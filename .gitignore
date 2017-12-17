@@ -30,6 +30,9 @@
 *.exp
 *.ilk
 *.pdb
+*.ipch
+*.iobj
+*.ipdb
 
 # directory
 web
