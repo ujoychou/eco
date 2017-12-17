@@ -1,0 +1,42 @@
+﻿#include "PrecHeader.h"
+#include <eco/persist/CsvSource.h>
+////////////////////////////////////////////////////////////////////////////////
+#include <eco/Project.h>
+#include <eco/filesystem/File.h>
+
+
+namespace eco {;
+
+////////////////////////////////////////////////////////////////////////////////
+class CsvSource::Impl
+{
+public:
+	std::shared_ptr<eco::filesystem::File> m_csv;
+
+	void init(CsvSource&){}
+};
+ECO_SHARED_IMPL(CsvSource);
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+void CsvSource::open(IN const char* csv_file, IN const char* mode)
+{
+	impl().m_csv.reset(new eco::filesystem::File(csv_file, mode));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void CsvSource::write(IN const char* data, IN const int size)
+{
+	impl().m_csv->write(data, size);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void CsvSource::read(OUT Record& head, IN Recordset& data)
+{
+}
+
+
+}

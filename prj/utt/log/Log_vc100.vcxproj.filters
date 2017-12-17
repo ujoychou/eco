@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="lib">
+      <UniqueIdentifier>{c32a2368-9d91-4d56-9ef3-a4cfdf709dfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{f550f197-2dda-47b8-b385-90e557cfa7ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin">
+      <UniqueIdentifier>{a5264100-52cf-45e4-a714-9dc5c9e5c56f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin\debug_win32">
+      <UniqueIdentifier>{fb8abe3c-2245-43b6-9836-5d1f0ff03d9c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PrecHeader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="App.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Test.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PrecHeader.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="App.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Test.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\utt\vc100\Log\Debug\cfg.sys.xml">
+      <Filter>bin\debug_win32</Filter>
+    </None>
+    <None Include="..\..\utt\vc100\Log\Debug\cfg.app.xml">
+      <Filter>bin\debug_win32</Filter>
+    </None>
+  </ItemGroup>
+</Project>

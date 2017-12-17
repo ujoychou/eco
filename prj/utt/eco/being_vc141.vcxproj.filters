@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="PrecHeader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="App.h" />
+    <ClInclude Include="PrecHeader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="bin">
+      <UniqueIdentifier>{4d14a986-f209-487c-bfb5-1c3f7db231a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{38ff682e-c2b3-4be8-b76d-cf4ec1243796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{22d0ef6d-bbfd-4995-9af5-7de1c9e448ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin\win32_debug">
+      <UniqueIdentifier>{d78ed587-4aeb-487c-b56a-bebfbd59fa8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin\win32_release">
+      <UniqueIdentifier>{d94f9c9a-5b96-47bf-af06-e25e4bad4311}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\..\bin\vc120\Being\Debug\cfg.app.xml">
+      <Filter>bin\win32_debug</Filter>
+    </Xml>
+    <Xml Include="..\..\bin\vc120\Being\Debug\cfg.sys.xml">
+      <Filter>bin\win32_debug</Filter>
+    </Xml>
+  </ItemGroup>
+</Project>

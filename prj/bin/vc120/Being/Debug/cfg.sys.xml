@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--#.配置文件-->
+  <config>
+    <file_path>cfg.app.xml</file_path>
+  </config>
+
+  <!--#.日志选项-->
+  <logging>
+    <sync  value="true"/>
+    <level value="trace"/>
+    <memcache value="5M"/>
+    <file_sink value="true">
+      <file_path>./log/</file_path>
+      <roll_size>50M</roll_size>
+      <full_path>20170104160222.ujoychou-PC.00051124.log</full_path>
+    </file_sink>
+    <console_sink value="true"/>
+    <max_sync_millsecs value="3000"/>
+  </logging>
+
+  <!--#.生命机制-->
+  <eco enable="true">
+    <being enable="true">
+      <unit_live_tick>1</unit_live_tick>
+    </being>
+    <task_server_thread_size value="2"/>
+  </eco>
+
+  <!--#.命令模式-->
+  <command enable="true">
+  </command>
+</root>

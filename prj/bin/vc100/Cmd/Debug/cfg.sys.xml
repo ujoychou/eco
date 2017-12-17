@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--APP配置文件-->
+  <config>
+    <file_path>cfg.app.xml</file_path>
+  </config>
+  <!--日志配置-->
+  <logging>
+    <sync  value="false"/>
+    <level value="info"/>
+    <memcache value="5M"/>
+    <text_size value="512"/>
+    <pack_size value="4096"/>
+    <sync_secs value="3"/>
+    <file_sink value="true">
+      <file_path>./log/</file_path>
+      <roll_size>100M</roll_size>
+      <full_path>20170104-160222.ujoychou-PC.00051124.log</full_path>
+    </file_sink>
+    <console_sink value="true"/>
+  </logging>
+  <!--Erx插件（动态库）管理-->
+  <erx>
+  </erx>
+  <!--运维中心服务模式-->
+  <ops_mode value="true">
+    <!--交易运维中心-->
+    <trade_ops>
+      <addr_shdx>127.0.0.1:40000</addr_shdx>
+      <addr_shlt>127.0.0.1:40001</addr_shlt>
+      <addr_cqdx>127.0.0.1:40002</addr_cqdx>
+      <addr_cqlt>127.0.0.1:40003</addr_cqlt>
+    </trade_ops>
+    <!--查询运维中心-->
+    <query_ops>
+      <addr_shdx>127.0.0.1:40100</addr_shdx>
+      <addr_shlt>127.0.0.1:40101</addr_shlt>
+      <addr_cqdx>127.0.0.1:40102</addr_cqdx>
+      <addr_cqlt>127.0.0.1:40103</addr_cqlt>
+    </query_ops>
+  </ops_mode>
+  <!--直连服务模式-->
+  <service_mode value="true">
+    <!--团队服务-->
+    <team>
+      <addr_shdx>127.0.0.1:50000</addr_shdx>
+      <addr_shlt>127.0.0.1:50001</addr_shlt>
+    </team>
+    <!--行情服务-->
+    <market>
+      <addr_shdx>127.0.0.1:50010</addr_shdx>
+      <addr_shlt>127.0.0.1:50011</addr_shlt>
+    </market>
+  </service_mode>
+</root>

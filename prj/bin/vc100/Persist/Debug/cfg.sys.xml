@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <config>
+    <file_path value="app.cfg.xml"/>
+  </config>
+  <logging>
+    <sync  value="false"/>
+    <level value="info"/>
+    <memcache value="5M"/>
+    <text_size value="512"/>
+    <pack_size value="4096"/>
+    <sync_secs value="3"/>
+    <file_sink value="true">
+      <file_path value="./log/"/>
+      <roll_size value="100M"/>
+      <full_path value="d:/app/bin/log/20160518-010450.txt"/>
+    </file_sink>
+    <console_sink value="true"/>
+  </logging>
+</root>

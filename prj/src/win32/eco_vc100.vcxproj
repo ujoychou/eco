@@ -1,0 +1,291 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0E757008-9077-44EB-9245-E7E7A1AE9296}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>PerformanceService</RootNamespace>
+    <ProjectName>eco</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(SolutionDir)..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\..\..\contrib\eco\lib_vc100\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IntDir>$(SolutionDir)..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\..\..\contrib\eco\lib_vc100\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\inc;$(SolutionDir)..\..\common;$(SolutionDir)..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\contrib\boost\lib_vc100;$(SolutionDir)..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\contrib\mysql\lib_vc100</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\inc;$(SolutionDir)..\..\common;$(SolutionDir)..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\contrib\boost\lib_vc100;$(SolutionDir)..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\contrib\mysql\lib_vc100</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\App.cpp" />
+    <ClCompile Include="..\Being.cpp" />
+    <ClCompile Include="..\cmd\Class.cpp" />
+    <ClCompile Include="..\cmd\Context.cpp" />
+    <ClCompile Include="..\cmd\Engine.cpp" />
+    <ClCompile Include="..\cmd\Group.cpp" />
+    <ClCompile Include="..\cmd\Inner.cpp" />
+    <ClCompile Include="..\Config.cpp" />
+    <ClCompile Include="..\DateTime.cpp" />
+    <ClCompile Include="..\DllObject.cpp" />
+    <ClCompile Include="..\DllObjectWin.cpp" />
+    <ClCompile Include="..\Eco.cpp" />
+    <ClCompile Include="..\HeapOperators.cpp" />
+    <ClCompile Include="..\log\Pusher.cpp" />
+    <ClCompile Include="..\log\Core.cpp" />
+    <ClCompile Include="..\log\FileSink.cpp" />
+    <ClCompile Include="..\net\Address.cpp" />
+    <ClCompile Include="..\net\asio\IoTimer.cpp" />
+    <ClCompile Include="..\net\asio\TcpAcceptor.cpp" />
+    <ClCompile Include="..\net\asio\TcpConnector.cpp" />
+    <ClCompile Include="..\net\asio\Worker.cpp" />
+    <ClCompile Include="..\net\Net.cpp" />
+    <ClCompile Include="..\net\ProtobufCodec.cpp" />
+    <ClCompile Include="..\net\TcpClientOption.cpp" />
+    <ClCompile Include="..\net\TcpClientPeer.cpp" />
+    <ClCompile Include="..\net\TcpClientSession.cpp" />
+    <ClCompile Include="..\net\TcpPeer.cpp" />
+    <ClCompile Include="..\net\TcpServer.cpp" />
+    <ClCompile Include="..\net\TcpServerOption.cpp" />
+    <ClCompile Include="..\net\TcpServerPeer.cpp" />
+    <ClCompile Include="..\net\TcpServerSession.cpp" />
+    <ClCompile Include="..\process\ProcessWin.cpp" />
+    <ClCompile Include="..\service\Cluster.cpp" />
+    <ClCompile Include="..\service\Deployment.cpp" />
+    <ClCompile Include="..\service\dev\Consumer.cpp" />
+    <ClCompile Include="..\service\dev\DevCluster.cpp" />
+    <ClCompile Include="..\service\dev\Horizontal.cpp" />
+    <ClCompile Include="..\service\dev\Provider.cpp" />
+    <ClCompile Include="..\service\DidProtocol.cpp" />
+    <ClCompile Include="..\service\Machine.cpp" />
+    <ClCompile Include="..\service\Service.cpp" />
+    <ClCompile Include="..\thread\ThreadLin.cpp" />
+    <ClCompile Include="..\thread\ThreadWin.cpp" />
+    <ClCompile Include="..\thread\Timer.cpp" />
+    <ClCompile Include="..\Typex.cpp" />
+    <ClCompile Include="..\xml\Reader.cpp" />
+    <ClCompile Include="PrecHeader.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\contrib\eco\App.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\atomic\Atomic.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\atomic\AtomicImpl.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\atomic\State.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Being.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Cast.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Class.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Command.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Context.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Engine.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Group.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Config.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\DllObject.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Memory.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\MemoryPool.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Proto.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CondVar.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\CondVarWin.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\MutexWin.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\OneTaskMonitor.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskMonitor.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TopicServer.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Error.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\ExportApi.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\SourceFile.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Implement.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Core.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Log.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Pusher.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Type.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\meta\Timestamp.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Net.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Object.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\CsvSource.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Json.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\process\Process.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Repository.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\RxApp.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\Centre.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\DevCentre.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\Impl.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\ops\OpsCentre.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\contrib\eco\service\ServiceApp.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CallOnce.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageQueue.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageServer.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Mutex.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\State.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Thread.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ThreadPool.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Worker.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\xml\Reader.h" />
+    <ClInclude Include="..\cmd\Inner.h" />
+    <ClInclude Include="..\Eco.h" />
+    <ClInclude Include="..\log\Queue.h" />
+    <ClInclude Include="..\log\Server.h" />
+    <ClInclude Include="..\log\FileSink.h" />
+    <ClInclude Include="..\service\Impl.h" />
+    <ClInclude Include="PrecHeader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\..\contrib\eco\cfg.app.xml" />
+    <None Include="..\..\..\..\..\contrib\eco\cfg.sys.xml" />
+    <None Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\..\..\..\contrib\eco\lib_vc100\release\eco.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\..\..\..\contrib\eco\service\proto\Error.proto" />
+    <None Include="..\..\..\..\..\contrib\eco\service\proto\Service.proto" />
+    <None Include="..\..\..\..\..\contrib\eco\service\proto\__proto.bat">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\cmd\Engine.ipp" />
+    <None Include="..\net\TcpClientPeer.ipp" />
+    <None Include="..\net\TcpClientSession.ipp" />
+    <None Include="..\net\TcpPeer.ipp" />
+    <None Include="..\net\TcpServer.ipp" />
+    <None Include="..\net\TcpServerPeer.ipp" />
+    <None Include="..\net\TcpServerSession.ipp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\..\..\..\contrib\eco\lib_vc100\release\eco.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </Library>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

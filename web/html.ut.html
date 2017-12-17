@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<!--指定页面使用的主要语言-->
+<html lang="zh">
+<head>
+<meta name="author" content="ujoy">
+<meta name="keywords" content="绩效,回测">
+<!--指定字符集-->
+<meta content-type="text/html" charset="utf-8"/>
+<meta http-equiv="expires" content="">
+<!--引入样式CSS-->
+<!--全局布局CSS-->
+<link rel="stylesheet" type="text/css" href="css/layout.css"/>
+<link rel="stylesheet" type="text/css" href="css/table.css"/>
+</head>	
+
+
+<!--=========================================================================-->
+<!--=========================================================================-->
+<body>
+<!--首页上页-->
+<div class="main_top_bar"></div>
+
+<!--分割线-->
+<div class="hcl_linear_top"></div>	
+<div class="hcl_linear_bottom"></div>
+
+<!--首页标题-->
+<div class="main_title">
+<div class="main_title_container">
+	<div class="main_title_left"></div>
+	<div class="main_title_right">	
+		<div class="main_search">
+			<div class="search_input">
+				<input type="text" placeholder="输入指标或关键字" />
+			</div>
+			<input type="button" class="btn_search" value="搜索"/>
+		</div>
+	</div>
+</div>
+</div>
+
+<!--=========================================================================-->
+<!--首页功能菜单-->
+<div class="main_navigation_container">
+	<ul class="main_navigation clearfix">
+		<li class="cur_page">首页</li>
+		<li><a href="profit_loss_analysis.html">盈亏分析</a></li>
+		<li><a href="cycle_analysis.html">周期分析</a></li>
+		<li><a href="trades.html">交易记录</a></li>
+	</ul>
+</div>
+
+
+<!--=========================================================================-->
+<!--首页.关键指标列表-->
+<div class="hc_table">
+	<div class="hc_table_bar">
+		<div class="hc_table_title">总体指标</div>
+		<div class="hc_table_tool">
+			<a class="talbe_tool_btn">导出CSV文件<a/>
+		</div>
+	</div>
+	<table class="hc_table_data">
+		<tr>
+			<th style="width: 300px;">指标</th>
+			<th style="width: 200px;">结果</th>
+			<th style="width: 200px;">指标</th>
+			<th style="width: 200px;">结果</th>
+			<th style="width: 200px;">指标</th>
+			<th style="width: 200px;">结果</th>
+		</tr>
+		<tr class="mbody">
+			<td>初始资金</td>
+			<td>$(init_capital)</td>
+			<td>开始时间</td>
+			<td>$(start_time)</td>
+			<td>结束时间</td>
+			<td>$(end_time)</td>
+		</tr>
+		<tr class="mbody">
+			<td>净利润</td>
+			<td>$(net_profit)</td>
+			<td>收益率</td>
+			<td>$(net_profit_rate)</td>
+			<td>年收益率</td>
+			<td>$(net_profit_year_rate)</td>
+		</tr>
+		<tr class="mbody">
+			<td>手续费</td>
+			<td>$(commission)</td>
+			<td>净利润手续费比</td>
+			<td>$(commission_profit_rate)</td>
+			<td>最大回撤比</td>
+			<td>$(max_rollback_rate)</td>
+		</tr>
+	</table>
+</div>
+
+
+<!--=========================================================================-->
+<!--首页.多维指标列表-->
+<div class="hc_table">
+	<div class="hc_table_bar">
+		<div class="hc_table_title">多维指标</div>
+		<div class="hc_table_tool">
+			<a class="talbe_tool_btn">导出CSV文件<a/>
+		</div>
+	</div>
+	<table class="hc_table_data">
+		<tr class="$(ut_table_head)">
+			<th style="width: 300px;">$(col_1)</th>
+			<th style="width: 200px;">$(col_2)</th>
+			<th style="width: 200px;">$(col_3)</th>
+			<th style="width: 200px;">$(col_4)</th>
+			<th style="width: 200px;">$(col_5)</th>
+			<th style="width: 200px;">$(col_6)</th>
+		</tr>
+		<!-- class="$(ut_table_body)-->
+		<tr class="mbody" class="$(ut_table_body)">
+			<br/>
+			<td>$(property)</td>
+			<!-- class="$(ut_class_a)-->
+			<td>$(all_trades_value)</td>
+			<td>$(gain_trades_value)</td>
+			<td>$(loss_trades_value)</td>
+			<td>$(long_trades_value)</td>
+			<!-- class="$(ut_class_a)-->
+			<td>$(short_trades_value)</td>
+			<br/>
+		</tr>
+	</table>
+</div>
+</body>
+</html>

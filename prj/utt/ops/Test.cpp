@@ -1,0 +1,85 @@
+#include "PrecHeader.h"
+#include "Test.h"
+////////////////////////////////////////////////////////////////////////////////
+#include <eco/Project.h>
+#include "App.h"
+
+
+
+namespace eco{;
+namespace cmd{;
+namespace test{;
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Cmd1::execute(IN const Context& context)
+{
+	std::cout << "execute cmd1." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Cmd2::execute(IN const Context& context)
+{
+	std::cout << "execute cmd2." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Cmd7::execute(IN const Context& context)
+{
+	std::cout << "execute cmd7." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Cmd8::execute(IN const Context& context)
+{
+	std::cout << "execute cmd8." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Cmd9::execute(IN const Context& context)
+{
+	std::cout << "execute cmd9." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Manager::cmd3(
+	IN const eco::cmd::Context& context,
+	IN eco::cmd::ExecuteMode mode)
+{
+	std::cout << "execute cmd3." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Manager::cmd4(
+	IN const eco::cmd::Context& context,
+	IN eco::cmd::ExecuteMode mode)
+{
+	std::cout << "execute cmd4." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Manager::cmd5(
+	IN const eco::cmd::Context& context,
+	IN eco::cmd::ExecuteMode mode)
+{
+	std::cout << "execute cmd5." << std::endl;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Manager::cmd6(
+	IN const eco::cmd::Context& context,
+	IN eco::cmd::ExecuteMode mode)
+{
+	std::cout << "execute cmd6." << std::endl;
+}
+
+
+}}}

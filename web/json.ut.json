@@ -1,0 +1,38 @@
+equity_series = 
+[
+    {
+        "equity": "1",
+        "net_profit": "2",
+        "commission": "3",
+        "times": "4",
+        "datetime": "string",
+        "book": {
+            "name": "string",
+            "page": "int"
+        },
+        "Array1" : 
+    	[
+    		{
+    			"good" : "string",
+    			"well" : "string"
+    		}
+    	],
+        "Array2" : 
+        [
+            {
+                "fail" : "string",
+                "timeout" : "string"
+            }
+        ]
+    }
+]
+
+
+profit_series = 
+{
+    "equity1": "double",
+    "net_profit1": "double",
+    "commission1": "double",
+    "times1": "int",
+    "datetime1": "string"
+}

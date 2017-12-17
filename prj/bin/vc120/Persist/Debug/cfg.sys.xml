@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--#.配置文件-->
+  <config>
+    <file_path>cfg.app.xml</file_path>
+  </config>
+
+  <!--#.日志选项-->
+  <logging>
+    <sync  value="false"/>
+    <level value="info"/>
+    <memcache value="5M"/>
+    <file_sink value="true">
+      <file_path>./log/</file_path>
+      <roll_size>50M</roll_size>
+      <full_path>20170104-160222.UJOYCHOU-PC.00051124.log</full_path>
+    </file_sink>
+    <console_sink value="true"/>
+    <max_sync_millsecs value="3000"/>
+  </logging>
+
+  <!--#.命令模式-->
+  <command enable="true">
+  </command>
+</root>
