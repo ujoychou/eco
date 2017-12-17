@@ -27,3 +27,10 @@
 *.exe
 *.out
 *.app
+*.exp
+*.ilk
+*.pdb
+
+# directory
+web
+net/protocol
