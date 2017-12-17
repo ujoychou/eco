@@ -35,6 +35,6 @@
 *.ipdb
 
 # directory
-web
-prj
-nchild
+obj
+/prj/src/net
+/prj/src/service
