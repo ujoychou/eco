@@ -100,7 +100,7 @@ public:
 		IN eco::net::AddressSet& service_addr);
 
 	// get service consumer.
-	eco::net::TcpClient* get_service(
+	eco::net::TcpClient get_service(
 		IN const char* service_name);
 
 	// get service address.

@@ -32,7 +32,7 @@ namespace eco{;
 
 ////////////////////////////////////////////////////////////////////////////////
 // get default Error log format.
-class Error : public std::exception
+class Error
 {
 public:
 	inline explicit Error(IN const int eid = 0) : m_id(eid)

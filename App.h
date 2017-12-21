@@ -34,12 +34,6 @@ app that run process.
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_APP_RESIGER_HANDLER(msg_type, msg, codec, func, obj_ptr) \
-dispatcher().register_handler<msg, codec>(msg_type,\
-std::bind(&func, obj_ptr, std::placeholders::_1, std::placeholders::_2));
-
-
-////////////////////////////////////////////////////////////////////////////////
 class ECO_API App : public HeapOperators
 {
 	ECO_IMPL_API();

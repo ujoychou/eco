@@ -531,6 +531,7 @@
     </None>
     <None Include="..\cmd\Engine.ipp" />
     <None Include="..\Eco.h" />
+    <None Include="..\net\TcpClient.ipp" />
     <None Include="..\net\TcpPeer.ipp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>

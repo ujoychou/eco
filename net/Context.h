@@ -30,29 +30,40 @@
 
 namespace eco{;
 namespace net{;
-////////////////////////////////////////////////////////////////////////////////
 class TcpPeer;
+typedef std::weak_ptr<TcpPeer> TcpPeerWptr;
+////////////////////////////////////////////////////////////////////////////////
 class DataContext
 {
 	ECO_OBJECT(DataContext);
 public:
-	inline DataContext()
+	inline DataContext(IN TcpSessionHost* host = nullptr)
 		: m_prot(nullptr)
 		, m_prot_head(nullptr)
-	{}
+		, m_category(0)
+	{
+		if (host != nullptr)
+		{
+			m_session_host = *host;
+		}
+	}
 
 	inline DataContext(IN DataContext&& v)
 		: m_data(std::move(v.m_data))
+		, m_category(v.m_category)
 		, m_prot(v.m_prot)
 		, m_prot_head(v.m_prot_head)
+		, m_session_host(v.m_session_host)
 		, m_peer_wptr(std::move(v.m_peer_wptr))
 	{}
 
 	inline DataContext& operator=(IN DataContext&& v)
 	{
 		m_data = std::move(v.m_data);
+		m_category = v.m_category;
 		m_prot = v.m_prot;
 		m_prot_head = v.m_prot_head;
+		m_session_host = v.m_session_host;
 		m_peer_wptr = std::move(v.m_peer_wptr);
 		return *this;
 	}
@@ -76,7 +87,8 @@ public:
 	// protocol and tcp peer.
 	Protocol*			m_prot;
 	ProtocolHead*		m_prot_head;
-	std::weak_ptr<TcpPeer>	m_peer_wptr;
+	TcpPeerWptr			m_peer_wptr;
+	TcpSessionHost		m_session_host;
 };
 
 
@@ -87,20 +99,25 @@ public:
 	eco::String			m_data;
 	eco::Bytes			m_message;
 	MessageCategory		m_category;
-	uint32_t			m_request_id;
+	uint64_t			m_request_data;
 	uint64_t			m_request_type;
 	TcpSession			m_session;
 	
 public:
-	inline MetaContext() : m_category(0), m_request_id(0), m_request_type(0)
+	inline MetaContext() 
+		: m_category(0)
+		, m_request_data(0)
+		, m_request_type(0)
 	{}
 
 	inline void set_context(IN DataContext& dc, IN MessageMeta& m)
 	{
 		m_data.swap(dc.m_data);
 		m_category = dc.m_category;
-		m_request_id = m.m_request_id;
+		m_request_data = m.m_request_data;
 		m_request_type = m.m_message_type;
+		m_session.set_protocol(*dc.m_prot);
+		m_session.set_host(dc.m_session_host);
 	}
 
 	inline void clear()
@@ -115,17 +132,17 @@ public:
 class Context
 {
 public:
-	uint32_t			m_request_id;
+	uint64_t			m_request_data;
 	MessageCategory		m_category;
 	TcpSession			m_session;
 
-	inline Context() : m_category(0), m_request_id(0)
+	inline Context() : m_category(0), m_request_data(0)
 	{}
 
 	inline void set_context(IN MetaContext& mc)
 	{
 		m_category = mc.m_category;
-		m_request_id = mc.m_request_id;
+		m_request_data = mc.m_request_data;
 	}
 };
 

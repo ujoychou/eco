@@ -40,23 +40,20 @@ namespace net{;
 enum
 {
 	// category: context message.
-	category_message			= 0x0001,
+	category_message			= 0x01,
 	// category: heartbeat message.
-	category_heartbeat			= 0x0002,
-
-	// option: a session message.
-	category_session_mode		= 0x0008,
-	// option: encrypted message, else general message.
-	category_encrypted			= 0x0010,
-	// option: sync request, else aysnc.
-	category_sync_mode			= 0x0020,
-	// option: is last array data.
-	category_last				= 0x0040,
-	// option: has message type to identify message.
-	category_has_type			= 0x0080,
+	category_heartbeat			= 0x02,
+	// category: heartbeat message.
+	category_authority			= 0x04,
+	// category: a session message.
+	category_session_mode		= 0x08,
+	// category: encrypted message, else general message.
+	category_encrypted			= 0x10,
+	// category: sync request, else aysnc.
+	category_sync_mode			= 0x20,
 };
-// for user define: MessageCategory is uint32_t.
-typedef uint32_t MessageCategory;
+// for user define: MessageCategory is uint16_t.
+typedef uint16_t MessageCategory;
 
 
 ////////////////////////////////////////////////////////////////////////////////

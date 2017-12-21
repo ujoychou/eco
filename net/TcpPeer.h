@@ -36,15 +36,6 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-enum 
-{
-	tcp_peer_host_server	= 1,
-	tcp_peer_host_client	= 2,
-};
-typedef uint32_t TcpPeerHost;
-
-
-////////////////////////////////////////////////////////////////////////////////
 class IoService;
 class TcpPeer;
 class TcpPeerHandler
@@ -70,25 +61,8 @@ public:
 		IN uint64_t peer_id)
 	{}
 
-public:
-	// get tcp peer host.
-	virtual TcpPeerHost get_host() const = 0;
-
-	// get protocol.
-	virtual ProtocolHead* protocol_head() const = 0;
-
-	// get protocol.
-	virtual Protocol* protocol(IN const uint32_t version) const = 0;
-
-	// find exist session.
-	virtual SessionData::ptr find_session(IN const SessionId id) const
-	{
-		return SessionData::ptr();
-	}
-
-	// erase session.
-	virtual void erase_session(IN const SessionId id)
-	{}
+	// get protocol head.
+	virtual ProtocolHead& protocol_head() const = 0;
 };
 
 
@@ -123,13 +97,6 @@ public:
 	// async recv message from peer.
 	void async_recv();
 
-	// async send message.
-	void async_send(IN eco::String& data);
-	void async_send(
-		IN MessageMeta& meta,
-		IN Protocol& prot,
-		IN ProtocolHead& prot_head);
-
 	// close peer.
 	void close();
 
@@ -137,50 +104,14 @@ public:
 	void notify_close(IN const eco::Error* e);
 
 public:
-	// send request to server.
-	inline void async_send(
-		IN eco::net::Codec& codec,
-		IN const uint32_t session_id,
-		IN const uint32_t msg_type,
-		IN const MessageModel model,
-		IN const uint32_t request_id,
-		IN const uint32_t category = category_message)
-	{
-		IN eco::net::MessageMeta meta;
-		eco::net::TcpProtocol prot;
-		eco::net::TcpProtocolHead prot_head;
-		meta.m_category = category;
-		meta.set_session_id(session_id);
-		meta.set_message_type(msg_type);
-		meta.m_request_id = request_id;
-		meta.m_model = model;
-		meta.m_codec = &codec;
-		async_send(meta, prot, prot_head);
-	}
+	// async send meta message.
+	void async_send(
+		IN MessageMeta& meta,
+		IN Protocol& prot,
+		IN ProtocolHead& prot_head);
 
-	// response to client.
-	inline void async_request(
-		IN eco::net::Codec& codec,
-		IN const uint32_t session_id,
-		IN const uint32_t msg_type,
-		IN const uint32_t request_id,
-		IN const uint32_t category = category_message)
-	{
-		async_send(codec, msg_type, session_id,
-			model_req, request_id, category);
-	}
-
-	// response to client.
-	inline void async_response(
-		IN eco::net::Codec& codec,
-		IN const uint32_t msg_type,
-		IN const uint32_t session_id,
-		IN const uint32_t request_id,
-		IN const uint32_t category = category_message)
-	{
-		async_send(codec, msg_type, session_id,
-			model_rsp, request_id, category);
-	}
+	// async send string message.
+	void async_send(IN eco::String& data);
 };
 
 

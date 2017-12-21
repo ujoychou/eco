@@ -111,11 +111,11 @@ public:
 	independently, we suggest the latter one.
 	*/
 	void set_response_heartbeat(IN const bool);
-	const bool response_heartbeat() const;
+	bool response_heartbeat() const;
 	TcpServerOption& response_heartbeat(IN const bool);
 
 	void set_rhythm_heartbeat(IN const bool);
-	const bool rhythm_heartbeat() const;
+	bool rhythm_heartbeat() const;
 	TcpServerOption& rhythm_heartbeat(IN const bool);
 
 	/*@ set intervals that clean the inactive connection peer.
@@ -142,17 +142,12 @@ public:
 	is to improve workload performace.
 	*/
 	void set_no_delay(IN const bool);
-	const bool no_delay() const;
+	bool no_delay() const;
 	TcpServerOption& no_delay(IN const bool);
-
-	/* @ set tcp connection option whether has session.*/
-	void set_session_mode(IN const bool);
-	const bool session_mode() const;
-	TcpServerOption& session_mode(IN const bool);
 
 	/* @ response heartbeat in io thread.*/
 	void set_io_heartbeat(IN const bool);
-	const bool io_heartbeat() const;
+	bool io_heartbeat() const;
 	TcpServerOption& io_heartbeat(IN const bool);
 };
 

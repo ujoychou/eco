@@ -297,7 +297,7 @@ object_t& object_t::##property_name(IN const bool val) \
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-const bool object_t::##property_name() const\
+bool object_t::##property_name() const\
 {\
 	return impl().m_##property_name > 0;\
 }

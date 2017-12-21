@@ -733,6 +733,9 @@
     <None Include="..\..\..\..\..\contrib\eco\lib_vc141\release\eco.dll">
       <Filter>bin\release_win32</Filter>
     </None>
+    <None Include="..\net\TcpClient.ipp">
+      <Filter>src\net</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\..\..\..\contrib\eco\cfg.app.xml">

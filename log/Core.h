@@ -47,7 +47,7 @@ public:
 
 	/*@ option: synchronous.*/
 	void set_sync(IN const bool);
-	const bool sync() const;
+	bool sync() const;
 	Core& sync(IN const bool);
 
 	/*@ set message queue capacity.*/

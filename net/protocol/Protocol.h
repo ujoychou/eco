@@ -63,23 +63,39 @@ enum
 	model_pub_str_rsp		= 0x0A,
 	model_pub_str			= 0x0B,
 };
-// for user define: MessageCategory is uint32_t.
-typedef uint32_t MessageModel;
+// for user define: MessageCategory is uint16_t.
+typedef uint16_t MessageModel;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/* for user define: MessageCategory & MessageModel is uint32_t. */
+// message option for message to send.
+enum
+{
+	// option: is last array data.
+	option_last				= 0x01,
+	// option: has message type to identify message.
+	option_type				= 0x02,
+	// option: request data that server will send back.
+	option_req4				= 0x04,
+	option_req8				= 0x08,
+};
+// for user define: MessageOption is uint16_t.
+typedef uint32_t MessageOption;
+
+
+////////////////////////////////////////////////////////////////////////////////
 class MessageMeta
 {
 public:
 	MessageCategory	m_category;
 	// meta fixed head.
 	MessageModel	m_model;
+	MessageOption	m_option;
 	// meta option data.
-	uint32_t		m_message_type;
 	uint32_t		m_session_id;
-	uint32_t		m_request_id;
-	// meta topic.
+	uint32_t		m_message_type;
+	uint64_t		m_request_data;
+	// meta option data topic.
 	uint16_t		m_topic_type;
 	uint16_t		m_topic_prop;
 	uint64_t		m_topic_value;
@@ -93,6 +109,20 @@ public:
 		memset(this, 0, sizeof(*this));
 	}
 
+	inline MessageMeta(
+		IN Codec& codec,
+		IN const uint32_t session_id,
+		IN const uint32_t msg_type,
+		IN const MessageModel model,
+		IN const MessageCategory category = category_message)
+	{
+		m_category = category;
+		set_session_id(session_id);
+		set_message_type(msg_type);
+		m_model = model;
+		m_codec = &codec;
+	}
+
 	inline void set_session_id(IN const uint32_t id)
 	{
 		m_session_id = id;
@@ -103,13 +133,27 @@ public:
 	inline void set_message_type(IN const uint32_t type)
 	{
 		m_message_type = type;
-		eco::add(m_category, category_has_type);
+		eco::add(m_category, option_type);
 	}
 
-	inline bool model_request() const
+	inline void set_request_data(IN const uint32_t req_data)
 	{
-		return eco::has(m_model, model_req) || eco::has(m_model, model_rsp);
+		m_request_data = req_data;
+		eco::add(m_option, option_req4);
 	}
+	inline void set_request_data(IN const uint64_t req_data)
+	{
+		m_request_data = req_data;
+		eco::add(m_option, option_req8);
+	}
+	inline void set_request_data(IN const void* req_data)
+	{
+		if (sizeof(void*) == 4)
+			set_request_data(reinterpret_cast<uint32_t>(req_data));
+		else if (sizeof(void*) == 8)
+			set_request_data(reinterpret_cast<uint64_t>(req_data));
+	}
+
 	inline bool model_topic() const
 	{
 		return model_sub_all_req <= m_model && m_model <= model_pub_str;

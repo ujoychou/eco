@@ -37,15 +37,7 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpClientHandler
-{
-public:
-
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpClient : public TcpClientHandler
+class ECO_API TcpClient
 {
 	ECO_OBJECT_API(TcpClient);
 public:
@@ -65,15 +57,6 @@ public:
 	// dispatch.
 	DispatchRegistry& dispatcher();
 
-	// create tcp session.
-	template<typename SessionDataT>
-	inline eco::net::TcpSession create_session()
-	{
-		return create_session(make_session_data<SessionDataT>(0));
-	}
-	// create tcp session.
-	eco::net::TcpSession create_session(IN SessionData* data);
-
 public:
 	// async connect to service.
 	void async_init_service(
@@ -88,28 +71,17 @@ public:
 
 	// async send message.
 	void async_send(
-		IN eco::net::Codec& codec,
+		IN Codec& codec,
 		IN const uint32_t session_id,
 		IN const uint32_t msg_type,
 		IN const MessageModel model,
-		IN const uint32_t request_id = 0,
-		IN const uint32_t category = category_message);
+		IN const MessageCategory category = category_message);
 
 	// async send request to server.
-	void async_request(
-		IN eco::net::Codec& codec,
-		IN const uint32_t session_id,
-		IN const uint32_t msg_type,
-		IN const uint32_t request_id = 0,
-		IN const uint32_t category = category_message);
-
-	// async send response to client.
-	void async_response(
-		IN eco::net::Codec& codec,
-		IN const uint32_t msg_type,
-		IN const uint32_t session_id,
-		IN const uint32_t request_id = 0,
-		IN const uint32_t category = category_message);
+	void async_authorize(
+		IN Codec& codec,
+		IN TcpSession& session,
+		IN const uint32_t msg_type);
 };
 
 

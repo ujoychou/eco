@@ -268,6 +268,14 @@ public:
 	{
 		append(1, c);
 	}
+	inline void append(IN const eco::String& str)
+	{
+		append(str.m_data, str.m_size);
+	}
+	inline void append(IN const eco::Bytes& str)
+	{
+		append(str.m_data, str.m_size);
+	}
 
 	inline void resize(IN uint32_t s)
 	{

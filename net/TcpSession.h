@@ -1,5 +1,5 @@
-#ifndef ECO_NET_TCP_CLIENT_SESSION_H
-#define ECO_NET_TCP_CLIENT_SESSION_H
+#ifndef ECO_NET_TCP_SESSION_H
+#define ECO_NET_TCP_SESSION_H
 /*******************************************************************************
 @ name
 
@@ -26,19 +26,24 @@
 #include <eco/ExportApi.h>
 #include <eco/net/SessionData.h>
 #include <eco/net/protocol/Protocol.h>
+#include <eco/net/protocol/ProtobufCodec.h>
 #include <memory>
-
 
 namespace eco{;
 namespace net{;
 class TcpPeer;
+class TcpClient;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TcpSession
 {
 	ECO_SHARED_API(TcpSession)
 public:
-	// open session and create session data object.
-	void open();
+	// set peer host, client or server.
+	void set_host(IN TcpSessionHost& host);
+	void set_protocol(IN Protocol& prot);
+
+	// if a none session open a new session, else get the exist session.
+	bool open(IN const SessionId session_id = none_session);
 
 	// check whether session has been opened.
 	bool opened() const;
@@ -46,36 +51,77 @@ public:
 	// close session, release session data.
 	void close();
 
-	// set session info.
-	void set_session(
-		IN TcpPeer& peer,
-		IN const SessionId session_id);
-
-	// get protocol in peer.
-	Protocol& protocol();
-	ProtocolHead& protocol_head();
-
 	// get session data.
 	uint32_t get_session_id() const;
 
+	// get session data.
+	SessionData::ptr data();
+
 	// get and cast session data.
 	template<typename SessionDataT>
-	SessionDataT* cast()
+	inline std::shared_ptr<SessionDataT> cast()
 	{
-		return static_cast<SessionDataT*>(data());
+		return std::dynamic_pointer_cast<SessionDataT>(data());
 	}
-	// get session data.
-	SessionData* data();
-	
-	// send message.
-	void send(IN eco::String& data);
 
-	/*@ send message.
-	* @ para.meta: the discription of message.
-	*/
-	void send(IN MessageMeta& meta)
+public:
+	// async send message.
+	void async_send(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const MessageModel model,
+		IN const MessageCategory category = category_message);
+
+	// async send message.
+	template<typename Codec, typename MessageT>
+	inline void async_send(
+		IN const MessageT& msg,
+		IN const uint32_t type,
+		IN const MessageModel model,
+		IN const MessageCategory category = category_message)
 	{
+		return async_send(Codec(msg), type, model, category);
 	}
+
+	// async send message.
+	inline void async_request(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const MessageCategory category = category_message)
+	{
+		return async_send(codec, type, model_req, category);
+	}
+
+	// async send message.
+	template<typename Codec, typename MessageT>
+	inline void async_request(
+		IN const MessageT& msg,
+		IN const uint32_t type,
+		IN const MessageCategory category = category_message)
+	{
+		return async_send(Codec(msg), type, model_req, category);
+	}
+
+public:
+	// async send protobuf.
+	inline void async_send(
+		IN google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const MessageModel model,
+		IN const MessageCategory category = category_message)
+	{
+		return async_send(ProtobufCodec(msg), type, model, category);
+	}
+
+	// async send request protobuf.
+	inline void async_request(
+		IN google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const MessageCategory category = category_message)
+	{
+		return async_send(ProtobufCodec(msg), type, model_req, category);
+	}
+
 };
 
 

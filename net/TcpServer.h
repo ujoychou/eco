@@ -71,14 +71,14 @@ public:
 
 	// set session data class and tcp session mode.
 	template<typename SessionDataT>
-	inline void set_session_mode()
+	inline void set_session_data()
 	{
-		set_session_mode(&make_session_data<SessionDataT>);
+		set_session_data(&make_session_data<SessionDataT>);
 	}
 	/*@ set tcp server session mode.
 	* @ make: validate session factory function.
 	*/
-	void set_session_mode(IN MakeSessionDataFunc make);
+	void set_session_data(IN MakeSessionDataFunc make);
 
 	// dispatcher
 	DispatchRegistry& dispatcher();

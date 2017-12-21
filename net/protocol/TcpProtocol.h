@@ -132,10 +132,12 @@ private:
 	{
 		// #.parameter head
 		size_model			= 1,
+		size_option			= 1,
 		// #.parameter option data.
 		size_session_id		= 4,
-		size_request_id		= 4,
 		size_type			= 2,
+		size_req4			= 4,
+		size_req8			= 8,
 		// #.parameter topic
 		size_topic_type		= 2,
 		size_topic_prop		= 2,
@@ -148,25 +150,30 @@ private:
 
 		// field pos.
 		pos_model			= TcpProtocolHead::size_head,
-		pos_optional_data	= pos_model + size_model,
+		pos_option			= pos_model  + size_model,
+		pos_option_data		= pos_option + size_option,
 	};
 
 	inline uint32_t get_meta_end(IN const MessageMeta& meta) const
 	{
-		uint32_t pos = pos_optional_data;
-		if (meta.model_request())
-		{
-			pos += size_request_id;
-		}
-		if (eco::has(meta.m_category, category_has_type))
-		{
-			pos += size_type;
-		}
+		uint32_t pos = pos_option_data;
 		if (eco::has(meta.m_category, category_session_mode))
 		{
 			pos += size_session_id;
 		}
-
+		if (eco::has(meta.m_option, option_type))
+		{
+			pos += size_type;
+		}
+		if (eco::has(meta.m_option, option_req4))
+		{
+			pos += size_req4;
+		}
+		else if (eco::has(meta.m_option, option_req8))
+		{
+			pos += size_req8;
+		}
+		
 		if (meta.model_topic_all())
 		{
 			pos += size_topic_all;
@@ -237,22 +244,28 @@ public:
 		}
 		meta.m_model = MessageModel(bytes[pos_model]);
 		// get optional data.
-		uint32_t pos = pos_optional_data;
-		if (meta.model_request())
+		uint32_t pos = pos_option_data;
+		if (eco::has(meta.m_category, category_session_mode))
 		{
-			ntoh(meta.m_request_id, pos, &bytes[pos]);
+			ntoh(meta.m_session_id, pos, &bytes[pos]);
 		}
-		if (eco::has(meta.m_category, category_has_type))
+		if (eco::has(meta.m_option, option_type))
 		{
 			uint16_t msg_type = 0;
 			ntoh(msg_type, pos, &bytes[pos]);
 			meta.m_message_type = msg_type;
 		}
-		if (eco::has(meta.m_category, category_session_mode))
+		if (eco::has(meta.m_option, option_req4))
 		{
-			ntoh(meta.m_session_id, pos, &bytes[pos]);
+			uint32_t req4 = 0;
+			ntoh(req4, pos, &bytes[pos]);
+			meta.m_request_data = req4;
 		}
-
+		else if (eco::has(meta.m_option, option_req8))
+		{
+			ntoh(meta.m_request_data, pos, &bytes[pos]);
+		}
+		
 		// get subscription topic info.
 		if (meta.model_topic_all())
 		{
@@ -314,17 +327,21 @@ public:
 
 		// 3.init message type and optional data.
 		bytes.append(static_cast<char>(meta.m_model));
-		if (meta.model_request())
-		{
-			append_hton(bytes, meta.m_request_id);
-		}
-		if (eco::has(meta.m_category, category_has_type))
-		{
-			append_hton(bytes, static_cast<uint16_t>(meta.m_message_type));
-		}
 		if (eco::has(meta.m_category, category_session_mode))
 		{
 			append_hton(bytes, meta.m_session_id);
+		}
+		if (eco::has(meta.m_option, option_type))
+		{
+			append_hton(bytes, static_cast<uint16_t>(meta.m_message_type));
+		}
+		if (eco::has(meta.m_option, option_req4))
+		{
+			append_hton(bytes, static_cast<uint32_t>(meta.m_request_data));
+		}
+		else if (eco::has(meta.m_option, option_req8))
+		{
+			append_hton(bytes, meta.m_request_data);
 		}
 
 		// 4.init message topic.
