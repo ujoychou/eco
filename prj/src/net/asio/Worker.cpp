@@ -1,0 +1,52 @@
+#include "PrecHeader.h"
+#include <eco/net/Worker.h>
+#include <eco/net/asio/Worker.h>
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+namespace eco{;
+namespace net{;
+////////////////////////////////////////////////////////////////////////////////
+class Worker::Impl
+{
+public:
+	asio::Worker m_worker;
+
+	void init(Worker&){}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+ECO_MOVABLE_IMPL(Worker);
+////////////////////////////////////////////////////////////////////////////////
+void Worker::run()
+{
+	m_impl->m_worker.run();
+}
+
+void Worker::join()
+{
+	m_impl->m_worker.join();
+}
+
+void Worker::stop()
+{
+	m_impl->m_worker.stop();
+}
+
+void Worker::async_stop()
+{
+	m_impl->m_worker.async_stop();
+}
+
+IoService* Worker::get_io_service()
+{
+	return (IoService*)m_impl->m_worker.get_io_service();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+}}
