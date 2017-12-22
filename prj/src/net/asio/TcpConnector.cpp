@@ -31,7 +31,8 @@ public:
 	TcpConnectorHandler* m_handler;
 
 public:
-	Impl(IN boost::asio::io_service& srv) : m_socket(srv)
+	Impl(IN boost::asio::io_service& srv)
+		: m_socket(srv), m_handler(nullptr)
 	{}
 
 	~Impl()

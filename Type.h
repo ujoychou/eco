@@ -240,10 +240,8 @@ public:
 	}
 	inline void asign(IN const char* d, IN uint32_t s)
 	{
-		m_size = s;
-		reserve(m_size);
-		memcpy(&m_data[0], d, m_size);
-		m_data[m_size] = 0;
+		resize(s);
+		memcpy(&m_data[0], d, s);
 	}
 
 	inline void append(IN const char* d)

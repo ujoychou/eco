@@ -116,6 +116,7 @@ public:
 		IN const MessageModel model,
 		IN const MessageCategory category = category_message)
 	{
+		memset(this, 0, sizeof(*this));
 		m_category = category;
 		set_session_id(session_id);
 		set_message_type(type);
@@ -133,7 +134,7 @@ public:
 	inline void set_message_type(IN const uint32_t type)
 	{
 		m_message_type = type;
-		eco::add(m_category, option_type);
+		eco::add(m_option, option_type);
 	}
 
 	inline void set_request_data(IN const uint32_t req_data)

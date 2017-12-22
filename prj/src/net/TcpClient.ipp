@@ -225,16 +225,15 @@ public:
 	inline void async_send(IN void* key, IN SessionDataPack::ptr& pack)
 	{
 		eco::String data;
-		pack->m_request.asign(data.c_str(), data.size());
+		data.asign(pack->m_request.c_str(), pack->m_request.size());
 		m_authority_map.set(key, pack);
+
+		// client isn't ready and connected when first send authority.
+		// because of before that client is async connect.
+		eco::Mutex::ScopeLock lock(m_mutex);
+		if (m_balancer.m_peer->get_state().is_connected())
 		{
-			// client isn't ready and connected when first send authority.
-			// because of before that client is async connect.
-			eco::Mutex::ScopeLock lock(m_mutex);
-			if (m_balancer.m_peer->get_state().is_connected())
-			{
-				m_balancer.m_peer->async_send(data);
-			}
+			m_balancer.m_peer->async_send(data);
 		}
 	}
 

@@ -58,6 +58,13 @@ void LoadBalancer::load_server()
 		m_peer = TcpPeer::make(io_srv, m_client);
 	}
 
+	// this client has connect to server.
+	if (m_peer->get_state().is_connected())
+	{
+		return;
+	}
+
+	// load balance algorithm.
 	uint16_t min_workload = 0;
 	auto min_workload_server = m_address_set.begin();
 	for (auto it = m_address_set.begin(); it != m_address_set.end(); ++it)
@@ -96,12 +103,6 @@ void TcpClient::Impl::async_connect()
 		EcoThrow(e_client_no_address) << "client has no server address.";
 	if (m_make_session == nullptr)
 		EcoThrow(e_client_no_session_data) << "client has no session data.";
-
-	// this client has connect to server.
-	if (m_balancer.m_peer->get_state().is_connected())
-	{
-		return;
-	}
 
 	// init tcp client worker. 
 	if (!m_init.is_ok())
@@ -280,6 +281,16 @@ void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 void TcpClient::release()
 {
 	impl().release();
+}
+
+void TcpClient::set_protocol_head(IN ProtocolHead* heap)
+{
+	impl().m_prot_head.reset(heap);
+}
+
+void TcpClient::set_protocol(IN Protocol* heap)
+{
+	impl().m_protocol.reset(heap);
 }
 
 void TcpClient::async_connect(IN eco::net::AddressSet& service_addr)
