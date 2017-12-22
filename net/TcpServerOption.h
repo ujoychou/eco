@@ -52,7 +52,7 @@ public:
 	TcpServerOption& port(IN const uint32_t&);
 
 	// tick counter.
-	void add_tick();
+	void step_tick(IN const uint32_t step = 1);
 	uint32_t tick_count() const;
 	void reset_tick();
 
@@ -88,6 +88,7 @@ public:
 	uint32_t& heartbeat_send_tick();
 	const uint32_t& get_heartbeat_send_tick() const;
 	TcpServerOption& heartbeat_send_tick(IN const uint32_t&);
+	//
 	void set_heartbeat_recv_tick(IN const uint32_t&);
 	uint32_t& heartbeat_recv_tick();
 	const uint32_t& get_heartbeat_recv_tick() const;
@@ -113,10 +114,14 @@ public:
 	void set_response_heartbeat(IN const bool);
 	bool response_heartbeat() const;
 	TcpServerOption& response_heartbeat(IN const bool);
-
+	//
 	void set_rhythm_heartbeat(IN const bool);
 	bool rhythm_heartbeat() const;
 	TcpServerOption& rhythm_heartbeat(IN const bool);
+	// response heartbeat in io thread.
+	void set_io_heartbeat(IN const bool);
+	bool io_heartbeat() const;
+	TcpServerOption& io_heartbeat(IN const bool);
 
 	/*@ set intervals that clean the inactive connection peer.
 	* @ para.tick: the server ticks of interval.
@@ -144,11 +149,6 @@ public:
 	void set_no_delay(IN const bool);
 	bool no_delay() const;
 	TcpServerOption& no_delay(IN const bool);
-
-	/* @ response heartbeat in io thread.*/
-	void set_io_heartbeat(IN const bool);
-	bool io_heartbeat() const;
-	TcpServerOption& io_heartbeat(IN const bool);
 };
 
 ////////////////////////////////////////////////////////////////////////////////

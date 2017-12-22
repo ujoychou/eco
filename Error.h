@@ -106,7 +106,7 @@ private:
 	int m_id;
 	FixStream<256> m_msg;
 };
-#define EcoFmt(err) (err).message() << " #" << (err).id()
+#define EcoFmt(err) (err).message() << " e" << (err).id()
 
 
 ////////////////////////////////////////////////////////////////////////////////

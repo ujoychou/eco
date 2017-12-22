@@ -62,6 +62,12 @@ public:
 			boost::asio::placeholders::error));
 	}
 
+	inline void set_option(IN bool delay)
+	{
+		boost::asio::ip::tcp::no_delay option(true);
+		m_socket.set_option(option);
+	}
+
 	inline void on_connect(
 		IN const boost::system::error_code& ec)
 	{
@@ -69,6 +75,7 @@ public:
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_connect(false, &e);
 		} else {
+			set_option(true);
 			m_handler->on_connect(true, nullptr);
 		}
 	}
@@ -146,7 +153,7 @@ public:
 		{
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_write((uint32_t)bytes_transferred, &e);
-		} 
+		}
 		else 
 		{
 			m_handler->on_write((uint32_t)bytes_transferred, nullptr);
@@ -222,6 +229,11 @@ TcpConnector::~TcpConnector()
 TcpSocket* TcpConnector::socket()
 {
 	return (TcpSocket*)&m_impl->m_socket;
+}
+
+void TcpConnector::set_option(IN bool delay)
+{
+	m_impl->set_option(delay);
 }
 
 void TcpConnector::register_handler(IN TcpConnectorHandler& handler)

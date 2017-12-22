@@ -46,6 +46,9 @@ public:
 
 	// start timer.
 	void set_timer(IN uint32_t tick_secs);
+
+	// cancel timer.
+	uint32_t cancel();
 };
 
 

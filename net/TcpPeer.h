@@ -46,19 +46,14 @@ public:
 	{}
 
 	// when peer has received a message data bytes.
-	virtual void on_read(
-		IN void* peer,
-		IN eco::String& data) = 0;
+	virtual void on_read(IN void* peer, IN eco::String& data) = 0;
 
 	// when peer has sended a data, async notify sended data size.
-	virtual void on_send(
-		IN void* peer,
-		IN const uint32_t size)
+	virtual void on_send(IN void* peer, IN const uint32_t size)
 	{}
 
 	// when peer has been closed.
-	virtual void on_close(
-		IN uint64_t peer_id)
+	virtual void on_close(IN uint64_t peer_id)
 	{}
 
 	// get protocol head.
@@ -90,6 +85,9 @@ public:
 	const TcpState& get_state() const;
 	// set tcp peer state to connected.
 	void set_connected();
+
+	// set tcp peer option
+	void set_option(IN bool no_delay);
 
 	// async connect to server address.
 	void async_connect(IN const Address& addr);

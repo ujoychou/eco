@@ -47,12 +47,16 @@ ECO_PROPERTY_VAL_IMPL(AddressSet, ServiceMode, service_mode);
 Address::Address(IN const char* v)
 {
 	m_impl = new Impl();
-	set_address(v);
+	reset(v);
 }
-void Address::set_address(IN const char* v)
+void Address::reset(IN const char* v)
 {
 	impl().m_host_name.clear();
 	impl().m_service_name.clear();
+	if (v == nullptr)
+	{
+		return;
+	}
 
 	// format "x:y"
 	std::string addr(v);
@@ -64,10 +68,13 @@ void Address::set_address(IN const char* v)
 		impl().m_service_name = addr.substr(pos, addr.size() - pos);
 	}
 }
-Address& Address::address(IN const char* addr)
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Address::reset(IN const char* ip, IN const uint32_t port)
 {
-	set_address(addr);
-	return *this;
+	impl().m_host_name = ip;
+	impl().m_service_name = eco::Integer<uint32_t>(port).c_str();
 }
 
 
@@ -83,21 +90,9 @@ bool Address::ip_format() const
 {
 	return get_port() > 0 && !impl().m_host_name.empty();
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-const eco::net::Address& AddressSet::one_address() const
+bool Address::empty() const
 {
-	static eco::net::Address addr;
-	return addr;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-const eco::net::Address& AddressSet::cur_address() const
-{
-	static eco::net::Address addr;
-	return addr;
+	return impl().m_service_name.empty() || impl().m_host_name.empty();
 }
 
 

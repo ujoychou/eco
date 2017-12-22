@@ -65,6 +65,13 @@ public:
 			boost::asio::placeholders::error));
 	}
 
+	// cancel timer.
+	inline uint32_t cancel()
+	{
+		boost::system::error_code ec;
+		return m_tick_timer->cancel(ec);
+	}
+
 private:
 	/*@ when there is a tick timer event.*/
 	inline void on_timer(

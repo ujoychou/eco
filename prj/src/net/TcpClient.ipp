@@ -21,19 +21,60 @@ ECO_NS_BEGIN(net);
 class AddressLoad
 {
 public:
+	inline AddressLoad()
+	{
+		clear();
+	}
+
 	inline AddressLoad(IN const Address& addr)
 		: m_address(addr)
 		, m_flag(0)
+		, m_workload(0)
 	{}
+
+	inline void clear()
+	{
+		m_address.reset();
+		m_workload = 0;
+		m_flag = 0;
+	}
 
 	inline bool operator==(IN const Address& addr) const
 	{
 		return (m_address == addr);
 	}
 
+	inline bool operator==(IN const AddressLoad& load) const
+	{
+		return (m_address == load.m_address);
+	}
+
 	Address		m_address;
 	uint16_t	m_workload;
 	uint16_t    m_flag;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class LoadBalancer
+{
+public:
+	TcpPeer::ptr				m_peer;
+	AddressLoad					m_address_cur;
+	std::vector<AddressLoad>	m_address_set;
+	TcpClient::Impl*			m_client;
+
+public:
+	inline LoadBalancer()
+	{}
+
+	inline void init(IN TcpClient::Impl& v)
+	{
+		m_client = &v;
+	}
+
+	void load_server();
+	void update_address(IN AddressSet& addr);
 };
 
 
@@ -58,29 +99,27 @@ public:
 class TcpClient::Impl : public TcpPeerHandler
 {
 public:
-	TcpClient*					m_client;
-	std::string					m_service_name;
-	TcpClientOption				m_option;
-	Protocol::ptr				m_protocol;
-	std::auto_ptr<ProtocolHead> m_prot_head;
-	eco::atomic::State			m_state;
-	eco::Mutex m_mutex;
-
-	// network io.
-	TcpPeer::ptr			m_peer;
-	AddressLoad*			m_address_cur;
-	std::vector<AddressLoad> m_address_set;
-	eco::net::Worker		m_worker;
-	eco::net::IoTimer		m_timer;
-	// message server.
-	DispatchServer			m_dispatcher;
+	typedef std::auto_ptr<ProtocolHead> ProtocolHeadPtr;
+	TcpClient*		m_client;
+	eco::Mutex		m_mutex;
+	std::string		m_service_name;	// the service that this client connect to.
+	LoadBalancer	m_balancer;		// load balance for multi server.
+	TcpClientOption	m_option;		// client option.
+	ProtocolHeadPtr m_prot_head;	// client protocol head.
+	Protocol::ptr	m_protocol;		// client protocol.
 	
-	// session management.
+	// io server, timer and business dispatcher server.
+	eco::net::Worker		m_worker;		// io thread.
+	eco::net::IoTimer		m_timer;		// run in io thread.
+	DispatchServer			m_dispatcher;	// dispatcher thread.
+	eco::atomic::State		m_init;			// server init state.
+
+	// session data management.
 	MakeSessionDataFunc m_make_session;
+	// all session that client have, diff by "&session".
 	eco::Repository<void*, SessionDataPack::ptr> m_authority_map;
+	// connected session that has id build by server.
 	eco::Repository<uint32_t, SessionDataPack::ptr> m_session_map;
-	std::vector<eco::net::TcpSession> m_session_wait;
-	eco::Mutex m_session_wait_mutex;
 
 public:
 	inline Impl() : m_client(nullptr)
@@ -89,8 +128,7 @@ public:
 	inline void init(IN TcpClient& v)
 	{
 		m_client = &v;
-		m_address_cur = nullptr;
-		m_peer = TcpPeer::make((IoService*)m_worker.get_io_service(), this);
+		m_balancer.init(*this);
 	}
 
 	// register protocol.
@@ -101,22 +139,6 @@ public:
 	inline void set_protocol(IN Protocol* p)
 	{
 		m_protocol.reset(p);
-	}
-
-public:
-	// waited session.
-	inline void get_session_wait(
-		IN std::vector<eco::net::TcpSession>& sess_set)
-	{
-		eco::Mutex::ScopeLock lock(m_session_wait_mutex);
-		sess_set = m_session_wait;
-		m_session_wait.clear();
-	}
-	inline void add_session_wait(IN eco::net::TcpSession& sess)
-	{
-		eco::Mutex::ScopeLock lock(m_session_wait_mutex);
-		m_session_wait.push_back(sess);
-		m_session_wait.clear();
 	}
 
 	// find exist session.
@@ -138,24 +160,99 @@ public:
 	}
 
 public:
-	// build connection.
-	inline void async_connect(
-		IN const char* service_name_,
-		IN eco::net::AddressSet& service_addr);
+	// async connect to server.
+	inline void update_address(IN eco::net::AddressSet& addr)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		m_balancer.update_address(addr);
+	}
+
+	// async connect to server.
+	inline void async_connect(IN eco::net::AddressSet& addr)
+	{
+		update_address(addr);
+		// reconnect to new address if cur address is removed.
+		async_connect();
+	}
 	inline void async_connect();
 
-	/*@ start tick timer that do some auxiliary.*/
-	inline void set_tick_timer();
+	// release tcp client and connection.
+	void release();
+
+	// set a tick timer to do some work in regular intervals.
+	inline void set_tick_timer()
+	{
+		if (m_option.has_tick_timer())
+			m_timer.set_timer(m_option.get_tick_time());
+	}
 	void on_timer(IN const eco::Error* e);
+
+	// async send data.
+	inline void async_send(IN eco::String& data)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		m_balancer.m_peer->async_send(data);
+	}
+
+	// async send data.
+	inline void async_send_heartbeat()
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		if (m_option.rhythm_heartbeat())
+			m_balancer.m_peer->impl().async_send_heartbeat(*m_prot_head);
+		else
+			m_balancer.m_peer->impl().async_send_live_heartbeat(*m_prot_head);
+	}
+
+	inline void async_send(
+		IN Codec& codec,
+		IN const uint32_t session_id,
+		IN const uint32_t type,
+		IN const MessageModel model,
+		IN const MessageCategory category = category_message)
+	{
+		eco::Error e;
+		eco::String data;
+		MessageMeta meta(codec, session_id, type, model, category);
+		if (!m_protocol->encode(data, meta, *m_prot_head, e))
+		{
+			EcoError << "tcp client encode data fail." << EcoFmt(e);
+			return;
+		}
+		async_send(data);
+	}
+
+	inline void async_send(IN void* key, IN SessionDataPack::ptr& pack)
+	{
+		eco::String data;
+		pack->m_request.asign(data.c_str(), data.size());
+		m_authority_map.set(key, pack);
+		{
+			// client isn't ready and connected when first send authority.
+			// because of before that client is async connect.
+			eco::Mutex::ScopeLock lock(m_mutex);
+			if (m_balancer.m_peer->get_state().is_connected())
+			{
+				m_balancer.m_peer->async_send(data);
+			}
+		}
+	}
+
+	inline void async_authorize(
+		IN Codec& codec,
+		IN TcpSession& session,
+		IN const uint32_t type,
+		IN const MessageCategory category = category_message);
 
 public:
 	// when peer has connected to server.
 	virtual void on_connect() override;
 
 	// when peer has received a message data bytes.
-	virtual void on_read(
-		IN void* peer,
-		IN eco::String& data) override;
+	virtual void on_read(IN void* peer, IN eco::String& data) override;
+
+	// when peer has been closed.
+	virtual void on_close(IN uint64_t peer_id);
 
 	// protocol.
 	virtual ProtocolHead& protocol_head() const override

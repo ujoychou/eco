@@ -36,7 +36,6 @@ public:
 
 	// peer option.
 	uint16_t m_no_delay;
-	uint16_t m_session_mode;
 	uint16_t m_io_heartbeat;
 
 	// io thread and business thread.
@@ -107,9 +106,9 @@ void TcpServerOption::reset_tick()
 {
 	m_impl->reset_tick();
 }
-void TcpServerOption::add_tick()
+void TcpServerOption::step_tick(IN const uint32_t step)
 {
-	++m_impl->m_tick_count;
+	m_impl->m_tick_count += step;
 }
 uint32_t TcpServerOption::tick_count() const
 {

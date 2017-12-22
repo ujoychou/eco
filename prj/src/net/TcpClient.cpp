@@ -6,98 +6,58 @@
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-ECO_OBJECT_IMPL(TcpClient);
-ECO_PROPERTY_STR_IMPL(TcpClient, service_name);
-////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::async_connect(
-	IN const char* service_name_,
-	IN eco::net::AddressSet& service_addr)
+void LoadBalancer::update_address(IN eco::net::AddressSet& addr)
 {
-	m_service_name = service_name_;
-
 	// reset flag.
-	auto it = m_address_set.begin();
-	for (; it != m_address_set.end(); ++it)
+	for (auto it = m_address_set.begin(); it != m_address_set.end(); ++it)
 	{
 		it->m_flag = 0;
 	}
 
 	// flag new, old, delete.
-	for (auto it = service_addr.begin(); it != service_addr.end(); ++it)
+	for (auto it = addr.begin(); it != addr.end(); ++it)
 	{
 		auto it_find = std::find(
 			m_address_set.begin(), m_address_set.end(), *it);
 		if (it_find == m_address_set.end())
 		{
 			AddressLoad load(*it);
-			load.m_flag = 1;
+			load.m_flag = 1;					// #.new
 			m_address_set.push_back(load);
 		}
 		else
 		{
-			it_find->m_flag = 2;
+			it_find->m_flag = 2;				// #.old
 		}
 	}
 
 	// delete address and peer.
 	for (auto it = m_address_set.begin(); it != m_address_set.end();)
 	{
-		if (it->m_flag == 0)
-		{
-			it = m_address_set.erase(it);
-			if (m_address_cur == &*it)
-			{
-				m_address_cur = nullptr;
-				m_peer->close();
-			}
-		}
-		else
+		if (it->m_flag != 0)
 		{
 			++it;
+			continue;
+		}
+		it = m_address_set.erase(it);			// #.delete.
+		if (m_address_cur == *it)
+		{
+			m_address_cur.clear();
+			m_peer->close();
 		}
 	}
-
-	// reconnect to new address if cur address is removed.
-	async_connect();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::async_connect()
+void LoadBalancer::load_server()
 {
-	if (m_peer->get_state().is_connected())
+	if (m_peer == nullptr)
 	{
-		return;
+		auto* io_srv = (IoService*)m_client->m_worker.get_io_service();
+		m_peer = TcpPeer::make(io_srv, m_client);
 	}
 
-	// check protocol.
-	if (m_prot_head.get() == nullptr)
-	{
-		EcoThrow(e_consumer_protocol_head_null)
-			<< "consumer protocol head is null.";
-	}
-	if (m_protocol.get() == nullptr)
-	{
-		EcoThrow(e_consumer_protocol_null)
-			<< "consumer protocol is null.";
-	}
-
-	if (!m_state.is_ok())
-	{
-		// start io server and message server.
-		m_worker.run();
-		m_dispatcher.run();		
-
-		// start client timer.
-		m_timer.set_io_service(*(IoService*)m_worker.get_io_service());
-		m_timer.register_on_timer(std::bind(
-			&Impl::on_timer, this, std::placeholders::_1));
-		set_tick_timer();
-
-		m_state.ok();
-	}
-	
-	// load balance algorithm.
 	uint16_t min_workload = 0;
 	auto min_workload_server = m_address_set.begin();
 	for (auto it = m_address_set.begin(); it != m_address_set.end(); ++it)
@@ -108,17 +68,126 @@ void TcpClient::Impl::async_connect()
 			min_workload_server = it;
 		}
 	}
-	if (min_workload_server == m_address_set.end())
+	if (min_workload_server != m_address_set.end())
+	{
+		++min_workload_server->m_workload;
+		m_address_cur = *min_workload_server;
+		m_peer->async_connect(m_address_cur.m_address);
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_OBJECT_IMPL(TcpClient);
+ECO_PROPERTY_STR_IMPL(TcpClient, service_name);
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::async_connect()
+{
+	eco::Mutex::ScopeLock lock(m_mutex);
+
+	// verify data.
+	if (m_prot_head.get() == nullptr)
+		EcoThrow(e_client_no_protocol_head) << "client protocol head is null.";
+	if (m_protocol.get() == nullptr)
+		EcoThrow(e_client_no_protocol) << "client protocol is null.";
+	if (m_balancer.m_address_set.empty())
+		EcoThrow(e_client_no_address) << "client has no server address.";
+	if (m_make_session == nullptr)
+		EcoThrow(e_client_no_session_data) << "client has no session data.";
+
+	// this client has connect to server.
+	if (m_balancer.m_peer->get_state().is_connected())
 	{
 		return;
 	}
-	m_peer->async_connect(min_workload_server->m_address);
+
+	// init tcp client worker. 
+	if (!m_init.is_ok())
+	{
+		// start io server, timer and dispatch server.
+		m_worker.run();
+		m_dispatcher.run();		
+		// start timer.
+		m_timer.set_io_service(*(IoService*)m_worker.get_io_service());
+		m_timer.register_on_timer(std::bind(
+			&Impl::on_timer, this, std::placeholders::_1));
+		set_tick_timer();
+		m_init.ok();
+	}
+	m_balancer.load_server();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::release()
+{
+	eco::Mutex::ScopeLock lock(m_mutex);
+	if (m_init.is_ok())
+	{
+		EcoInfo << "tcp client closing.";
+		m_timer.cancel();
+		m_balancer.m_peer->close();
+		m_worker.stop();
+		m_dispatcher.stop();
+		m_init.none();
+		EcoInfo << "tcp client closed.";
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::async_authorize(
+	IN Codec& codec,
+	IN TcpSession& session,
+	IN const uint32_t type,
+	IN const MessageCategory category)
+{
+	// send authority to server for validating session.
+	// if the authority is correct, server and client will build a new session.
+	SessionDataPack::ptr pack(new SessionDataPack);
+	pack->m_session.reset(m_make_session(none_session));
+	session.set_host(TcpSessionHost(*m_client));
+	session.impl().m_session_wptr = pack->m_session;
+	session.impl().user_born();
+	pack->m_user_observer = session.impl().m_user;
+
+	// encode the send data.
+	eco::Error e;
+	MessageMeta meta(codec, none_session,
+		type, model_req, category | category_authority);
+	// use "&session" when get response, because it represent user.
+	meta.set_request_data(&session);
+	if (!m_protocol->encode(pack->m_request, meta, *m_prot_head, e))
+	{
+		EcoError << "tcp client async_authorize: encode data fail."
+			<< EcoFmt(e);
+		return;
+	}
+	async_send(&session, pack);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void TcpClient::Impl::on_connect()
 {
+	eco::String data;
+	eco::Mutex::ScopeLock lock(m_authority_map.mutex());
+	auto it = m_authority_map.map().begin();
+	for (; it != m_authority_map.map().end(); ++it)
+	{
+		SessionDataPack& pack = (*it->second);
+		data.asign(pack.m_request.c_str(), pack.m_request.size());
+		async_send(data);
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::on_close(IN uint64_t peer_id)
+{
+	m_session_map.clear();
 }
 
 
@@ -132,8 +201,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		e << " tcp client decode head fail.";
-		EcoNet(EcoError, *m_peer, "on_read", e);
+		EcoNet(EcoError, *peer_impl, "on_read", e);
 		return;
 	}
 
@@ -142,7 +210,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	{
 		e.id(e_message_unknown) << "tcp client have no protocol: "
 			<< head.m_version;
-		EcoNet(EcoError, *m_peer, "on_read", e);
+		EcoNet(EcoError, *peer_impl, "on_read", e);
 		return;
 	}
 
@@ -169,29 +237,30 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void TcpClient::Impl::set_tick_timer()
-{
-	// there is no need a tick timer.
-	if (!m_option.has_tick_timer())
-	{
-		return;
-	}
-
-	// set a tick timer to do some work in regular intervals.
-	uint32_t tick_secs = m_option.get_tick_time();
-	m_timer.set_timer(tick_secs);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 void TcpClient::Impl::on_timer(IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
 		return;
 	}
+	m_option.step_tick();
+	EcoDebug << "...tcp client on tick........................................";
 
-	set_tick_timer();
+	// send rhythm heartbeat.
+	if (m_option.get_heartbeat_send_tick() > 0 &&
+		m_option.tick_count() % m_option.get_heartbeat_send_tick() == 0)
+	{
+		async_send_heartbeat();
+	}
+
+	// #.auto reconnect.
+	if (m_option.auto_reconnect_tick() > 0 &&
+		m_option.tick_count() % m_option.auto_reconnect_tick() == 0)
+	{
+		async_connect();
+	}
+
+	set_tick_timer();		// set next timer.
 }
 
 
@@ -203,58 +272,43 @@ DispatchRegistry& TcpClient::dispatcher()
 	return impl().m_dispatcher;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-void TcpClient::async_init_service(
-	IN const char* service_name_,
-	IN eco::net::AddressSet& service_addr)
+void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 {
-	impl().async_connect(service_name_, service_addr);
+	impl().m_make_session = make;
 }
 
+void TcpClient::release()
+{
+	impl().release();
+}
 
-////////////////////////////////////////////////////////////////////////////////
+void TcpClient::async_connect(IN eco::net::AddressSet& service_addr)
+{
+	impl().async_connect(service_addr);
+}
+
+void TcpClient::async_send(IN eco::String& data)
+{
+	impl().async_send(data);
+}
+
 void TcpClient::async_send(
-	IN eco::net::Codec& codec,
+	IN Codec& codec,
 	IN const uint32_t session_id,
-	IN const uint32_t msg_type,
+	IN const uint32_t type,
 	IN const MessageModel model,
 	IN const MessageCategory category)
 {
-	MessageMeta meta(codec, session_id, msg_type, model);
-	impl().m_peer->async_send(meta, *impl().m_protocol, *impl().m_prot_head);
+	impl().async_send(codec, session_id, type, model, category);
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
 void TcpClient::async_authorize(
 	IN Codec& codec,
 	IN TcpSession& session,
-	IN const uint32_t type)
+	IN const uint32_t type,
+	IN const MessageCategory category)
 {
-	// send authority to server for validating session.
-	// if the authority is correct, server and client will build a new session.
-	SessionDataPack::ptr pack(new SessionDataPack);
-	pack->m_session.reset(impl().m_make_session(none_session));
-	session.set_host(TcpSessionHost(*this));
-	session.impl().m_session_wptr = pack->m_session;
-	session.impl().user_born();
-	pack->m_user_observer = session.impl().m_user;
-	
-	// encode the send data.
-	eco::Error e;
-	eco::String data;
-	MessageMeta meta(codec, none_session, type, model_req);
-	meta.set_request_data(&session);
-	if (!impl().m_protocol->encode(data, meta, *impl().m_prot_head, e))
-	{
-		EcoNet(EcoError, (*impl().m_peer), "async_authorize", e);
-		return ;
-	}
-	// save authority data bytes.
-	pack->m_request.asign(data.c_str(), data.size());
-	impl().m_authority_map.set(&session, pack);
-	impl().m_peer->async_send(data);
+	impl().async_authorize(codec, session, type, category);
 }
 
 

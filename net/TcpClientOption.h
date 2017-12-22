@@ -42,7 +42,7 @@ public:
 	TcpClientOption& name(IN const char*);
 
 	// tick counter.
-	void add_tick();
+	void step_tick(IN const uint32_t step = 1);
 	uint32_t tick_count() const;
 	void reset_tick();
 

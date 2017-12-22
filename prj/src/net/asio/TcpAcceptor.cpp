@@ -37,9 +37,20 @@ public:
 	inline ~Impl()
 	{}
 
+	/*@ async accept peer.*/
+	inline void async_accept()
+	{
+		TcpPeer::ptr pr(TcpPeer::make(
+			(IoService*)m_worker_pool.get_io_service(), m_server));
+		m_acceptor->async_accept(
+			*(boost::asio::ip::tcp::socket*)(pr->impl().socket()),
+			boost::bind(&Impl::on_accept, this,
+				pr, boost::asio::placeholders::error));
+	}
+
 	inline void listen(
-		IN  const uint16_t port,
-		IN  const uint16_t io_server_size)
+		IN const uint16_t port,
+		IN const uint16_t io_server_size)
 	{
 		using namespace boost::asio::ip;
 
@@ -55,6 +66,9 @@ public:
 
 		// start io services for connections.
 		m_worker_pool.run(io_server_size);
+
+		// accept client peer.
+		async_accept();
 	}
 
 	inline void stop()
@@ -69,17 +83,6 @@ public:
 		m_worker_pool.join();
 	}
 
-	/*@ async accept peer.*/
-	inline void async_accept()
-	{
-		TcpPeer::ptr pr(TcpPeer::make(
-			(IoService*)m_worker_pool.get_io_service(), m_server));
-		m_acceptor->async_accept(
-			*(boost::asio::ip::tcp::socket*)(pr->impl().socket()),
-			boost::bind(&Impl::on_accept, this,
-			pr, boost::asio::placeholders::error));
-	}
-
 	/*@ when accepted a client connection.*/
 	inline void on_accept(
 		IN TcpPeer::ptr& pr,
@@ -92,12 +95,7 @@ public:
 		}
 		else
 		{
-			if (m_server->m_option.no_delay())
-			{
-				auto* s = (boost::asio::ip::tcp::socket*)pr->impl().socket();
-				boost::asio::ip::tcp::no_delay option(true);
-				s->set_option(option);
-			}
+			pr->set_option(m_server->m_option.no_delay());
 			m_on_accept(pr, nullptr);
 		}
 	}

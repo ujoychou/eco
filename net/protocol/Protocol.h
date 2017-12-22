@@ -112,13 +112,13 @@ public:
 	inline MessageMeta(
 		IN Codec& codec,
 		IN const uint32_t session_id,
-		IN const uint32_t msg_type,
+		IN const uint32_t type,
 		IN const MessageModel model,
 		IN const MessageCategory category = category_message)
 	{
 		m_category = category;
 		set_session_id(session_id);
-		set_message_type(msg_type);
+		set_message_type(type);
 		m_model = model;
 		m_codec = &codec;
 	}

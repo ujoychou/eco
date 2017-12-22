@@ -72,7 +72,6 @@ public:
 	inline bool add(IN TcpPeer::ptr& p)
 	{
 		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
-
 		// connection set is full.
 		if (m_peer_map.size() > m_max_conn_size)
 		{
@@ -87,10 +86,9 @@ public:
 	/*@ remove connection from connection set.
 	* @ para.peer: the connection to be removed.
 	*/
-	inline void del(IN int64_t conn_id)
+	inline void erase(IN int64_t conn_id)
 	{
 		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
-
 		// find connnection and remove.
 		auto it = m_peer_map.find(conn_id);
 		if (it != m_peer_map.end())
@@ -115,16 +113,7 @@ public:
 		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
 		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); ++it)
 		{
-			// during send tick, if connection itself send a message.
-			// indicated it is alive, and no need to send heartbeat.
-			if (it->second->get_state().is_self_live())
-			{
-				it->second->state().self_live(false);
-			}
-			else
-			{
-				it->second->impl().async_send_heartbeat(prot_head);
-			}
+			
 		}// end for
 	}
 

@@ -34,8 +34,8 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 enum  
 {
-	service_mode_direct		= 0x0001,		// C\S架构服务
-	service_mode_router		= 0X0002,		// 路由架构服务
+	service_mode		= 0x0001,		// C\S架构服务
+	router_mode			= 0X0002,		// 路由架构服务
 };
 typedef uint16_t ServiceMode;
 
@@ -47,18 +47,17 @@ class ECO_API Address
 public:
 	Address(IN const char* addr);
 
-	/*@ set net address.
+	/*@ set net address. clear the address info if @addr == nullptr.
 	* @ para.addr_str: net address string.
 	"ip:port": 127.0.0.1:80" "host_name:server_name": zhouyu:datetime"
 	*/
-	void set_address(IN const char* addr);
-	Address& address(IN const char* addr);
+	void reset(IN const char* addr = nullptr);
 
 	/*@ set net address.
 	* @ para.ip: net address string. exp:"127.0.0.1"
 	* @ para.port: net address port number. exp:"80"
 	*/
-	void set_address(
+	void reset(
 		IN const char* ip,
 		IN const uint32_t port);
 
@@ -77,6 +76,9 @@ public:
 
 	// check the address is a ip format or hostname format.
 	bool ip_format() const;
+
+	// check is a empty address.
+	bool empty() const;
 
 	// check equal.
 	inline bool operator==(IN const Address& addr) const
@@ -131,12 +133,6 @@ public:
 	const Address& at(IN const int i) const;
 
 public:
-	// get one address by balance load algorithm.
-	const eco::net::Address& one_address() const;
-
-	// get current address.
-	const eco::net::Address& cur_address() const;
-
 	// service mode.
 	ServiceMode& service_mode();
 	const ServiceMode& get_service_mode() const;

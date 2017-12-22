@@ -107,7 +107,7 @@ public:
 	}
 	inline void async_recv();
 
-	// add session to peer. todo.
+	// add session to peer. TODO.
 	inline void add_session(IN const SessionId id)
 	{
 	}
@@ -140,6 +140,16 @@ public:
 		eco::String data;
 		prot_head.encode_heartbeat(data);
 		async_send(data);
+	}
+	// send live heartbeat.
+	inline void async_send_live_heartbeat(IN ProtocolHead& prot_head)
+	{
+		// during send tick, if connection itself send a message.
+		// indicated it is alive, and no need to send heartbeat.
+		if (get_state().is_self_live())
+			state().self_live(false);
+		else
+			async_send_heartbeat(prot_head);
 	}
 
 	// close peer.

@@ -492,6 +492,7 @@
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
     <ClInclude Include="..\log\FileSink.h" />
+    <ClInclude Include="..\net\TcpPeerSet.h" />
     <ClInclude Include="..\PrecHeader.h" />
     <ClInclude Include="..\service\Impl.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

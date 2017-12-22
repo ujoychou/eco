@@ -47,24 +47,58 @@ public:
 	TcpClient& service_name(IN const char*);
 
 	// protocol head.
+	template<typename ProtocolHeadT>
+	inline void set_protocol_head()
+	{
+		set_protocol_head(new ProtocolHeadT());
+	}
 	void set_protocol_head(IN ProtocolHead*);
 	ProtocolHead& protocol_head() const;
 
 	// protocol
+	template<typename ProtocolT>
+	inline void set_protocol()
+	{
+		set_protocol(new ProtocolT());
+	}
 	void set_protocol(IN Protocol*);
 	Protocol& protocol() const;
+
+	// set session data class and tcp session mode.
+	template<typename SessionDataT>
+	inline void set_session_data()
+	{
+		set_session_data(&make_session_data<SessionDataT>);
+	}
+	void set_session_data(IN MakeSessionDataFunc make);
 
 	// dispatch.
 	DispatchRegistry& dispatcher();
 
-public:
-	// async connect to service.
-	void async_init_service(
-		IN const char* service_name_,
-		IN eco::net::AddressSet& service_addr);
-
 	// produce next request id.
+	// TODO
 	uint32_t next_request_id();
+
+	// release client.
+	void release();
+
+//////////////////////////////////////////////////////////////////// ROUTER MODE
+public:
+	// router mode: async call cluster init router.
+	void async_init_router(
+		IN const char* router_name,
+		IN eco::net::AddressSet& router_addr);
+
+	// router mode: async connect to service of router.
+	void async_init(
+		IN const char* router_name,
+		IN const char* service_name);
+
+/////////////////////////////////////////////////////////////////// SERVICE MODE
+public:
+	// service mode: async connect to service.
+	void async_connect(
+		IN eco::net::AddressSet& service_addr);
 
 	// async send message.
 	void async_send(IN eco::String& data);
@@ -73,7 +107,7 @@ public:
 	void async_send(
 		IN Codec& codec,
 		IN const uint32_t session_id,
-		IN const uint32_t msg_type,
+		IN const uint32_t type,
 		IN const MessageModel model,
 		IN const MessageCategory category = category_message);
 
@@ -81,7 +115,8 @@ public:
 	void async_authorize(
 		IN Codec& codec,
 		IN TcpSession& session,
-		IN const uint32_t msg_type);
+		IN const uint32_t type,
+		IN const MessageCategory category = category_message);
 };
 
 

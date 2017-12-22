@@ -71,12 +71,17 @@ public:
 
 	void register_handler(IN TcpConnectorHandler& handler);
 
+	// get tcp connection id.
 	inline int64_t get_id() const
 	{
 		return reinterpret_cast<int64_t>(this);
 	}
 
+	// get tcp connection socket.
 	TcpSocket* socket();
+
+	// set tcp connector option.
+	void set_option(IN bool delay);
 
 	/*@ client async connect to server.	*/
 	void async_connect(IN const Address& addr);

@@ -55,7 +55,6 @@ public:
 	TcpServerOption m_option;
 
 	// tcp acceptor.
-	uint32_t m_port;
 	TcpAcceptor m_acceptor;
 	TcpPeerSet m_peer_set;
 	IoTimer m_timer;
@@ -68,7 +67,7 @@ public:
 	// dispatch server.
 	DispatchServer m_dispatch;
 
-	// session management.
+	// session data management.
 	MakeSessionDataFunc m_make_session;
 	eco::Atomic<SessionId> m_next_session_id;
 	std::vector<SessionId> m_left_session_ids;
@@ -77,7 +76,6 @@ public:
 public:
 	inline Impl()
 	{
-		m_port = min_port;
 		m_server = nullptr;
 		m_make_session = nullptr;
 		m_next_session_id = none_session;
@@ -122,15 +120,23 @@ public:
 		return nullptr;
 	}
 	
+//////////////////////////////////////////////////////////////////////// SESSION
 public:
-	// session maker which is a session factory method.
-	inline void set_session_data(IN MakeSessionDataFunc v)
+	// produce a new session id.
+	inline uint32_t next_session_id()
 	{
-		m_make_session = v;
+		eco::Mutex::ScopeLock lock(m_session_map.mutex());
+		// reuse session id that has been recycled.
+		if (m_left_session_ids.size() > 0)
+		{
+			uint32_t id = m_left_session_ids.back();
+			m_left_session_ids.pop_back();
+			return id;
+		}
+		// session will not reach the "uint32_t" max value.
+		return ++m_next_session_id;
 	}
 
-	// produce a new session id.
-	inline uint32_t next_session_id();
 
 	// add new session.
 	SessionData::ptr add_session(OUT SessionId& id, IN TcpPeer& peer);
@@ -148,44 +154,51 @@ public:
 	{
 		SessionData::ptr v = m_session_map.pop(id);
 		if (v != nullptr)
-		{
 			eco::thread::release(v);
-		}
+		eco::Mutex::ScopeLock lock(m_session_map.mutex());
+		m_left_session_ids.push_back(id);
 	}
 
+////////////////////////////////////////////////////////////////////// IO SERVER
 public:
 	// run server.
 	void start();
 
 	// stop server.
-	void stop();
+	inline void stop()
+	{
+		m_acceptor.stop();
+		m_dispatch.stop();
+	}
 
 	// wait server thread end.
-	void join();
+	inline void join()
+	{
+		m_dispatch.join();
+		m_acceptor.join();
+	}
 
-	/*@ start accept.
-	* @ para.port: listen port which to accept new client tcp_connection.
-	*/
-	void listen(
-		IN  const uint16_t port,
-		IN  const uint32_t io_server_size);
-
-	/*@ ready to accept client tcp_connection.*/
-	void async_accept();
-
-	/*@ start tick timer that do some auxiliary.*/
-	void set_tick_timer();
+	// set a tick timer to do some work in regular intervals.
+	inline void set_tick_timer()
+	{
+		if (m_option.has_tick_timer())
+			m_timer.set_timer(m_option.get_tick_time());
+	}
 
 	/*@ send heartbeat to peer of all connection.*/
-	void send_heartbeat();
-
-	/*@ clean timeout request that has asynchronous handled by app server.*/
-	void clean_timeout_request();
+	inline void async_send_heartbeat()
+	{
+		if (m_option.rhythm_heartbeat())
+			m_peer_set.send_rhythm_heartbeat(*m_prot_head);
+		else
+			m_peer_set.send_live_heartbeat(*m_prot_head);
+	}
 
 	// on call.
 	void on_timer(IN const eco::Error* e);
 	void on_accept(IN TcpPeer::ptr& p, IN const eco::Error* e);
 
+/////////////////////////////////////////////////////////////// TCP PEER HANDLER
 public:
 	// when peer has received a message data bytes.
 	virtual void on_read(
@@ -206,10 +219,6 @@ public:
 	{
 		return *m_prot_head;
 	}
-
-	
-
-	
 };
 
 

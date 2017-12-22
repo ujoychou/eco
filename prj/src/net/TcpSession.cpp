@@ -131,8 +131,7 @@ void TcpSession::async_send(
 	{
 		TcpClient* client = reinterpret_cast<TcpClient*>(
 			impl().m_host.m_host);
-		client->async_send(
-			codec, impl().m_session_id, type, model, category);
+		client->async_send(codec, impl().m_session_id, type, model, category);
 	}
 	else if (impl().m_host.m_type == tcp_session_host_server)
 	{

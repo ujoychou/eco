@@ -116,6 +116,10 @@ inline void handle_context_default(
 disp.register_handler<msg, codec>(msg_type,\
 std::bind(&func, obj_ptr, std::placeholders::_1, std::placeholders::_2));
 
+#define ECO_REGISTER_FUNCTOR(disp, msg_type, msg, codec, func) \
+disp.register_handler<msg, codec>(msg_type,\
+std::bind(&func, std::placeholders::_1, std::placeholders::_2));
+
 
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API DispatchRegistry

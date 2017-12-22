@@ -50,10 +50,12 @@
 
   <!--#.服务者-->
   <provider enable="true" router="front_router">
-    <service>RedAntFront</service>
+    <service>hornet</service>
     <port>50000</port>
-    <max_connection_size value="2000"/>
     <tick_time value="15"/>
+    <max_connection_size value="2000"/>
+    <max_session_size value="100000"/>
+    <io_heartbeat value="false"/>
     <response_heartbeat value="false"/>
     <rhythm_heartbeat value="true"/>
     <heartbeat_recv_tick value="3"/>

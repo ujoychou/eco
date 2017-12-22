@@ -36,6 +36,7 @@ bool handle_server_context(
 		meta.m_session_id == none_session &&
 		server->m_option.response_heartbeat())
 	{
+		peer.impl().state().peer_live(true);
 		peer.impl().async_send_heartbeat(*server->m_prot_head);
 		return false;
 	}
@@ -66,9 +67,9 @@ bool handle_client_context(
 		{
 			return false;
 		}
-		auto pack = client->m_authority_map.pop(sess);
-		// user object destroyed.
-		if (pack == nullptr || pack->m_user_observer.expired())
+		SessionDataPack::ptr pack;
+		if (!client->m_authority_map.find(pack, sess) ||
+			pack->m_user_observer.expired())	// user object destroyed.
 		{
 			return false;
 		}
@@ -90,6 +91,7 @@ bool handle_client_context(
 		meta.m_session_id == none_session &&
 		client->m_option.response_heartbeat())
 	{
+		peer.impl().state().peer_live(true);
 		peer.impl().async_send_heartbeat(*client->m_prot_head);
 		return false;
 	}
@@ -114,21 +116,21 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	eco::Error e;
 	MetaContext mc;
 	MessageMeta meta;
-	TcpSessionHostType host = dc.m_session_host.m_type;
 	if (!dc.m_prot->decode(meta, mc.m_message, dc.m_data, *dc.m_prot_head, e))
 	{
-		e << (host == tcp_session_host_server	? "tcp server" : "tcp client")
-			<< " decode fail.";
+		e << (dc.m_session_host.m_type == tcp_session_host_server
+			? "tcp server" : "tcp client") << " decode fail.";
 		EcoNet(EcoError, *peer, "dispatch", e);
 		return;
 	}
 
 	// get message type id and dispatch to the handler.
-	if (host == tcp_session_host_server &&
+	if (dc.m_session_host.m_type == tcp_session_host_server &&
 		handle_server_context(mc, meta, *peer) ||
-		host == tcp_session_host_client &&
+		dc.m_session_host.m_type == tcp_session_host_client &&
 		handle_client_context(mc, meta, *peer))
 	{
+		peer->impl().state().peer_active(true);
 		mc.set_context(dc, meta);
 		dispatch(mc.m_request_type, mc);
 	}

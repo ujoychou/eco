@@ -65,9 +65,10 @@ public:
 	template<typename ProtocolT>
 	inline void register_protocol()
 	{
-		register_protocol(new ProtocolT);
+		register_protocol(new ProtocolT());
 	}
 	void register_protocol(IN Protocol*);
+	Protocol* protocol(IN const uint32_t version) const;
 
 	// set session data class and tcp session mode.
 	template<typename SessionDataT>
@@ -75,9 +76,6 @@ public:
 	{
 		set_session_data(&make_session_data<SessionDataT>);
 	}
-	/*@ set tcp server session mode.
-	* @ make: validate session factory function.
-	*/
 	void set_session_data(IN MakeSessionDataFunc make);
 
 	// dispatcher

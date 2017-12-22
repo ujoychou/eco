@@ -94,9 +94,9 @@ void TcpClientOption::reset_tick()
 {
 	m_impl->reset_tick();
 }
-void TcpClientOption::add_tick()
+void TcpClientOption::step_tick(IN const uint32_t step)
 {
-	++m_impl->m_tick_count;
+	m_impl->m_tick_count += step;
 }
 uint32_t TcpClientOption::tick_count() const
 {

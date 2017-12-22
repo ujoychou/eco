@@ -686,6 +686,9 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpSession.h">
       <Filter>lib\net</Filter>
     </ClInclude>
+    <ClInclude Include="..\net\TcpPeerSet.h">
+      <Filter>src\net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cmd\Engine.ipp">

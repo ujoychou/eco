@@ -157,6 +157,10 @@ void TcpPeer::set_connected()
 {
 	impl().set_connected();
 }
+void TcpPeer::set_option(IN bool no_delay)
+{
+	impl().m_connector->set_option(no_delay);
+}
 void TcpPeer::async_connect(IN const Address& addr)
 {
 	impl().async_connect(addr);

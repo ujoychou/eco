@@ -13,7 +13,8 @@
 
 namespace eco{;
 
-
+const char* sys_cfg_file = "cfg.sys.xml";
+const char* app_cfg_file = "cfg.app.xml";
 ////////////////////////////////////////////////////////////////////////////////
 class App::Impl
 {
@@ -28,14 +29,13 @@ public:
 	static App::CreateAppFunc s_create_app;
 	static std::vector<std::string> s_params;
 
+////////////////////////////////////////////////////////////////////// ECO & CMD
 public:
 	inline Impl()
-		: m_sys_config_file("cfg.sys.xml")
-		, m_app_config_file("cfg.app.xml")
+		: m_sys_config_file(sys_cfg_file)
+		, m_app_config_file("")
 		, m_provider(eco::null)
-	{
-		//m_provider = eco::heap;
-	}
+	{}
 
 	// exit app and clear provider and consumer.
 	inline ~Impl()
@@ -59,9 +59,7 @@ public:
 			m_provider.stop();
 		}
 		if (enable_consumer())
-		{
-			//eco::service::dev::get_consumer().stop();
-		}
+		{}
 		on_rx_exit();
 
 		if (enable_eco() && get_eco())
@@ -71,6 +69,7 @@ public:
 		eco::log::get_core().stop();
 	}
 
+////////////////////////////////////////////////////////////////////// ECO & CMD
 public:
 	inline bool enable_eco() const
 	{
@@ -94,6 +93,7 @@ public:
 		}
 	}
 
+//////////////////////////////////////////////////////////////////////// ERX DLL
 public:
 	inline bool enable_erx() const
 	{
@@ -101,6 +101,7 @@ public:
 		return m_sys_config.find(v, "erx");
 	}
 
+	////////////////////////////////////////////////////////////////////////////
 	void on_rx_init(IN App& ap)
 	{
 		if (enable_erx())
@@ -123,6 +124,8 @@ public:
 		}
 	}
 
+
+	////////////////////////////////////////////////////////////////////////////
 	void on_rx_cmd()
 	{
 		if (enable_erx())
@@ -135,6 +138,8 @@ public:
 		}
 	}
 
+
+	////////////////////////////////////////////////////////////////////////////
 	void on_rx_exit()
 	{
 		if (enable_erx())
@@ -153,6 +158,7 @@ public:
 		}
 	}
 
+//////////////////////////////////////////////////////////////////////// SERVICE
 public:
 	// is there consumer valid.
 	inline bool enable_consumer() const
@@ -161,6 +167,7 @@ public:
 		return m_sys_config.find(v, "consumer");
 	}
 
+	////////////////////////////////////////////////////////////////////////////
 	inline void init_consumer()
 	{
 		if (!enable_consumer())
@@ -178,10 +185,8 @@ public:
 			auto addr = router->get_children().begin();
 			for (; addr != router->get_children().end(); ++addr)
 			{
-				addrset.add().address(addr->get_value());
+				addrset.add().reset(addr->get_value());
 			}
-			eco::service::dev::get_cluster().init_router(
-				router->get_name(), addrset);
 		}
 
 		// #.init the service that this service depends on.
@@ -194,7 +199,7 @@ public:
 			{
 				if (strcmp(addr->get_name(), "router") == 0)		// router mode.
 				{
-					addrset.set_service_mode(eco::net::service_mode_router);
+					addrset.set_service_mode(eco::net::router_mode);
 					auto r_addr = router_map.find(addr->get_value());
 					if (r_addr == router_map.end())
 					{
@@ -206,8 +211,8 @@ public:
 				}
 				else
 				{
-					addrset.set_service_mode(eco::net::service_mode_direct);
-					addrset.add().address(addr->get_value());		// direct mode.
+					addrset.set_service_mode(eco::net::service_mode);
+					addrset.add().reset(addr->get_value());		// direct mode.
 				}
 			}
 		}
@@ -217,11 +222,16 @@ public:
 		// 1) get router service; 2) if step 1 fail, get cs service by local storage.
 	}
 
+
+	////////////////////////////////////////////////////////////////////////////
 	inline bool enable_provider() const
 	{
 		StringAny v;
 		return m_sys_config.find(v, "provider");
 	}
+
+
+	////////////////////////////////////////////////////////////////////////////
 	inline void init_provider()
 	{
 		// #.create a new tcp server.
@@ -235,52 +245,40 @@ public:
 		StringAny v;
 		eco::net::TcpServerOption& option = m_provider.option();
 		if (m_sys_config.find(v, "provider/router"))
-		{
 			option.set_router(v.c_str());
-		}
 		if (m_sys_config.find(v, "provider/service"))
-		{
 			option.set_name(v.c_str());
-		}
 		if (m_sys_config.find(v, "provider/port"))
-		{
 			option.set_port(v);
-		}
 		if (m_sys_config.find(v, "provider/tick_time"))
-		{
 			option.set_tick_time(v);
-		}
 		if (m_sys_config.find(v, "provider/no_delay"))
-		{
 			option.set_no_delay(v);
-		}
 		if (m_sys_config.find(v, "provider/max_connection_size"))
-		{
 			option.set_max_connection_size(v);
-		}
+		if (m_sys_config.find(v, "provider/max_session_size"))
+			option.set_max_session_size(v);
+		if (m_sys_config.find(v, "provider/io_heartbeat"))
+			option.set_io_heartbeat(v);
 		if (m_sys_config.find(v, "provider/response_heartbeat"))
-		{
 			option.set_response_heartbeat(v);
-		}
 		if (m_sys_config.find(v, "provider/rhythm_heartbeat"))
-		{
 			option.set_rhythm_heartbeat(v);
-		}
 		if (m_sys_config.find(v, "provider/heartbeat_recv_tick"))
-		{
 			option.set_heartbeat_recv_tick(v);
-		}
 		if (m_sys_config.find(v, "provider/heartbeat_send_tick"))
-		{
 			option.set_heartbeat_send_tick(v);
-		}
 		if (m_sys_config.find(v, "provider/io_thread_size"))
-		{
 			option.set_io_thread_size(v);
-		}
 		if (m_sys_config.find(v, "provider/business_thread_size"))
-		{
 			option.set_business_thread_size(v);
+	}
+
+	inline void start_provider()
+	{
+		if (!m_provider.null())
+		{
+			m_provider.start();
 		}
 	}
 };
@@ -298,52 +296,36 @@ extern "C" ECO_API void init_app(IN eco::App& ap)
 
 	// #.init app config.
 	eco::StringAny v;
-	if (impl.m_sys_config.find(v, "config/file_path"))
-	{
-		impl.m_app_config_file = v.c_str();
+	if (impl.m_app_config_file.empty()) {
+		if (impl.m_sys_config.find(v, "config/file_path"))
+			impl.m_app_config_file = v.c_str();
+		else
+			impl.m_app_config_file = app_cfg_file;
 	}
 	impl.m_app_config.init(impl.m_app_config_file);
 
 	// #.read logging config.
 	if (impl.m_sys_config.find(v, "logging/sync"))
-	{
 		eco::log::get_core().set_sync(v);
-	}
 	if (impl.m_sys_config.find(v, "logging/level"))
-	{
 		eco::log::get_core().set_severity_level(v.c_str());
-	}
 	if (impl.m_sys_config.find(v, "logging/memcache"))
-	{
 		eco::log::get_core().set_capacity(uint32_t(double(v) * 1024 * 1024));
-	}
 	if (impl.m_sys_config.find(v, "logging/max_sync_millsecs"))
-	{
 		eco::log::get_core().set_max_sync_interval(v);
-	}
 	if (impl.m_sys_config.find(v, "logging/file_sink"))
-	{
 		eco::log::get_core().add_file_sink(v);
-	}
+	if (impl.m_sys_config.find(v, "logging/console_sink"))
+		eco::log::get_core().add_console_sink(v);
 	if (eco::log::get_core().has_file_sink())
 	{
 		if (impl.m_sys_config.find(v, "logging/file_sink/file_path"))
-		{
 			eco::log::get_core().set_file_path(v.c_str());
-		}
 		if (impl.m_sys_config.find(v, "logging/file_sink/roll_size"))
-		{
 			eco::log::get_core().set_file_roll_size(
 				uint32_t(double(v) * 1024 * 1024));
-		}
 		if (impl.m_sys_config.find(v, "logging/file_sink/flush_inverval"))
-		{
 			eco::log::get_core().set_flush_interval(v);
-		}
-	}
-	if (impl.m_sys_config.find(v, "logging/console_sink"))
-	{
-		eco::log::get_core().add_console_sink(v);
 	}
 	eco::log::get_core().run();
 
@@ -352,15 +334,16 @@ extern "C" ECO_API void init_app(IN eco::App& ap)
 	{
 		init_eco();
 		if (impl.m_sys_config.find(v, "eco/being/unit_live_tick"))
-		{
 			get_eco()->set_unit_live_tick_seconds(v);
-		}
 		if (impl.m_sys_config.find(v, "eco/task_server_thread_size"))
-		{
 			get_eco()->set_task_server_thread_size(v);
-		}
 		get_eco()->start();
 	}
+
+	// #.init consumer.
+	impl.init_consumer();
+	// #.init provider.
+	impl.init_provider();
 }
 
 
@@ -394,18 +377,15 @@ int App::main(IN int argc, IN char* argv[])
 		// 1.must wait app object construct over.
 		// and it can set the sys config path in "derived app()".
 		eco::init_app(*app);
-		//app->impl().init_consumer();
-		//app->impl().init_provider();
 
 		// init erx that ready for "app on_init" using.
 		app->impl().on_rx_init(*app);
-
 		// init app business object.
 		app->on_init();
-		//app->provider().start();
-
 		// init command based on app business object and service.
 		app->impl().init_command(*app);
+		// start service provider.
+		app->impl().start_provider();
 
 		// join app.
 		app->impl().join();
@@ -425,7 +405,6 @@ int App::main(IN int argc, IN char* argv[])
 		EcoCout << "[error] " << e.what();
 		getch_exit();
 	}
-
 	return 0;
 }
 
