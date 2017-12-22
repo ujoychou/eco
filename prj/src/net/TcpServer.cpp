@@ -103,7 +103,7 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 	if (m_option.get_heartbeat_recv_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_recv_tick() == 0)
 	{
-		m_peer_set.clean_dead_peer();
+		//m_peer_set.clean_dead_peer();
 	}
 
 	// clean inactive connection.

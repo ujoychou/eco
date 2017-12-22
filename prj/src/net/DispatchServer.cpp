@@ -67,9 +67,8 @@ bool handle_client_context(
 		{
 			return false;
 		}
-		SessionDataPack::ptr pack;
-		if (!client->m_authority_map.find(pack, sess) ||
-			pack->m_user_observer.expired())	// user object destroyed.
+		SessionDataPack::ptr pack = client->find_authority(sess);
+		if (pack == nullptr || pack->m_user_observer.expired())	// user object destroyed.
 		{
 			return false;
 		}

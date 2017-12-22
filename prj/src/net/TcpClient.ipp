@@ -101,7 +101,6 @@ class TcpClient::Impl : public TcpPeerHandler
 public:
 	typedef std::auto_ptr<ProtocolHead> ProtocolHeadPtr;
 	TcpClient*		m_client;
-	eco::Mutex		m_mutex;
 	std::string		m_service_name;	// the service that this client connect to.
 	LoadBalancer	m_balancer;		// load balance for multi server.
 	TcpClientOption	m_option;		// client option.
@@ -117,9 +116,11 @@ public:
 	// session data management.
 	MakeSessionDataFunc m_make_session;
 	// all session that client have, diff by "&session".
-	eco::Repository<void*, SessionDataPack::ptr> m_authority_map;
+	std::unordered_map<void*, SessionDataPack::ptr> m_authority_map;
 	// connected session that has id build by server.
 	eco::Repository<uint32_t, SessionDataPack::ptr> m_session_map;
+
+	mutable eco::Mutex	m_mutex;
 
 public:
 	inline Impl() : m_client(nullptr)
@@ -157,6 +158,14 @@ public:
 		{
 			eco::thread::release(v);
 		}
+	}
+
+	// find exist session.
+	inline SessionDataPack::ptr find_authority(IN TcpSession* key)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		auto it = m_authority_map.find(key);
+		return it != m_authority_map.end() ? it->second : nullptr;
 	}
 
 public:
@@ -226,11 +235,11 @@ public:
 	{
 		eco::String data;
 		data.asign(pack->m_request.c_str(), pack->m_request.size());
-		m_authority_map.set(key, pack);
 
 		// client isn't ready and connected when first send authority.
 		// because of before that client is async connect.
 		eco::Mutex::ScopeLock lock(m_mutex);
+		m_authority_map[key] = pack;
 		if (m_balancer.m_peer->get_state().is_connected())
 		{
 			m_balancer.m_peer->async_send(data);

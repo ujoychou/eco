@@ -173,11 +173,10 @@ void TcpClient::Impl::async_authorize(
 ////////////////////////////////////////////////////////////////////////////////
 void TcpClient::Impl::on_connect()
 {
-	eco::String data;
-	eco::Mutex::ScopeLock lock(m_authority_map.mutex());
-	auto it = m_authority_map.map().begin();
-	for (; it != m_authority_map.map().end(); ++it)
+	eco::Mutex::ScopeLock lock(m_mutex);
+	for (auto it = m_authority_map.begin(); it != m_authority_map.end(); ++it)
 	{
+		eco::String data;
 		SessionDataPack& pack = (*it->second);
 		data.asign(pack.m_request.c_str(), pack.m_request.size());
 		async_send(data);
@@ -251,14 +250,14 @@ void TcpClient::Impl::on_timer(IN const eco::Error* e)
 	if (m_option.get_heartbeat_send_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_send_tick() == 0)
 	{
-		async_send_heartbeat();
+		//async_send_heartbeat();
 	}
 
 	// #.auto reconnect.
 	if (m_option.auto_reconnect_tick() > 0 &&
 		m_option.tick_count() % m_option.auto_reconnect_tick() == 0)
 	{
-		async_connect();
+		//async_connect();
 	}
 
 	set_tick_timer();		// set next timer.
