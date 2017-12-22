@@ -31,7 +31,6 @@ eco basic type.
 #include <eco/Cast.h>
 
 
-
 namespace eco{;
 
 #undef max
