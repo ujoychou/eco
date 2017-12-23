@@ -86,11 +86,12 @@ public:
 	eco::String m_request;
 	SessionData::ptr m_session;
 	SharedObserver m_user_observer;
+	uint64_t m_request_data;
 	uint32_t m_auto_login;
 
 public:
 	inline SessionDataPack(IN bool auto_login = false)
-		: m_auto_login(auto_login)
+		: m_request_data(0), m_auto_login(auto_login)
 	{}
 };
 
@@ -140,6 +141,24 @@ public:
 		m_protocol.reset(p);
 	}
 
+	// open a session with no authority.
+	inline TcpSession open_session();
+
+	// set a authority.
+	inline void set_authority(IN void* key, IN SessionDataPack::ptr& pack)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		m_authority_map[key] = pack;
+	}
+
+	// find exist authority.
+	inline SessionDataPack::ptr find_authority(IN void* key)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		auto it = m_authority_map.find(key);
+		return it != m_authority_map.end() ? it->second : nullptr;
+	}
+
 	// find exist session.
 	inline SessionDataPack::ptr find_session(IN const SessionId id) const
 	{
@@ -156,14 +175,6 @@ public:
 		{
 			eco::thread::release(v);
 		}
-	}
-
-	// find exist session.
-	inline SessionDataPack::ptr find_authority(IN TcpSession* key)
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		auto it = m_authority_map.find(key);
-		return it != m_authority_map.end() ? it->second : nullptr;
 	}
 
 public:
@@ -211,16 +222,10 @@ public:
 			m_balancer.m_peer->impl().async_send_live_heartbeat(*m_prot_head);
 	}
 
-	inline void async_send(
-		IN Codec& codec,
-		IN const uint32_t session_id,
-		IN const uint32_t type,
-		IN const MessageModel model,
-		IN const MessageCategory category = category_message)
+	inline void async_send(IN MessageMeta& meta)
 	{
 		eco::Error e;
 		eco::String data;
-		MessageMeta meta(codec, session_id, type, model, category);
 		if (!m_protocol->encode(data, meta, *m_prot_head, e))
 		{
 			EcoError << "tcp client encode data fail." << EcoFmt(e);
@@ -229,7 +234,7 @@ public:
 		async_send(data);
 	}
 
-	inline void async_send(IN void* key, IN SessionDataPack::ptr& pack)
+	inline void async_send(IN SessionDataPack::ptr& pack)
 	{
 		eco::String data;
 		data.asign(pack->m_request.c_str(), pack->m_request.size());
@@ -237,18 +242,13 @@ public:
 		// client isn't ready and connected when first send authority.
 		// because of before that client is async connect.
 		eco::Mutex::ScopeLock lock(m_mutex);
-		m_authority_map[key] = pack;
 		if (m_balancer.m_peer->get_state().is_connected())
 		{
 			m_balancer.m_peer->async_send(data);
 		}
 	}
 
-	inline void async_authorize(
-		IN Codec& codec,
-		IN TcpSession& session,
-		IN const uint32_t type,
-		IN const MessageCategory category = category_message);
+	inline void async_auth(IN TcpSession& session, IN MessageMeta& meta);
 
 public:
 	// when peer has connected to server.

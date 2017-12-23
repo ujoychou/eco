@@ -139,40 +139,48 @@ void TcpClient::Impl::release()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::async_authorize(
-	IN Codec& codec,
-	IN TcpSession& session,
-	IN const uint32_t type,
-	IN const MessageCategory category)
+TcpSession TcpClient::Impl::open_session()
 {
-	if (find_authority(&session))
-	{
-		EcoThrow(e_client_session_authorized) << "this session has authorized.";
-		return;
-	}
-
-	// send authority to server for validating session.
-	// if the authority is correct, server and client will build a new session.
+	// create new session.
+	TcpSession session;
 	SessionDataPack::ptr pack(new SessionDataPack);
 	pack->m_session.reset(m_make_session(none_session));
 	session.set_host(TcpSessionHost(*(TcpClientImpl*)this));
 	session.impl().m_session_wptr = pack->m_session;
 	session.impl().user_born();
 	pack->m_user_observer = session.impl().m_user;
+	
+	// add session.
+	set_authority(&session.impl(), pack);
+	return session;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::async_auth(IN TcpSession& session, IN MessageMeta& meta)
+{
+	// send authority to server for validating session.
+	// if the authority is correct, server will build a new session.
+	void* session_key = &session.impl();
+	SessionDataPack::ptr pack = find_authority(session_key);
+	if (pack == nullptr)
+	{
+		EcoThrow(e_client_session_not_opened) << "this session is not opened.";
+	}
 
 	// encode the send data.
 	eco::Error e;
-	MessageMeta meta(codec, none_session,
-		type, model_req, category | category_authority);
+	meta.m_category |= category_authority;
+	meta.set_session_id(none_session);
 	// use "&session" when get response, because it represent user.
-	meta.set_request_data(&session);
+	pack->m_request_data = meta.m_request_data;
+	meta.set_request_data(session_key);
 	if (!m_protocol->encode(pack->m_request, meta, *m_prot_head, e))
 	{
-		EcoError << "tcp client async_authorize: encode data fail."
-			<< EcoFmt(e);
+		EcoError << "tcp client async auth: encode data fail." << EcoFmt(e);
 		return;
 	}
-	async_send(&session, pack);
+	async_send(pack);
 }
 
 
@@ -211,29 +219,13 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 		return;
 	}
 
-	// get related protocol.
-	if (m_protocol == nullptr)
-	{
-		e.id(e_message_unknown) << "tcp client have no protocol: "
-			<< head.m_version;
-		EcoNet(EcoError, *peer_impl, "on_read", e);
-		return;
-	}
-
 	// ignore sync request: don't support sync mode.
 	if (eco::has(head.m_category, category_sync_mode))
 	{
 		return;
 	}
 
-	// handle heartbeat.
-	if (eco::has(head.m_category, category_heartbeat) &&
-		m_option.response_heartbeat())
-	{
-		peer_impl->async_send_heartbeat(*m_prot_head);
-		return;
-	}
-
+	// client have no "io heartbeat" option.
 	TcpSessionHost host(*(TcpClientImpl*)this);
 	DataContext dc(&host);
 	peer_impl->get_data_context(dc, head.m_category, data, 
@@ -308,23 +300,19 @@ void TcpClient::async_send(IN eco::String& data)
 	impl().async_send(data);
 }
 
-void TcpClient::async_send(
-	IN Codec& codec,
-	IN const uint32_t session_id,
-	IN const uint32_t type,
-	IN const MessageModel model,
-	IN const MessageCategory category)
+void TcpClient::async_send(IN MessageMeta& meta)
 {
-	impl().async_send(codec, session_id, type, model, category);
+	impl().async_send(meta);
 }
 
-void TcpClient::async_authorize(
-	IN Codec& codec,
-	IN TcpSession& session,
-	IN const uint32_t type,
-	IN const MessageCategory category)
+TcpSession TcpClient::open_session()
 {
-	impl().async_authorize(codec, session, type, category);
+	return impl().open_session();
+}
+
+void TcpClient::async_auth(IN TcpSession& session, IN MessageMeta& meta)
+{
+	impl().async_auth(session, meta);
 }
 
 

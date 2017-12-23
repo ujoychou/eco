@@ -96,27 +96,23 @@ public:
 
 /////////////////////////////////////////////////////////////////// SERVICE MODE
 public:
+	// open session.
+	TcpSession open_session();
+
 	// service mode: async connect to service.
 	void async_connect(
 		IN eco::net::AddressSet& service_addr);
+
+	// async send request to server.
+	void async_auth(IN TcpSession& session, IN MessageMeta& meta);
 
 	// async send message.
 	void async_send(IN eco::String& data);
 
 	// async send message.
-	void async_send(
-		IN Codec& codec,
-		IN const uint32_t session_id,
-		IN const uint32_t type,
-		IN const MessageModel model,
-		IN const MessageCategory category = category_message);
+	void async_send(IN MessageMeta& meta);
 
-	// async send request to server.
-	void async_authorize(
-		IN Codec& codec,
-		IN TcpSession& session,
-		IN const uint32_t type,
-		IN const MessageCategory category = category_message);
+	
 };
 
 
