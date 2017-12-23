@@ -174,7 +174,9 @@ void TcpPeer::async_send(IN eco::String& data)
 	impl().async_send(data);
 }
 void TcpPeer::async_send(
-	IN MessageMeta& meta, IN Protocol& prot, IN ProtocolHead& prot_head)
+	IN MessageMeta& meta, 
+	IN Protocol& prot,
+	IN ProtocolHead& prot_head)
 {
 	impl().async_send(meta, prot, prot_head);
 }

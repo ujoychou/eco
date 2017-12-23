@@ -101,15 +101,14 @@ public:
 	// close peer and notify peer handler.
 	void notify_close(IN const eco::Error* e);
 
-public:
+	// async send string message.
+	void async_send(IN eco::String& data);
+
 	// async send meta message.
 	void async_send(
 		IN MessageMeta& meta,
 		IN Protocol& prot,
 		IN ProtocolHead& prot_head);
-
-	// async send string message.
-	void async_send(IN eco::String& data);
 };
 
 

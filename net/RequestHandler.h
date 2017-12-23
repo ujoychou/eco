@@ -116,36 +116,12 @@ public:
 	}
 
 	// response message to the request.
-	inline void response(
-		IN eco::net::Codec& codec,
-		IN uint16_t iid,
-		IN MessageCategory category = category_general)
+	inline void async_resp(
+		IN Codec& codec, 
+		IN const uint32_t type,
+		IN bool last = false)
 	{
-		response(codec, iid, false, category);
-	}
-
-	// response message to the request.
-	inline void response(
-		IN eco::net::Codec& codec,
-		IN uint16_t iid,
-		IN bool last,
-		IN MessageCategory category = category_general)
-	{
-		eco::net::MessageMeta meta;
-		meta.m_category = category;
-		meta.m_model = model_rsp;
-		meta.m_codec = &codec;
-		meta.m_request_id = m_context.m_request_id;
-		eco::set(meta.m_option, opt_last, last);
-		if (eco::has(m_context.m_category, category_sync_mode))
-		{
-			eco::add(meta.m_category, category_sync_mode);
-		}
-		else
-		{
-			meta.set_message_type(iid);
-		}
-		m_context.m_session.send(meta);
+		session().async_send(codec, type, m_context, last);
 	}
 
 private:

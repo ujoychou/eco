@@ -37,15 +37,15 @@ namespace net{;
 enum
 {
 	model_none				= 0x00,
-	// req/rsp mode.
-	model_req				= 0x01,
-	model_rsp				= 0x02,
+
+	// todo with.
+	model_req1				= 0x80,
+	model_rsp2				= 0x40,
 
 	// object all.
 	// case: tid = (product_type, 0, 0), all product.
-	model_sub_all_req		= 0x03,
-	model_sub_all_rsp		= 0x04,
-	model_pub_all			= 0x05,
+	model_sub_all			= 0x01,
+	model_pub_all			= 0x02,
 	/* object set: type + property condition set.
 	case: product of the user whose id=2.
 	tid = (product_type, userid, 2), 
@@ -55,13 +55,11 @@ enum
 	tid = (product_type, data_privilege, 1)
 	data_privilege = 1 means {data_type=product_type, userid=2, type=stock;}
 	*/
-	model_sub_set_req		= 0x06,
-	model_sub_set_rsp		= 0x07,
-	model_pub_set			= 0x08,
+	model_sub_set			= 0x03,
+	model_pub_set			= 0x04,
 	// object set & all. topic id = "string topic id";
-	model_sub_str_req		= 0x09,
-	model_pub_str_rsp		= 0x0A,
-	model_pub_str			= 0x0B,
+	model_sub_str			= 0x05,
+	model_pub_str			= 0x06,
 };
 // for user define: MessageCategory is uint16_t.
 typedef uint16_t MessageModel;
@@ -121,14 +119,12 @@ public:
 		IN Codec& codec,
 		IN const uint32_t session_id,
 		IN const uint32_t type,
-		IN const MessageModel model,
 		IN const MessageCategory category = category_message)
 	{
 		memset(this, 0, sizeof(*this));
 		m_category = category;
 		set_session_id(session_id);
 		set_message_type(type);
-		m_model = model;
 		m_codec = &codec;
 	}
 
@@ -136,6 +132,11 @@ public:
 	{
 		m_session_id = id;
 		eco::set(m_option, option_sess, m_session_id != none_session);
+	}
+
+	inline void set_last(IN const bool is)
+	{
+		eco::set(m_option, option_last, is);
 	}
 
 	inline void set_message_type(IN const uint32_t type)
@@ -161,22 +162,28 @@ public:
 		else if (sizeof(void*) == 8)
 			set_request_data(reinterpret_cast<uint64_t>(req_data));
 	}
+	inline void set_request_data(IN uint64_t req_data, IN uint32_t opt)
+	{
+		m_request_data = req_data;
+		eco::set(m_option, option_req4, eco::has(opt, option_req4));
+		eco::set(m_option, option_req8, eco::has(opt, option_req8));
+	}
 
 	inline bool model_topic() const
 	{
-		return model_sub_all_req <= m_model && m_model <= model_pub_str;
+		return model_sub_all <= m_model && m_model <= model_pub_str;
 	}
 	inline bool model_topic_all() const
 	{
-		return model_sub_all_req <= m_model && m_model <= model_pub_all;
+		return model_sub_all <= m_model && m_model <= model_pub_all;
 	}
 	inline bool model_topic_set() const
 	{
-		return model_sub_set_req <= m_model && m_model <= model_pub_set;
+		return model_sub_set <= m_model && m_model <= model_pub_set;
 	}
 	inline bool model_topic_str() const
 	{
-		return model_sub_str_req <= m_model && m_model <= model_pub_str;
+		return model_sub_str <= m_model && m_model <= model_pub_str;
 	}
 };
 

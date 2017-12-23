@@ -97,10 +97,11 @@ class MetaContext
 {
 public:
 	eco::String			m_data;
-	eco::Bytes			m_message;
 	MessageCategory		m_category;
-	uint64_t			m_request_data;
+	eco::Bytes			m_message;
 	uint64_t			m_request_type;
+	uint64_t			m_request_data;
+	uint32_t			m_option;
 	TcpSession			m_session;
 	
 public:
@@ -113,6 +114,7 @@ public:
 		, m_message(msg)
 		, m_request_data(meta.m_request_data)
 		, m_request_type(meta.m_message_type)
+		, m_option(meta.m_option)
 	{
 		m_session.set_protocol(*dc.m_prot);
 		m_session.set_host(dc.m_session_host);
@@ -131,16 +133,20 @@ public:
 class Context
 {
 public:
-	uint64_t			m_request_data;
 	MessageCategory		m_category;
+	uint32_t			m_option;
+	uint64_t			m_request_data;
 	TcpSession			m_session;
 
-	inline Context() :m_category(0), m_request_data(0), m_session(eco::null)
+	inline Context()
+		: m_category(0), m_option(0)
+		, m_request_data(0), m_session(eco::null)
 	{}
 
 	inline void set_context(IN MetaContext& mc)
 	{
 		m_category = mc.m_category;
+		m_option = mc.m_option;
 		m_request_data = mc.m_request_data;
 		m_session = mc.m_session;
 	}

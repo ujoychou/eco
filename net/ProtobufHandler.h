@@ -45,6 +45,15 @@ public:
 		return codec.decode(bytes, size);
 	}
 
+	// response message to the request.
+	inline void async_resp(
+		IN google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const bool last = false)
+	{
+		session().async_resp(msg, type, context(), last);
+	}
+
 	inline void response(
 		IN const google::protobuf::Message& msg,
 		IN uint16_t iid,

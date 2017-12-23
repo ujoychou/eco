@@ -103,7 +103,7 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 	if (m_option.get_heartbeat_recv_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_recv_tick() == 0)
 	{
-		m_peer_set.clean_dead_peer();
+		//m_peer_set.clean_dead_peer();
 	}
 
 	// clean inactive connection.
@@ -176,10 +176,11 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 	
 	// #.send heartbeat.
 	if (eco::has(head.m_category, category_heartbeat) &&
-		m_option.io_heartbeat() && m_option.response_heartbeat())
+		m_option.io_heartbeat())
 	{
 		peer_impl->state().peer_live(true);
-		peer_impl->async_send_heartbeat(*m_prot_head);
+		if (m_option.response_heartbeat())
+			peer_impl->async_send_heartbeat(*m_prot_head);		
 		return;
 	}
 

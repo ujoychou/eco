@@ -163,6 +163,7 @@ public:
 	// stop server.
 	inline void stop()
 	{
+		m_timer.cancel();
 		m_acceptor.stop();
 		m_dispatch.stop();
 	}

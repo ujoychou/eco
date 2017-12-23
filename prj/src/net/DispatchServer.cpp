@@ -16,8 +16,12 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 // return whether need to dispatch meta context.
 bool handle_server_context(
-	OUT TcpSession& sess, IN MessageMeta& meta, IN TcpPeer& peer)
+	OUT MetaContext& mc, IN const MessageMeta& meta, IN TcpPeer& peer)
 {
+	TcpSession& sess = mc.m_session;
+	auto* server = (TcpServer::Impl*)sess.impl().m_host.m_host;
+	assert(server != nullptr);
+
 	// #.handle session.
 	if (meta.m_session_id != none_session)
 	{
@@ -35,10 +39,11 @@ bool handle_server_context(
 
 ////////////////////////////////////////////////////////////////////////////////
 bool handle_client_context(
-	OUT TcpSession& sess, IN MessageMeta& meta, IN  TcpPeer& peer)
+	OUT MetaContext& mc, IN const MessageMeta& meta, IN  TcpPeer& peer)
 {
-	TcpClient::Impl* client = &reinterpret_cast<TcpClient*>(
-		&sess.impl().m_host.m_host)->impl();
+	TcpSession& sess = mc.m_session;
+	auto* client = (TcpClient::Impl*)sess.impl().m_host.m_host;
+	assert(client != nullptr);
 
 	// #.handle authority.
 	if (eco::has(meta.m_category, category_authority))
@@ -55,10 +60,12 @@ bool handle_client_context(
 			return false;
 		}
 		SessionDataPack::ptr pack = client->find_authority(sess);
-		if (pack == nullptr || pack->m_user_observer.expired())	// user object destroyed.
+		// user object destroyed.
+		if (pack == nullptr || pack->m_user_observer.expired())
 		{
 			return false;
 		}
+		mc.m_request_data = pack->m_request_data;
 		client->m_session_map.set(meta.m_session_id, pack);
 	}
 
@@ -86,8 +93,11 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	{
 		return;
 	}
-	dc.m_session_host.set_peer(*peer);
-
+	if (dc.m_session_host.m_type == tcp_session_host_server)
+	{
+		dc.m_session_host.set_peer(*peer);
+	}
+	
 	// #.heartbeat is unrelated to session, it's manage remote peer life.
 	if (eco::has(dc.m_category, category_heartbeat))
 	{
@@ -116,9 +126,9 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	// get message type id and dispatch to the handler.
 	MetaContext mc(dc, message, meta);
 	if (dc.m_session_host.m_type == tcp_session_host_server &&
-		handle_server_context(mc.m_session, meta, *peer) ||
+		handle_server_context(mc, meta, *peer) ||
 		dc.m_session_host.m_type == tcp_session_host_client &&
-		handle_client_context(mc.m_session, meta, *peer))
+		handle_client_context(mc, meta, *peer))
 	{
 		peer->impl().state().peer_active(true);
 		dispatch(mc.m_request_type, mc);

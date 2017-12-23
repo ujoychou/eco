@@ -33,6 +33,7 @@ namespace eco{;
 namespace net{;
 class TcpPeer;
 class TcpClient;
+class Context;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TcpSession
 {
@@ -69,62 +70,71 @@ public:
 
 public:
 	// async send message.
-	void async_send(
+	void async_send(IN MessageMeta& meta);
+
+	// async send authority info.
+	void async_auth(IN MessageMeta& meta);
+
+	// async response message.
+	void async_resp(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const MessageModel model,
-		IN const MessageCategory category = category_message);
+		IN const Context& context,
+		IN const bool last = false);
 
 	// async send message.
 	template<typename Codec, typename MessageT>
 	inline void async_send(
 		IN const MessageT& msg,
-		IN const uint32_t type,
-		IN const MessageModel model,
-		IN const MessageCategory category = category_message)
+		IN MessageMeta& meta)
 	{
-		return async_send(Codec(msg), type, model, category);
+		Codec codec(msg);
+		meta.m_codec = &codec;
+		async_send(meta);
 	}
 
-	// async send message.
-	inline void async_request(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const MessageCategory category = category_message)
+	// async send protobuf.
+	inline void async_send(
+		IN google::protobuf::Message& msg,
+		IN MessageMeta& meta)
 	{
-		return async_send(codec, type, model_req, category);
+		ProtobufCodec codec(msg);
+		meta.m_codec = &codec;
+		async_send(meta);
 	}
 
-	// async send message.
-	template<typename Codec, typename MessageT>
-	inline void async_request(
-		IN const MessageT& msg,
-		IN const uint32_t type,
-		IN const MessageCategory category = category_message)
-	{
-		return async_send(Codec(msg), type, model_req, category);
-	}
-
-public:
 	// async send protobuf.
 	inline void async_send(
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const MessageModel model,
 		IN const MessageCategory category = category_message)
 	{
-		return async_send(ProtobufCodec(msg), type, model, category);
+		ProtobufCodec codec(msg);
+		MessageMeta meta(codec, get_session_id(), type, category);
+		async_send(meta);
 	}
 
-	// async send request protobuf.
-	inline void async_request(
+	// async send protobuf authority info.
+	inline void async_auth(
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const MessageCategory category = category_message)
 	{
-		return async_send(ProtobufCodec(msg), type, model_req, category);
+		ProtobufCodec codec(msg);
+		MessageMeta meta(codec, none_session, type, category);
+		async_auth(meta);
 	}
 
+	// async send response to client by context.
+	inline void async_resp(
+		IN google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const Context& context,
+		IN const bool last = false)
+	{
+		ProtobufCodec codec(msg);
+		async_resp(codec, type, context, last);
+	}
 };
 
 
