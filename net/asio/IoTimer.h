@@ -68,8 +68,12 @@ public:
 	// cancel timer.
 	inline uint32_t cancel()
 	{
-		boost::system::error_code ec;
-		return m_tick_timer->cancel(ec);
+		if (m_tick_timer != nullptr)
+		{
+			boost::system::error_code ec;
+			return m_tick_timer->cancel(ec);
+		}
+		return 0;
 	}
 
 private:
