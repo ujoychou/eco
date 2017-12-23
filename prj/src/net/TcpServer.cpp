@@ -103,7 +103,7 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 	if (m_option.get_heartbeat_recv_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_recv_tick() == 0)
 	{
-		//m_peer_set.clean_dead_peer();
+		m_peer_set.clean_dead_peer();
 	}
 
 	// clean inactive connection.
@@ -185,6 +185,7 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 
 	// #.dispatch data context.
 	TcpSessionHost host(*m_server);
+	m_server->impl().m_option.set_business_thread_size(0);
 	eco::net::DataContext dc(&host);
 	peer_impl->get_data_context(dc, head.m_category, data, *prot, *m_prot_head);
 	m_dispatch.post(dc);

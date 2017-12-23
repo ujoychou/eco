@@ -8,8 +8,6 @@
 #include <eco/net/protocol/ProtocolHead.h>
 
 
-
-////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
 namespace net{;
 
@@ -29,6 +27,7 @@ public:
 
 	// peer handler.
 	TcpConnectorHandler* m_handler;
+	std::weak_ptr<TcpPeer> m_peer_observer;
 
 public:
 	Impl(IN boost::asio::io_service& srv)
@@ -72,6 +71,7 @@ public:
 	inline void on_connect(
 		IN const boost::system::error_code& ec)
 	{
+		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
 		if (ec) {
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_connect(false, &e);
@@ -103,6 +103,7 @@ public:
 		IN const uint32_t size,
 		IN const boost::system::error_code& ec)
 	{
+		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
 		if (ec) {
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_read_head(data, size, &e);
@@ -115,8 +116,12 @@ public:
 		IN eco::String& data,
 		IN const uint32_t start)
 	{
+		// eco::move(data) will clear eco::String, so can't use like:
+		// boost::asio::buffer(&d[start], data.size() - start),
+		char* d = &data[start];
+		const uint32_t s = data.size() - start;
 		boost::asio::async_read(m_socket,
-			boost::asio::buffer(&data[start], data.size() - start),
+			boost::asio::buffer(d, s),
 			boost::bind(&Impl::on_read_data, this,
 			eco::move(data), boost::asio::placeholders::error));
 	}
@@ -125,6 +130,7 @@ public:
 		IN eco::String& data,
 		IN const boost::system::error_code& ec)
 	{
+		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
 		if (ec) {
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_read_data(data, &e);
@@ -137,8 +143,12 @@ public:
 #ifdef ECO_WIN
 	inline void async_write(IN eco::String& data)
 	{
+		// eco::move(data) will clear data(eco::String), so can't use like:
+		// boost::asio::buffer(data.c_str(), data.size()),
+		const char* d = data.c_str();
+		const uint32_t s = data.size();
 		boost::asio::async_write(m_socket,
-			boost::asio::buffer(&data[0], data.size()),
+			boost::asio::buffer(d, s),
 			boost::bind(&Impl::on_write, this,
 			eco::move(data),
 			boost::asio::placeholders::error,
@@ -150,6 +160,7 @@ public:
 		IN const boost::system::error_code& ec,
 		IN size_t bytes_transferred)
 	{
+		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
 		if (ec)
 		{
 			eco::Error e(ec.message(), ec.value());
@@ -186,6 +197,7 @@ public:
 		IN const boost::system::error_code& ec,
 		IN size_t bytes_transferred)
 	{
+		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
 		if (ec)
 		{
 			eco::Error e(ec.message(), ec.value());
@@ -237,9 +249,12 @@ void TcpConnector::set_option(IN bool delay)
 	m_impl->set_option(delay);
 }
 
-void TcpConnector::register_handler(IN TcpConnectorHandler& handler)
+void TcpConnector::register_handler(
+	IN TcpConnectorHandler& handler,
+	IN std::weak_ptr<TcpPeer>& peer)
 {
 	m_impl->m_handler = &handler;
+	m_impl->m_peer_observer = peer;
 }
 
 void TcpConnector::async_connect(IN const Address& addr)

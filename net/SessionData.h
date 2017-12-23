@@ -34,6 +34,7 @@ class TcpPeer;
 class TcpClient;
 class TcpServer;
 class Protocol;
+class ProtocolHead;
 ////////////////////////////////////////////////////////////////////////////////
 typedef uint32_t SessionId;
 const SessionId none_session = 0;
@@ -84,6 +85,9 @@ public:
 		m_host = 0;
 		m_peer = 0;
 	}
+
+	bool response_heartbeat() const;
+	ProtocolHead* protocol_head() const;
 
 	TcpSessionHostType	m_type;
 	TcpSessionHostPtr	m_host;

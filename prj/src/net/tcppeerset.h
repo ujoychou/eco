@@ -93,6 +93,7 @@ public:
 		auto it = m_peer_map.find(conn_id);
 		if (it != m_peer_map.end())
 		{
+			EcoNetLog(EcoDebug, *it->second) << "tcp_peer_set erase peer.";
 			m_peer_map.erase(it);
 		}
 	}
@@ -113,8 +114,8 @@ public:
 		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
 		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); ++it)
 		{
-			
-		}// end for
+			it->second->impl().async_send_live_heartbeat(prot_head);
+		}
 	}
 
 	/*@ clean the dead peer who has not been send heartbeat to me.*/

@@ -78,6 +78,8 @@ enum
 	// option: request data that server will send back.
 	option_req4				= 0x04,
 	option_req8				= 0x08,
+	// option: message has a session id.
+	option_sess				= 0x10,
 };
 // for user define: MessageOption is uint16_t.
 typedef uint32_t MessageOption;
@@ -109,6 +111,12 @@ public:
 		memset(this, 0, sizeof(*this));
 	}
 
+	inline MessageMeta(IN MessageCategory v)
+	{
+		memset(this, 0, sizeof(*this));
+		m_category = v;
+	}
+
 	inline MessageMeta(
 		IN Codec& codec,
 		IN const uint32_t session_id,
@@ -127,8 +135,7 @@ public:
 	inline void set_session_id(IN const uint32_t id)
 	{
 		m_session_id = id;
-		eco::set(m_category, category_session_mode,
-			m_session_id != none_session);
+		eco::set(m_option, option_sess, m_session_id != none_session);
 	}
 
 	inline void set_message_type(IN const uint32_t type)
@@ -189,7 +196,7 @@ public:
 		OUT eco::net::MessageMeta& meta,
 		OUT eco::Bytes& data,
 		IN  eco::String& bytes,
-		IN  eco::net::ProtocolHead& prot_head,
+		IN  const uint32_t head_size,
 		IN  eco::Error& e) = 0;
 
 	/*@ #1.encode message to bytes string.*/

@@ -37,7 +37,7 @@ class TcpPeer::Impl : public TcpConnectorHandler
 {
 public:
 	TcpState m_state;
-	TcpPeer::wptr m_wptr;
+	TcpPeer::wptr m_peer_observer;
 	TcpPeerHandler* m_handler;
 	std::auto_ptr<TcpConnector> m_connector;
 	// the session of tcp peer.
@@ -55,7 +55,7 @@ public:
 	{
 		// init io service and set tcp server.
 		m_connector.reset(new TcpConnector(io));
-		m_connector->register_handler(*this);
+		m_connector->register_handler(*this, m_peer_observer);
 		set_handler(handler);
 
 		// init state: prepare for first heartbeat.
@@ -182,7 +182,7 @@ public:
 	{
 		dc.m_category = category;
 		dc.m_data = std::move(data);
-		dc.m_peer_wptr = m_wptr;
+		dc.m_peer_wptr = m_peer_observer;
 		dc.m_prot = &prot;
 		dc.m_prot_head = &prot_head;
 	}

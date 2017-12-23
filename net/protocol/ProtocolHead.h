@@ -43,14 +43,16 @@ enum
 	category_message			= 0x01,
 	// category: heartbeat message.
 	category_heartbeat			= 0x02,
-	// category: heartbeat message.
+	// category: authority message.
 	category_authority			= 0x04,
-	// category: a session message.
-	category_session_mode		= 0x08,
-	// category: encrypted message, else general message.
+	// category: message with a check sum.
+	category_checksum			= 0x08,
+	// category: encrypted message.
 	category_encrypted			= 0x10,
 	// category: sync request, else aysnc.
 	category_sync_mode			= 0x20,
+	// category: auto authority (support for auto login).
+	category_auto_auth			= 0x40,
 };
 // for user define: MessageCategory is uint16_t.
 typedef uint16_t MessageCategory;

@@ -104,26 +104,25 @@ public:
 	TcpSession			m_session;
 	
 public:
-	inline MetaContext() 
-		: m_category(0)
-		, m_request_data(0)
-		, m_request_type(0)
-	{}
-
-	inline void set_context(IN DataContext& dc, IN MessageMeta& m)
+	inline MetaContext(
+		IN DataContext& dc, 
+		IN eco::Bytes& msg,
+		IN MessageMeta& meta)
+		: m_category(dc.m_category)
+		, m_data(std::move(dc.m_data))
+		, m_message(msg)
+		, m_request_data(meta.m_request_data)
+		, m_request_type(meta.m_message_type)
 	{
-		m_data.swap(dc.m_data);
-		m_category = dc.m_category;
-		m_request_data = m.m_request_data;
-		m_request_type = m.m_message_type;
 		m_session.set_protocol(*dc.m_prot);
 		m_session.set_host(dc.m_session_host);
 	}
 
-	inline void clear()
+	inline void release()
 	{
-		m_data.clear();
+		m_data.release();
 		m_message.clear();
+		m_session.reset();
 	}
 };
 
@@ -136,13 +135,14 @@ public:
 	MessageCategory		m_category;
 	TcpSession			m_session;
 
-	inline Context() : m_category(0), m_request_data(0)
+	inline Context() :m_category(0), m_request_data(0), m_session(eco::null)
 	{}
 
 	inline void set_context(IN MetaContext& mc)
 	{
 		m_category = mc.m_category;
 		m_request_data = mc.m_request_data;
+		m_session = mc.m_session;
 	}
 };
 

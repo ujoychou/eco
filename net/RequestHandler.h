@@ -25,6 +25,7 @@
 *******************************************************************************/
 #include <eco/Project.h>
 #include <eco/net/Context.h>
+#include <eco/net/TcpPeer.h>
 #include <eco/net/TcpSession.h>
 #include <eco/net/RequestFilter.h>
 #include <eco/log/Log.h>
@@ -88,7 +89,7 @@ public:
 		return m_context;
 	}
 
-	// context that recv from client.
+	// context that recv from remote peer.
 	inline TcpSession& session()
 	{
 		return m_context.m_session;
@@ -98,7 +99,13 @@ public:
 		return m_context.m_session;
 	}
 
-	// request that recv from client.
+	// context that recv from remote peer.
+	inline TcpPeer& peer() const
+	{
+		return m_context.m_session.get_peer();
+	}
+
+	// request that recv from remote peer.
 	inline Request& request()
 	{
 		return m_request;

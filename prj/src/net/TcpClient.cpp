@@ -145,6 +145,12 @@ void TcpClient::Impl::async_authorize(
 	IN const uint32_t type,
 	IN const MessageCategory category)
 {
+	if (find_authority(&session))
+	{
+		EcoThrow(e_client_session_authorized) << "this session has authorized.";
+		return;
+	}
+
 	// send authority to server for validating session.
 	// if the authority is correct, server and client will build a new session.
 	SessionDataPack::ptr pack(new SessionDataPack);

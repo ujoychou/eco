@@ -74,6 +74,12 @@ public:
 		return ntoh16(bytes + pos_size);
 	}
 
+	virtual void encode_data_size(OUT eco::String& bytes) const override
+	{
+		hton(&bytes[pos_size], static_cast<uint16_t>(bytes.size() - size_head));
+	}
+
+public:
 	virtual bool decode(
 		OUT eco::net::MessageHead& head,
 		IN  const eco::String& bytes,
@@ -99,11 +105,6 @@ public:
 		bytes[pos_version] = static_cast<char>(head.m_version);
 		bytes[pos_category] = static_cast<char>(head.m_category);
 	}
-
-	virtual void encode_data_size(OUT eco::String& bytes) const override
-	{
-		hton(&bytes[pos_size], static_cast<uint16_t>(bytes.size()));
-	}
 };
 
 
@@ -125,6 +126,9 @@ private:
 
 		// message model.
 		uint8_t		m_model;
+
+		// message option.
+		uint8_t		m_option;
 	};
 
 	// "message data" value
@@ -147,17 +151,27 @@ private:
 		size_topic_set		= size_topic_type + 
 							  size_topic_prop + size_topic_value,
 		size_topic_str		= 1,
-
-		// field pos.
-		pos_model			= TcpProtocolHead::size_head,
-		pos_option			= pos_model  + size_model,
-		pos_option_data		= pos_option + size_option,
 	};
 
-	inline uint32_t get_meta_end(IN const MessageMeta& meta) const
+	inline uint32_t get_model_pos(IN  const uint32_t head_size) const
 	{
-		uint32_t pos = pos_option_data;
-		if (eco::has(meta.m_category, category_session_mode))
+		return head_size;
+	}
+	inline uint32_t get_option_pos(IN  const uint32_t head_size) const
+	{
+		return head_size + size_model;
+	}
+	inline uint32_t get_option_data_pos(IN  const uint32_t head_size) const
+	{
+		return get_option_pos(head_size) + size_option;
+	}
+
+	inline uint32_t get_meta_end(
+		IN const MessageMeta& meta,
+		IN  const uint32_t head_size) const
+	{
+		uint32_t pos = get_option_data_pos(head_size);
+		if (eco::has(meta.m_option, option_sess))
 		{
 			pos += size_session_id;
 		}
@@ -204,48 +218,56 @@ public:
 		OUT eco::net::MessageMeta& meta,
 		OUT eco::Bytes& data,
 		IN  eco::String& bytes,
-		IN  eco::net::ProtocolHead& prot_head,
+		IN  const uint32_t head_size,
 		IN  eco::Error& e) override
 	{
-		// check message.
+		// check sum message.
 		uint32_t check_sum_size = 0;
-		if (m_check != nullptr)
+		if (eco::has(meta.m_category, category_checksum) && m_check != nullptr)
 		{
 			if (!m_check->decode(bytes))
 			{
 				e.id(e_message_checksum)
-					<< "checksum bytes size error or checksum doesn't match.";
+					<< "checksum bytes size error or checksum match fail.";
 				return false;
 			}
 			check_sum_size = m_check->get_byte_size();
 		}
-
 		// decrypt message.
 		if (eco::has(meta.m_category, category_encrypted) && m_crypt != nullptr)
 		{
 			uint32_t crypt_size = bytes.size();
-			crypt_size -= (TcpProtocolHead::size_head + check_sum_size);
-			bytes = m_crypt->decode(
-				bytes, TcpProtocolHead::size_head, crypt_size, e);
+			crypt_size -= (head_size + check_sum_size);
+			bytes = m_crypt->decode(bytes, head_size, crypt_size, e);
 			if (bytes.null())
 			{
 				return false;
 			}
 		}
 
-		// get model.
-		uint32_t meta_end = get_meta_end(meta);
+		// get model & option.
+		uint32_t opt_data_pos = get_option_data_pos(head_size);
+		if (bytes.size() < opt_data_pos)
+		{
+			e.id(e_protocol_parameter)
+				<< "message size is too smaller to have option: "
+				<< bytes.size() << '<' << opt_data_pos;
+			return false;
+		}
+		meta.m_model = MessageModel(bytes[get_model_pos(head_size)]);
+		meta.m_option = MessageOption(bytes[get_option_pos(head_size)]);
+
+		// get option data.
+		uint32_t meta_end = get_meta_end(meta, head_size);
 		if (bytes.size() < meta_end)
 		{
 			e.id(e_protocol_parameter)
-				<< "message size is smaller than meta size: "
+				<< "message size is too small to have meta: "
 				<< bytes.size() << '<' << meta_end;
 			return false;
 		}
-		meta.m_model = MessageModel(bytes[pos_model]);
-		// get optional data.
-		uint32_t pos = pos_option_data;
-		if (eco::has(meta.m_category, category_session_mode))
+		uint32_t pos = opt_data_pos;
+		if (eco::has(meta.m_option, option_sess))
 		{
 			ntoh(meta.m_session_id, pos, &bytes[pos]);
 		}
@@ -308,14 +330,13 @@ public:
 		assert(meta.m_codec != nullptr);
 
 		// 1.init bytes size.
-		uint32_t meta_end = get_meta_end(meta);
-		uint32_t byte_size = meta_end;
-		uint32_t code_size = meta.m_codec->get_byte_size();
-		if (meta.m_topic_str.m_size > 0)
+		uint32_t byte_size = get_meta_end(meta, prot_head.head_size());
+		uint32_t code_size = meta.m_codec->get_byte_size();	// meta size.
+		if (meta.m_topic_str.m_size > 0)	// topic str size.
 			byte_size += meta.m_topic_str.m_size;
-		byte_size += (m_crypt == nullptr)
+		byte_size += (m_crypt == nullptr)	// crypt size.
 			? code_size : m_crypt->get_byte_size(code_size);
-		if (m_check != nullptr)
+		if (m_check != nullptr)				// checksum size.
 			byte_size += m_check->get_byte_size();
 		bytes.reserve(byte_size);
 
@@ -327,7 +348,8 @@ public:
 
 		// 3.init message type and optional data.
 		bytes.append(static_cast<char>(meta.m_model));
-		if (eco::has(meta.m_category, category_session_mode))
+		bytes.append(static_cast<char>(meta.m_option));
+		if (eco::has(meta.m_option, option_sess))
 		{
 			append_hton(bytes, meta.m_session_id);
 		}
@@ -355,7 +377,7 @@ public:
 			append_hton(bytes, meta.m_topic_prop);
 			append_hton(bytes, meta.m_topic_value);
 		}
-		if (meta.model_topic_str())
+		else if (meta.model_topic_str())
 		{
 			bytes.append(meta.m_topic_str);
 		}
@@ -375,7 +397,7 @@ public:
 		}
 
 		// 7.append checksum.
-		if (m_check != nullptr)
+		if (eco::has(head.m_category, category_checksum) && m_check != nullptr)
 		{
 			m_check->encode(bytes);
 		}

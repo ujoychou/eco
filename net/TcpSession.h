@@ -64,6 +64,9 @@ public:
 		return std::dynamic_pointer_cast<SessionDataT>(data());
 	}
 
+	// get session peer.
+	TcpPeer& get_peer() const;
+
 public:
 	// async send message.
 	void async_send(

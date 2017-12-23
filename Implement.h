@@ -163,8 +163,9 @@ object_t& object_t::operator=(IN eco::Null)\
 }\
 object_t& object_t::operator=(IN eco::Heap)\
 {\
-	object_t new_obj;\
-	return *this = new_obj;\
+	m_proxy->m_impl.reset(new object_t::Impl);\
+	m_proxy->m_impl->init(*this);\
+	return *this;\
 }\
 bool object_t::operator==(IN const object_t& obj) const\
 {\

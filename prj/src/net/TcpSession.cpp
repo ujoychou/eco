@@ -10,6 +10,31 @@
 ////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
 namespace net{;
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool TcpSessionHost::response_heartbeat() const
+{
+	if (m_type == tcp_session_host_client)
+	{
+		return reinterpret_cast<TcpClient*>(
+			m_host)->impl().m_option.response_heartbeat();
+	}
+	assert(m_type == tcp_session_host_server);
+	return reinterpret_cast<TcpServer*>(
+		m_host)->impl().m_option.response_heartbeat();
+}
+ProtocolHead* TcpSessionHost::protocol_head() const
+{
+	if (m_type == tcp_session_host_client)
+	{
+		return reinterpret_cast<TcpClient*>(m_host)->impl().m_prot_head.get();
+	}
+	assert(m_type == tcp_session_host_server);
+	return reinterpret_cast<TcpServer*>(m_host)->impl().m_prot_head.get();
+}
+
+
 ECO_SHARED_IMPL(TcpSession);
 ////////////////////////////////////////////////////////////////////////////////
 void TcpSession::set_host(IN TcpSessionHost& host)
@@ -20,7 +45,6 @@ void TcpSession::set_protocol(IN Protocol& prot)
 {
 	impl().m_prot = &prot;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 bool TcpSession::open(IN const SessionId session_id)
@@ -111,6 +135,10 @@ SessionData::ptr TcpSession::data()
 uint32_t TcpSession::get_session_id() const
 {
 	return impl().m_session_id;
+}
+TcpPeer& TcpSession::get_peer() const
+{
+	return *impl().m_host.m_peer;
 }
 
 

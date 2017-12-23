@@ -306,12 +306,6 @@ public:
 		}
 	}
 
-	inline void clear()
-	{
-		m_size = 0;
-		m_data[m_size] = 0;
-	}
-
 	inline void release()
 	{
 		if (m_data != nullptr)
@@ -348,6 +342,7 @@ class FixBuffer
 public:
 	inline FixBuffer()
 	{
+		assert(fix_size > 0);
 		clear();
 	}
 
@@ -468,14 +463,14 @@ public:
 	void clear()
 	{
 		m_cur_size = 0;
-		m_data[m_cur_size] = '\0';
+		m_data[m_cur_size] = 0;
 	}
 
 	void erase(IN const uint32_t size)
 	{
 		int32_t new_size = static_cast<int32_t>(m_cur_size - size);
 		m_cur_size = (new_size > 0) ? new_size : 0;
-		m_data[m_cur_size] = '\0';
+		m_data[m_cur_size] = 0;
 	}
 
 private:

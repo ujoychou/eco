@@ -133,9 +133,10 @@ Pusher::Impl::~Impl()
 	}
 
 	// logging thread name.
-	if (m_severity > eco::log::info)
+	const char* t_name = eco::this_thread::name();
+	if (m_severity > eco::log::info && t_name[0] != 0)
 	{
-		m_stream << " #" << eco::this_thread::name();
+		m_stream << " #" << t_name;
 	}
 
 	// logging source file info.

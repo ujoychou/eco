@@ -129,7 +129,7 @@ TcpPeer::ptr TcpPeer::make(
 	IN TcpPeerHandler* hdl)
 {
 	TcpPeer::ptr peer(new TcpPeer);
-	peer->impl().m_wptr = peer;
+	peer->impl().m_peer_observer = peer;
 	peer->impl().make(io, hdl);
 	return peer;
 }

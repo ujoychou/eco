@@ -62,6 +62,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+class TcpPeer;
 class TcpConnector : eco::Object<TcpConnector>
 {
 	ECO_IMPL_API();
@@ -69,7 +70,10 @@ public:
 	TcpConnector(IN IoService* srv);
 	~TcpConnector();
 
-	void register_handler(IN TcpConnectorHandler& handler);
+	// register handler and handler life control.
+	void register_handler(
+		IN TcpConnectorHandler& handler,
+		IN std::weak_ptr<TcpPeer>& peer);
 
 	// get tcp connection id.
 	inline int64_t get_id() const

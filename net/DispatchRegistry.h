@@ -31,13 +31,16 @@
 namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
+// message handled by "handler", suguest using in server.
 template<typename HandlerT>
 inline void handle_context(IN MetaContext& mc)
 {
-	// 1.filter request.
+	// 1.filter request by session open state.
  	if (HandlerT::get_filter().closed_session() && !mc.m_session.opened() ||
  		HandlerT::get_filter().opened_session() && mc.m_session.opened())
  	{
+		EcoNetLog(EcoWarn, mc.m_session.get_peer()) 
+			<< "filter message: " << mc.m_request_type;
  		return;
  	}
 
@@ -49,7 +52,7 @@ inline void handle_context(IN MetaContext& mc)
 	{
 		return;
 	}
-	mc.clear();	// clear io raw data to save memory.
+	mc.release();	// release io raw data to save memory.
 
 	// 3.logging request.
 	if (HandlerT::auto_logging())
@@ -66,6 +69,7 @@ inline void handle_context(IN MetaContext& mc)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// message handled by "functor", suguest using in client.
 template<typename MessageT, typename CodecT>
 inline void handle_context(
 	IN std::function<void(IN MessageT&, IN MetaContext&)>& func,
@@ -78,9 +82,10 @@ inline void handle_context(
 	func(object, mc);
 }
 
+// message array handled by "functor", suguest using in client.
 #define ECO_HANDLE_CONTEXT_ARRAY_FUNC(MessageT) \
 std::function<void(std::vector<std::shared_ptr<MessageT>>&, MetaContext&)>
-
+// 
 template<typename MessageT, typename CodecT>
 inline void handle_context_array(
 	IN ECO_HANDLE_CONTEXT_ARRAY_FUNC(MessageT)& func,
@@ -98,8 +103,13 @@ inline void handle_context_array(
 	// 2.handle message.
 	if (eco::has(mc.m_option, opt_last))
 	{
-		// 3.todo: release message object.
+		// 3.release message object.
 		func(s_message_set, mc);
+		auto it = s_message_set.begin();
+		for (; it != s_message_set.end(); ++it){
+			delete *it;
+		}
+		s_message_set.clear();
 	}
 }
 
