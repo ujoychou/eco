@@ -51,18 +51,16 @@ public:
 	};
 
 	// server option.
-	TcpServer* m_server;
 	TcpServerOption m_option;
+	// protocol.
+	typedef std::shared_ptr<Protocol> ProtocolPtr;
+	std::auto_ptr<ProtocolHead> m_prot_head;
+	std::map<uint32_t, ProtocolPtr> m_protocol_set;
 
 	// tcp acceptor.
 	TcpAcceptor m_acceptor;
 	TcpPeerSet m_peer_set;
 	IoTimer m_timer;
-
-	// protocol.
-	typedef std::shared_ptr<Protocol> ProtocolPtr;
-	std::auto_ptr<ProtocolHead> m_prot_head;
-	std::map<uint32_t, ProtocolPtr> m_protocol_set;
 
 	// dispatch server.
 	DispatchServer m_dispatch;
@@ -76,7 +74,6 @@ public:
 public:
 	inline Impl()
 	{
-		m_server = nullptr;
 		m_make_session = nullptr;
 		m_next_session_id = none_session;
 	}
@@ -84,7 +81,6 @@ public:
 	// eco implment object init by api object(parent).
 	inline void init(TcpServer& server)
 	{
-		m_server = &server;
 		m_acceptor.set_server(server);
 
 		// event hander: on timer

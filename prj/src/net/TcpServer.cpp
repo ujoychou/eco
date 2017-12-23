@@ -184,8 +184,7 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 	}
 
 	// #.dispatch data context.
-	TcpSessionHost host(*m_server);
-	m_server->impl().m_option.set_business_thread_size(0);
+	TcpSessionHost host(*(TcpServerImpl*)this);
 	eco::net::DataContext dc(&host);
 	peer_impl->get_data_context(dc, head.m_category, data, *prot, *m_prot_head);
 	m_dispatch.post(dc);

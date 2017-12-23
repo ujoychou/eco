@@ -100,7 +100,6 @@ class TcpClient::Impl : public TcpPeerHandler
 {
 public:
 	typedef std::auto_ptr<ProtocolHead> ProtocolHeadPtr;
-	TcpClient*		m_client;
 	std::string		m_service_name;	// the service that this client connect to.
 	LoadBalancer	m_balancer;		// load balance for multi server.
 	TcpClientOption	m_option;		// client option.
@@ -123,12 +122,11 @@ public:
 	mutable eco::Mutex	m_mutex;
 
 public:
-	inline Impl() : m_client(nullptr)
+	inline Impl()
 	{}
 
 	inline void init(IN TcpClient& v)
 	{
-		m_client = &v;
 		m_balancer.init(*this);
 	}
 

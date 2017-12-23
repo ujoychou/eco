@@ -58,7 +58,8 @@ inline void handle_context(IN MetaContext& mc)
 	if (HandlerT::auto_logging())
 	{
 		uint32_t type = static_cast<uint32_t>(mc.m_request_type);
-		EcoInfo << "req >" << eco::Integer<uint32_t>(type, eco::dec, 4).c_str()
+		EcoInfo << "req > " 
+			<< eco::Integer<uint32_t>(type, eco::dec, 4).c_str()
 			<< " " << HandlerT::get_request_type_name()
 			<< " " >> HandlerT::Logging(*hdl);
 	}

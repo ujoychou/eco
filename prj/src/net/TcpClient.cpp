@@ -155,7 +155,7 @@ void TcpClient::Impl::async_authorize(
 	// if the authority is correct, server and client will build a new session.
 	SessionDataPack::ptr pack(new SessionDataPack);
 	pack->m_session.reset(m_make_session(none_session));
-	session.set_host(TcpSessionHost(*m_client));
+	session.set_host(TcpSessionHost(*(TcpClientImpl*)this));
 	session.impl().m_session_wptr = pack->m_session;
 	session.impl().user_born();
 	pack->m_user_observer = session.impl().m_user;
@@ -234,7 +234,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 		return;
 	}
 
-	TcpSessionHost host(*m_client);
+	TcpSessionHost host(*(TcpClientImpl*)this);
 	DataContext dc(&host);
 	peer_impl->get_data_context(dc, head.m_category, data, 
 		*m_protocol, *m_prot_head);

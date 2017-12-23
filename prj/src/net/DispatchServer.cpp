@@ -18,9 +18,6 @@ namespace net{;
 bool handle_server_context(
 	OUT TcpSession& sess, IN MessageMeta& meta, IN TcpPeer& peer)
 {
-	TcpServer::Impl& server = reinterpret_cast<TcpServer*>(
-		&sess.impl().m_host.m_host)->impl();
-
 	// #.handle session.
 	if (meta.m_session_id != none_session)
 	{
@@ -92,11 +89,14 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	dc.m_session_host.set_peer(*peer);
 
 	// #.heartbeat is unrelated to session, it's manage remote peer life.
-	if (eco::has(dc.m_category, category_heartbeat) &&
-		dc.m_session_host.response_heartbeat())
+	if (eco::has(dc.m_category, category_heartbeat))
 	{
 		peer->impl().state().peer_live(true);
-		peer->impl().async_send_heartbeat(*dc.m_session_host.protocol_head());
+		if (dc.m_session_host.response_heartbeat())
+		{
+			peer->impl().async_send_heartbeat(
+				*dc.m_session_host.protocol_head());
+		}
 		return ;
 	}
 

@@ -17,21 +17,21 @@ bool TcpSessionHost::response_heartbeat() const
 {
 	if (m_type == tcp_session_host_client)
 	{
-		return reinterpret_cast<TcpClient*>(
-			m_host)->impl().m_option.response_heartbeat();
+		return reinterpret_cast<TcpClient::Impl*>(m_host)
+			->m_option.response_heartbeat();
 	}
 	assert(m_type == tcp_session_host_server);
-	return reinterpret_cast<TcpServer*>(
-		m_host)->impl().m_option.response_heartbeat();
+	return reinterpret_cast<TcpServer::Impl*>(m_host)
+		->m_option.response_heartbeat();
 }
 ProtocolHead* TcpSessionHost::protocol_head() const
 {
 	if (m_type == tcp_session_host_client)
 	{
-		return reinterpret_cast<TcpClient*>(m_host)->impl().m_prot_head.get();
+		return reinterpret_cast<TcpClient::Impl*>(m_host)->m_prot_head.get();
 	}
 	assert(m_type == tcp_session_host_server);
-	return reinterpret_cast<TcpServer*>(m_host)->impl().m_prot_head.get();
+	return reinterpret_cast<TcpServer::Impl*>(m_host)->m_prot_head.get();
 }
 
 
@@ -55,9 +55,9 @@ bool TcpSession::open(IN const SessionId session_id)
 		// note: client open a none session is invalid.
 		if (impl().m_host.m_type == tcp_session_host_server)
 		{
-			TcpServer::Impl& server = reinterpret_cast<TcpServer*>(
-				impl().m_host.m_host)->impl();
-			SessionData::ptr sess = server.add_session(
+			auto* server = reinterpret_cast<
+				TcpServer::Impl*>(impl().m_host.m_host);
+			SessionData::ptr sess = server->add_session(
 				impl().m_session_id, *impl().m_host.m_peer);
 			if (sess != nullptr)
 			{
@@ -69,9 +69,8 @@ bool TcpSession::open(IN const SessionId session_id)
 	// get the exist session.
 	else if (impl().m_host.m_type == tcp_session_host_client)
 	{
-		TcpClient::Impl& client = reinterpret_cast<TcpClient*>(
-			impl().m_host.m_host)->impl();
-		SessionDataPack::ptr pack = client.find_session(session_id);
+		auto* client = reinterpret_cast<TcpClient::Impl*>(impl().m_host.m_host);
+		SessionDataPack::ptr pack = client->find_session(session_id);
 		if (pack != nullptr)
 		{
 			impl().m_user = pack->m_user_observer.lock();
@@ -84,9 +83,8 @@ bool TcpSession::open(IN const SessionId session_id)
 	}
 	else if (impl().m_host.m_type == tcp_session_host_server)
 	{
-		TcpServer::Impl& server = reinterpret_cast<TcpServer*>(
-			impl().m_host.m_host)->impl();
-		auto sess = server.find_session(session_id);
+		auto* server = reinterpret_cast<TcpServer::Impl*>(impl().m_host.m_host);
+		auto sess = server->find_session(session_id);
 		if (sess != nullptr)
 		{
 			impl().m_session_wptr = sess;

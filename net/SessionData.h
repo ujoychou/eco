@@ -31,8 +31,8 @@
 namespace eco{;
 namespace net{;
 class TcpPeer;
-class TcpClient;
-class TcpServer;
+class TcpClientImpl;
+class TcpServerImpl;
 class Protocol;
 class ProtocolHead;
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,13 +62,13 @@ public:
 		: m_type(0), m_host(nullptr), m_peer(nullptr)
 	{}
 
-	inline TcpSessionHost(IN TcpClient& client)
+	inline TcpSessionHost(IN TcpClientImpl& client)
 		: m_type(tcp_session_host_client)
 		, m_host(&client), m_peer(nullptr)
 	{}
 
 	inline TcpSessionHost(
-		IN TcpServer& server, 
+		IN TcpServerImpl& server, 
 		IN TcpPeer* peer = nullptr)
 		: m_type(tcp_session_host_server)
 		, m_host(&server), m_peer(peer)
