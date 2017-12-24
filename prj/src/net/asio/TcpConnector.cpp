@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <eco/Project.h>
+#include <eco/log/Log.h>
 #include <eco/thread/Mutex.h>
 #include <eco/net/protocol/ProtocolHead.h>
 
@@ -40,6 +41,11 @@ public:
 		m_socket.close(ec);
 	}
 
+	inline size_t get_id() const
+	{
+		return reinterpret_cast<size_t>(this);
+	}
+
 	inline void async_connect(IN const Address& addr)
 	{
 		using namespace boost::asio::ip;
@@ -58,7 +64,7 @@ public:
 
 		// connect to server.
 		boost::asio::async_connect(m_socket, it_endpoint,
-			boost::bind(&Impl::on_connect, this,
+			boost::bind(&Impl::on_connect, this, std::move(m_peer_observer),
 			boost::asio::placeholders::error));
 	}
 
@@ -69,9 +75,20 @@ public:
 	}
 
 	inline void on_connect(
+		IN std::weak_ptr<TcpPeer>& peer_wptr,
 		IN const boost::system::error_code& ec)
 	{
-		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
+		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
+		if (peer == nullptr)
+		{
+			if (ec)
+			{
+				eco::Error e(ec.message(), ec.value());
+				EcoNet(EcoInfo, *this, "on_connect", e);
+			}
+			return;
+		}
+
 		if (ec) {
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_connect(false, &e);
@@ -94,16 +111,27 @@ public:
 	{
 		boost::asio::async_read(m_socket,
 			boost::asio::buffer(data, size),
-			boost::bind(&Impl::on_read_head, this,
-			data, size, boost::asio::placeholders::error));
+			boost::bind(&Impl::on_read_head, this, data, size,
+			std::move(m_peer_observer), boost::asio::placeholders::error));
 	}
 
 	inline void on_read_head(
 		IN char* data,
 		IN const uint32_t size,
+		IN std::weak_ptr<TcpPeer>& peer_wptr,
 		IN const boost::system::error_code& ec)
 	{
-		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
+		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
+		if (peer == nullptr)
+		{
+			if (ec)
+			{
+				eco::Error e(ec.message(), ec.value());
+				EcoNet(EcoInfo, *this, "on_read_head", e);
+			}
+			return;
+		}
+
 		if (ec) {
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_read_head(data, size, &e);
@@ -122,15 +150,26 @@ public:
 		const uint32_t s = data.size() - start;
 		boost::asio::async_read(m_socket,
 			boost::asio::buffer(d, s),
-			boost::bind(&Impl::on_read_data, this,
-			eco::move(data), boost::asio::placeholders::error));
+			boost::bind(&Impl::on_read_data, this, eco::move(data), 
+			std::move(m_peer_observer), boost::asio::placeholders::error));
 	}
 
 	inline void on_read_data(
 		IN eco::String& data,
+		IN std::weak_ptr<TcpPeer>& peer_wptr,
 		IN const boost::system::error_code& ec)
 	{
-		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
+		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
+		if (peer == nullptr)
+		{
+			if (ec)
+			{
+				eco::Error e(ec.message(), ec.value());
+				EcoNet(EcoInfo, *this, "on_read_data", e);
+			}
+			return;
+		}
+
 		if (ec) {
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_read_data(data, &e);
@@ -149,18 +188,28 @@ public:
 		const uint32_t s = data.size();
 		boost::asio::async_write(m_socket,
 			boost::asio::buffer(d, s),
-			boost::bind(&Impl::on_write, this,
-			eco::move(data),
-			boost::asio::placeholders::error,
+			boost::bind(&Impl::on_write, this, eco::move(data), 
+			std::move(m_peer_observer), boost::asio::placeholders::error,
 			boost::asio::placeholders::bytes_transferred));
 	}
 
 	inline void on_write(
 		IN eco::String& data,
+		IN std::weak_ptr<TcpPeer>& peer_wptr,
 		IN const boost::system::error_code& ec,
 		IN size_t bytes_transferred)
 	{
-		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
+		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
+		if (peer == nullptr)
+		{
+			if (ec)
+			{
+				eco::Error e(ec.message(), ec.value());
+				EcoNet(EcoInfo, *this, "on_write", e);
+			}
+			return;
+		}
+
 		if (ec)
 		{
 			eco::Error e(ec.message(), ec.value());
@@ -187,17 +236,28 @@ public:
 			eco::String sd(std::move(m_send_msg.front()));
 			boost::asio::async_write(m_socket,
 				boost::asio::buffer(&sd[0], sd.size()),
-				boost::bind(&Impl::on_write, this,
+				boost::bind(&Impl::on_write, this, std::move(m_peer_observer),
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred));
 		}
 	}
 
 	inline void on_write(
+		IN std::weak_ptr<TcpPeer>& peer_wptr,
 		IN const boost::system::error_code& ec,
 		IN size_t bytes_transferred)
 	{
-		std::shared_ptr<TcpPeer> handler_guard(m_peer_observer.lock());
+		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
+		if (peer == nullptr)
+		{
+			if (ec)
+			{
+				eco::Error e(ec.message(), ec.value());
+				EcoNet(EcoInfo, *this, "on_write", e);
+			}
+			return;
+		}
+
 		if (ec)
 		{
 			eco::Error e(ec.message(), ec.value());
@@ -227,6 +287,7 @@ public:
 };
 
 
+ECO_IMPL(TcpConnector);
 ////////////////////////////////////////////////////////////////////////////////
 TcpConnector::TcpConnector(IN IoService* srv)
 {
@@ -282,6 +343,10 @@ void TcpConnector::async_write(IN eco::String& data)
 	m_impl->async_write(data);
 }
 
+int64_t TcpConnector::get_id() const
+{
+	return impl().get_id();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

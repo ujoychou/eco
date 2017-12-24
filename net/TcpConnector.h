@@ -76,10 +76,7 @@ public:
 		IN std::weak_ptr<TcpPeer>& peer);
 
 	// get tcp connection id.
-	inline int64_t get_id() const
-	{
-		return reinterpret_cast<int64_t>(this);
-	}
+	int64_t get_id() const;
 
 	// get tcp connection socket.
 	TcpSocket* socket();
