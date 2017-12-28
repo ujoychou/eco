@@ -170,6 +170,14 @@ public:
 			resize(siz);
 	}
 
+	explicit inline String(IN const char* v)
+		: m_data(nullptr)
+		, m_size(0)
+		, m_capacity(0)
+	{
+		asign(v);
+	}
+
 	inline String(IN String&& v)
 		: m_data(v.m_data)
 		, m_size(v.m_size)
@@ -277,8 +285,11 @@ public:
 	inline void resize(IN uint32_t s)
 	{
 		reserve(s);
-		m_size = s;
-		m_data[m_size] = 0;
+		if (s > 0)
+		{
+			m_size = s;
+			m_data[m_size] = 0;
+		}
 	}
 
 	inline void reserve(IN uint32_t c)
@@ -286,6 +297,7 @@ public:
 		if (m_capacity < c)
 		{
 			// exponential growth.
+			uint32_t old_size = m_size;
 			uint32_t new_size = m_capacity * 2;
 			if (new_size < c)
 			{
@@ -294,14 +306,15 @@ public:
 
 			// keep old value.
 			char* new_data = new char[new_size + 1];
-			if (m_size > 0)
+			if (old_size > 0)
 			{
-				memcpy(new_data, m_data, m_size);
+				memcpy(new_data, m_data, old_size);
 			}
-			new_data[m_size] = 0;
+			new_data[old_size] = 0;
 			
 			release();
 			m_data = new_data;
+			m_size = old_size;
 			m_capacity = new_size;
 		}
 	}
@@ -315,6 +328,29 @@ public:
 		}
 		m_size = 0;
 		m_capacity = 0;
+	}
+
+	inline const char* find(IN const char* v) const
+	{
+		return eco::find(m_data, v);
+	}
+
+	inline const char* find_reverse(
+		IN const char* v,
+		IN const uint32_t find_end = 0) const
+	{
+		uint32_t len = strlen(v);
+		if (m_size < find_end + len)
+			return nullptr;
+
+		const char* end = &m_data[find_end];
+		const char* start = &m_data[m_size - len];
+		for (; start != end; --start)
+		{
+			if (eco::find_cmp(start, v))
+				return start;
+		}
+		return eco::find_cmp(start, v) ? start : nullptr;
 	}
 
 private:
