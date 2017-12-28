@@ -98,6 +98,13 @@ public:
 	*/
 	void async_read_data(IN eco::String& data, IN const uint32_t start);
 
+	/*@ async read data until meet the "delimiter" string.
+	* @ para.size: memory space for storing comming data.
+	*/
+	void async_read_until(
+		IN const uint32_t data_size,
+		IN const char* delimiter);
+
 	/*@ asynchronous send data to client.
 	* @ para.data: data to send to client.
 	*/

@@ -46,6 +46,12 @@ public:
 	const char* get_service_name() const;
 	TcpClient& service_name(IN const char*);
 
+	// network server option.
+	void set_option(IN const TcpClientOption&);
+	TcpClientOption& option();
+	const TcpClientOption& get_option() const;
+	TcpClient& option(IN const TcpClientOption&);
+
 	// protocol head.
 	template<typename ProtocolHeadT>
 	inline void set_protocol_head()

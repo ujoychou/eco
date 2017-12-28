@@ -51,8 +51,6 @@ enum
 	category_encrypted			= 0x10,
 	// category: sync request, else aysnc.
 	category_sync_mode			= 0x20,
-	// category: auto authority (support for auto login).
-	category_auto_auth			= 0x40,
 };
 // for user define: MessageCategory is uint16_t.
 typedef uint16_t MessageCategory;
@@ -75,11 +73,17 @@ class ProtocolHead
 {
 public:
 	// get message head size. max head "size = 32 = sizeof(s_head_data[])".
-	virtual uint32_t head_size() const = 0;
+	virtual uint32_t size() const = 0;
+
+	// the max data size that this protocol head support.
+	virtual uint32_t max_data_size() const = 0;
 
 	// get message data size that don't include head size.
-	virtual uint32_t decode_data_size(
-		IN const char* bytes) const = 0;
+	virtual bool decode_data_size(
+		OUT uint32_t& data_size,
+		IN const char* bytes,
+		IN const uint32_t size,
+		OUT eco::Error& e) const = 0;
 
 	/*@ decode message head.
 	* @ para.bytes: message head bytes.
@@ -89,26 +93,12 @@ public:
 		IN  const eco::String& bytes,
 		IN  eco::Error& e) const = 0;
 
-	/*@ encode protocol head.*/
-	virtual void encode_append(
-		OUT eco::String& bytes,
-		IN  const eco::net::MessageHead& head) const = 0;
-
-	virtual void encode_data_size(
-		OUT eco::String& bytes) const = 0;
-
 	/* encode a heartbeat message, heartbeat encoded by protocol head, not by 
 	protocol, so it has no protocol info. and heartbeat don't judge protocol,
 	it's responsibility is only judge peer live status.
 	*/
 	virtual void encode_heartbeat(
-		OUT eco::String& bytes) const
-	{
-		MessageHead head;
-		head.m_version = -1;
-		eco::add(head.m_category, category_heartbeat);
-		encode_append(bytes, head);
-	}
+		OUT eco::String& bytes) const = 0;
 };
 
 

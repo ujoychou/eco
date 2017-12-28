@@ -207,6 +207,18 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\..\codec\base64.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\codec\sha1.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\Being.cpp" />
     <ClCompile Include="..\Eco.cpp" />
     <ClCompile Include="..\App.cpp" />
@@ -488,6 +500,14 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\web\Html.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\web\Json.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\xml\Reader.h" />
+    <ClInclude Include="..\..\..\codec\base64.h" />
+    <ClInclude Include="..\..\..\codec\NullByteCoder.h" />
+    <ClInclude Include="..\..\..\codec\sha1.h" />
+    <ClInclude Include="..\..\..\codec\Zlib.h" />
+    <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
+    <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
+    <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h" />
+    <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />

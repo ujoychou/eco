@@ -130,6 +130,12 @@
     <Filter Include="lib\proxy">
       <UniqueIdentifier>{590dc099-fd12-44f0-8479-f7cb5fdbcdaa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lib\codec">
+      <UniqueIdentifier>{05509480-6f77-4a39-bf04-bc1b6c4b6ea6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\net\protocol">
+      <UniqueIdentifier>{1caaef26-d6d5-420b-b507-14b6b5b197eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Config.cpp">
@@ -290,6 +296,12 @@
     </ClCompile>
     <ClCompile Include="..\net\DispatchServer.cpp">
       <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\codec\base64.cpp">
+      <Filter>lib\codec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\codec\sha1.cpp">
+      <Filter>lib\codec</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -688,6 +700,30 @@
     </ClInclude>
     <ClInclude Include="..\net\TcpPeerSet.h">
       <Filter>src\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\base64.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\NullByteCoder.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\sha1.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\Zlib.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\ZlibFlate.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h">
+      <Filter>lib\net\protocol</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

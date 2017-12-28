@@ -64,7 +64,7 @@ public:
 
 		// connect to server.
 		boost::asio::async_connect(m_socket, it_endpoint,
-			boost::bind(&Impl::on_connect, this, std::move(m_peer_observer),
+			boost::bind(&Impl::on_connect, this, m_peer_observer,
 			boost::asio::placeholders::error));
 	}
 
@@ -81,11 +81,8 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			if (ec)
-			{
-				eco::Error e(ec.message(), ec.value());
-				EcoNet(EcoInfo, *this, "on_connect", e);
-			}
+			EcoInfo << "on_connect peer null: " << ec.message()
+				<< '@' << ec.value();
 			return;
 		}
 
@@ -105,6 +102,65 @@ public:
 		m_socket.close(ec);
 	}
 
+	inline void async_read_until(
+		IN const uint32_t data_size,
+		IN const char* delimiter)
+	{
+		eco::String delim(delimiter);
+		eco::String data(data_size);
+		async_read_some(data, 0, delim);
+	}
+
+	inline void async_read_some(
+		IN eco::String& data,
+		IN uint32_t start_pos,
+		IN eco::String& delimiter)
+	{
+		uint32_t size = data.size() - start_pos;
+		char* buff = &data[start_pos];
+		m_socket.async_read_some(
+			boost::asio::buffer(buff, size),
+			boost::bind(&Impl::on_read_until, this,
+				eco::move(data), start_pos, eco::move(delimiter),
+				m_peer_observer, boost::asio::placeholders::error,
+				boost::asio::placeholders::bytes_transferred));
+	}
+
+	inline void on_read_until(
+		IN eco::String& data,
+		IN uint32_t start_pos,
+		IN eco::String& delimiter,
+		IN std::weak_ptr<TcpPeer>& peer_wptr,
+		IN const boost::system::error_code& ec,
+		IN size_t bytes_transferred)
+	{
+		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
+		if (peer == nullptr)
+		{
+			EcoInfo << "on_read_until peer null: " << ec.message()
+				<< '@' << ec.value();
+			return;
+		}
+		if (ec)
+		{
+			eco::Error e(ec.message(), ec.value());
+			m_handler->on_read_data(data, &e);
+			return;
+		}
+
+		// check whether reach the end.
+		data.resize(start_pos + bytes_transferred);
+		if (!data.find_reverse(delimiter.c_str(), start_pos))
+		{
+			async_read_some(data, data.size(), delimiter);
+		}
+		else
+		{
+			m_handler->on_read_data(data, nullptr);
+		}
+	}
+
+public:
 	inline void async_read_head(
 		IN char* data,
 		IN const uint32_t size)
@@ -112,23 +168,22 @@ public:
 		boost::asio::async_read(m_socket,
 			boost::asio::buffer(data, size),
 			boost::bind(&Impl::on_read_head, this, data, size,
-			std::move(m_peer_observer), boost::asio::placeholders::error));
+			m_peer_observer, boost::asio::placeholders::error,
+			boost::asio::placeholders::bytes_transferred));
 	}
 
 	inline void on_read_head(
 		IN char* data,
 		IN const uint32_t size,
 		IN std::weak_ptr<TcpPeer>& peer_wptr,
-		IN const boost::system::error_code& ec)
+		IN const boost::system::error_code& ec,
+		IN size_t bytes_transferred)
 	{
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			if (ec)
-			{
-				eco::Error e(ec.message(), ec.value());
-				EcoNet(EcoInfo, *this, "on_read_head", e);
-			}
+			EcoInfo << "on_read_head peer null: " << ec.message() 
+				<< '@' << ec.value();
 			return;
 		}
 
@@ -142,31 +197,30 @@ public:
 
 	inline void async_read_data(
 		IN eco::String& data,
-		IN const uint32_t start)
+		IN const uint32_t head_size)
 	{
 		// eco::move(data) will clear eco::String, so can't use like:
 		// boost::asio::buffer(&d[start], data.size() - start),
-		char* d = &data[start];
-		const uint32_t s = data.size() - start;
+		char* d = &data[head_size];
+		const uint32_t s = data.size() - head_size;
 		boost::asio::async_read(m_socket,
 			boost::asio::buffer(d, s),
-			boost::bind(&Impl::on_read_data, this, eco::move(data), 
-			std::move(m_peer_observer), boost::asio::placeholders::error));
+			boost::bind(&Impl::on_read_data, this, eco::move(data),
+			m_peer_observer, boost::asio::placeholders::error,
+			boost::asio::placeholders::bytes_transferred));
 	}
 
 	inline void on_read_data(
 		IN eco::String& data,
 		IN std::weak_ptr<TcpPeer>& peer_wptr,
-		IN const boost::system::error_code& ec)
+		IN const boost::system::error_code& ec,
+		IN size_t bytes_transferred)
 	{
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			if (ec)
-			{
-				eco::Error e(ec.message(), ec.value());
-				EcoNet(EcoInfo, *this, "on_read_data", e);
-			}
+			EcoInfo << "on_read_data peer null: " << ec.message()
+				<< '@' << ec.value();
 			return;
 		}
 
@@ -179,6 +233,7 @@ public:
 		}
 	}
 
+public:
 #ifdef ECO_WIN
 	inline void async_write(IN eco::String& data)
 	{
@@ -189,7 +244,7 @@ public:
 		boost::asio::async_write(m_socket,
 			boost::asio::buffer(d, s),
 			boost::bind(&Impl::on_write, this, eco::move(data), 
-			std::move(m_peer_observer), boost::asio::placeholders::error,
+			m_peer_observer, boost::asio::placeholders::error,
 			boost::asio::placeholders::bytes_transferred));
 	}
 
@@ -202,11 +257,8 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			if (ec)
-			{
-				eco::Error e(ec.message(), ec.value());
-				EcoNet(EcoInfo, *this, "on_write", e);
-			}
+			EcoInfo << "on_write peer null: " << ec.message()
+				<< '@' << ec.value();
 			return;
 		}
 
@@ -236,7 +288,7 @@ public:
 			eco::String sd(std::move(m_send_msg.front()));
 			boost::asio::async_write(m_socket,
 				boost::asio::buffer(&sd[0], sd.size()),
-				boost::bind(&Impl::on_write, this, std::move(m_peer_observer),
+				boost::bind(&Impl::on_write, this, m_peer_observer,
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred));
 		}
@@ -250,11 +302,8 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			if (ec)
-			{
-				eco::Error e(ec.message(), ec.value());
-				EcoNet(EcoInfo, *this, "on_write", e);
-			}
+			EcoInfo << "on_write peer null: " << ec.message()
+				<< '@' << ec.value();
 			return;
 		}
 
@@ -328,14 +377,23 @@ void TcpConnector::close()
 	m_impl->close();
 }
 
-void TcpConnector::async_read_head(IN char* data, IN const uint32_t head_size)
+void TcpConnector::async_read_head(
+	IN char* data, IN const uint32_t head_size)
 {
 	m_impl->async_read_head(data, head_size);
 }
 
-void TcpConnector::async_read_data(IN eco::String& data, IN const uint32_t start)
+void TcpConnector::async_read_data(
+	IN eco::String& data, IN const uint32_t start)
 {
 	m_impl->async_read_data(data, start);
+}
+
+void TcpConnector::async_read_until(
+	IN const uint32_t data_size, 
+	IN const char* delimiter)
+{
+	m_impl->async_read_until(data_size, delimiter);
 }
 
 void TcpConnector::async_write(IN eco::String& data)

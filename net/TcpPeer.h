@@ -58,6 +58,9 @@ public:
 
 	// get protocol head.
 	virtual ProtocolHead& protocol_head() const = 0;
+
+	// whether is a websocket.
+	virtual bool websocket() const = 0;
 };
 
 
@@ -94,6 +97,7 @@ public:
 
 	// async recv message from peer.
 	void async_recv();
+	void async_recv_shakehand();
 
 	// close peer.
 	void close();

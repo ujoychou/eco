@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/log/Log.h>
 #include <eco/service/dev/Cluster.h>
-#include <eco/net/protocol/TcpProtocol.h>
+#include <eco/net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
 #include "TcpSession.ipp"
 
@@ -17,14 +17,22 @@ namespace net{;
 void TcpServer::Impl::start()
 {
 	// verify data.
-	if (m_prot_head.get() == nullptr)
-		EcoThrow(e_server_no_protocol_head) << "server protocol head is null.";
-	if (m_protocol_set.empty())
-		EcoThrow(e_server_no_protocol) << "server protocol is null.";
 	if (m_option.get_port() == 0)
 		EcoThrow(e_server_no_port) << "server must dedicated server port.";
 	if (m_make_session == nullptr)
 		EcoThrow(e_server_no_session_data) << "server has no session data.";
+
+	// set protocol.
+	if (m_option.websocket())
+	{
+		set_protocol_head(new WebSocketProtocolHead());
+		set_protocol(new WebSocketProtocol());
+	}
+
+	if (m_prot_head.get() == nullptr)
+		EcoThrow(e_server_no_protocol_head) << "server protocol head is null.";
+	if (m_protocol_set.empty())
+		EcoThrow(e_server_no_protocol) << "server protocol is null.";
 
 	// set default value.
 	if (m_option.get_max_connection_size() == 0)
@@ -96,14 +104,14 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 	if (m_option.get_heartbeat_send_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_send_tick() == 0)
 	{
-		async_send_heartbeat();
+		//async_send_heartbeat();
 	}
 
 	// clean dead peer.
 	if (m_option.get_heartbeat_recv_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_recv_tick() == 0)
 	{
-		m_peer_set.clean_dead_peer();
+		//m_peer_set.clean_dead_peer();
 	}
 
 	// clean inactive connection.
@@ -133,7 +141,15 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& p, IN const eco::Error* e)
 	if (m_peer_set.add(p))
 	{
 		// tcp_connection start work and recv request.
-		p->async_recv();
+		if (m_option.websocket())
+		{
+			p->async_recv_shakehand();
+		}
+		else
+		{
+			p->state().set_ready();
+			p->async_recv();
+		}
 	}
 	else
 	{
@@ -178,7 +194,7 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 	if (eco::has(head.m_category, category_heartbeat) &&
 		m_option.io_heartbeat())
 	{
-		peer_impl->state().peer_live(true);
+		peer_impl->state().set_peer_live(true);
 		if (m_option.response_heartbeat())
 			peer_impl->async_send_heartbeat(*m_prot_head);		
 		return;

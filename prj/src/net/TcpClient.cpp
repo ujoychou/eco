@@ -59,7 +59,7 @@ void LoadBalancer::load_server()
 	}
 
 	// this client has connect to server.
-	if (m_peer->get_state().is_connected())
+	if (m_peer->get_state().connected())
 	{
 		return;
 	}
@@ -175,7 +175,7 @@ void TcpClient::Impl::async_auth(IN TcpSession& session, IN MessageMeta& meta)
 	// use "&session" when get response, because it represent user.
 	pack->m_request_data = meta.m_request_data;
 	meta.set_request_data(session_key);
-	if (!m_protocol->encode(pack->m_request, meta, *m_prot_head, e))
+	if (!m_protocol->encode(pack->m_request, meta, e))
 	{
 		EcoError << "tcp client async auth: encode data fail." << EcoFmt(e);
 		return;
@@ -264,6 +264,7 @@ void TcpClient::Impl::on_timer(IN const eco::Error* e)
 
 //##############################################################################
 //##############################################################################
+ECO_PROPERTY_VAL_IMPL(TcpClient, TcpClientOption, option);
 ////////////////////////////////////////////////////////////////////////////////
 DispatchRegistry& TcpClient::dispatcher()
 {

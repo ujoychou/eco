@@ -78,6 +78,8 @@ enum
 	option_req8				= 0x08,
 	// option: message has a session id.
 	option_sess				= 0x10,
+	// option: auto authority(support for auto login).
+	option_auto				= 0x20,
 };
 // for user define: MessageOption is uint16_t.
 typedef uint32_t MessageOption;
@@ -203,14 +205,12 @@ public:
 		OUT eco::net::MessageMeta& meta,
 		OUT eco::Bytes& data,
 		IN  eco::String& bytes,
-		IN  const uint32_t head_size,
 		IN  eco::Error& e) = 0;
 
 	/*@ #1.encode message to bytes string.*/
 	virtual bool encode(
 		OUT eco::String& bytes,
 		IN  const eco::net::MessageMeta& meta,
-		IN  eco::net::ProtocolHead& prot_head,
 		OUT eco::Error& e) = 0;
 };
 

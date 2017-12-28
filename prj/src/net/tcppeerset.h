@@ -124,9 +124,9 @@ public:
 		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
 		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); )
 		{
-			if (it->second->get_state().is_peer_live())
+			if (it->second->get_state().peer_live())
 			{
-				it->second->state().peer_live(false);
+				it->second->state().set_peer_live(false);
 				++it;
 			}
 			else
@@ -145,9 +145,9 @@ public:
 		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
 		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); )
 		{
-			if (it->second->get_state().is_peer_active())
+			if (it->second->get_state().peer_active())
 			{
-				it->second->state().peer_active(false);
+				it->second->state().set_peer_active(false);
 				++it;
 			}
 			else
@@ -158,6 +158,17 @@ public:
 				it = m_peer_map.erase(it);
 			}
 		}// end for
+	}
+
+	/*@ send heartbeat to all inactive connections.*/
+	inline void send_test()
+	{
+		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
+		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); ++it)
+		{
+			it->second->impl().async_send(
+				eco::String("hello ujoychou, this is a test message."));
+		}
 	}
 };
 

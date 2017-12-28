@@ -34,6 +34,7 @@ public:
 	// option.
 	uint16_t m_no_delay;
 	uint16_t m_session_mode;
+	uint16_t m_websocket;
 
 	// io thread and business thread.
 	uint16_t m_io_thread_size;
@@ -64,6 +65,7 @@ public:
 		// option.
 		m_no_delay = false;
 		m_session_mode = false;
+		m_websocket = false;
 
 		reset_tick();
 	}
@@ -76,6 +78,7 @@ public:
 ECO_VALUE_IMPL(TcpClientOption);
 ECO_PROPERTY_STR_IMPL(TcpClientOption, name);
 ECO_PROPERTY_BOL_IMPL(TcpClientOption, no_delay);
+ECO_PROPERTY_BOL_IMPL(TcpClientOption, websocket);
 ECO_PROPERTY_BOL_IMPL(TcpClientOption, session_mode);
 ECO_PROPERTY_BOL_IMPL(TcpClientOption, rhythm_heartbeat);
 ECO_PROPERTY_BOL_IMPL(TcpClientOption, response_heartbeat);

@@ -37,6 +37,7 @@ public:
 	// peer option.
 	uint16_t m_no_delay;
 	uint16_t m_io_heartbeat;
+	uint16_t m_websocket;
 
 	// io thread and business thread.
 	uint16_t m_io_thread_size;
@@ -69,6 +70,7 @@ public:
 		// option.
 		m_no_delay = false;
 		m_io_heartbeat = false;
+		m_websocket = false;
 
 		reset_tick();
 	}
@@ -86,6 +88,7 @@ ECO_VALUE_IMPL(TcpServerOption);
 ECO_PROPERTY_STR_IMPL(TcpServerOption, router);
 ECO_PROPERTY_STR_IMPL(TcpServerOption, name);
 ECO_PROPERTY_BOL_IMPL(TcpServerOption, no_delay);
+ECO_PROPERTY_BOL_IMPL(TcpServerOption, websocket);
 ECO_PROPERTY_BOL_IMPL(TcpServerOption, io_heartbeat);
 ECO_PROPERTY_BOL_IMPL(TcpServerOption, rhythm_heartbeat);
 ECO_PROPERTY_BOL_IMPL(TcpServerOption, response_heartbeat);

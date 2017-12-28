@@ -260,6 +260,8 @@ public:
 			option.set_max_session_size(v);
 		if (m_sys_config.find(v, "provider/io_heartbeat"))
 			option.set_io_heartbeat(v);
+		if (m_sys_config.find(v, "provider/websocket"))
+			option.set_websocket(v);
 		if (m_sys_config.find(v, "provider/response_heartbeat"))
 			option.set_response_heartbeat(v);
 		if (m_sys_config.find(v, "provider/rhythm_heartbeat"))

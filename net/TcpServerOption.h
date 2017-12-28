@@ -149,6 +149,12 @@ public:
 	void set_no_delay(IN const bool);
 	bool no_delay() const;
 	TcpServerOption& no_delay(IN const bool);
+
+	/* @ set tcp connection option whether it is a websocket protocol.
+	*/
+	void set_websocket(IN const bool);
+	bool websocket() const;
+	TcpServerOption& websocket(IN const bool);
 };
 
 ////////////////////////////////////////////////////////////////////////////////

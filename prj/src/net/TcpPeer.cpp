@@ -4,19 +4,25 @@
 #include <eco/net/Ecode.h>
 #include <eco/log/Log.h>
 #include <eco/net/protocol/TcpProtocol.h>
+#include <eco/net/protocol/WebSocketShakeHand.h>
+#include <eco/net/protocol/WebSocketProtocol.h>
 
 
 
 namespace eco{;
 namespace net{;
 ECO_OBJECT_IMPL(TcpPeer);
-////////////////////////////////////////////////////////////////////////////////
 EcoThreadLocal char s_data_head[32] = {0};
-inline void TcpPeer::Impl::async_recv()
+////////////////////////////////////////////////////////////////////////////////
+void TcpPeer::Impl::async_recv_next()
 {
-	// ready to receive data head.
-	uint32_t size = handler().protocol_head().head_size();
-	m_connector->async_read_head(s_data_head, size);
+	m_connector->async_read_head(s_data_head, head_size());
+}
+void TcpPeer::Impl::async_recv_shakehand()
+{
+	m_state.set_websocket();
+	m_connector->async_read_until(
+		WebSocketShakeHand::size(), WebSocketShakeHand::head_end());
 }
 
 
@@ -28,13 +34,50 @@ void TcpPeer::Impl::on_connect(
 	if (!is_connected)
 	{
 		EcoNet(EcoError, *this, "connect", *e);
+		return;
+	}
+
+	// "client" connect callback.
+	set_connected();				// set peer state.
+	if (handler().websocket())
+	{
+		assert(false);
+		m_state.set_websocket();
 	}
 	else
 	{
-		set_connected();			// set peer state.
+		m_state.set_ready();
 		m_handler->on_connect();	// notify handler.
-		async_recv();
+		async_recv_next();
 	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline void TcpPeer::Impl::handle_websocket_shakehand(
+	IN const char* data_head, IN const uint32_t head_size)
+{
+	if (!m_state.websocket())
+	{
+		return;
+	}
+
+	// handle websockets shakehands head : "Get ..."
+	if (eco::find(data_head, head_size, "GET ") != data_head)
+	{
+		EcoNetLog(EcoError, *this)
+			<< "web socket shakehand invalid 'Get '.";
+		return;
+	}
+	WebSocketShakeHand shake_hand;
+	if (!shake_hand.parse(data_head))
+	{
+		EcoNetLog(EcoError, *this) << "web socket shakehand invalid.";
+		notify_close(nullptr);
+		return;
+	}
+	async_send(shake_hand.response());
+	m_state.set_ready();	// websocket connection has build.
 }
 
 
@@ -42,40 +85,36 @@ void TcpPeer::Impl::on_connect(
 void TcpPeer::Impl::on_read_head(
 	IN char* data_head,
 	IN const uint32_t head_size,
-	IN const eco::Error* e)
+	IN const eco::Error* err)
 {
-	if (e != nullptr)	// if peerection occur error, close it.
+	if (err != nullptr)	// if peerection occur error, close it.
 	{
-		EcoNet(EcoWarn, *this, "recv_head", *e);
-		notify_close(e);
-		return;
+		EcoNet(EcoWarn, *this, "recv_head", *err);
+		notify_close(err);
+		return; 
 	}
 
-	uint32_t data_size = handler().protocol_head().decode_data_size(data_head);
-	// if recv message size is error.
-	const uint32_t max_recv_size = 2 * 1024 * 1024;		// max data size < 2M.
-	if (data_size > max_recv_size)
+	// parse message body length from protocol head.
+	eco::Error e;
+	uint32_t data_size = 0;
+	if (!protocol_head().decode_data_size(data_size, data_head, head_size, e))
 	{
-		eco::Error e(e_message_overszie);
-		e << "peer received a oversize message: " << data_size;
 		EcoNet(EcoError, *this, "recv_head", e);
 		notify_close(&e);
 		return;
 	}
 
 	// when recv head from peer, means peer is alive.
-	m_state.peer_live(true);
+	m_state.set_peer_live(true);
 
 	// allocate memory for store coming data.
 	eco::String data;
 	data.resize(head_size + data_size);
 	strncpy(&data[0], data_head, head_size);
-
-	// empty message.
-	if (data_size == 0)
+	if (data_size == 0)		// empty message.
 	{
 		m_handler->on_read(this, data);
-		async_recv();	// recv next coming data.
+		async_recv_next();		// recv next coming data.
 		return;
 	}
 
@@ -96,15 +135,24 @@ void TcpPeer::Impl::on_read_data(
 		return;
 	}
 
-	// when recv data message from peer, means peer is active.
-	m_state.peer_active(true);
+	if (!m_state.ready())
+	{
+		handle_websocket_shakehand(data.c_str(), data.size());
+		async_recv_next();
+		return;
+	}
+	if (m_state.websocket())
+	{
+		WebSocketProtocol().decode_websocket(data);
+		async_recv_next();
+		return;
+	}
 
+	// when recv message from peer, means peer is active.
 	// post data message to tcp server.
-	uint32_t head_size = m_handler->protocol_head().head_size();
+	m_state.set_peer_active(true);
 	m_handler->on_read(this, data);
-
-	// recv next coming data.
-	async_recv();
+	async_recv_next();		// recv next coming data.
 }
 
 
@@ -167,7 +215,11 @@ void TcpPeer::async_connect(IN const Address& addr)
 }
 void TcpPeer::async_recv()
 {
-	impl().async_recv();
+	impl().async_recv_next();
+}
+void TcpPeer::async_recv_shakehand()
+{
+	impl().async_recv_shakehand();
 }
 void TcpPeer::async_send(IN eco::String& data)
 {

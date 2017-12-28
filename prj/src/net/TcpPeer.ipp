@@ -59,7 +59,7 @@ public:
 		set_handler(handler);
 
 		// init state: prepare for first heartbeat.
-		m_state.self_live(false);
+		m_state.set_self_live(false);
 	}
 
 	// tcp peer callback handler.
@@ -70,6 +70,14 @@ public:
 	inline TcpPeerHandler& handler()
 	{
 		return *m_handler;
+	}
+	inline ProtocolHead& protocol_head()
+	{
+		return m_handler->protocol_head();
+	}
+	inline uint32_t head_size() const
+	{
+		return m_handler->protocol_head().size();
 	}
 
 	// raw io socket related by the net framework: exp boost::asio\libevent.
@@ -96,8 +104,8 @@ public:
 	// set tcp peer state to connected.
 	inline void set_connected()
 	{
-		m_state.connected();
-		m_state.peer_live(true);
+		m_state.set_connected();
+		m_state.set_peer_live(true);
 	}
 
 	// ready to receive data head.
@@ -105,7 +113,13 @@ public:
 	{
 		m_connector->async_connect(addr);
 	}
-	inline void async_recv();
+	inline void async_recv_next();
+
+	// handle websocket shakehand.
+	inline void async_recv_shakehand();
+	inline void handle_websocket_shakehand(
+		IN const char* data_head,
+		IN const uint32_t head_size);
 
 	// add session to peer. TODO.
 	inline void add_session(IN const SessionId id)
@@ -115,7 +129,7 @@ public:
 	// send response to client.
 	inline void async_send(IN eco::String& data)
 	{
-		m_state.self_live(true);
+		m_state.set_self_live(true);
 		m_connector->async_write(data);
 	}
 
@@ -126,7 +140,7 @@ public:
 	{
 		eco::Error e;
 		eco::String data;
-		if (!prot.encode(data, meta, prot_head, e))
+		if (!prot.encode(data, meta, e))
 		{
 			EcoNet(EcoError,*this, "async_send", e);
 			return;
@@ -137,6 +151,8 @@ public:
 	// send heartbeat.
 	inline void async_send_heartbeat(IN ProtocolHead& prot_head)
 	{
+		if (!m_state.ready())
+			return;
 		eco::String data;
 		prot_head.encode_heartbeat(data);
 		async_send(data);
@@ -144,10 +160,12 @@ public:
 	// send live heartbeat.
 	inline void async_send_live_heartbeat(IN ProtocolHead& prot_head)
 	{
+		if (!m_state.ready())
+			return;
 		// during send tick, if connection itself send a message.
 		// indicated it is alive, and no need to send heartbeat.
-		if (get_state().is_self_live())
-			state().self_live(false);
+		if (get_state().self_live())
+			state().set_self_live(false);
 		else
 			async_send_heartbeat(prot_head);
 	}
@@ -155,10 +173,10 @@ public:
 	// close peer.
 	inline void close()
 	{
-		if (!m_state.is_close())
+		if (!m_state.closed())
 		{
 			// 1.close state.
-			m_state.close();
+			m_state.set_closed();
 
 			// 2.close socket.
 			m_connector->close();

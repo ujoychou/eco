@@ -8,9 +8,8 @@
 #include <eco/Repository.h>
 #include <eco/net/Worker.h>
 #include <eco/net/IoTimer.h>
-#include <eco/net/TcpClientOption.h>
 #include <eco/net/DispatchServer.h>
-#include <eco/net/protocol/TcpProtocol.h>
+#include <eco/net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
 #include "TcpSession.ipp"
 
@@ -189,6 +188,12 @@ public:
 	inline void async_connect(IN eco::net::AddressSet& addr)
 	{
 		update_address(addr);
+		// set protocol.
+		if (m_option.websocket())
+		{
+			set_protocol_head(new WebSocketProtocolHead());
+			set_protocol(new WebSocketProtocol());
+		}
 		// reconnect to new address if cur address is removed.
 		async_connect();
 	}
@@ -226,7 +231,7 @@ public:
 	{
 		eco::Error e;
 		eco::String data;
-		if (!m_protocol->encode(data, meta, *m_prot_head, e))
+		if (!m_protocol->encode(data, meta, e))
 		{
 			EcoError << "tcp client encode data fail." << EcoFmt(e);
 			return;
@@ -242,7 +247,7 @@ public:
 		// client isn't ready and connected when first send authority.
 		// because of before that client is async connect.
 		eco::Mutex::ScopeLock lock(m_mutex);
-		if (m_balancer.m_peer->get_state().is_connected())
+		if (m_balancer.m_peer->get_state().connected())
 		{
 			m_balancer.m_peer->async_send(data);
 		}
@@ -264,6 +269,12 @@ public:
 	virtual ProtocolHead& protocol_head() const override
 	{
 		return *m_prot_head;
+	}
+
+	// whether is a websocket.
+	virtual bool websocket() const
+	{
+		return false;
 	}
 };
 

@@ -101,7 +101,7 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	// #.heartbeat is unrelated to session, it's manage remote peer life.
 	if (eco::has(dc.m_category, category_heartbeat))
 	{
-		peer->impl().state().peer_live(true);
+		peer->impl().state().set_peer_live(true);
 		if (dc.m_session_host.response_heartbeat())
 		{
 			peer->impl().async_send_heartbeat(
@@ -114,8 +114,7 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	eco::Error e;
 	eco::Bytes message;
 	MessageMeta meta(dc.m_category);
-	uint32_t head_size = dc.m_prot_head->head_size();
-	if (!dc.m_prot->decode(meta, message, dc.m_data, head_size, e))
+	if (!dc.m_prot->decode(meta, message, dc.m_data, e))
 	{
 		e << (dc.m_session_host.m_type == tcp_session_host_server
 			? "tcp server" : "tcp client") << " decode fail.";
@@ -130,7 +129,7 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 		dc.m_session_host.m_type == tcp_session_host_client &&
 		handle_client_context(mc, meta, *peer))
 	{
-		peer->impl().state().peer_active(true);
+		peer->impl().state().set_peer_active(true);
 		dispatch(mc.m_request_type, mc);
 	}
 }

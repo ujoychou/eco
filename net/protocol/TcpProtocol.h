@@ -64,22 +64,26 @@ private:
 	};
 
 public:
-	virtual uint32_t head_size() const override
+	virtual uint32_t size() const override
 	{
 		return size_head;
 	}
 
-	virtual uint32_t decode_data_size(IN const char* bytes) const override
+	virtual uint32_t max_data_size() const override
 	{
-		return ntoh16(bytes + pos_size);
+		return 0xFFFF;	// 65535;
 	}
 
-	virtual void encode_data_size(OUT eco::String& bytes) const override
+	virtual bool decode_data_size(
+		OUT uint32_t& data_size,
+		IN const char* bytes,
+		IN const uint32_t size,
+		IN  eco::Error& e) const override
 	{
-		hton(&bytes[pos_size], static_cast<uint16_t>(bytes.size() - size_head));
+		data_size = ntoh16(bytes + pos_size);
+		return true;
 	}
 
-public:
 	virtual bool decode(
 		OUT eco::net::MessageHead& head,
 		IN  const eco::String& bytes,
@@ -97,9 +101,24 @@ public:
 		return true;
 	}
 
-	virtual void encode_append(
+	virtual void encode_heartbeat(
+		OUT eco::String& bytes) const
+	{
+		MessageHead head;
+		head.m_version = -1;
+		head.m_category = category_heartbeat;
+		encode_append(bytes, head);
+	}
+
+public:
+	inline void encode_data_size(OUT eco::String& bytes) const
+	{
+		hton(&bytes[pos_size], (uint16_t)(bytes.size() - size_head));
+	}
+
+	inline void encode_append(
 		OUT eco::String& bytes,
-		IN  const eco::net::MessageHead& head) const override
+		IN  const eco::net::MessageHead& head) const
 	{
 		bytes.append(size_head, 0);
 		bytes[pos_version] = static_cast<char>(head.m_version);
@@ -115,20 +134,20 @@ private:
 	// "message data" class.
 	struct __Data__
 	{
-		// optional field: identity the session.
-		uint32_t	m_session_id;
-
-		// optional field: identity the request from client.
-		uint32_t	m_request_id;
-
-		// message type.
-		uint16_t	m_type;
-
 		// message model.
 		uint8_t		m_model;
 
 		// message option.
 		uint8_t		m_option;
+
+		// optional field: identity the session.
+		uint32_t	m_session_id;
+
+		// message type.
+		uint16_t	m_type;
+
+		// optional field: the request data from client.
+		uint32_t	m_request_data;
 	};
 
 	// "message data" value
@@ -166,11 +185,9 @@ private:
 		return get_option_pos(head_size) + size_option;
 	}
 
-	inline uint32_t get_meta_end(
-		IN const MessageMeta& meta,
-		IN  const uint32_t head_size) const
+	inline uint32_t get_meta_size(IN const MessageMeta& meta) const
 	{
-		uint32_t pos = get_option_data_pos(head_size);
+		uint32_t pos = size_model + size_option;
 		if (eco::has(meta.m_option, option_sess))
 		{
 			pos += size_session_id;
@@ -218,11 +235,11 @@ public:
 		OUT eco::net::MessageMeta& meta,
 		OUT eco::Bytes& data,
 		IN  eco::String& bytes,
-		IN  const uint32_t head_size,
 		IN  eco::Error& e) override
 	{
 		// check sum message.
 		uint32_t check_sum_size = 0;
+		uint32_t head_size = eco::net::TcpProtocolHead::size_head;
 		if (eco::has(meta.m_category, category_checksum) && m_check != nullptr)
 		{
 			if (!m_check->decode(bytes))
@@ -258,7 +275,7 @@ public:
 		meta.m_option = MessageOption(bytes[get_option_pos(head_size)]);
 
 		// get option data.
-		uint32_t meta_end = get_meta_end(meta, head_size);
+		uint32_t meta_end = get_meta_size(meta) + head_size;
 		if (bytes.size() < meta_end)
 		{
 			e.id(e_protocol_parameter)
@@ -324,20 +341,29 @@ public:
 	virtual bool encode(
 		OUT eco::String& bytes,
 		IN  const eco::net::MessageMeta& meta,
-		IN  eco::net::ProtocolHead& prot_head,
 		OUT eco::Error& e) override
 	{
 		assert(meta.m_codec != nullptr);
 
 		// 1.init bytes size.
-		uint32_t byte_size = get_meta_end(meta, prot_head.head_size());
-		uint32_t code_size = meta.m_codec->get_byte_size();	// meta size.
-		if (meta.m_topic_str.m_size > 0)	// topic str size.
-			byte_size += meta.m_topic_str.m_size;
-		byte_size += (m_crypt == nullptr)	// crypt size.
-			? code_size : m_crypt->get_byte_size(code_size);
-		if (m_check != nullptr)				// checksum size.
-			byte_size += m_check->get_byte_size();
+		eco::net::TcpProtocolHead prot_head;
+		uint16_t head_size = prot_head.size();		// @head size.
+		uint32_t byte_size = get_meta_size(meta);		// #@meta size.
+		if (meta.m_topic_str.m_size > 0)
+		{
+			byte_size += meta.m_topic_str.m_size;		// #@topic str size.
+		}
+		uint32_t code_size = meta.m_codec->get_byte_size();	// #@message size.	
+		byte_size += code_size;
+		if (eco::has(meta.m_category, category_encrypted) && m_crypt != nullptr)
+		{
+			byte_size = m_crypt->get_byte_size(byte_size);	// [#]@crypt size.
+		}
+		byte_size += head_size;
+		if (eco::has(meta.m_category, category_checksum) && m_check != nullptr)
+		{
+			byte_size += m_check->get_byte_size();		// [@]checksum size.
+		}
 		bytes.reserve(byte_size);
 
 		// 2.init message version and category.
@@ -388,7 +414,7 @@ public:
 		// 6.encrypt message.
 		if (eco::has(head.m_category, category_encrypted) && m_crypt != nullptr)
 		{
-			bytes = m_crypt->encode(bytes, TcpProtocolHead::size_head);
+			bytes = m_crypt->encode(bytes, head_size);
 			if (bytes.null())
 			{
 				e.id(e_message_encode) << "crypt message fail.";

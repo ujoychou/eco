@@ -55,11 +55,43 @@ inline size_t auto_strncpy(OUT char* dest, IN const char* src, IN size_t len)
 	}
 	return cpy_len;
 }
+
 inline size_t auto_strncat(OUT char* dest, IN const char* src, IN size_t len)
 {
 	size_t dest_end = strlen(dest);
 	return auto_strncpy(&dest[dest_end], src, len - dest_end);
 }
+
+inline bool find_cmp(IN const char* dest, IN const char* v)
+{
+	for (; *dest != '\0' && *v != '\0' && *dest == *v; ++dest, ++v) {}
+	return *v == '\0';
+}
+
+inline const char* find(IN const char* dest, IN const char* v)
+{
+	for (; *dest != '\0'; ++dest)
+	{
+		if (find_cmp(dest, v))
+			return dest;
+	}
+	return nullptr;
+}
+
+inline const char* find(
+	IN const char* dest,
+	IN const uint32_t size,
+	IN const char* v)
+{
+	const char* end = &dest[size - strlen(v)];
+	for (; dest <= end; ++dest)
+	{
+		if (find_cmp(dest, v))
+			return dest;
+	}
+	return nullptr;
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +127,7 @@ inline uint32_t find_of(
 		pos = -1;
 	return pos;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 inline void insert(OUT char* dest, IN uint32_t pos, IN uint32_t num, char c)

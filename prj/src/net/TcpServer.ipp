@@ -100,6 +100,11 @@ public:
 	}
 	
 	// read only and thread safe.
+	inline void set_protocol(IN Protocol* p)
+	{
+		m_protocol_set.clear();
+		m_protocol_set[p->version()] = ProtocolPtr(p);
+	}
 	inline void register_protocol(IN Protocol* p)
 	{
 		m_protocol_set[p->version()] = ProtocolPtr(p);
@@ -215,6 +220,12 @@ public:
 	virtual ProtocolHead& protocol_head() const override
 	{
 		return *m_prot_head;
+	}
+
+	// whether is a websocket.
+	virtual bool websocket() const override
+	{
+		return m_option.websocket();
 	}
 };
 

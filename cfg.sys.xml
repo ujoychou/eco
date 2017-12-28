@@ -61,6 +61,7 @@
     <heartbeat_recv_tick value="3"/>
     <heartbeat_send_tick value="2"/>
     <no_delay value="true"/>
+    <websocket value="false"/>
     <io_thread_size value="2"/>
     <business_thread_size value="4"/>
   </provider>

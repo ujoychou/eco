@@ -135,6 +135,12 @@ public:
 	void set_session_mode(IN const bool);
 	bool session_mode() const;
 	TcpClientOption& session_mode(IN const bool);
+
+	/* @ set tcp connection option whether it is a websocket protocol.
+	*/
+	void set_websocket(IN const bool);
+	bool websocket() const;
+	TcpClientOption& websocket(IN const bool);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
