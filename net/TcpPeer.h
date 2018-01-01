@@ -34,10 +34,35 @@
 namespace eco{;
 namespace net{;
 
+class TcpPeer;
+////////////////////////////////////////////////////////////////////////////////
+// define session data holder. (using the boost::any<type> mechanism)
+class ConnectionData : public eco::HeapOperators
+{
+	ECO_OBJECT(ConnectionData);
+public:
+	inline  ConnectionData() : m_peer(nullptr){}
+	virtual ~ConnectionData() {}
+
+private:
+	TcpPeer* m_peer;
+};
+
+// default session factory function.
+template<typename ConnectionDataT>
+inline static ConnectionData* make_connection_data(IN TcpPeer& peer)
+{
+	return new ConnectionDataT();
+}
+
+// set session factory to create session of tcp server peer.
+typedef ConnectionData* (*MakeConnectionDataFunc)(IN TcpPeer& peer);
+
 
 ////////////////////////////////////////////////////////////////////////////////
 class IoService;
 class TcpPeer;
+class Context;
 class TcpPeerHandler
 {
 public:
@@ -92,6 +117,16 @@ public:
 	// set tcp peer option
 	void set_option(IN bool no_delay);
 
+	// get peer data.
+	ConnectionData::ptr data();
+
+	// get and cast peer data.
+	template<typename ConnectionDataT>
+	inline std::shared_ptr<ConnectionDataT> cast()
+	{
+		return std::dynamic_pointer_cast<ConnectionDataT>(data());
+	}
+
 	// async connect to server address.
 	void async_connect(IN const Address& addr);
 
@@ -106,13 +141,18 @@ public:
 	void notify_close(IN const eco::Error* e);
 
 	// async send string message.
-	void async_send(IN eco::String& data);
+	void async_send(IN eco::String& data, IN const uint32_t start);
 
 	// async send meta message.
-	void async_send(
-		IN MessageMeta& meta,
+	void async_send(IN MessageMeta& meta, IN Protocol& prot);
+
+	// async response message.
+	void async_resp(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const Context& context,
 		IN Protocol& prot,
-		IN ProtocolHead& prot_head);
+		IN const bool last = true);
 };
 
 

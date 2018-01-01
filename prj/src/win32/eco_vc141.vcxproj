@@ -291,6 +291,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\net\TcpConnection.cpp" />
     <ClCompile Include="..\net\TcpPeer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -506,8 +507,10 @@
     <ClInclude Include="..\..\..\codec\Zlib.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
+    <ClInclude Include="..\..\..\net\protocol\StringCodec.h" />
     <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h" />
     <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
+    <ClInclude Include="..\..\..\net\TcpConnection.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />

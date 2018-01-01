@@ -111,9 +111,10 @@ public:
 	}
 
 public:
-	inline void encode_data_size(OUT eco::String& bytes) const
+	inline uint32_t encode_data_size(OUT eco::String& bytes) const
 	{
 		hton(&bytes[pos_size], (uint16_t)(bytes.size() - size_head));
+		return 0;
 	}
 
 	inline void encode_append(
@@ -340,6 +341,7 @@ public:
 
 	virtual bool encode(
 		OUT eco::String& bytes,
+		OUT uint32_t& start,
 		IN  const eco::net::MessageMeta& meta,
 		OUT eco::Error& e) override
 	{
@@ -429,7 +431,7 @@ public:
 		}
 
 		// 8.reset bytes size.
-		prot_head.encode_data_size(bytes);
+		start = prot_head.encode_data_size(bytes);
 		return true;
 	}
 

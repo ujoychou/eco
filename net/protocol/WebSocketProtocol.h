@@ -53,9 +53,6 @@ typedef uint8_t WebSocketFrame;
 
 
 const char eco_masking_key[] = "#2^1";
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class WebSocketProtocolHead : public ProtocolHead
 {
@@ -74,12 +71,6 @@ public:
 
 		// mask data 4 bytes if has mask.
 		char		m_mask_key[4];
-
-		// message version.
-		uint8_t		m_version;
-
-		// message category.
-		uint8_t		m_category;
 	};
 
 	// "message data" value
@@ -89,21 +80,24 @@ public:
 		size_ws_len2		= 2,
 		size_ws_len8		= 8,
 		size_ws_mask_key	= 4,
-		size_version		= 1,
-		size_category		= 1,
 	};
 
 	inline WebSocketProtocolHead()
 	{}
 
+	inline uint16_t max_uint16() const
+	{
+		return 0xFFFF;	// 65535;
+	}
+
 	virtual uint32_t size() const override
 	{
-		return fixed_size();
+		return size_ws_head;
 	}
 
 	virtual uint32_t max_data_size() const override
 	{
-		return 0xFFFF;	// 65535;
+		return max_uint16();	// 65535;
 	}
 
 	virtual bool decode_data_size(
@@ -122,6 +116,13 @@ public:
 			return false;
 		}
 
+		// if it's a websocket close frame.
+		if (frame == websocket_frame_close)
+		{
+			e.id(e_peer_client_close) << "web client close this peer.";
+			return false;
+		}
+
 		// handle mask & payload.
 		data_size = payload_len;
 		if (mask)
@@ -137,7 +138,7 @@ public:
 		{
 			data_size += 0;		// =2-2
 		}
-		else if (payload_len > 0xFFFF)
+		else if (payload_len > max_uint16())
 		{
 			data_size += 6;		// =8-2
 		}
@@ -149,13 +150,23 @@ public:
 		IN  const eco::String& bytes,
 		IN  eco::Error& e) const override
 	{
+		uint8_t  fin = 0;
+		uint8_t  frame = 0;
+		uint8_t  mask = 0;
+		uint32_t payload_len = 0;
 		uint32_t pos = 0;
-		if (!get_version_pos(pos, bytes.c_str(), bytes.size(), e))
+		if (!decode_head(fin, frame, payload_len, mask, pos,
+			bytes.c_str(), bytes.size(), e))
 		{
 			return false;
 		}
-		head.m_version = bytes[pos];
-		head.m_category = bytes[pos + 1];
+		if (mask)
+		{
+			char masking_key[4] = { 0 };
+			eco::cpy_pos(masking_key, pos, &bytes[pos], size_ws_mask_key);
+			head.m_version  = (bytes[pos] ^ masking_key[0]);
+			head.m_category = (bytes[pos + 1] ^ masking_key[1]);
+		}
 		return true;
 	}
 
@@ -169,45 +180,6 @@ public:
 	}
 
 public:
-	inline uint32_t fixed_size() const
-	{
-		return size_ws_head + size_version + size_category;
-	}
-
-	inline uint32_t estimate_size(
-		IN const MessageCategory category,
-		IN const uint32_t data_size) const
-	{
-		uint32_t result = fixed_size();
-		if (eco::has(category, category_encrypted))
-		{
-			result += size_ws_mask_key;
-		}
-
-		if (data_size < 126)
-			result += 0;
-		else if (data_size <= 0xFFFF)
-			result += 2;	// uint16
-		else
-			result += 8;	// uint64
-		return result;
-	}
-
-	inline void estimate_encode_append(
-		OUT eco::String& bytes,
-		IN  const uint8_t version,
-		IN  const MessageCategory category) const
-	{
-		bytes.append(size_ws_head, 0);
-		bytes.append(size_ws_len8, 0);
-		if (eco::has(category, category_encrypted))
-		{
-			bytes.append(size_ws_mask_key, 0);
-		}
-		bytes.append(1, version);
-		bytes.append(1, (uint8_t)category);
-	}
-
 	inline void mask_data(
 		OUT eco::String&  bytes,
 		IN const uint32_t start,
@@ -221,64 +193,80 @@ public:
 		}
 	}
 
+	inline uint32_t pre_size(IN const MessageCategory category) const
+	{
+		uint32_t result = size();
+		if (eco::has(category, category_encrypted))
+		{
+			result += size_ws_mask_key;
+		}
+		return result += size_ws_len8;	// uint64 or uint16 or 0.	
+	}
+
+	inline uint32_t ws_head_size(IN const MessageCategory category) const
+	{
+		uint32_t result = size_ws_head;
+		if (eco::has(category, category_encrypted))
+		{
+			result += size_ws_mask_key;
+		}
+		return result += size_ws_len8;	// uint64 or uint16 or 0.	
+	}
+
+	inline void pre_encode_append(
+		OUT eco::String& bytes,
+		IN  const MessageCategory category) const
+	{
+		bytes.append(size_ws_head, 0);
+		bytes[0] = websocket_frame_binary;		// optcode
+		bytes[0] = (uint8_t(bytes[0]) | 0x80);	// fin
+		bytes.append(size_ws_len8, 0);
+		if (eco::has(category, category_encrypted))
+		{
+			bytes.append(size_ws_mask_key, 0);
+		}
+	}
+
+
 	// return bytes start.
-	inline uint32_t encode_data_size(
+	inline uint32_t encode_mask(
 		OUT eco::String& bytes,
 		IN  const MessageCategory category) const
 	{
 		// payload len.
-		uint32_t cpy_start = 0;
-		if (bytes.size() < 126)
+		uint32_t data_start = 0;
+		uint32_t data_size = bytes.size() - ws_head_size(category);
+		if (data_size < 126)
 		{
-			cpy_start = size_ws_len8;
-			bytes[cpy_start + 1] = uint8_t(bytes.size());
-			bytes[cpy_start] = bytes[0];
+			data_start = size_ws_len8;
+			bytes[data_start] = bytes[0];
+			bytes[data_start + 1] = uint8_t(data_size);
 		}
-		else if (bytes.size() <= 0xFFFF)
+		else if (data_size <= max_uint16())
 		{
-			cpy_start = size_ws_len8 - size_ws_len2;
-			bytes[cpy_start + 1] = 126;
-			bytes[cpy_start] = bytes[0];
-			eco::net::hton(&bytes[size_ws_len2], (uint16_t)bytes.size());
+			data_start = size_ws_len8 - size_ws_len2;
+			bytes[data_start] = bytes[0];
+			bytes[data_start + 1] = 126;
+			eco::net::hton(&bytes[size_ws_len2], (uint16_t)data_size);
 		}
-		else //if (bytes.size() > 0xFFFF)
+		else //if (data_size > max_uint16())
 		{
-			bytes[cpy_start + 1] = 127;
-			eco::net::hton(&bytes[size_ws_len2], (uint64_t)bytes.size());
+			bytes[data_start + 1] = 127;
+			eco::net::hton(&bytes[size_ws_len2], (uint64_t)data_size);
 		}
 		uint32_t pos = size_ws_head + size_ws_len8;
 
 		// masking key.
 		if (eco::has(category, category_encrypted))
 		{
-			bytes[cpy_start + 1] |= 0x80;
+			bytes[data_start + 1] = uint8_t(bytes[data_start + 1]) | 0x80;
 			eco::cpy_pos(&bytes[pos], pos, eco_masking_key, size_ws_mask_key);
 			mask_data(bytes, pos, eco_masking_key);
 		}
-		return cpy_start;
+		return data_start;
 	}
 
-	inline bool get_version_pos(
-		OUT IN uint32_t& pos,
-		IN  const char* head,
-		IN  const uint32_t size,
-		IN  eco::Error& e) const
-	{
-		uint8_t  fin = 0;
-		uint8_t  frame = 0;
-		uint8_t  mask = 0;
-		uint32_t payload_len = 0;
-		if (!decode_head(fin, frame, payload_len, mask, pos, head, size, e))
-		{
-			return false;
-		}
-		if (mask)
-		{
-			pos += size_ws_mask_key;
-		}
-		return true;
-	}
-
+public:
 	inline uint32_t get_payload_len_size(
 		IN const uint8_t payload_len) const
 	{
@@ -335,10 +323,8 @@ public:
 		return true;
 	}
 
-	inline bool decode(
-		OUT eco::String& bytes,
-		OUT uint32_t& head_end,
-		IN  eco::Error& e) const
+	inline bool decode(OUT eco::String& bytes,
+		OUT uint32_t& head_end, IN  eco::Error& e) const
 	{
 		uint8_t  fin = 0;
 		uint8_t  frame = 0;
@@ -355,11 +341,64 @@ public:
 			char masking_key[4] = { 0 };
 			eco::cpy_pos(masking_key, head_end,
 				&bytes[head_end], size_ws_mask_key);
-			head_end += size_version;
-			head_end += size_category;
 			mask_data(bytes, head_end, masking_key);
 		}
 		return true;
+	}
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+class WebSocketProtocolHeadEx : public WebSocketProtocolHead
+{
+public:
+	// "protocol head data" class.
+	struct __Data__
+	{
+		// 1bit-fin,3bit-optcode(type).
+		WebSocketProtocolHead::__Data__ ws_ph;
+
+		// message version.
+		uint8_t		m_version;
+
+		// message category.
+		uint8_t		m_category;
+	};
+
+	// "message data" value
+	enum
+	{
+		size_version		= 1,
+		size_category		= 1,
+	};
+
+public:
+	virtual uint32_t size() const override
+	{
+		return size_ws_head + size_version + size_category;
+	}
+
+	inline void pre_encode_append(
+		OUT eco::String& bytes,
+		IN  const uint8_t version,
+		IN  const MessageCategory category) const
+	{
+		WebSocketProtocolHead::pre_encode_append(bytes, category);
+		bytes.append(1, version);
+		bytes.append(1, (uint8_t)category);
+	}
+
+	inline bool decode(OUT eco::String& bytes,
+		OUT uint32_t& head_end, IN  eco::Error& e) const
+	{
+		if (WebSocketProtocolHead::decode(bytes, head_end, e))
+		{
+			head_end += size_version;
+			head_end += size_category;
+			return true;
+		}
+		return false;
 	}
 };
 
@@ -414,7 +453,7 @@ public:
 		return size;
 	}
 
-	virtual void decode_websocket(IN  eco::String& bytes)
+	inline const char* decode_websocket(IN  eco::String& bytes)
 	{
 		uint32_t pos = 0;
 		uint8_t  fin = 0;
@@ -427,7 +466,7 @@ public:
 			pos, bytes.c_str(), bytes.size(), e))
 		{
 			EcoError << EcoFmt(e);
-			return ;
+			return nullptr;
 		}
 		if (mask)
 		{
@@ -443,6 +482,7 @@ public:
 			<< " mask=" << bool(mask)
 			<< " payload len=" << payload_len
 			<< " payload=" << &bytes[pos];
+		return &bytes[pos];
 	}
 
 public:
@@ -511,19 +551,21 @@ public:
 
 	virtual bool encode(
 		OUT eco::String& bytes,
+		OUT uint32_t& start,
 		IN  const eco::net::MessageMeta& meta,
 		OUT eco::Error& e) override
 	{
-		WebSocketProtocolHead prot_head;
+		WebSocketProtocolHeadEx prot_head;
 		// 1.init bytes size.
 		uint32_t meta_size = get_meta_size(meta);
 		uint32_t code_size = meta.m_codec->get_byte_size();
-		uint32_t byte_size = prot_head.estimate_size(
-			meta.m_category, meta_size + code_size);
+		uint32_t byte_size = prot_head.pre_size(meta.m_category);
+		byte_size += meta_size + code_size;
+		bytes.clear();
 		bytes.reserve(byte_size);
 
 		// 2.init message version and category.
-		prot_head.estimate_encode_append(bytes, version(), meta.m_category);
+		prot_head.pre_encode_append(bytes, version(), meta.m_category);
 
 		// 3.init message type and optional data.
 		bytes.append(static_cast<char>(meta.m_model));
@@ -545,7 +587,32 @@ public:
 		meta.m_codec->encode_append(bytes, code_size);
 
 		// 5.reset bytes size.
-		prot_head.encode_data_size(bytes, meta.m_category);
+		start = prot_head.encode_mask(bytes, meta.m_category);
+		return true;
+	}
+
+	inline bool encode_text(
+		OUT eco::String& bytes,
+		OUT uint32_t& start,
+		IN  const char* message,
+		IN  MessageCategory category = category_encrypted)
+	{
+		WebSocketProtocolHead prot_head;
+		// 1.init bytes size.
+		uint32_t code_size = (uint32_t)strlen(message);
+		uint32_t byte_size = prot_head.pre_size(category);
+		byte_size += code_size;
+		bytes.clear();
+		bytes.reserve(byte_size);
+
+		// 2.init message version and category.
+		prot_head.pre_encode_append(bytes, category);
+
+		// 4.encode message object.
+		bytes.append(message, code_size);
+
+		// 5.reset bytes size.
+		start = prot_head.encode_mask(bytes, category);
 		return true;
 	}
 

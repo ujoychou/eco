@@ -14,6 +14,21 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+bool TcpSessionHost::session_mode() const
+{
+	if (m_type == tcp_session_host_client)
+	{
+		auto* client = (TcpClient::Impl*)m_host;
+		return client->session_mode();
+	}
+	else if (m_type == tcp_session_host_server)
+	{
+		auto* server = (TcpServer::Impl*)m_host;
+		return server->session_mode();
+	}
+	assert(false);
+	return false;
+}
 bool TcpSessionHost::response_heartbeat() const
 {
 	if (m_type == tcp_session_host_client)
@@ -35,16 +50,6 @@ ProtocolHead* TcpSessionHost::protocol_head() const
 
 
 ECO_SHARED_IMPL(TcpSession);
-////////////////////////////////////////////////////////////////////////////////
-void TcpSession::set_host(IN TcpSessionHost& host)
-{
-	impl().m_host = host;
-}
-void TcpSession::set_protocol(IN Protocol& prot)
-{
-	impl().m_prot = &prot;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 bool TcpSession::open(IN const SessionId session_id)
 {
@@ -157,8 +162,7 @@ void TcpSession::async_send(IN MessageMeta& meta)
 	{
 		auto* server = (TcpServer::Impl*)impl().m_host.m_host;
 		meta.set_session_id(impl().m_session_id);
-		impl().m_host.m_peer->async_send(
-			meta, *impl().m_prot, *server->m_prot_head);
+		impl().m_host.m_peer->async_send(meta, *impl().m_prot);
 	}
 }
 
@@ -187,15 +191,18 @@ void TcpSession::async_auth(IN MessageMeta& meta)
 void TcpSession::async_resp(
 	IN Codec& codec,
 	IN const uint32_t type,
-	IN const Context& context,
+	IN const Context& c,
 	IN const bool last)
 {
-	MessageMeta meta(codec, impl().m_session_id, type, context.m_category);
-	meta.set_request_data(context.m_request_data, context.m_option);
+	MessageMeta meta(codec, impl().m_session_id, type, c.m_meta.m_category);
+	meta.set_request_data(c.m_meta.m_request_data, c.m_meta.m_option);
 	meta.set_last(last);
 	async_send(meta);
 }
-
+bool TcpSession::session_mode() const
+{
+	return impl().m_host.session_mode();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

@@ -1,5 +1,5 @@
-#ifndef ECO_NET_TCP_SESSION_H
-#define ECO_NET_TCP_SESSION_H
+#ifndef ECO_NET_TCP_CONNECTION_H
+#define ECO_NET_TCP_CONNECTION_H
 /*******************************************************************************
 @ name
 
@@ -27,60 +27,118 @@
 #include <eco/net/SessionData.h>
 #include <eco/net/protocol/Protocol.h>
 #include <eco/net/protocol/ProtobufCodec.h>
+#include <eco/net/TcpPeer.h>
 #include <memory>
-
 
 namespace eco{;
 namespace net{;
-class TcpPeer;
-class TcpClient;
-class Context;
-////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpSession
-{
-	ECO_SHARED_API(TcpSession)
-public:
-	// if a none session open a new session, else get the exist session.
-	bool open(IN const SessionId session_id = none_session);
 
+
+////////////////////////////////////////////////////////////////////////////////
+class TcpConnection
+{
+public:
 	// check whether session has been opened.
-	bool opened() const;
+	inline bool opened() const
+	{
+		return !m_peer_wptr.expired();
+	}
 
 	// close session, release session data.
-	void close();
+	inline void close()
+	{
+		TcpPeer::ptr peer = m_peer_wptr.lock();
+		if (peer != nullptr)
+		{
+			peer->notify_close(nullptr);
+		}
+	}
+
+	inline void clear()
+	{
+		m_peer_wptr.reset();
+		m_protocol = nullptr;
+	}
 
 	// get session data.
-	uint32_t get_session_id() const;
+	inline uint64_t get_id() const
+	{
+		TcpPeer::ptr peer = m_peer_wptr.lock();
+		if (peer != nullptr)
+		{
+			return peer->get_id();
+		}
+		return 0;
+	}
 
 	// get session data.
-	SessionData::ptr data();
+	inline ConnectionData::ptr data() const
+	{
+		TcpPeer::ptr peer = m_peer_wptr.lock();
+		if (peer != nullptr)
+		{
+			return peer->data();
+		}
+		return ConnectionData::ptr();
+	}
 
 	// get and cast session data.
 	template<typename SessionDataT>
-	inline std::shared_ptr<SessionDataT> cast()
+	inline std::shared_ptr<SessionDataT> cast() const
 	{
-		return std::dynamic_pointer_cast<SessionDataT>(data());
+		TcpPeer::ptr peer = m_peer_wptr.lock();
+		if (peer != nullptr)
+		{
+			return peer->cast<SessionDataT>();
+		}
+		return std::shared_ptr<SessionDataT>();
 	}
-
-	// get session peer.
-	TcpPeer& get_peer() const;
-
-	// check that it is a session mode.
-	bool session_mode() const;
 
 public:
 	// async send message.
-	void async_send(IN MessageMeta& meta);
-
-	// async send authority info.
-	void async_auth(IN MessageMeta& meta);
+	inline void async_send(IN MessageMeta& meta)
+	{
+		TcpPeer::ptr peer = m_peer_wptr.lock();
+		if (peer != nullptr)
+		{
+			return peer->async_send(meta, *m_protocol);
+		}
+	}
 
 	// async response message.
-	void async_resp(
+	inline void async_resp(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool last = false);
+		IN const bool last = true)
+	{
+		TcpPeer::ptr peer = m_peer_wptr.lock();
+		if (peer != nullptr)
+		{
+			return peer->async_resp(codec, type, context, *m_protocol);
+		}
+	}
+
+	// async send message.
+	template<typename Codec, typename MessageT>
+	inline void async_send(
+		IN const MessageT& msg,
+		IN MessageMeta& meta)
+	{
+		Codec codec(msg);
+		meta.m_codec = &codec;
+		async_send(meta);
+	}
+
+	// async send protobuf.
+	inline void async_send(
+		IN google::protobuf::Message& msg,
+		IN MessageMeta& meta)
+	{
+		ProtobufCodec codec(msg);
+		meta.m_codec = &codec;
+		async_send(meta);
+	}
 
 	// async send protobuf.
 	inline void async_send(
@@ -89,19 +147,8 @@ public:
 		IN const MessageCategory category = category_message)
 	{
 		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, get_session_id(), type, category);
-		async_send(meta);
-	}
-
-	// async send protobuf authority info.
-	inline void async_auth(
-		IN google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const MessageCategory category = category_message)
-	{
-		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, none_session, type, category);
-		async_auth(meta);
+		async_send(meta);
 	}
 
 	// async send response to client by context.
@@ -109,11 +156,16 @@ public:
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool last = false)
+		IN const bool last = true)
 	{
 		ProtobufCodec codec(msg);
 		async_resp(codec, type, context, last);
 	}
+
+private:
+	TcpPeer::wptr	m_peer_wptr;
+	Protocol*		m_protocol;
+	friend class DispatchHandler;
 };
 
 

@@ -167,7 +167,7 @@ public:
 		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); ++it)
 		{
 			it->second->impl().async_send(
-				eco::String("hello ujoychou, this is a test message."));
+				eco::String("hello ujoychou, this is a test message."), 0);
 		}
 	}
 };

@@ -35,7 +35,7 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class DispatchHandler : public eco::DispatchHandler<uint64_t, MetaContext>
+class DispatchHandler : public eco::DispatchHandler<uint64_t, Context>
 {
 public:
 	/*@ dispatch message to message handler.

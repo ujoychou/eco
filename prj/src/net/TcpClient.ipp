@@ -83,6 +83,7 @@ class SessionDataPack
 	ECO_OBJECT(SessionDataPack);
 public:
 	eco::String m_request;
+	uint32_t m_request_start;
 	SessionData::ptr m_session;
 	SharedObserver m_user_observer;
 	uint64_t m_request_data;
@@ -91,6 +92,7 @@ public:
 public:
 	inline SessionDataPack(IN bool auto_login = false)
 		: m_request_data(0), m_auto_login(auto_login)
+		, m_request_start(0)
 	{}
 };
 
@@ -112,6 +114,8 @@ public:
 	DispatchServer			m_dispatcher;	// dispatcher thread.
 	eco::atomic::State		m_init;			// server init state.
 
+	// connection data factory.
+	MakeConnectionDataFunc m_make_connection;
 	// session data management.
 	MakeSessionDataFunc m_make_session;
 	// all session that client have, diff by "&session".
@@ -122,7 +126,7 @@ public:
 	mutable eco::Mutex	m_mutex;
 
 public:
-	inline Impl()
+	inline Impl() : m_make_connection(nullptr), m_make_session(nullptr)
 	{}
 
 	inline void init(IN TcpClient& v)
@@ -138,6 +142,27 @@ public:
 	inline void set_protocol(IN Protocol* p)
 	{
 		m_protocol.reset(p);
+	}
+
+	// get current tcp peer connected to server.
+	inline TcpPeer& peer()
+	{
+		return *m_balancer.m_peer;
+	}
+
+	inline void make_connection_data(IN TcpPeer& peer)
+	{
+		if (peer.impl().m_data.get() == nullptr && 
+			m_make_connection != nullptr)
+		{
+			peer.impl().m_data.reset(m_make_connection(peer));
+		}
+	}
+
+	// is a session mode.
+	inline bool session_mode() const
+	{
+		return m_make_session != nullptr;
 	}
 
 	// open a session with no authority.
@@ -191,7 +216,7 @@ public:
 		// set protocol.
 		if (m_option.websocket())
 		{
-			set_protocol_head(new WebSocketProtocolHead());
+			set_protocol_head(new WebSocketProtocolHeadEx());
 			set_protocol(new WebSocketProtocol());
 		}
 		// reconnect to new address if cur address is removed.
@@ -211,10 +236,10 @@ public:
 	void on_timer(IN const eco::Error* e);
 
 	// async send data.
-	inline void async_send(IN eco::String& data)
+	inline void async_send(IN eco::String& data, IN const uint32_t start)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		m_balancer.m_peer->async_send(data);
+		m_balancer.m_peer->async_send(data, start);
 	}
 
 	// async send data.
@@ -231,12 +256,13 @@ public:
 	{
 		eco::Error e;
 		eco::String data;
-		if (!m_protocol->encode(data, meta, e))
+		uint32_t start = 0;
+		if (!m_protocol->encode(data, start, meta, e))
 		{
 			EcoError << "tcp client encode data fail." << EcoFmt(e);
 			return;
 		}
-		async_send(data);
+		async_send(data, start);
 	}
 
 	inline void async_send(IN SessionDataPack::ptr& pack)
@@ -249,7 +275,7 @@ public:
 		eco::Mutex::ScopeLock lock(m_mutex);
 		if (m_balancer.m_peer->get_state().connected())
 		{
-			m_balancer.m_peer->async_send(data);
+			m_balancer.m_peer->async_send(data, pack->m_request_start);
 		}
 	}
 

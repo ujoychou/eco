@@ -70,6 +70,14 @@ public:
 	void register_protocol(IN Protocol*);
 	Protocol* protocol(IN const uint32_t version) const;
 
+	// set connection data type.
+	template<typename ConnectionDataT>
+	inline void set_connection_data()
+	{
+		set_connection_data(&make_connection_data<ConnectionDataT>);
+	}
+	void set_connection_data(IN MakeConnectionDataFunc make);
+
 	// set session data class and tcp session mode.
 	template<typename SessionDataT>
 	inline void set_session_data()

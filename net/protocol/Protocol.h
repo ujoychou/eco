@@ -160,9 +160,9 @@ public:
 	inline void set_request_data(IN const void* req_data)
 	{
 		if (sizeof(void*) == 4)
-			set_request_data(reinterpret_cast<uint32_t>(req_data));
+			set_request_data((uint32_t)(uint64_t)(req_data));
 		else if (sizeof(void*) == 8)
-			set_request_data(reinterpret_cast<uint64_t>(req_data));
+			set_request_data((uint64_t)(req_data));
 	}
 	inline void set_request_data(IN uint64_t req_data, IN uint32_t opt)
 	{
@@ -210,6 +210,7 @@ public:
 	/*@ #1.encode message to bytes string.*/
 	virtual bool encode(
 		OUT eco::String& bytes,
+		OUT uint32_t& start,
 		IN  const eco::net::MessageMeta& meta,
 		OUT eco::Error& e) = 0;
 };

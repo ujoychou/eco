@@ -149,7 +149,7 @@ public:
 		}
 
 		// check whether reach the end.
-		data.resize(start_pos + bytes_transferred);
+		data.resize(start_pos + (uint32_t)bytes_transferred);
 		if (!data.find_reverse(delimiter.c_str(), start_pos))
 		{
 			async_read_some(data, data.size(), delimiter);
@@ -235,12 +235,14 @@ public:
 
 public:
 #ifdef ECO_WIN
-	inline void async_write(IN eco::String& data)
+	inline void async_write(
+		IN eco::String& data,
+		IN const uint32_t start)
 	{
 		// eco::move(data) will clear data(eco::String), so can't use like:
 		// boost::asio::buffer(data.c_str(), data.size()),
-		const char* d = data.c_str();
-		const uint32_t s = data.size();
+		const char* d = &data[start];
+		const uint32_t s = data.size() - start;
 		boost::asio::async_write(m_socket,
 			boost::asio::buffer(d, s),
 			boost::bind(&Impl::on_write, this, eco::move(data), 
@@ -274,7 +276,9 @@ public:
 	}
 
 #else
-	inline void async_write(IN eco::String& data)
+	inline void async_write(
+		IN eco::String& data,
+		IN const uint32_t start)
 	{
 		eco::Mutex::ScopeLock lock(m_send_msg_mutex);
 		bool is_idle = m_send_msg.empty();
@@ -396,9 +400,9 @@ void TcpConnector::async_read_until(
 	m_impl->async_read_until(data_size, delimiter);
 }
 
-void TcpConnector::async_write(IN eco::String& data)
+void TcpConnector::async_write(IN eco::String& data, IN const uint32_t start)
 {
-	m_impl->async_write(data);
+	m_impl->async_write(data, start);
 }
 
 int64_t TcpConnector::get_id() const

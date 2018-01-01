@@ -61,6 +61,7 @@ public:
 	TcpAcceptor m_acceptor;
 	TcpPeerSet m_peer_set;
 	IoTimer m_timer;
+	MakeConnectionDataFunc m_make_connection;
 
 	// dispatch server.
 	DispatchServer m_dispatch;
@@ -72,9 +73,8 @@ public:
 	eco::Repository<SessionId, SessionData::ptr> m_session_map;
 
 public:
-	inline Impl()
+	inline Impl() : m_make_connection(nullptr), m_make_session(nullptr)
 	{
-		m_make_session = nullptr;
 		m_next_session_id = none_session;
 	}
 
@@ -119,6 +119,21 @@ public:
 			return it->second.get();
 		}
 		return nullptr;
+	}
+
+	inline void make_connection_data(IN TcpPeer& peer)
+	{
+		if (peer.impl().m_data.get() == nullptr &&
+			m_make_connection != nullptr)
+		{
+			peer.impl().m_data.reset(m_make_connection(peer));
+		}
+	}
+
+	// is it a session mode.
+	inline bool session_mode() const
+	{
+		return (m_make_session != nullptr);
 	}
 	
 //////////////////////////////////////////////////////////////////////// SESSION

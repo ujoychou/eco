@@ -25,8 +25,8 @@
 *******************************************************************************/
 #include <eco/Project.h>
 #include <eco/net/Context.h>
-#include <eco/net/TcpPeer.h>
 #include <eco/net/TcpSession.h>
+#include <eco/net/TcpConnection.h>
 #include <eco/net/RequestFilter.h>
 #include <eco/log/Log.h>
 
@@ -34,6 +34,13 @@
 namespace eco{;
 namespace net{;
 
+
+////////////////////////////////////////////////////////////////////////////////
+class MessageHandler : public eco::Object<MessageHandler>
+{
+public:
+	virtual ~MessageHandler() = 0 {}
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +64,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Request>
-class RequestHandler
+class RequestHandler : public MessageHandler
 {
 public:
 	// decode message from bytes string.
@@ -89,22 +96,6 @@ public:
 		return m_context;
 	}
 
-	// context that recv from remote peer.
-	inline TcpSession& session()
-	{
-		return m_context.m_session;
-	}
-	inline const TcpSession& get_session() const
-	{
-		return m_context.m_session;
-	}
-
-	// context that recv from remote peer.
-	inline TcpPeer& peer() const
-	{
-		return m_context.m_session.get_peer();
-	}
-
 	// request that recv from remote peer.
 	inline Request& request()
 	{
@@ -115,16 +106,31 @@ public:
 		return m_request;
 	}
 
+	// context that recv from remote peer.
+	inline TcpSession& session() const
+	{
+		return (TcpSession&)m_context.m_session;
+	}
+
+	// context that recv from remote peer.
+	inline TcpConnection& connection() const
+	{
+		return (TcpConnection&)m_context.m_connection;
+	}
+
 	// response message to the request.
 	inline void async_resp(
 		IN Codec& codec, 
 		IN const uint32_t type,
-		IN bool last = false)
+		IN bool last = true)
 	{
-		session().async_send(codec, type, m_context, last);
+		if (session().session_mode())
+			session().async_resp(codec, type, m_context, last);
+		else
+			connection().async_resp(codec, type, m_context, last);
 	}
 
-private:
+protected:
 	Request m_request;
 	Context m_context;
 };

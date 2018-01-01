@@ -19,13 +19,11 @@ void TcpServer::Impl::start()
 	// verify data.
 	if (m_option.get_port() == 0)
 		EcoThrow(e_server_no_port) << "server must dedicated server port.";
-	if (m_make_session == nullptr)
-		EcoThrow(e_server_no_session_data) << "server has no session data.";
 
 	// set protocol.
 	if (m_option.websocket())
 	{
-		set_protocol_head(new WebSocketProtocolHead());
+		set_protocol_head(new WebSocketProtocolHeadEx());
 		set_protocol(new WebSocketProtocol());
 	}
 
@@ -69,11 +67,18 @@ void TcpServer::Impl::start()
 SessionData::ptr TcpServer::Impl::add_session(
 	OUT SessionId& sess_id, IN TcpPeer& peer)
 {
+	if (m_make_session == nullptr)
+	{
+		eco::Error e(e_server_no_support_session);
+		e << "tcp server don't supoort session, it's in a connection mode.";
+		EcoNet(EcoError, peer, "", e);
+		return SessionData::ptr();
+	}
 	// session overloaded.
 	if (m_session_map.size() >= m_option.get_max_session_size())
 	{
 		eco::Error e(e_session_over_max_size);
-		e << "session has reached max size: " 
+		e << "tcp server session has reached max size: " 
 			<< m_option.get_max_session_size();
 		EcoNet(EcoError, peer, "", e);
 		return SessionData::ptr();
@@ -203,7 +208,7 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 	// #.dispatch data context.
 	TcpSessionHost host(*(TcpServerImpl*)this);
 	eco::net::DataContext dc(&host);
-	peer_impl->get_data_context(dc, head.m_category, data, *prot, *m_prot_head);
+	peer_impl->get_data_context(dc, head.m_category, data, prot);
 	m_dispatch.post(dc);
 }
 
@@ -227,6 +232,11 @@ void TcpServer::Impl::on_send(
 //##############################################################################
 ECO_SHARED_IMPL(TcpServer);
 ECO_PROPERTY_VAL_IMPL(TcpServer, TcpServerOption, option);
+void TcpServer::set_connection_data(IN MakeConnectionDataFunc make)
+{
+	impl().m_make_connection = make;
+}
+
 void TcpServer::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;

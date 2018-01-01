@@ -49,19 +49,12 @@ public:
 	inline void async_resp(
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const bool last = false)
+		IN const bool last = true)
 	{
-		session().async_resp(msg, type, context(), last);
-	}
-
-	inline void response(
-		IN const google::protobuf::Message& msg,
-		IN uint16_t iid,
-		IN bool is_last = true,
-		IN MessageCategory category = category_general)
-	{
-		ProtobufCodec codec(const_cast<google::protobuf::Message&>(msg));
-		Handler::response(codec, iid, is_last, category);
+		if (session().session_mode())
+			session().async_resp(msg, type, m_context, last);
+		else
+			connection().async_resp(msg, type, m_context, last);
 	}
 };
 

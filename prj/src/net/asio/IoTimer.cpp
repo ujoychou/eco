@@ -33,7 +33,7 @@ void IoTimer::set_timer(IN uint32_t tick_secs)
 	m_impl->m_timer.set_timer(tick_secs);
 }
 
-uint32_t IoTimer::cancel()
+size_t IoTimer::cancel()
 {
 	return m_impl->m_timer.cancel();
 }

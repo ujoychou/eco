@@ -40,6 +40,7 @@ public:
 	TcpPeer::wptr m_peer_observer;
 	TcpPeerHandler* m_handler;
 	std::auto_ptr<TcpConnector> m_connector;
+	std::auto_ptr<ConnectionData> m_data;
 	// the session of tcp peer.
 	//std::vector<uint32_t> m_session_id;
 	//eco::Mutex m_session_id_mutex;
@@ -127,25 +128,25 @@ public:
 	}
 
 	// send response to client.
-	inline void async_send(IN eco::String& data)
+	inline void async_send(
+		IN eco::String& data, 
+		IN const uint32_t start)
 	{
 		m_state.set_self_live(true);
-		m_connector->async_write(data);
+		m_connector->async_write(data, start);
 	}
 
-	inline void async_send(
-		IN MessageMeta& meta, 
-		IN Protocol& prot,
-		IN ProtocolHead& prot_head)
+	inline void async_send(IN MessageMeta& meta, IN Protocol& prot)
 	{
 		eco::Error e;
 		eco::String data;
-		if (!prot.encode(data, meta, e))
+		uint32_t start = 0;
+		if (!prot.encode(data, start, meta, e))
 		{
 			EcoNet(EcoError,*this, "async_send", e);
 			return;
 		}
-		async_send(data);
+		async_send(data, start);
 	}
 
 	// send heartbeat.
@@ -155,7 +156,7 @@ public:
 			return;
 		eco::String data;
 		prot_head.encode_heartbeat(data);
-		async_send(data);
+		async_send(data, 0);
 	}
 	// send live heartbeat.
 	inline void async_send_live_heartbeat(IN ProtocolHead& prot_head)
@@ -195,14 +196,12 @@ public:
 		OUT DataContext& dc,
 		IN  MessageCategory category,
 		IN  eco::String& data,
-		IN  Protocol& prot,
-		IN  ProtocolHead& prot_head)
+		IN  Protocol* prot)
 	{
 		dc.m_category = category;
 		dc.m_data = std::move(data);
 		dc.m_peer_wptr = m_peer_observer;
-		dc.m_prot = &prot;
-		dc.m_prot_head = &prot_head;
+		dc.m_prot = prot;
 	}
 
 public:

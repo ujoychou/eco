@@ -66,7 +66,7 @@ public:
 	}
 
 	// cancel timer.
-	inline uint32_t cancel()
+	inline size_t cancel()
 	{
 		if (m_tick_timer != nullptr)
 		{

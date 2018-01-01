@@ -80,7 +80,7 @@ inline const char* find(IN const char* dest, IN const char* v)
 
 inline const char* find(
 	IN const char* dest,
-	IN const uint32_t size,
+	IN const size_t size,
 	IN const char* v)
 {
 	const char* end = &dest[size - strlen(v)];

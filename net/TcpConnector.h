@@ -108,7 +108,7 @@ public:
 	/*@ asynchronous send data to client.
 	* @ para.data: data to send to client.
 	*/
-	void async_write(IN eco::String& data);
+	void async_write(IN eco::String& data, IN const uint32_t start);
 
 	// close socket.
 	void close();

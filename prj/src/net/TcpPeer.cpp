@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/net/Ecode.h>
 #include <eco/log/Log.h>
+#include <eco/net/protocol/StringCodec.h>
 #include <eco/net/protocol/TcpProtocol.h>
 #include <eco/net/protocol/WebSocketShakeHand.h>
 #include <eco/net/protocol/WebSocketProtocol.h>
@@ -76,7 +77,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand(
 		notify_close(nullptr);
 		return;
 	}
-	async_send(shake_hand.response());
+	async_send(shake_hand.response(), 0);
 	m_state.set_ready();	// websocket connection has build.
 }
 
@@ -137,13 +138,10 @@ void TcpPeer::Impl::on_read_data(
 
 	if (!m_state.ready())
 	{
-		handle_websocket_shakehand(data.c_str(), data.size());
-		async_recv_next();
-		return;
-	}
-	if (m_state.websocket())
-	{
-		WebSocketProtocol().decode_websocket(data);
+		if (m_state.websocket())
+		{
+			handle_websocket_shakehand(data.c_str(), data.size());
+		}
 		async_recv_next();
 		return;
 	}
@@ -221,16 +219,13 @@ void TcpPeer::async_recv_shakehand()
 {
 	impl().async_recv_shakehand();
 }
-void TcpPeer::async_send(IN eco::String& data)
+void TcpPeer::async_send(IN eco::String& data, IN const uint32_t start)
 {
-	impl().async_send(data);
+	impl().async_send(data, start);
 }
-void TcpPeer::async_send(
-	IN MessageMeta& meta, 
-	IN Protocol& prot,
-	IN ProtocolHead& prot_head)
+void TcpPeer::async_send(IN MessageMeta& meta, IN Protocol& prot)
 {
-	impl().async_send(meta, prot, prot_head);
+	impl().async_send(meta, prot);
 }
 void TcpPeer::close()
 {
@@ -240,6 +235,15 @@ void TcpPeer::notify_close(IN const eco::Error* e)
 {
 	impl().notify_close(e);
 }
+void TcpPeer::async_resp(IN Codec& codec, IN const uint32_t type,
+	IN const Context& c, IN Protocol& prot, IN const bool last)
+{
+	MessageMeta meta(codec, none_session, type, c.m_meta.m_category);
+	meta.set_request_data(c.m_meta.m_request_data, c.m_meta.m_option);
+	meta.set_last(last);
+	impl().async_send(meta, prot);
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////

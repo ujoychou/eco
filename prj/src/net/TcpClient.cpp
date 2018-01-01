@@ -101,8 +101,6 @@ void TcpClient::Impl::async_connect()
 		EcoThrow(e_client_no_protocol) << "client protocol is null.";
 	if (m_balancer.m_address_set.empty())
 		EcoThrow(e_client_no_address) << "client has no server address.";
-	if (m_make_session == nullptr)
-		EcoThrow(e_client_no_session_data) << "client has no session data.";
 
 	// init tcp client worker. 
 	if (!m_init.is_ok())
@@ -145,7 +143,7 @@ TcpSession TcpClient::Impl::open_session()
 	TcpSession session;
 	SessionDataPack::ptr pack(new SessionDataPack);
 	pack->m_session.reset(m_make_session(none_session));
-	session.set_host(TcpSessionHost(*(TcpClientImpl*)this));
+	session.impl().m_host = (TcpSessionHost(*(TcpClientImpl*)this));
 	session.impl().m_session_wptr = pack->m_session;
 	session.impl().user_born();
 	pack->m_user_observer = session.impl().m_user;
@@ -175,7 +173,7 @@ void TcpClient::Impl::async_auth(IN TcpSession& session, IN MessageMeta& meta)
 	// use "&session" when get response, because it represent user.
 	pack->m_request_data = meta.m_request_data;
 	meta.set_request_data(session_key);
-	if (!m_protocol->encode(pack->m_request, meta, e))
+	if (!m_protocol->encode(pack->m_request, pack->m_request_start, meta, e))
 	{
 		EcoError << "tcp client async auth: encode data fail." << EcoFmt(e);
 		return;
@@ -193,8 +191,9 @@ void TcpClient::Impl::on_connect()
 		eco::String data;
 		SessionDataPack& pack = (*it->second);
 		data.asign(pack.m_request.c_str(), pack.m_request.size());
-		async_send(data);
+		async_send(data, pack.m_request_start);
 	}
+	EcoNetLog(EcoDebug, peer()) << "connected.";
 }
 
 
@@ -228,8 +227,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	// client have no "io heartbeat" option.
 	TcpSessionHost host(*(TcpClientImpl*)this);
 	DataContext dc(&host);
-	peer_impl->get_data_context(dc, head.m_category, data, 
-		*m_protocol, *m_prot_head);
+	peer_impl->get_data_context(dc, head.m_category, data, m_protocol.get());
 	m_dispatcher.post(dc);
 }
 
@@ -271,6 +269,11 @@ DispatchRegistry& TcpClient::dispatcher()
 	return impl().m_dispatcher;
 }
 
+void TcpClient::set_connection_data(IN MakeConnectionDataFunc make)
+{
+	impl().m_make_connection = make;
+}
+
 void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;
@@ -296,9 +299,9 @@ void TcpClient::async_connect(IN eco::net::AddressSet& service_addr)
 	impl().async_connect(service_addr);
 }
 
-void TcpClient::async_send(IN eco::String& data)
+void TcpClient::async_send(IN eco::String& data, IN const uint32_t start)
 {
-	impl().async_send(data);
+	impl().async_send(data, start);
 }
 
 void TcpClient::async_send(IN MessageMeta& meta)

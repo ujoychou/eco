@@ -70,6 +70,14 @@ public:
 	void set_protocol(IN Protocol*);
 	Protocol& protocol() const;
 
+	// set connection data class.
+	template<typename ConnectionDataT>
+	inline void set_connection_data()
+	{
+		set_connection_data(&make_connection_data<ConnectionData>);
+	}
+	void set_connection_data(IN MakeConnectionDataFunc make);
+
 	// set session data class and tcp session mode.
 	template<typename SessionDataT>
 	inline void set_session_data()
@@ -113,12 +121,23 @@ public:
 	void async_auth(IN TcpSession& session, IN MessageMeta& meta);
 
 	// async send message.
-	void async_send(IN eco::String& data);
+	void async_send(IN eco::String& data, IN const uint32_t start);
 
 	// async send message.
 	void async_send(IN MessageMeta& meta);
 
-	
+	// async send protobuf.
+	inline void async_send(
+		IN google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const uint32_t request_data,
+		IN const MessageCategory category = category_message)
+	{
+		ProtobufCodec codec(msg);
+		MessageMeta meta(codec, none_session, type, category);
+		meta.set_request_data(request_data);
+		async_send(meta);
+	}
 };
 
 

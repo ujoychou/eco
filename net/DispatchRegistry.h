@@ -33,31 +33,32 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 // message handled by "handler", suguest using in server.
 template<typename HandlerT>
-inline void handle_context(IN MetaContext& mc)
+inline void handle_context(IN Context& c)
 {
 	// 1.filter request by session open state.
- 	if (HandlerT::get_filter().closed_session() && !mc.m_session.opened() ||
- 		HandlerT::get_filter().opened_session() && mc.m_session.opened())
+ 	if (HandlerT::get_filter().closed_session() && !c.m_session.opened() ||
+ 		HandlerT::get_filter().opened_session() && c.m_session.opened())
  	{
-		EcoNetLog(EcoWarn, mc.m_session.get_peer()) 
-			<< "filter message: " << mc.m_request_type;
+		EcoNetLog(EcoWarn, c.m_session.get_peer()) 
+			<< "filter message: " << c.m_meta.m_message_type;
  		return;
  	}
 
 	// 2.decode message by a newer handler.
 	// heap is used to be passed by deriving from "enable_shared_from_this".
 	std::shared_ptr<HandlerT> hdl(new HandlerT);
-	hdl->context().set_context(mc);
-	if (!hdl->on_decode(mc.m_message.m_data, mc.m_message.m_size))
+	if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
 	{
 		return;
 	}
-	mc.release();	// release io raw data to save memory.
+	c.release_data();		// release io raw data to save memory.
+	hdl->context() = std::move(c);
+	
 
 	// 3.logging request.
 	if (HandlerT::auto_logging())
 	{
-		uint32_t type = static_cast<uint32_t>(mc.m_request_type);
+		uint32_t type = static_cast<uint32_t>(c.m_meta.m_message_type);
 		EcoInfo << "req > " 
 			<< eco::Integer<uint32_t>(type, eco::dec, 4).c_str()
 			<< " " << HandlerT::get_request_type_name()
@@ -73,24 +74,24 @@ inline void handle_context(IN MetaContext& mc)
 // message handled by "functor", suguest using in client.
 template<typename MessageT, typename CodecT>
 inline void handle_context(
-	IN std::function<void(IN MessageT&, IN MetaContext&)>& func,
-	IN MetaContext& mc)
+	IN std::function<void(IN MessageT&, IN Context&)>& func,
+	IN Context& c)
 {
 	CodecT codec;
 	MessageT object;
 	codec.set_message(&object);
-	codec.decode(mc.m_message.m_data, mc.m_message.m_size);
-	func(object, mc);
+	codec.decode(c.m_message.m_data, c.m_message.m_size);
+	func(object, c);
 }
 
 // message array handled by "functor", suguest using in client.
 #define ECO_HANDLE_CONTEXT_ARRAY_FUNC(MessageT) \
-std::function<void(std::vector<std::shared_ptr<MessageT>>&, MetaContext&)>
+std::function<void(std::vector<std::shared_ptr<MessageT>>&, Context&)>
 // 
 template<typename MessageT, typename CodecT>
 inline void handle_context_array(
 	IN ECO_HANDLE_CONTEXT_ARRAY_FUNC(MessageT)& func,
-	IN MetaContext& mc)
+	IN Context& c)
 {
 	static std::vector<MessageT*> s_message_set;
 
@@ -98,14 +99,14 @@ inline void handle_context_array(
 	CodecT codec;
 	MessageT* msg(new MessageT);
 	codec.set_message(msg);
-	codec.decode(&mc.m_message);
+	codec.decode(&c.m_message);
 	s_message_set.push_back(msg);
 
 	// 2.handle message.
-	if (eco::has(mc.m_option, opt_last))
+	if (eco::has(c.m_option, opt_last))
 	{
 		// 3.release message object.
-		func(s_message_set, mc);
+		func(s_message_set, c);
 		auto it = s_message_set.begin();
 		for (; it != s_message_set.end(); ++it){
 			delete *it;
@@ -115,10 +116,10 @@ inline void handle_context_array(
 }
 
 inline void handle_context_default(
-	IN std::function<void(IN eco::Bytes&, IN MetaContext&)>& func,
-	IN MetaContext& mc)
+	IN std::function<void(IN eco::Bytes&, IN Context&)>& func,
+	IN Context& c)
 {
-	func(mc.m_message, mc);
+	func(c.m_message, c);
 }
 
 
@@ -136,7 +137,7 @@ std::bind(&func, std::placeholders::_1, std::placeholders::_2));
 class ECO_API DispatchRegistry
 {
 public:
-	typedef std::function<void(IN MetaContext&)> HandlerFunc;
+	typedef std::function<void(IN Context&)> HandlerFunc;
 
 	virtual ~DispatchRegistry() {}
 
@@ -174,7 +175,7 @@ public:
 	template<typename MessageT, typename CodecT>
 	inline void register_handler(
 		IN uint64_t id,
-		IN std::function<void(IN MessageT&, IN MetaContext&)> func)
+		IN std::function<void(IN MessageT&, IN Context&)> func)
 	{
 		register_handler(id, std::bind(&handle_context<MessageT, CodecT>,
 			func, std::placeholders::_1));
@@ -182,7 +183,7 @@ public:
 
 	/*@ register message default handler func.*/
 	inline void register_default(
-		IN std::function<void(IN eco::Bytes&, IN MetaContext&)> func)
+		IN std::function<void(IN eco::Bytes&, IN Context&)> func)
 	{
 		register_default_handler(std::bind(&handle_context_default, 
 			func, std::placeholders::_1));

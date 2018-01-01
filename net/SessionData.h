@@ -86,6 +86,7 @@ public:
 		m_peer = 0;
 	}
 
+	bool session_mode() const;
 	bool response_heartbeat() const;
 	ProtocolHead* protocol_head() const;
 

@@ -285,11 +285,9 @@ public:
 	inline void resize(IN uint32_t s)
 	{
 		reserve(s);
-		if (s > 0)
-		{
-			m_size = s;
+		m_size = s;
+		if (m_data != nullptr)
 			m_data[m_size] = 0;
-		}
 	}
 
 	inline void reserve(IN uint32_t c)
@@ -319,6 +317,11 @@ public:
 		}
 	}
 
+	inline void clear()
+	{
+		resize(0);
+	}
+
 	inline void release()
 	{
 		if (m_data != nullptr)
@@ -339,7 +342,7 @@ public:
 		IN const char* v,
 		IN const uint32_t find_end = 0) const
 	{
-		uint32_t len = strlen(v);
+		uint32_t len = (uint32_t)strlen(v);
 		if (m_size < find_end + len)
 			return nullptr;
 
