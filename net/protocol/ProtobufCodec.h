@@ -27,9 +27,7 @@
 #include <google/protobuf/message.h>
 
 #ifndef ECO_AUTO_LINK_NO
-#	pragma comment(lib, "libprotoc.lib")
 #	pragma comment(lib, "libprotobuf.lib")
-#	pragma comment(lib, "libprotobuf-lite.lib")
 #endif
 
 namespace eco{;

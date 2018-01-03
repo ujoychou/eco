@@ -1,9 +1,10 @@
+syntax = "proto3";
 package eco.service.proto;
 
 
 // ´íÎó
 message Error
 {
-	optional int32  id = 1;				// ´íÎóID
-	optional bytes  info = 2;			// ´íÎóÐÅÏ¢
+	int32  id = 1;				// ´íÎóID
+	bytes  info = 2;			// ´íÎóÐÅÏ¢
 }

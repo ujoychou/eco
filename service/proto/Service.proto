@@ -1,3 +1,4 @@
+syntax = "proto3";
 import "Error.proto";
 package eco.service.proto;
 
@@ -6,20 +7,20 @@ package eco.service.proto;
 // 获取服务请求
 message GetServiceReq
 {
-	optional string service_name = 10;
+	string service_name = 10;
 }
 // 获取服务回报
 message Service
 {
-	optional Error  error = 2;
-	optional string service_name = 10;
-	optional string process_name = 11;
-	optional string did_protocol = 12;
-	optional string object_name  = 13;
-	optional int64  max_future_object_workload = 14;
-	optional int64  max_limited_object_workload = 15;
-	optional int32  virtual_service_object_workload = 16;
-	optional int32  horizontal_virtual_service_number = 17;
+	Error  error = 2;
+	string service_name = 10;
+	string process_name = 11;
+	string did_protocol = 12;
+	string object_name  = 13;
+	int64  max_future_object_workload = 14;
+	int64  max_limited_object_workload = 15;
+	int32  virtual_service_object_workload = 16;
+	int32  horizontal_virtual_service_number = 17;
 }
 
 
@@ -27,39 +28,39 @@ message Service
 // 服务地址请求
 message GetServiceAddressReq
 {
-	optional string service_name = 10;
+	string service_name = 10;
 }
 // 服务地址回报
 message GetServiceAddressRsp
 {
-	optional Error  error = 2;
-	optional string service_name = 10;
+	Error  error = 2;
+	string service_name = 10;
 }
 
 // 服务地址订阅请求
 message SubServiceAddressReq
 {
-	optional string service_name = 10;
+	string service_name = 10;
 }
 // 服务地址订阅回报
 message SubServiceAddressRsp
 {
-	optional Error  error = 2;
-	optional string service_name = 10;
+	Error  error = 2;
+	string service_name = 10;
 }
 // 服务地址发布请求
 message PubServiceAddressReq
 {
-	optional string service_name = 10;
+	string service_name = 10;
 }
 // 服务地址发布回报
 message PubServiceAddressRsp
 {
-	optional Error  error = 2;
-	optional string service_name = 10;
+	Error  error = 2;
+	string service_name = 10;
 }
 // 服务地址广播
 message OnPubServiceAddress
 {
-	optional string service_name = 10;
+	string service_name = 10;
 }

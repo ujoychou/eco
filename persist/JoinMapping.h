@@ -204,8 +204,7 @@ public:
 				auto it = join_meta->m_map->get_map().begin();
 				for (; it != join_meta->m_map->get_map().end(); ++it)
 				{
-					if (it->is_pk() && get_main_table()->find_property(
-						it->get_property(), 
+					if (get_main_table()->find_property(it->get_property(), 
 						eco::constraint_fk | eco::constraint_pk))
 					{
 						continue;

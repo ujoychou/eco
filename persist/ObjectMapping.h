@@ -245,8 +245,8 @@ public:
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
 			// not main table pk.
-			if (main_table == nullptr ||
-				!main_table->find_property(it->get_property(), constraint_pk))
+			if (main_table == nullptr || !main_table->find_property(
+				it->get_property(), constraint_pk | constraint_fk))
 			{
 				if (table_lias != 0)
 				{

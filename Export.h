@@ -53,7 +53,6 @@ namespace eco{}
 #	define ECO_WIN
 #endif
 
-
 /*@ [WIN_32]*/
 #ifdef ECO_WIN32
 // windows related header file.

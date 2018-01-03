@@ -497,7 +497,7 @@ public:
 		IN  eco::String& bytes,
 		IN  eco::Error& e) override
 	{
-		WebSocketProtocolHead head;
+		WebSocketProtocolHeadEx head;
 		uint32_t meta_pos = 0;
 		if (!head.decode(bytes, meta_pos, e))
 		{
