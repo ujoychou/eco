@@ -31,58 +31,50 @@ public:\
 class TopicId
 {
 public:
-	uint64_t m_object_id;
-	uint32_t m_aspect_id;
-	uint32_t m_subject_id;
+	uint32_t m_type; 
+	uint32_t m_prop;
+	uint64_t m_value;
 
-	inline TopicId()
-		: m_object_id(0)
-		, m_aspect_id(0)
-		, m_subject_id(0)
+	inline TopicId() : m_type(0), m_prop(0), m_value(0)
 	{}
 
 	inline TopicId(
-		IN const uint32_t subject_id,
-		IN const uint32_t aspect_id,
-		IN const uint64_t object_id = 0)
-		: m_object_id(object_id)
-		, m_aspect_id(aspect_id)
-		, m_subject_id(subject_id)
+		IN const uint32_t type,
+		IN const uint32_t prop,
+		IN const uint64_t value = 0)
+		: m_type(type), m_prop(prop), m_value(value)
 	{}
 
 	inline void set(
-		IN const uint32_t subject_id,
-		IN const uint32_t aspect_id,
-		IN const uint64_t object_id = 0)
+		IN const uint32_t type,
+		IN const uint32_t prop,
+		IN const uint64_t value = 0)
 	{
-		m_object_id = object_id;
-		m_aspect_id = aspect_id;
-		m_subject_id = subject_id;
+		m_type = type;
+		m_prop = prop;
+		m_value = value;
 	}
 
 	inline uint64_t hash_value() const
 	{
-		uint64_t result = m_aspect_id;
-		result += m_subject_id * 100;
-		result += m_object_id * 10000;
+		uint64_t result = m_type;
+		result += m_prop * 100;
+		result += m_value * 10000;
 		return result;
 	}
 
-	inline bool operator==(IN const TopicId& topic_id) const
+	inline bool operator==(IN const TopicId& tid) const
 	{
-		return m_subject_id == topic_id.m_subject_id
-			&& m_object_id == topic_id.m_object_id
-			&& m_aspect_id == topic_id.m_aspect_id;
+		return m_value == tid.m_value && m_type == tid.m_type 
+			&& m_prop == tid.m_prop;
 	}
 
 	inline bool equal(
-		IN const uint32_t subject_id,
-		IN const uint32_t aspect_id,
-		IN const uint64_t object_id = 0) const
+		IN const uint32_t type,
+		IN const uint32_t prop,
+		IN const uint64_t value = 0) const
 	{
-		return m_subject_id == subject_id
-			&& m_object_id == object_id
-			&& m_aspect_id == aspect_id;
+		return m_value == value	&& m_type == type && m_prop == prop;
 	}
 };
 ////////////////////////////////////////////////////////////////////////////////
