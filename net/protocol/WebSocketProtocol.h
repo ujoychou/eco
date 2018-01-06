@@ -247,12 +247,14 @@ public:
 			data_start = size_ws_len8 - size_ws_len2;
 			bytes[data_start] = bytes[0];
 			bytes[data_start + 1] = 126;
-			eco::net::hton(&bytes[size_ws_len2], (uint16_t)data_size);
+			eco::net::hton(
+				&bytes[data_start + size_ws_len2], (uint16_t)data_size);
 		}
 		else //if (data_size > max_uint16())
 		{
 			bytes[data_start + 1] = 127;
-			eco::net::hton(&bytes[size_ws_len2], (uint64_t)data_size);
+			eco::net::hton(
+				&bytes[data_start + size_ws_len2], (uint64_t)data_size);
 		}
 		uint32_t pos = size_ws_head + size_ws_len8;
 
