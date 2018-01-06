@@ -44,7 +44,7 @@ public:
 	bool open(IN const SessionId session_id = none_session);
 
 	// check whether session has been opened.
-	bool opened() const;
+	bool authed() const;
 
 	// close session, release session data.
 	void close();

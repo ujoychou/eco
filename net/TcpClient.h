@@ -74,7 +74,7 @@ public:
 	template<typename ConnectionDataT>
 	inline void set_connection_data()
 	{
-		set_connection_data(&make_connection_data<ConnectionData>);
+		set_connection_data(&make_connection_data<ConnectionDataT>);
 	}
 	void set_connection_data(IN MakeConnectionDataFunc make);
 

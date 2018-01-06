@@ -42,8 +42,10 @@ or send a response, so get the request and response info.
 
 #define EcoNet(EcoLog, peer, func, e) \
 EcoLog << (peer).get_id() << " " << func << ": " << EcoFmt(e);
-
+#define EcoNetId(EcoLog, id, func, e) \
+EcoLog << id << " " << func << ": " << EcoFmt(e);
 #define EcoNetLog(EcoLog, peer) EcoLog << (peer).get_id() << " "
+#define EcoNetIdLog(EcoLog, id) EcoLog << id << " "
 
 
 ////////////////////////////////////////////////////////////////////////////////

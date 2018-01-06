@@ -22,7 +22,8 @@ bool handle_server_context(OUT Context& c, IN TcpPeer& peer)
 	auto* server = (TcpServer::Impl*)sess.impl().m_host.m_host;
 	assert(server != nullptr);
 	// #.handle connection.
-	server->make_connection_data(peer);
+	peer.impl().make_connection_data(
+		server->m_make_connection, sess.impl().m_prot);
 
 	// #.handle session.
 	if (c.m_meta.m_session_id != none_session)
@@ -47,7 +48,8 @@ bool handle_client_context(
 	auto* client = (TcpClient::Impl*)sess.impl().m_host.m_host;
 	assert(client != nullptr);
 	// #.handle connection.
-	client->make_connection_data(peer);
+	peer.impl().make_connection_data(
+		client->m_make_connection, sess.impl().m_prot);
 
 	// #.handle authority.
 	if (eco::has(c.m_meta.m_category, category_authority))
@@ -128,8 +130,7 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	c.m_session = eco::heap;
 	c.m_session.impl().m_host = dc.m_session_host;
 	c.m_session.impl().m_prot = dc.m_prot;
-	c.m_connection.m_peer_wptr = peer;
-	c.m_connection.m_protocol = dc.m_prot;
+	c.m_connection = eco::net::TcpConnection(dc.m_peer_wptr, *dc.m_prot);
 	if (dc.m_session_host.m_type == tcp_session_host_server &&
 		handle_server_context(c, *peer) ||
 		dc.m_session_host.m_type == tcp_session_host_client &&

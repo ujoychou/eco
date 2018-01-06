@@ -34,30 +34,6 @@
 namespace eco{;
 namespace net{;
 
-class TcpPeer;
-////////////////////////////////////////////////////////////////////////////////
-// define session data holder. (using the boost::any<type> mechanism)
-class ConnectionData : public eco::HeapOperators
-{
-	ECO_OBJECT(ConnectionData);
-public:
-	inline  ConnectionData() : m_peer(nullptr){}
-	virtual ~ConnectionData() {}
-
-private:
-	TcpPeer* m_peer;
-};
-
-// default session factory function.
-template<typename ConnectionDataT>
-inline static ConnectionData* make_connection_data(IN TcpPeer& peer)
-{
-	return new ConnectionDataT();
-}
-
-// set session factory to create session of tcp server peer.
-typedef ConnectionData* (*MakeConnectionDataFunc)(IN TcpPeer& peer);
-
 
 ////////////////////////////////////////////////////////////////////////////////
 class IoService;
@@ -90,6 +66,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+class ConnectionData;
 class ECO_API TcpPeer
 {
 	ECO_OBJECT_API(TcpPeer);
@@ -118,14 +95,7 @@ public:
 	void set_option(IN bool no_delay);
 
 	// get peer data.
-	ConnectionData::ptr data();
-
-	// get and cast peer data.
-	template<typename ConnectionDataT>
-	inline std::shared_ptr<ConnectionDataT> cast()
-	{
-		return std::dynamic_pointer_cast<ConnectionDataT>(data());
-	}
+	ConnectionData* data();
 
 	// async connect to server address.
 	void async_connect(IN const Address& addr);

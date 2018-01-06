@@ -187,6 +187,10 @@ TcpPeerHandler& TcpPeer::handler()
 {
 	return impl().handler();
 }
+ConnectionData* TcpPeer::data()
+{
+	return impl().m_data.get();
+}
 int64_t TcpPeer::get_id() const
 {
 	return impl().get_id();
@@ -243,7 +247,6 @@ void TcpPeer::async_resp(IN Codec& codec, IN const uint32_t type,
 	meta.set_last(last);
 	impl().async_send(meta, prot);
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

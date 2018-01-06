@@ -63,6 +63,17 @@ public:
 		m_state.set_self_live(false);
 	}
 
+	inline void make_connection_data(
+		IN MakeConnectionDataFunc make_func, IN Protocol* prot)
+	{
+		if (make_func != nullptr && m_data.get() == nullptr)
+		{
+			m_data.reset(make_func());
+			m_data->m_wptr = m_peer_observer;
+			m_data->m_prot = prot;
+		}
+	}
+
 	// tcp peer callback handler.
 	inline void set_handler(IN TcpPeerHandler* v)
 	{

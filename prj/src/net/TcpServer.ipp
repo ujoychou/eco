@@ -121,15 +121,6 @@ public:
 		return nullptr;
 	}
 
-	inline void make_connection_data(IN TcpPeer& peer)
-	{
-		if (peer.impl().m_data.get() == nullptr &&
-			m_make_connection != nullptr)
-		{
-			peer.impl().m_data.reset(m_make_connection(peer));
-		}
-	}
-
 	// is it a session mode.
 	inline bool session_mode() const
 	{

@@ -115,7 +115,7 @@ public:
 		m_message = c.m_message;
 		m_meta = c.m_meta;
 		m_session = c.m_session;
-		m_connection = c.m_connection;
+		m_connection = std::move(c.m_connection);
 		return *this;
 	}
 };

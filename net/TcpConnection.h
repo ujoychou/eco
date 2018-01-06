@@ -35,14 +35,39 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+template<typename ConnectionDataT>
+class ConnectionDataPtr
+{
+	ECO_OBJECT(ConnectionDataPtr);
+	ECO_PTR_MEMBER(ConnectionDataT,
+		static_cast<ConnectionDataT*>(m_peer->data()));
+public:
+	inline ConnectionDataPtr(IN TcpPeer::ptr& peer) : m_peer(peer)
+	{}
+
+	inline ConnectionDataPtr(IN ConnectionDataPtr&& v)
+		: m_peer(std::move(v.peer))
+	{}
+
+private:
+	TcpPeer::ptr m_peer;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 class TcpConnection
 {
 public:
-	// check whether session has been opened.
-	inline bool opened() const
-	{
-		return !m_peer_wptr.expired();
-	}
+	inline TcpConnection() : m_protocol(nullptr)
+	{}
+
+	inline TcpConnection(IN TcpPeer::wptr& wptr, IN Protocol& prot)
+		: m_peer_wptr(wptr), m_protocol(&prot)
+	{}
+
+	inline TcpConnection(IN const TcpConnection& other) :
+		m_peer_wptr(other.m_peer_wptr),
+		m_protocol(other.m_protocol)
+	{}
 
 	// close session, release session data.
 	inline void close()
@@ -60,6 +85,15 @@ public:
 		m_protocol = nullptr;
 	}
 
+	// check whether this connection has been expired.
+	inline bool expired() const
+	{
+		return m_peer_wptr.expired();
+	}
+
+	// check whether this connection has been authed.
+	inline bool authed() const;
+
 	// get session data.
 	inline uint64_t get_id() const
 	{
@@ -71,27 +105,16 @@ public:
 		return 0;
 	}
 
-	// get session data.
-	inline ConnectionData::ptr data() const
+	template<typename ConnectionDataT>
+	inline ConnectionDataPtr<ConnectionDataT> cast() const
 	{
 		TcpPeer::ptr peer = m_peer_wptr.lock();
-		if (peer != nullptr)
+		if (peer == nullptr)
 		{
-			return peer->data();
+			EcoThrow(e_peer_expired)
+				<< "peer has expired, it has been closed.";
 		}
-		return ConnectionData::ptr();
-	}
-
-	// get and cast session data.
-	template<typename SessionDataT>
-	inline std::shared_ptr<SessionDataT> cast() const
-	{
-		TcpPeer::ptr peer = m_peer_wptr.lock();
-		if (peer != nullptr)
-		{
-			return peer->cast<SessionDataT>();
-		}
-		return std::shared_ptr<SessionDataT>();
+		return ConnectionDataPtr<ConnectionDataT>(peer);
 	}
 
 public:
@@ -117,17 +140,6 @@ public:
 		{
 			return peer->async_resp(codec, type, context, *m_protocol);
 		}
-	}
-
-	// async send message.
-	template<typename Codec, typename MessageT>
-	inline void async_send(
-		IN const MessageT& msg,
-		IN MessageMeta& meta)
-	{
-		Codec codec(msg);
-		meta.m_codec = &codec;
-		async_send(meta);
 	}
 
 	// async send protobuf.
@@ -162,11 +174,56 @@ public:
 		async_resp(codec, type, context, last);
 	}
 
-private:
 	TcpPeer::wptr	m_peer_wptr;
 	Protocol*		m_protocol;
-	friend class DispatchHandler;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+// define session data holder. (using the boost::any<type> mechanism)
+class ConnectionData : public eco::HeapOperators
+{
+	ECO_OBJECT(ConnectionData);
+public:
+	inline  ConnectionData() : m_prot(nullptr) {}
+	virtual ~ConnectionData() {}
+
+	// get connection object.
+	inline TcpConnection connection()
+	{
+		return TcpConnection(m_wptr, *m_prot);
+	}
+
+	// whether this connection has authorized.
+	virtual bool authed() const
+	{
+		return false;
+	}
+
+private:
+	TcpPeer::wptr m_wptr;
+	Protocol* m_prot;
+	friend class TcpPeer;
+};
+
+// default session factory function.
+template<typename ConnectionDataT>
+inline static ConnectionData* make_connection_data()
+{
+	return new ConnectionDataT();
+}
+
+// set session factory to create session of tcp server peer.
+typedef ConnectionData* (*MakeConnectionDataFunc)();
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline bool TcpConnection::authed() const
+{
+	TcpPeer::ptr peer = m_peer_wptr.lock();
+	return peer != nullptr && peer->data() != nullptr
+		&& peer->data()->authed();
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

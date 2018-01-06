@@ -150,15 +150,6 @@ public:
 		return *m_balancer.m_peer;
 	}
 
-	inline void make_connection_data(IN TcpPeer& peer)
-	{
-		if (peer.impl().m_data.get() == nullptr && 
-			m_make_connection != nullptr)
-		{
-			peer.impl().m_data.reset(m_make_connection(peer));
-		}
-	}
-
 	// is a session mode.
 	inline bool session_mode() const
 	{

@@ -31,9 +31,9 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
-	filter_none				= 0x00000000,
-	filter_closed_session	= 0x00000001,
-	filter_opened_session	= 0x00000002,
+	filter_none			= 0x0000,
+	filter_sess_authed  = 0x0001,
+	filter_conn_authed  = 0x0002,
 };
 typedef uint32_t RequestFilterValue;
 
@@ -50,22 +50,22 @@ public:
 		return m_value != filter_none;
 	}
 
-	inline bool closed_session() const
+	inline bool sess_authed() const
 	{
-		return eco::has(m_value, filter_closed_session);
+		return eco::has(m_value, filter_sess_authed);
 	}
-	inline void set_closed_session(IN bool is)
+	inline void set_sess_authed(IN bool is)
 	{
-		eco::set(m_value, filter_closed_session, is);
+		eco::set(m_value, filter_sess_authed, is);
 	}
 
-	inline bool opened_session() const
+	inline bool conn_authed() const
 	{
-		return eco::has(m_value, filter_opened_session);
+		return eco::has(m_value, filter_conn_authed);
 	}
-	inline void set_opened_session(IN bool is)
+	inline void set_conn_authed(IN bool is)
 	{
-		eco::set(m_value, filter_opened_session, is);
+		eco::set(m_value, filter_conn_authed, is);
 	}
 
 private:

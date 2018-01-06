@@ -303,9 +303,6 @@
     <ClCompile Include="..\..\..\codec\sha1.cpp">
       <Filter>lib\codec</Filter>
     </ClCompile>
-    <ClCompile Include="..\net\TcpConnection.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\log\Queue.h">

@@ -35,14 +35,28 @@ namespace net{;
 template<typename HandlerT>
 inline void handle_context(IN Context& c)
 {
-	// 1.filter request by session open state.
- 	if (HandlerT::get_filter().closed_session() && !c.m_session.opened() ||
- 		HandlerT::get_filter().opened_session() && c.m_session.opened())
- 	{
-		EcoNetLog(EcoWarn, c.m_session.get_peer()) 
-			<< "filter message: " << c.m_meta.m_message_type;
- 		return;
- 	}
+	// 1.filter request
+	const char* error = nullptr;
+	if (c.m_session.session_mode())
+	{
+		if (HandlerT::get_filter().sess_authed() && !c.m_session.authed())
+			error = "session should be authed when recv message: ";
+		if (!HandlerT::get_filter().sess_authed() && c.m_session.authed())
+			error = "session should be not authed when recv message: ";
+	}
+	else
+	{
+		if (HandlerT::get_filter().conn_authed() && !c.m_connection.authed())
+			error = "connection should be authed when recv message: ";
+		if (!HandlerT::get_filter().conn_authed() && c.m_connection.authed())
+			error = "connection should be not authed when recv message: ";
+	}
+	if (error != nullptr)
+	{
+		EcoNetIdLog(EcoWarn, c.m_connection.get_id())
+			<< error << c.m_meta.m_message_type;
+		return;
+	}
 
 	// 2.decode message by a newer handler.
 	// heap is used to be passed by deriving from "enable_shared_from_this".
@@ -66,7 +80,15 @@ inline void handle_context(IN Context& c)
 	}
 
 	// 4.handle request.
-	hdl->on_request();
+	try {
+		hdl->on_request();
+	} 
+	catch (eco::Error& e) {
+		EcoError << EcoFmt(e);
+	}
+	catch (std::exception& e) {
+		EcoError << e.what();
+	}
 }
 
 

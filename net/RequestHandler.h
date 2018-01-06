@@ -130,6 +130,20 @@ public:
 			connection().async_resp(codec, type, m_context, last);
 	}
 
+public:
+	template<typename Handler>
+	inline static std::shared_ptr<Handler> cast(
+		IN eco::net::MessageHandler::ptr& v)
+	{
+		return std::dynamic_pointer_cast<Handler>(v);
+	}
+
+	template<typename Handler>
+	inline static eco::net::MessageHandler::ptr cast(IN Handler* v)
+	{
+		return std::dynamic_pointer_cast<Handler>(v->shared_from_this());
+	}
+
 protected:
 	Request m_request;
 	Context m_context;
