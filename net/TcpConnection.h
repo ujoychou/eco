@@ -118,16 +118,6 @@ public:
 	}
 
 public:
-	// async send message.
-	inline void async_send(IN MessageMeta& meta)
-	{
-		TcpPeer::ptr peer = m_peer_wptr.lock();
-		if (peer != nullptr)
-		{
-			return peer->async_send(meta, *m_protocol);
-		}
-	}
-
 	// async response message.
 	inline void async_resp(
 		IN Codec& codec,
@@ -140,16 +130,6 @@ public:
 		{
 			return peer->async_resp(codec, type, context, *m_protocol);
 		}
-	}
-
-	// async send protobuf.
-	inline void async_send(
-		IN google::protobuf::Message& msg,
-		IN MessageMeta& meta)
-	{
-		ProtobufCodec codec(msg);
-		meta.m_codec = &codec;
-		async_send(meta);
 	}
 
 	// async send protobuf.
@@ -172,6 +152,17 @@ public:
 	{
 		ProtobufCodec codec(msg);
 		async_resp(codec, type, context, last);
+	}
+
+private:
+	// async send message.
+	inline void async_send(IN MessageMeta& meta)
+	{
+		TcpPeer::ptr peer = m_peer_wptr.lock();
+		if (peer != nullptr)
+		{
+			return peer->async_send(meta, *m_protocol);
+		}
 	}
 
 	TcpPeer::wptr	m_peer_wptr;

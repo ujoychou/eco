@@ -181,7 +181,7 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 		return;
 	}
 
-	// #.get related protocol.
+	// #.get related protocol and make connection data.
 	Protocol* prot = nullptr;
 	if (!eco::has(head.m_category, category_heartbeat))
 	{
@@ -193,6 +193,10 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 			EcoNet(EcoError, *peer_impl, "on_read", e);
 			return;
 		}
+		// this is thread safe:
+		// 1)one peer in one thread; 
+		// 2)all connection data access after this sentense(create data).
+		peer_impl->make_connection_data(m_make_connection, prot);
 	}
 	
 	// #.send heartbeat.

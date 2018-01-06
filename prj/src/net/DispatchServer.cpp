@@ -21,9 +21,6 @@ bool handle_server_context(OUT Context& c, IN TcpPeer& peer)
 	TcpSession& sess = c.m_session;
 	auto* server = (TcpServer::Impl*)sess.impl().m_host.m_host;
 	assert(server != nullptr);
-	// #.handle connection.
-	peer.impl().make_connection_data(
-		server->m_make_connection, sess.impl().m_prot);
 
 	// #.handle session.
 	if (c.m_meta.m_session_id != none_session)
@@ -47,9 +44,6 @@ bool handle_client_context(
 	TcpSession& sess = c.m_session;
 	auto* client = (TcpClient::Impl*)sess.impl().m_host.m_host;
 	assert(client != nullptr);
-	// #.handle connection.
-	peer.impl().make_connection_data(
-		client->m_make_connection, sess.impl().m_prot);
 
 	// #.handle authority.
 	if (eco::has(c.m_meta.m_category, category_authority))

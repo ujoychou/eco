@@ -193,6 +193,8 @@ void TcpClient::Impl::on_connect()
 		data.asign(pack.m_request.c_str(), pack.m_request.size());
 		async_send(data, pack.m_request_start);
 	}
+	m_balancer.m_peer->impl().make_connection_data(
+		m_make_connection, m_protocol.get());
 	EcoNetLog(EcoDebug, peer()) << "connected.";
 }
 

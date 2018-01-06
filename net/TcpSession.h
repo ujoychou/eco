@@ -43,11 +43,14 @@ public:
 	// if a none session open a new session, else get the exist session.
 	bool open(IN const SessionId session_id = none_session);
 
-	// check whether session has been opened.
-	bool authed() const;
-
 	// close session, release session data.
 	void close();
+
+	// check whether session has been opened.
+	bool opened() const;
+
+	// check whether session has been opened.
+	bool authed() const;
 
 	// get session data.
 	uint32_t get_session_id() const;
@@ -69,19 +72,6 @@ public:
 	bool session_mode() const;
 
 public:
-	// async send message.
-	void async_send(IN MessageMeta& meta);
-
-	// async send authority info.
-	void async_auth(IN MessageMeta& meta);
-
-	// async response message.
-	void async_resp(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const Context& context,
-		IN const bool last = false);
-
 	// async send protobuf.
 	inline void async_send(
 		IN google::protobuf::Message& msg,
@@ -114,6 +104,20 @@ public:
 		ProtobufCodec codec(msg);
 		async_resp(codec, type, context, last);
 	}
+
+	// async response message.
+	void async_resp(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const Context& context,
+		IN const bool last = false);
+
+private:
+	// async send message.
+	void async_send(IN MessageMeta& meta);
+
+	// async send authority info.
+	void async_auth(IN MessageMeta& meta);
 };
 
 

@@ -101,6 +101,10 @@ bool TcpSession::open(IN const SessionId session_id)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+inline bool TcpSession::opened() const
+{
+	return impl().m_session_wptr.expired();
+}
 bool TcpSession::authed() const
 {
 	return impl().m_session_wptr.expired();

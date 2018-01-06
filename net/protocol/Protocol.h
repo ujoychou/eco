@@ -38,7 +38,7 @@ enum
 {
 	model_none				= 0x00,
 
-	// todo with.
+	// none using.(once for ftdc.)
 	model_req1				= 0x80,
 	model_rsp2				= 0x40,
 
