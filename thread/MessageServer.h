@@ -176,27 +176,24 @@ protected:
 	/*@ work thread method.	*/
 	virtual void work() override
 	{
-		try 
+		while (true)
 		{
-			while (true)
+			// don't declare message before while.
+			Message msg;
+			if (!m_message_queue.pop(msg))
 			{
-				// don't declare message before while.
-				Message msg;
-				if (!m_message_queue.pop(msg))
-				{
-					break;	// message queue has been closed.
-				}
+				break;	// message queue has been closed.
+			}
+
+			// handler message.
+			try {
 				m_message_handler(msg);
-			}// end while
-		}
-		catch (eco::Error& e)
-		{
-			EcoError << "exception caught in message server: " << EcoFmt(e);
-		}
-		catch (std::exception& e)
-		{
-			EcoError << "exception caught in message server: " << e.what();
-		}
+			} catch (eco::Error& e) {
+				EcoError << "message server: " << EcoFmt(e);
+			} catch (std::exception& e) {
+				EcoError << "message server: " << e.what();
+			}
+		}// end while
 	}
 };
 

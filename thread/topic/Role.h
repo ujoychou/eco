@@ -117,6 +117,12 @@ public:
 	{
 		return *static_cast<value_t*>(get_value());
 	}
+	template<typename value_t>
+	inline value_t* cast_ptr()
+	{
+		return get_type_id() == eco::TypeId<value_t>::value()
+			? static_cast<value_t*>(get_value()) : nullptr;
+	}
 
 	// content timestamp.
 	inline eco::meta::Timestamp& timestamp()
