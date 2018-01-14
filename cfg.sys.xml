@@ -83,4 +83,14 @@
       <addr_shlt>127.0.0.1:50014</addr_shlt>
     </market>
   </customer>
+
+  <!--#.数据库-->
+  <persist enable="true">
+    <aliyun type="mysql">
+      <user value="root"/>
+      <password value="123456"/>
+      <database value="develop"/>
+      <address  value="127.0.0.1:3306"/>
+    </aliyun>
+  </persist>
 </root>

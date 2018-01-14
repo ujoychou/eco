@@ -30,6 +30,7 @@ app that run process.
 #include <eco/net/TcpServer.h>
 #include <eco/net/TcpClient.h>
 #include <eco/thread/Timer.h>
+#include <eco/persist/Persist.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -67,6 +68,7 @@ public:
 
 	/*@ get system config.*/
 	const Config& get_sys_config() const;
+	eco::Persist& persist();
 
 	/*@ get app config.*/
 	const Config& get_config() const;

@@ -300,6 +300,12 @@
     <ClCompile Include="..\..\..\codec\sha1.cpp">
       <Filter>lib\codec</Filter>
     </ClCompile>
+    <ClCompile Include="..\persist\PersistAddress.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\Persist.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\log\Queue.h">
@@ -732,6 +738,9 @@
       <Filter>lib\persist</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\persist\Persist.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Address.h">
       <Filter>lib\persist</Filter>
     </ClInclude>
   </ItemGroup>
