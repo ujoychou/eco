@@ -35,52 +35,54 @@ namespace net{;
 template<typename HandlerT>
 inline void handle_context(IN Context& c)
 {
+	const TcpConnection& conn = c.m_session.get_connection();
+
 	// 1.filter request
 	const char* error = nullptr;
 	if (c.m_session.session_mode())
 	{
-		if (HandlerT::get_filter().sess_authed() && !c.m_session.authed())
+		if (HandlerT::get_filter().authed() && !c.m_session.authed())
 			error = "session should be authed when recv message: ";
-		if (!HandlerT::get_filter().sess_authed() && c.m_session.authed())
+		if (!HandlerT::get_filter().authed() && c.m_session.authed())
 			error = "session should be not authed when recv message: ";
 	}
 	else
 	{
-		if (HandlerT::get_filter().conn_authed() && !c.m_connection.authed())
+		if (HandlerT::get_filter().authed() && !conn.authed())
 			error = "connection should be authed when recv message: ";
-		if (!HandlerT::get_filter().conn_authed() && c.m_connection.authed())
+		if (!HandlerT::get_filter().authed() && conn.authed())
 			error = "connection should be not authed when recv message: ";
 	}
 	if (error != nullptr)
 	{
-		EcoNetIdLog(EcoWarn, c.m_connection.get_id())
+		EcoNetIdLog(EcoWarn, conn.get_id())
 			<< error << c.m_meta.m_message_type;
 		return;
 	}
-
-	// 2.decode message by a newer handler.
-	// heap is used to be passed by deriving from "enable_shared_from_this".
-	std::shared_ptr<HandlerT> hdl(new HandlerT);
-	if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
-	{
-		return;
-	}
-	c.release_data();		// release io raw data to save memory.
-	hdl->context() = std::move(c);
 	
-
-	// 3.logging request.
-	if (HandlerT::auto_logging())
+	try
 	{
-		uint32_t type = static_cast<uint32_t>(c.m_meta.m_message_type);
-		EcoInfo << "req > " 
-			<< eco::Integer<uint32_t>(type, eco::dec, 4).c_str()
-			<< " " << HandlerT::get_request_type_name()
-			<< " " >> HandlerT::Logging(*hdl);
-	}
+		// 2.decode message by a newer handler.
+		// heap is used to be passed by deriving from "enable_shared_from_this".
+		std::shared_ptr<HandlerT> hdl(new HandlerT);
+		if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
+		{
+			return;
+		}
+		c.release_data();		// release io raw data to save memory.
+		hdl->context() = std::move(c);
 
-	// 4.handle request.
-	try {
+		// 3.logging request.
+		if (HandlerT::auto_logging())
+		{
+			uint32_t type = static_cast<uint32_t>(c.m_meta.m_message_type);
+			EcoInfo << "req > "
+				<< eco::Integer<uint32_t>(type, eco::dec, 4).c_str()
+				<< " " << HandlerT::get_request_type_name()
+				<< " " >> HandlerT::Logging(*hdl);
+		}
+
+		// 4.handle request.
 		hdl->on_request();
 	} 
 	catch (eco::Error& e) {

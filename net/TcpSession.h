@@ -25,6 +25,7 @@
 *******************************************************************************/
 #include <eco/ExportApi.h>
 #include <eco/net/SessionData.h>
+#include <eco/net/TcpConnection.h>
 #include <eco/net/protocol/Protocol.h>
 #include <eco/net/protocol/ProtobufCodec.h>
 #include <memory>
@@ -32,44 +33,58 @@
 
 namespace eco{;
 namespace net{;
-class TcpPeer;
-class TcpClient;
-class Context;
+
+
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpSession
+class TcpSessionImpl
 {
-	ECO_SHARED_API(TcpSession)
 public:
-	// if a none session open a new session, else get the exist session.
-	bool open(IN const SessionId session_id = none_session);
+	TcpConnection		m_conn;
+
+	// session data
+	SessionId			m_session_id;		// session id.
+	SessionData::wptr	m_session_wptr;		// session data.
+	TcpPeer*			m_peer;				// sesseion peer.
+	
+	// session owner: client or server.
+	TcpSessionOwner		m_owner;
+	ClientUser			m_user;
+
+	inline TcpSessionImpl() : m_session_id(none_session), m_peer(nullptr)
+	{}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Context;
+class TcpSession
+{
+public:
+	// open session.
+	inline bool auth();
 
 	// close session, release session data.
-	void close();
+	inline void close();
 
 	// check whether session has been opened.
-	bool opened() const;
+	inline bool authed() const;
 
-	// check whether session has been opened.
-	bool authed() const;
-
-	// get session data.
-	uint32_t get_session_id() const;
+	// get connection.
+	inline TcpConnection& connection();
+	inline const TcpConnection& get_connection() const;
 
 	// get session data.
-	SessionData::ptr data();
+	inline uint32_t get_session_id() const;
+
+	// get session data.
+	inline SessionData::ptr data();
 
 	// get and cast session data.
 	template<typename SessionDataT>
-	inline std::shared_ptr<SessionDataT> cast()
-	{
-		return std::dynamic_pointer_cast<SessionDataT>(data());
-	}
-
-	// get session peer.
-	TcpPeer& get_peer() const;
+	inline std::shared_ptr<SessionDataT> cast();
 
 	// check that it is a session mode.
-	bool session_mode() const;
+	inline bool session_mode() const;
 
 public:
 	// async send protobuf.
@@ -106,7 +121,7 @@ public:
 	}
 
 	// async response message.
-	void async_resp(
+	inline void async_resp(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
@@ -114,13 +129,17 @@ public:
 
 private:
 	// async send message.
-	void async_send(IN MessageMeta& meta);
+	inline void async_send(IN MessageMeta& meta);
 
 	// async send authority info.
-	void async_auth(IN MessageMeta& meta);
+	inline void async_auth(IN MessageMeta& meta);
+
+	// implement.
+	TcpSessionImpl m_impl;
+	friend class TcpSessionOuter;
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
 }}
+
+#include <eco/net/TcpSession.inl>
+////////////////////////////////////////////////////////////////////////////////
 #endif

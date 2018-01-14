@@ -5,7 +5,7 @@
 #include <eco/service/dev/Cluster.h>
 #include <eco/net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
-#include "TcpSession.ipp"
+#include "TcpOuter.h"
 
 
 namespace eco{;
@@ -210,8 +210,8 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 	}
 
 	// #.dispatch data context.
-	TcpSessionHost host(*(TcpServerImpl*)this);
-	eco::net::DataContext dc(&host);
+	TcpSessionOwner owner(*(TcpServerImpl*)this);
+	eco::net::DataContext dc(&owner);
 	peer_impl->get_data_context(dc, head.m_category, data, prot);
 	m_dispatch.post(dc);
 }
@@ -244,6 +244,11 @@ void TcpServer::set_connection_data(IN MakeConnectionDataFunc make)
 void TcpServer::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;
+}
+
+bool TcpServer::session_mode() const
+{
+	return impl().m_make_session != nullptr;
 }
 
 void TcpServer::start()

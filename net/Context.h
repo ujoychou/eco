@@ -38,21 +38,18 @@ class DataContext
 {
 	ECO_OBJECT(DataContext);
 public:
-	inline DataContext(IN TcpSessionHost* host = nullptr)
-		: m_prot(nullptr)
-		, m_category(0)
+	inline DataContext(IN TcpSessionOwner* owner = nullptr)
+		: m_prot(nullptr), m_category(0)
 	{
-		if (host != nullptr)
-		{
-			m_session_host = *host;
-		}
+		if (owner != nullptr)
+			m_session_owner = *owner;
 	}
 
 	inline DataContext(IN DataContext&& v)
 		: m_data(std::move(v.m_data))
 		, m_category(v.m_category)
 		, m_prot(v.m_prot)
-		, m_session_host(v.m_session_host)
+		, m_session_owner(v.m_session_owner)
 		, m_peer_wptr(std::move(v.m_peer_wptr))
 	{}
 
@@ -61,7 +58,7 @@ public:
 		m_data = std::move(v.m_data);
 		m_category = v.m_category;
 		m_prot = v.m_prot;
-		m_session_host = v.m_session_host;
+		m_session_owner = v.m_session_owner;
 		m_peer_wptr = std::move(v.m_peer_wptr);
 		return *this;
 	}
@@ -85,7 +82,7 @@ public:
 	// protocol and tcp peer.
 	Protocol*			m_prot;
 	TcpPeerWptr			m_peer_wptr;
-	TcpSessionHost		m_session_host;
+	TcpSessionOwner		m_session_owner;
 };
 
 
@@ -97,10 +94,9 @@ public:
 	eco::Bytes			m_message;
 	MessageMeta			m_meta;
 	TcpSession			m_session;
-	TcpConnection		m_connection;
 	
 public:
-	inline Context() : m_session(eco::null)
+	inline Context()
 	{}
 
 	inline void release_data()
@@ -115,7 +111,6 @@ public:
 		m_message = c.m_message;
 		m_meta = c.m_meta;
 		m_session = c.m_session;
-		m_connection = std::move(c.m_connection);
 		return *this;
 	}
 };

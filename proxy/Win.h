@@ -61,5 +61,49 @@ inline std::wstring cast(IN  const char* sour)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+inline void remove_end(OUT std::string& tmp)
+{
+	size_t x = 0;
+	size_t i = tmp.length() - 1;
+	for (; i > 0; --i)
+	{
+		if (tmp[i] != 0)
+			break;
+		++x;
+	}
+	if (i == 0 && tmp[i] == 0) ++x;
+	tmp.resize(tmp.length() - x);
+}
+
+inline void utf_to_gbk(OUT std::string& gbk, IN const char* utf8)
+{
+	std::wstring wstr;
+	int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+	wstr.resize(len);
+	MultiByteToWideChar(CP_UTF8, 0, utf8, -1, &wstr[0], len);
+
+	len = WideCharToMultiByte(CP_ACP, 0, &wstr[0], -1, NULL, 0, NULL, NULL);
+	gbk.resize(len);
+	WideCharToMultiByte(CP_ACP, 0, &wstr[0], -1, &gbk[0], len, NULL, NULL);
+	remove_end(gbk);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline void gbk_to_utf(OUT std::string& utf, IN const char* gbk)
+{
+	std::wstring wstr;
+	int len = MultiByteToWideChar(CP_ACP, 0, gbk, -1, NULL, 0);
+	wstr.resize(len);
+	MultiByteToWideChar(CP_ACP, 0, gbk, -1, &wstr[0], len);
+
+	len = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], -1, NULL, 0, NULL, NULL);
+	utf.resize(len);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], -1, &utf[0], len, NULL, NULL);
+	remove_end(utf);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 }}
 #endif

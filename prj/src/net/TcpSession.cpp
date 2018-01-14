@@ -1,10 +1,11 @@
 #include "PrecHeader.h"
+#include <eco/net/TcpSession.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Project.h>
 #include <eco/net/Context.h>
-#include "TcpSession.ipp"
-#include "TcpServer.ipp"
 #include "TcpClient.ipp"
+#include "TcpServer.ipp"
+#include "TcpOuter.h"
 
 
 
@@ -14,85 +15,27 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool TcpSessionHost::session_mode() const
+bool TcpSessionInner::session_mode() const
 {
-	if (m_type == tcp_session_host_client)
-	{
-		auto* client = (TcpClient::Impl*)m_host;
-		return client->session_mode();
-	}
-	else if (m_type == tcp_session_host_server)
-	{
-		auto* server = (TcpServer::Impl*)m_host;
-		return server->session_mode();
-	}
-	assert(false);
-	return false;
-}
-bool TcpSessionHost::response_heartbeat() const
-{
-	if (m_type == tcp_session_host_client)
-	{
-		return ((TcpClient::Impl*)m_host)->m_option.response_heartbeat();
-	}
-	assert(m_type == tcp_session_host_server);
-	return ((TcpServer::Impl*)m_host)->m_option.response_heartbeat();
-}
-ProtocolHead* TcpSessionHost::protocol_head() const
-{
-	if (m_type == tcp_session_host_client)
-	{
-		return ((TcpClient::Impl*)m_host)->m_prot_head.get();
-	}
-	assert(m_type == tcp_session_host_server);
-	return ((TcpServer::Impl*)m_host)->m_prot_head.get();
+	assert(impl().m_owner.m_owner != nullptr);
+	return (impl().m_owner.m_server)
+		? ((TcpServer::Impl*)(impl().m_owner.m_owner))->session_mode()
+		: ((TcpClient::Impl*)(impl().m_owner.m_owner))->session_mode();
 }
 
 
-ECO_SHARED_IMPL(TcpSession);
 ////////////////////////////////////////////////////////////////////////////////
-bool TcpSession::open(IN const SessionId session_id)
+bool TcpSessionInner::auth()
 {
-	// create new session.
-	if (session_id == none_session)
+	// note: client open a none session is invalid.
+	if (impl().m_session_id == none_session && impl().m_owner.m_server)
 	{
-		// note: client open a none session is invalid.
-		if (impl().m_host.m_type == tcp_session_host_server)
-		{
-			auto* server = (TcpServer::Impl*)impl().m_host.m_host;
-			SessionData::ptr sess = server->add_session(
-				impl().m_session_id, *impl().m_host.m_peer);
-			if (sess != nullptr)
-			{
-				impl().m_session_wptr = sess;
-				return true;
-			}
-		}
-	}
-	// get the exist session.
-	else if (impl().m_host.m_type == tcp_session_host_client)
-	{
-		auto* client = (TcpClient::Impl*)impl().m_host.m_host;
-		SessionDataPack::ptr pack = client->find_session(session_id);
-		if (pack != nullptr)
-		{
-			impl().m_user = pack->m_user_observer.lock();
-			if (impl().m_user != nullptr)
-			{
-				impl().m_session_wptr = pack->m_session;
-				impl().m_session_id = session_id;
-				return true;
-			}
-		}
-	}
-	else if (impl().m_host.m_type == tcp_session_host_server)
-	{
-		auto* server = (TcpServer::Impl*)impl().m_host.m_host;
-		auto sess = server->find_session(session_id);
+		// create new session in server.
+		auto* srv = (TcpServer::Impl*)impl().m_owner.m_owner;
+		auto sess = srv->add_session(impl().m_session_id, *impl().m_peer);
 		if (sess != nullptr)
 		{
 			impl().m_session_wptr = sess;
-			impl().m_session_id = session_id;
 			return true;
 		}
 	}
@@ -101,54 +44,28 @@ bool TcpSession::open(IN const SessionId session_id)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool TcpSession::opened() const
-{
-	return impl().m_session_wptr.expired();
-}
-bool TcpSession::authed() const
-{
-	return impl().m_session_wptr.expired();
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void TcpSession::close()
+void TcpSessionInner::close()
 {
 	if (impl().m_session_id != none_session)
 	{
-		if (impl().m_host.m_type == tcp_session_host_client)
+		if (impl().m_owner.m_server)
 		{
-			auto* client = (TcpClient::Impl*)impl().m_host.m_host;
-			client->erase_session(impl().m_session_id);
-		}
-		else if (impl().m_host.m_type == tcp_session_host_server)
-		{
-			auto* server = (TcpServer::Impl*)impl().m_host.m_host;
+			auto* server = (TcpServer::Impl*)impl().m_owner.m_owner;
 			server->erase_session(impl().m_session_id);
+		}
+		else
+		{
+			auto* client = (TcpClient::Impl*)impl().m_owner.m_owner;
+			client->erase_session(impl().m_session_id);
 		}
 	}
 	impl().m_session_wptr.reset();
-	impl().m_host.clear();
+	impl().m_owner.clear();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-SessionData::ptr TcpSession::data()
-{
-	return impl().m_session_wptr.lock();
-}
-uint32_t TcpSession::get_session_id() const
-{
-	return impl().m_session_id;
-}
-TcpPeer& TcpSession::get_peer() const
-{
-	return *impl().m_host.m_peer;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void TcpSession::async_send(IN MessageMeta& meta)
+void TcpSessionInner::async_send(IN MessageMeta& meta)
 {
 	SessionData::ptr lock = impl().m_session_wptr.lock();
 	if (lock == nullptr)
@@ -156,43 +73,39 @@ void TcpSession::async_send(IN MessageMeta& meta)
 		return;
 	}
 
-	if (impl().m_host.m_type == tcp_session_host_client)
+	if (impl().m_owner.m_server)
 	{
-		auto* client = (TcpClient::Impl*)impl().m_host.m_host;
+		TcpConnectionOuter conn(impl().m_conn);
+		auto* server = (TcpServer::Impl*)impl().m_owner.m_owner;
+		meta.set_session_id(impl().m_session_id);
+		impl().m_peer->async_send(meta, conn.protocol());
+	}
+	else
+	{
+		auto* client = (TcpClient::Impl*)impl().m_owner.m_owner;
 		meta.set_session_id(impl().m_session_id);
 		client->async_send(meta);
 	}
-	else if (impl().m_host.m_type == tcp_session_host_server)
-	{
-		auto* server = (TcpServer::Impl*)impl().m_host.m_host;
-		meta.set_session_id(impl().m_session_id);
-		impl().m_host.m_peer->async_send(meta, *impl().m_prot);
-	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSession::async_auth(IN MessageMeta& meta)
+void TcpSessionInner::async_auth(IN MessageMeta& meta)
 {
 	SessionData::ptr lock = impl().m_session_wptr.lock();
-	if (lock == nullptr)
+	if (lock == nullptr || impl().m_owner.m_server)
 	{
 		return;
 	}
-	if (impl().m_host.m_type != tcp_session_host_client)
-	{
-		EcoThrow(e_session_auth_host_client)
-			<< "session host who async auth must be client.";
-	}
 
-	auto* client = (TcpClient::Impl*)impl().m_host.m_host;
+	auto* client = (TcpClient::Impl*)impl().m_owner.m_owner;
 	meta.set_session_id(impl().m_session_id);
-	client->async_auth(*this, meta);
+	client->async_auth(*m_impl, meta);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSession::async_resp(
+void TcpSessionInner::async_resp(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& c,
@@ -203,10 +116,7 @@ void TcpSession::async_resp(
 	meta.set_last(last);
 	async_send(meta);
 }
-bool TcpSession::session_mode() const
-{
-	return impl().m_host.session_mode();
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

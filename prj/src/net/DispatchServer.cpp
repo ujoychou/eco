@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/net/TcpPeer.h>
 #include <eco/net/TcpConnection.h>
-#include "TcpSession.ipp"
+#include "TcpOuter.h"
 #include "TcpServer.ipp"
 #include "TcpClient.ipp"
 
@@ -18,8 +18,8 @@ namespace net{;
 // return whether need to dispatch meta context.
 bool handle_server_context(OUT Context& c, IN TcpPeer& peer)
 {
-	TcpSession& sess = c.m_session;
-	auto* server = (TcpServer::Impl*)sess.impl().m_host.m_host;
+	TcpSessionOuter sess(c.m_session);
+	auto* server = (TcpServer::Impl*)sess.impl().m_owner.m_owner;
 	assert(server != nullptr);
 
 	// #.handle session.
@@ -41,8 +41,8 @@ bool handle_server_context(OUT Context& c, IN TcpPeer& peer)
 bool handle_client_context(
 	OUT Context& c, IN  TcpPeer& peer)
 {
-	TcpSession& sess = c.m_session;
-	auto* client = (TcpClient::Impl*)sess.impl().m_host.m_host;
+	TcpSessionOuter sess(c.m_session);
+	auto* client = (TcpClient::Impl*)sess.impl().m_owner.m_owner;
 	assert(client != nullptr);
 
 	// #.handle authority.
@@ -93,16 +93,15 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	{
 		return;
 	}
-	dc.m_session_host.set_peer(*peer);
 	
 	// #.heartbeat is unrelated to session, it's manage remote peer life.
+	TcpSessionOwnerOuter owner(dc.m_session_owner);
 	if (eco::has(dc.m_category, category_heartbeat))
 	{
 		peer->impl().state().set_peer_live(true);
-		if (dc.m_session_host.response_heartbeat())
+		if (owner.response_heartbeat())
 		{
-			peer->impl().async_send_heartbeat(
-				*dc.m_session_host.protocol_head());
+			peer->impl().async_send_heartbeat(*owner.protocol_head());
 		}
 		return ;
 	}
@@ -113,22 +112,22 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	c.m_meta.m_category = dc.m_category;
 	if (!dc.m_prot->decode(c.m_meta, c.m_message, dc.m_data, e))
 	{
-		e << (dc.m_session_host.m_type == tcp_session_host_server
-			? "tcp server" : "tcp client") << " decode fail.";
+		e << (dc.m_session_owner.m_server ? "tcp server" : "tcp client")
+			<< " decode fail.";
 		EcoNet(EcoError, *peer, "dispatch", e);
 		return;
 	}
 
 	// get message type id and dispatch to the handler.
+	TcpSessionOuter sess(c.m_session);
+	TcpConnectionOuter conn(sess.impl().m_conn);
+	sess.impl().m_peer = peer.get();
+	sess.impl().m_owner = dc.m_session_owner;
+	conn.set_peer(dc.m_peer_wptr);
+	conn.set_protocol(*dc.m_prot);
 	c.m_data = std::move(dc.m_data);
-	c.m_session = eco::heap;
-	c.m_session.impl().m_host = dc.m_session_host;
-	c.m_session.impl().m_prot = dc.m_prot;
-	c.m_connection = eco::net::TcpConnection(dc.m_peer_wptr, *dc.m_prot);
-	if (dc.m_session_host.m_type == tcp_session_host_server &&
-		handle_server_context(c, *peer) ||
-		dc.m_session_host.m_type == tcp_session_host_client &&
-		handle_client_context(c, *peer))
+	if (dc.m_session_owner.m_server && handle_server_context(c, *peer) ||
+		!dc.m_session_owner.m_server && handle_client_context(c, *peer))
 	{
 		peer->impl().state().set_peer_active(true);
 		dispatch(c.m_meta.m_message_type, c);

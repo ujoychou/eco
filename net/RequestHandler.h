@@ -67,6 +67,8 @@ template<typename Request>
 class RequestHandler : public MessageHandler
 {
 public:
+	typedef RequestHandler<Request> Handler;
+
 	// decode message from bytes string.
 	virtual bool on_decode(
 		IN const char* bytes,
@@ -115,7 +117,7 @@ public:
 	// context that recv from remote peer.
 	inline TcpConnection& connection() const
 	{
-		return (TcpConnection&)m_context.m_connection;
+		return session().connection();
 	}
 
 	// response message to the request.
@@ -151,7 +153,7 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_HANDLER(request_type, request_type_name, is_logging, filter_value)\
+#define ECO_HANDLER(request_type, request_type_name, auto_log, filter_authed)\
 public:\
 	inline static uint64_t get_request_type()\
 	{\
@@ -163,12 +165,13 @@ public:\
 	}\
 	inline static eco::net::RequestFilter get_filter()\
 	{\
-		eco::net::RequestFilter f(filter_value);\
+		eco::net::RequestFilter f;\
+		f.set_authed(filter_authed);\
 		return f;\
 	}\
 	inline static bool auto_logging()\
 	{\
-		return is_logging;\
+		return auto_log;\
 	}
 
 

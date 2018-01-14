@@ -11,7 +11,6 @@
 #include <eco/net/DispatchServer.h>
 #include <eco/net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
-#include "TcpSession.ipp"
 
 
 ECO_NS_BEGIN(eco);
@@ -85,7 +84,7 @@ public:
 	eco::String m_request;
 	uint32_t m_request_start;
 	SessionData::ptr m_session;
-	SharedObserver m_user_observer;
+	ClientUserObserver m_user_observer;
 	uint64_t m_request_data;
 	uint32_t m_auto_login;
 
@@ -270,7 +269,7 @@ public:
 		}
 	}
 
-	inline void async_auth(IN TcpSession& session, IN MessageMeta& meta);
+	inline void async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta);
 
 public:
 	// when peer has connected to server.

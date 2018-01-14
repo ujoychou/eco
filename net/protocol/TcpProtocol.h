@@ -366,6 +366,7 @@ public:
 		{
 			byte_size += m_check->get_byte_size();		// [@]checksum size.
 		}
+		bytes.clear();
 		bytes.reserve(byte_size);
 
 		// 2.init message version and category.

@@ -26,7 +26,6 @@
 #include <eco/Project.h>
 #include <eco/net/Address.h>
 #include <eco/net/TcpState.h>
-#include <eco/net/SessionData.h>
 #include <eco/net/protocol/Protocol.h>
 #include <eco/net/protocol/TcpProtocol.h>
 

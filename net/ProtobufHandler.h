@@ -37,6 +37,8 @@ template<typename ProtobufMessage>
 class ProtobufHandler : public RequestHandler<ProtobufMessage>
 {
 public:
+	typedef ProtobufHandler<ProtobufMessage> Handler;
+
 	inline bool on_decode(
 		IN const char* bytes,
 		IN const uint32_t size)

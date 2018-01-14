@@ -85,6 +85,7 @@ public:
 		set_session_data(&make_session_data<SessionDataT>);
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
+	bool session_mode() const;
 
 	// dispatcher
 	DispatchRegistry& dispatcher();

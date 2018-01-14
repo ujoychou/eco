@@ -57,22 +57,28 @@ private:
 class TcpConnection
 {
 public:
-	inline TcpConnection() : m_protocol(nullptr)
+	inline TcpConnection() : m_prot(nullptr)
 	{}
 
 	inline TcpConnection(IN TcpPeer::wptr& wptr, IN Protocol& prot)
-		: m_peer_wptr(wptr), m_protocol(&prot)
+		: m_peer(wptr), m_prot(&prot)
 	{}
 
 	inline TcpConnection(IN const TcpConnection& other) :
-		m_peer_wptr(other.m_peer_wptr),
-		m_protocol(other.m_protocol)
+		m_peer(other.m_peer),
+		m_prot(other.m_prot)
 	{}
+
+	inline void move(IN TcpConnection& other)
+	{
+		m_peer = std::move(other.m_peer);
+		m_prot = other.m_prot;
+	}
 
 	// close session, release session data.
 	inline void close()
 	{
-		TcpPeer::ptr peer = m_peer_wptr.lock();
+		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
 			peer->notify_close(nullptr);
@@ -81,14 +87,14 @@ public:
 
 	inline void clear()
 	{
-		m_peer_wptr.reset();
-		m_protocol = nullptr;
+		m_peer.reset();
+		m_prot = nullptr;
 	}
 
 	// check whether this connection has been expired.
 	inline bool expired() const
 	{
-		return m_peer_wptr.expired();
+		return m_peer.expired();
 	}
 
 	// check whether this connection has been authed.
@@ -97,7 +103,7 @@ public:
 	// get session data.
 	inline uint64_t get_id() const
 	{
-		TcpPeer::ptr peer = m_peer_wptr.lock();
+		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
 			return peer->get_id();
@@ -108,7 +114,7 @@ public:
 	template<typename ConnectionDataT>
 	inline ConnectionDataPtr<ConnectionDataT> cast() const
 	{
-		TcpPeer::ptr peer = m_peer_wptr.lock();
+		TcpPeer::ptr peer = m_peer.lock();
 		if (peer == nullptr)
 		{
 			EcoThrow(e_peer_expired)
@@ -125,10 +131,10 @@ public:
 		IN const Context& context,
 		IN const bool last = true)
 	{
-		TcpPeer::ptr peer = m_peer_wptr.lock();
+		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			return peer->async_resp(codec, type, context, *m_protocol);
+			return peer->async_resp(codec, type, context, *m_prot);
 		}
 	}
 
@@ -158,15 +164,16 @@ private:
 	// async send message.
 	inline void async_send(IN MessageMeta& meta)
 	{
-		TcpPeer::ptr peer = m_peer_wptr.lock();
+		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			return peer->async_send(meta, *m_protocol);
+			return peer->async_send(meta, *m_prot);
 		}
 	}
 
-	TcpPeer::wptr	m_peer_wptr;
-	Protocol*		m_protocol;
+	TcpPeer::wptr	m_peer;
+	Protocol*		m_prot;
+	friend class TcpConnectionOuter;
 };
 
 
@@ -211,7 +218,7 @@ typedef ConnectionData* (*MakeConnectionDataFunc)();
 ////////////////////////////////////////////////////////////////////////////////
 inline bool TcpConnection::authed() const
 {
-	TcpPeer::ptr peer = m_peer_wptr.lock();
+	TcpPeer::ptr peer = m_peer.lock();
 	return peer != nullptr && peer->data() != nullptr
 		&& peer->data()->authed();
 }

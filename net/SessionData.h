@@ -39,60 +39,45 @@ class ProtocolHead;
 typedef uint32_t SessionId;
 const SessionId none_session = 0;
 
-// 1.tcp session and tcp client life management.
-// 2.user and service life manangement.
-typedef std::shared_ptr<int> SharedSubject;
-typedef std::weak_ptr<int> SharedObserver;
+// client access user handler, and user access client.
+typedef std::shared_ptr<int> ClientUser;
+typedef std::weak_ptr<int> ClientUserObserver;
 
-
-////////////////////////////////////////////////////////////////////////////////
-enum
-{
-	tcp_session_host_server = 1,
-	tcp_session_host_client = 2,
-};
-typedef uint32_t TcpSessionHostType;
-typedef void* TcpSessionHostPtr;
-
-// tcp peer host: tcp client or tcp server.
-class TcpSessionHost
+// tcp session owner: tcp client or tcp server.
+class TcpSessionOwner
 {
 public:
-	inline TcpSessionHost()
-		: m_type(0), m_host(nullptr), m_peer(nullptr)
+	inline TcpSessionOwner() : m_server(false), m_owner(nullptr)
 	{}
 
-	inline TcpSessionHost(IN TcpClientImpl& client)
-		: m_type(tcp_session_host_client)
-		, m_host(&client), m_peer(nullptr)
+	inline TcpSessionOwner(IN TcpClientImpl& client)
+		: m_server(false), m_owner(&client)
 	{}
 
-	inline TcpSessionHost(
-		IN TcpServerImpl& server, 
-		IN TcpPeer* peer = nullptr)
-		: m_type(tcp_session_host_server)
-		, m_host(&server), m_peer(peer)
+	inline TcpSessionOwner(IN TcpServerImpl& server)
+		: m_server(true), m_owner(&server)
 	{}
 
-	inline void set_peer(IN TcpPeer& peer)
+	inline void set(IN TcpClientImpl& client)
 	{
-		m_peer = &peer;
+		m_server = false;
+		m_owner = &client;
+	}
+
+	inline void set(IN TcpServerImpl& server)
+	{
+		m_server = true;
+		m_owner = &server;
 	}
 
 	inline void clear()
 	{
-		m_type = 0;
-		m_host = 0;
-		m_peer = 0;
+		m_server = 0;
+		m_owner = 0;
 	}
 
-	bool session_mode() const;
-	bool response_heartbeat() const;
-	ProtocolHead* protocol_head() const;
-
-	TcpSessionHostType	m_type;
-	TcpSessionHostPtr	m_host;
-	TcpPeer*			m_peer;
+	uint32_t	m_server;
+	void*		m_owner;
 };
 
 

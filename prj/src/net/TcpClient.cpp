@@ -1,6 +1,7 @@
 #include "PrecHeader.h"
 #include "TcpClient.ipp"
 ////////////////////////////////////////////////////////////////////////////////
+#include "TcpOuter.h"
 
 
 ECO_NS_BEGIN(eco);
@@ -143,23 +144,29 @@ TcpSession TcpClient::Impl::open_session()
 	TcpSession session;
 	SessionDataPack::ptr pack(new SessionDataPack);
 	pack->m_session.reset(m_make_session(none_session));
-	session.impl().m_host = (TcpSessionHost(*(TcpClientImpl*)this));
-	session.impl().m_session_wptr = pack->m_session;
-	session.impl().user_born();
-	pack->m_user_observer = session.impl().m_user;
+	TcpSessionOuter sess(session);
+	TcpConnectionOuter conn(sess.impl().m_conn);
+	sess.impl().m_owner.set(*(TcpClientImpl*)this);
+	sess.impl().m_session_wptr = pack->m_session;
+	sess.impl().m_peer = m_balancer.m_peer.get();
+	sess.make_client_session();
+	conn.set_peer(sess.impl().m_peer->impl().m_peer_observer);
+	conn.set_protocol(*m_protocol);
+	pack->m_user_observer = sess.impl().m_user;
 	
 	// add session.
-	set_authority(&session.impl(), pack);
+	void* session_key = sess.impl().m_user.get();
+	set_authority(session_key, pack);
 	return session;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::async_auth(IN TcpSession& session, IN MessageMeta& meta)
+void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 {
 	// send authority to server for validating session.
 	// if the authority is correct, server will build a new session.
-	void* session_key = &session.impl();
+	void* session_key = sess.m_user.get();
 	SessionDataPack::ptr pack = find_authority(session_key);
 	if (pack == nullptr)
 	{
@@ -169,7 +176,6 @@ void TcpClient::Impl::async_auth(IN TcpSession& session, IN MessageMeta& meta)
 	// encode the send data.
 	eco::Error e;
 	meta.m_category |= category_authority;
-	meta.set_session_id(none_session);
 	// use "&session" when get response, because it represent user.
 	pack->m_request_data = meta.m_request_data;
 	meta.set_request_data(session_key);
@@ -227,8 +233,8 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	}
 
 	// client have no "io heartbeat" option.
-	TcpSessionHost host(*(TcpClientImpl*)this);
-	DataContext dc(&host);
+	TcpSessionOwner owner(*(TcpClientImpl*)this);
+	DataContext dc(&owner);
 	peer_impl->get_data_context(dc, head.m_category, data, m_protocol.get());
 	m_dispatcher.post(dc);
 }
@@ -318,7 +324,8 @@ TcpSession TcpClient::open_session()
 
 void TcpClient::async_auth(IN TcpSession& session, IN MessageMeta& meta)
 {
-	impl().async_auth(session, meta);
+	TcpSessionOuter outer(session);
+	impl().async_auth(outer.impl(), meta);
 }
 
 

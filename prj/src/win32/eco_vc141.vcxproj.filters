@@ -769,9 +769,6 @@
     <None Include="..\..\..\..\..\contrib\eco\Typex.ipp">
       <Filter>lib\app</Filter>
     </None>
-    <None Include="..\net\TcpSession.ipp">
-      <Filter>src\net</Filter>
-    </None>
     <None Include="..\..\..\..\..\contrib\eco\lib_vc141\debug\eco.dll">
       <Filter>bin\debug_win32</Filter>
     </None>
@@ -779,6 +776,12 @@
       <Filter>bin\release_win32</Filter>
     </None>
     <None Include="..\net\TcpClient.ipp">
+      <Filter>src\net</Filter>
+    </None>
+    <None Include="..\..\..\net\TcpSession.inl">
+      <Filter>lib\net</Filter>
+    </None>
+    <None Include="..\net\TcpOuter.h">
       <Filter>src\net</Filter>
     </None>
   </ItemGroup>
