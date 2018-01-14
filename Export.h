@@ -191,6 +191,9 @@ public:\
 public:\
 	typedef std::weak_ptr<object_t> wptr;\
 	typedef std::shared_ptr<object_t> ptr;\
+	object_t(IN eco::Null);\
+	object_t& operator=(IN eco::Heap);\
+	object_t& operator=(IN eco::Null);\
 	bool null() const;\
 	void reset();\
 	ECO_TYPE_API(object_t)\

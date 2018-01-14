@@ -73,6 +73,21 @@ value_t& value_t::operator=(IN const value_t& val)\
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_OBJECT_IMPL(object_t) \
 ECO_TYPE_IMPL(object_t);\
+object_t::object_t(IN eco::Null)\
+{\
+	m_impl = nullptr;\
+}\
+object_t& object_t::operator=(IN eco::Null)\
+{\
+	reset();\
+	return *this;\
+}\
+object_t& object_t::operator=(IN eco::Heap)\
+{\
+	m_impl = new Impl;\
+	m_impl->init(*this);\
+	return *this;\
+}\
 bool object_t::null() const\
 {\
 	return m_impl == nullptr;\
@@ -163,7 +178,7 @@ object_t& object_t::operator=(IN eco::Null)\
 }\
 object_t& object_t::operator=(IN eco::Heap)\
 {\
-	m_proxy->m_impl.reset(new object_t::Impl);\
+	m_proxy->m_impl.reset(new Impl);\
 	m_proxy->m_impl->init(*this);\
 	return *this;\
 }\
@@ -190,7 +205,7 @@ void object_t::reset()\
 void object_t::reserve()\
 {\
 	if ((m_proxy->m_impl.get() == nullptr)) {\
-		m_proxy->m_impl.reset(new object_t::Impl);\
+		m_proxy->m_impl.reset(new Impl);\
 		m_proxy->m_impl->init(*this);\
 	}\
 }
@@ -232,6 +247,25 @@ property_t& object_t::##property_name()\
 	return impl().m_##property_name;\
 }\
 const property_t& object_t::get_##property_name() const\
+{\
+	return impl().m_##property_name;\
+}
+// export value property implement
+#define ECO_PROPERTY_VAV_IMPL(object_t, property_t, property_name) \
+void object_t::set_##property_name(IN const property_t val)\
+{\
+	impl().m_##property_name = val;\
+}\
+object_t& object_t::##property_name(IN const property_t val) \
+{\
+	impl().m_##property_name = val;\
+	return *this;\
+}\
+property_t object_t::##property_name()\
+{\
+	return impl().m_##property_name;\
+}\
+const property_t object_t::get_##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
