@@ -246,9 +246,6 @@
     <ClCompile Include="..\net\TcpPeer.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
-    <ClCompile Include="..\net\ProtobufCodec.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
     <ClCompile Include="..\App.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
@@ -730,6 +727,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\net\TcpConnection.h">
       <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Database.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Persist.h">
+      <Filter>lib\persist</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

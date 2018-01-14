@@ -18,6 +18,7 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
+#include <eco/meta/Meta.h>
 #include <eco/persist/Recordset.h>
 #include <eco/persist/JoinMapping.h>
 #include <eco/persist/DatabaseConfig.h>
@@ -25,6 +26,63 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
+
+
+////////////////////////////////////////////////////////////////////////////////
+/* auto transaction management.
+1.multi thread will execute the transaction sync.
+2.transaction level is thread safe, it is a thread local data.
+3.this thread manage a level transaction.
+*/
+template<typename DatabaseT>
+class Transaction
+{
+public:
+	inline Transaction(DatabaseT& db)
+		: m_db(db), m_commited(false)
+	{
+		++m_db.transaction_level();
+		if (m_db.transaction_level() == 1)
+		{
+			m_db.begin();
+		}
+	}
+
+	// auto rollback when hasn't call commit explicit.
+	inline ~Transaction()
+	{
+		if (!m_commited)
+		{
+			m_db.rollback();
+			m_db.transaction_level() = 0;
+		}
+	}
+
+	// commit when database operation finished.
+	inline void commit()
+	{
+		if (m_db.transaction_level() == 0)
+		{
+			throw std::logic_error("commit error: db has no transaction.");
+		}
+
+		if (m_db.transaction_level() == 1)
+		{
+			m_db.commit();
+		}
+		--m_db.transaction_level();
+		m_commited = true;
+	}
+
+	inline DatabaseT& get_db()
+	{
+		return m_db;
+	}
+
+private:
+	DatabaseT& m_db;
+	uint32_t m_commited;
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,6 +164,8 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
+	typedef Transaction<eco::Database> Transaction;
+
 	// begin a transaction.
 	virtual void begin() = 0;
 
@@ -117,61 +177,6 @@ public:
 
 	// transaction level, thread local data.
 	virtual uint32_t& transaction_level() = 0;
-
-	/* auto transaction management.
-	1.multi thread will execute the transaction sync.
-	2.transaction level is thread safe, it is a thread local data.
-	3.this thread manage a level transaction.
-	*/
-	class Transaction
-	{
-	public:
-		inline Transaction(eco::Database& db)
-			: m_db(db), m_commited(false)
-		{
-			++m_db.transaction_level();
-			if (m_db.transaction_level() == 1)
-			{
-				m_db.begin();
-			}
-		}
-
-		// auto rollback when hasn't call commit explicit.
-		inline ~Transaction()
-		{
-			if (!m_commited)
-			{
-				m_db.rollback();
-				m_db.transaction_level() = 0;
-			}
-		}
-
-		// commit when database operation finished.
-		inline void commit()
-		{
-			if (m_db.transaction_level() == 0)
-			{
-				throw std::logic_error("commit error: db has no transaction.");
-			}
-
-			if (m_db.transaction_level() == 1)
-			{
-				m_db.commit();
-			}
-			--m_db.transaction_level();
-			m_commited = true;
-		}
-
-		inline eco::Database& get_db()
-		{
-			return m_db;
-		}
-
-	private:
-		eco::Database& m_db;
-		uint32_t m_commited;
-	};
-
 
 ////////////////////////////////////////////////////////////////////////////////
 public:

@@ -1,5 +1,6 @@
 #ifndef ECO_NET_PROTOBUF_CODEC_H
 #define ECO_NET_PROTOBUF_CODEC_H
+#ifndef ECO_NO_PROTOBUF
 /*******************************************************************************
 @ name
 
@@ -76,4 +77,5 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 }}
+#endif
 #endif

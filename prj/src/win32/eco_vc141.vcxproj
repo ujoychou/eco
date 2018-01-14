@@ -275,12 +275,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\net\DispatchServer.cpp" />
-    <ClCompile Include="..\net\ProtobufCodec.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\net\Net.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -533,6 +527,8 @@
     <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h" />
     <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
     <ClInclude Include="..\..\..\net\TcpConnection.h" />
+    <ClInclude Include="..\..\..\persist\Persist.h" />
+    <ClInclude Include="..\..\..\persist\Database.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />

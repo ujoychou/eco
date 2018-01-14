@@ -46,6 +46,10 @@ namespace eco{}
 #define ECO_NO_VARIADIC_TEMPLATE
 #endif
 
+/*@ include protobuf.*/
+#ifdef ECO_NO_PROTOBUF
+#endif
+
 
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef WIN32

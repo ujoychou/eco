@@ -138,6 +138,7 @@ public:
 		}
 	}
 
+#ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void async_send(
 		IN google::protobuf::Message& msg,
@@ -159,6 +160,7 @@ public:
 		ProtobufCodec codec(msg);
 		async_resp(codec, type, context, last);
 	}
+#endif
 
 private:
 	// async send message.

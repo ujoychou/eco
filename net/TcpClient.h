@@ -126,6 +126,7 @@ public:
 	// async send message.
 	void async_send(IN MessageMeta& meta);
 
+#ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void async_send(
 		IN google::protobuf::Message& msg,
@@ -138,6 +139,7 @@ public:
 		meta.set_request_data(request_data);
 		async_send(meta);
 	}
+#endif
 };
 
 

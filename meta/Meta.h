@@ -87,5 +87,34 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+template<typename ObjectId>
+class PropertyValue
+{
+public:
+	ObjectId	m_id;				// object id.
+	std::string m_property;			// property name
+	std::string m_value;			// Property value.
+
+	inline PropertyValue(
+		IN const ObjectId id,
+		IN const char* p,
+		IN const char* v)
+		: m_id(id), m_property(p), m_value(v)
+	{}
+
+	inline void set_id(IN const ObjectId id)
+	{
+		m_id = id;
+	}
+
+	inline void set_value(IN const char* p, IN const char* v)
+	{
+		m_property = p;
+		m_value = v;
+	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 }// ns
 #endif
