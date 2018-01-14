@@ -18,7 +18,10 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
+#include <eco/Being.h>
 #include <eco/meta/Meta.h>
+#include <eco/persist/Address.h>
+#include <eco/persist/Database.h>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,17 +55,60 @@ public:
 		return *this;
 	}
 };
-
+	
 
 ////////////////////////////////////////////////////////////////////////////////
 class VersionMeta : public eco::Meta<Version>
 {
 public:
+};
+ECO_NS_END(persist);
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Persist;
+class PersistHandler
+{
+public:
+	// event: init object relation mapping.
+	virtual void on_mapping() {}
+
+	// event: register upgrade function.
+	virtual void on_upgrade(OUT Persist& persist) {}
+
+	// event: init business data after config database.
+	virtual void on_init(OUT Persist& persist) {}
+
+public:
+	// get persist.
+	Persist& persist();
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_NS_END(persist);
+class Persist : public eco::Being
+{
+	ECO_OBJECT_API(Persist);
+public:
+	// set address set.
+	void set_address(persist::AddressSet&);
+
+	// register persist handler.
+	void register_handler(IN PersistHandler&);
+
+	// register persist upgrade sql.
+	typedef bool(*UpgradeFunc)(IN Persist&);
+	void register_upgrade(IN const uint32_t ver, IN UpgradeFunc func);
+
+	// get master data source.
+	eco::Database& master();
+
+protected:
+	virtual bool on_born() override;
+	virtual void on_live() override;
+};
+
+
 ECO_NS_END(eco);
 #endif

@@ -90,13 +90,6 @@ class ECO_API Database
 {
 	ECO_OBJECT(Database);
 public:
-	// datasouce type.
-	enum Type
-	{
-		mysql  = 1,
-		sqlite = 2,
-	};
-
 	// datasouce client character set.
 	enum CharSet
 	{
