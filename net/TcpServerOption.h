@@ -46,10 +46,10 @@ public:
 	const char* get_name() const;
 	TcpServerOption& name(IN const char*);
 
-	void set_port(IN const uint32_t&);
-	uint32_t& port();
-	const uint32_t& get_port() const;
-	TcpServerOption& port(IN const uint32_t&);
+	void set_port(IN const uint32_t);
+	uint32_t port();
+	const uint32_t get_port() const;
+	TcpServerOption& port(IN const uint32_t);
 
 	// tick counter.
 	void step_tick(IN const uint32_t step = 1);
@@ -57,24 +57,24 @@ public:
 	void reset_tick();
 
 	// max connection size this server can accept.
-	void set_max_connection_size(IN const uint32_t&);
-	uint32_t& max_connection_size();
-	const uint32_t& get_max_connection_size() const;
-	TcpServerOption& max_connection_size(IN const uint32_t&);
+	void set_max_connection_size(IN const uint32_t);
+	uint32_t max_connection_size();
+	const uint32_t get_max_connection_size() const;
+	TcpServerOption& max_connection_size(IN const uint32_t);
 
 	// max session size this server can contain.
-	void set_max_session_size(IN const uint32_t&);
-	uint32_t& max_session_size();
-	const uint32_t& get_max_session_size() const;
-	TcpServerOption& max_session_size(IN const uint32_t&);
+	void set_max_session_size(IN const uint32_t);
+	uint32_t max_session_size();
+	const uint32_t get_max_session_size() const;
+	TcpServerOption& max_session_size(IN const uint32_t);
 
 	/*@ set server tick time which is mininum unit time of server timer.
 	* @ para.seconds: tick time seconds, if "=0" there will not be a tick timer.
 	*/
-	void set_tick_time(IN const uint32_t& seconds);
-	uint32_t& tick_time();
-	const uint32_t& get_tick_time() const;
-	TcpServerOption& tick_time(IN const uint32_t&);
+	void set_tick_time(IN const uint32_t seconds);
+	uint32_t tick_time();
+	const uint32_t get_tick_time() const;
+	TcpServerOption& tick_time(IN const uint32_t);
 	bool has_tick_timer() const;
 
 	/*@ set tcp server heartbeat ticks that include send tick and recv tick.
@@ -84,15 +84,15 @@ public:
 	* @ heartbeat_recv_tick: if server doesn't recv a heartbeat from peer in recv
 	ticks, it will close connection with the peer.
 	*/
-	void set_heartbeat_send_tick(IN const uint32_t&);
-	uint32_t& heartbeat_send_tick();
-	const uint32_t& get_heartbeat_send_tick() const;
-	TcpServerOption& heartbeat_send_tick(IN const uint32_t&);
+	void set_heartbeat_send_tick(IN const uint32_t);
+	uint32_t heartbeat_send_tick();
+	const uint32_t get_heartbeat_send_tick() const;
+	TcpServerOption& heartbeat_send_tick(IN const uint32_t);
 	//
-	void set_heartbeat_recv_tick(IN const uint32_t&);
-	uint32_t& heartbeat_recv_tick();
-	const uint32_t& get_heartbeat_recv_tick() const;
-	TcpServerOption& heartbeat_recv_tick(IN const uint32_t&);
+	void set_heartbeat_recv_tick(IN const uint32_t);
+	uint32_t heartbeat_recv_tick();
+	const uint32_t get_heartbeat_recv_tick() const;
+	TcpServerOption& heartbeat_recv_tick(IN const uint32_t);
 
 	/*@ set tcp server heartbeat mode.
 	* @ para.is_conn_mode: if "true", each connection will set a timer by itself
@@ -126,22 +126,22 @@ public:
 	/*@ set intervals that clean the inactive connection peer.
 	* @ para.tick: the server ticks of interval.
 	*/
-	void set_clean_inactive_peer_tick(IN const uint32_t& tick);
-	uint32_t& clean_inactive_peer_tick();
-	const uint32_t& get_clean_inactive_peer_tick() const;
-	TcpServerOption& clean_inactive_peer_tick(IN const uint32_t&);
+	void set_clean_inactive_peer_tick(IN const uint32_t tick);
+	uint32_t clean_inactive_peer_tick();
+	const uint32_t get_clean_inactive_peer_tick() const;
+	TcpServerOption& clean_inactive_peer_tick(IN const uint32_t);
 
 	/*@ server io thread size to handle net data.*/
-	void set_io_thread_size(IN const uint16_t&);
-	uint16_t& io_thread_size();
-	const uint16_t& get_io_thread_size() const;
-	TcpServerOption& io_thread_size(IN const uint16_t&);
+	void set_io_thread_size(IN const uint16_t);
+	uint16_t io_thread_size();
+	const uint16_t get_io_thread_size() const;
+	TcpServerOption& io_thread_size(IN const uint16_t);
 
 	/*@ server business thread size to handle request.*/
-	void set_business_thread_size(IN const uint16_t&);
-	uint16_t& business_thread_size();
-	const uint16_t& get_business_thread_size() const;
-	TcpServerOption& business_thread_size(IN const uint16_t&);
+	void set_business_thread_size(IN const uint16_t);
+	uint16_t business_thread_size();
+	const uint16_t get_business_thread_size() const;
+	TcpServerOption& business_thread_size(IN const uint16_t);
 
 	/* @ set tcp connection option whether has delay on sending data, and delay
 	is to improve workload performace.

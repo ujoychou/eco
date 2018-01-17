@@ -86,7 +86,7 @@ inline void handle_context(IN Context& c)
 		hdl->on_request();
 	} 
 	catch (eco::Error& e) {
-		EcoError << EcoFmt(e);
+		EcoError << EcoFmte(e);
 	}
 	catch (std::exception& e) {
 		EcoError << e.what();

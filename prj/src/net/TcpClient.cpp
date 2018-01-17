@@ -51,7 +51,7 @@ void LoadBalancer::update_address(IN eco::net::AddressSet& addr)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void LoadBalancer::load_server()
+bool LoadBalancer::load_server()
 {
 	if (m_peer == nullptr)
 	{
@@ -62,15 +62,16 @@ void LoadBalancer::load_server()
 	// this client has connect to server.
 	if (m_peer->get_state().connected())
 	{
-		return;
+		return false;
 	}
+	assert(!m_address_set.empty());
 
 	// load balance algorithm.
-	uint16_t min_workload = 0;
 	auto min_workload_server = m_address_set.begin();
+	uint16_t min_workload = min_workload_server->m_workload;
 	for (auto it = m_address_set.begin(); it != m_address_set.end(); ++it)
 	{
-		if (it->m_workload > min_workload)
+		if (it->m_workload < min_workload)
 		{
 			min_workload = it->m_workload;
 			min_workload_server = it;
@@ -82,26 +83,36 @@ void LoadBalancer::load_server()
 		m_address_cur = *min_workload_server;
 		m_peer->async_connect(m_address_cur.m_address);
 	}
+	return true;
 }
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_OBJECT_IMPL(TcpClient);
-ECO_PROPERTY_STR_IMPL(TcpClient, service_name);
-
-////////////////////////////////////////////////////////////////////////////////
+ECO_SHARED_IMPL(TcpClient);
 void TcpClient::Impl::async_connect()
 {
 	eco::Mutex::ScopeLock lock(m_mutex);
 
 	// verify data.
+	eco::Error e;
 	if (m_prot_head.get() == nullptr)
-		EcoThrow(e_client_no_protocol_head) << "client protocol head is null.";
-	if (m_protocol.get() == nullptr)
-		EcoThrow(e_client_no_protocol) << "client protocol is null.";
-	if (m_balancer.m_address_set.empty())
-		EcoThrow(e_client_no_address) << "client has no server address.";
+	{
+		e.id(e_client_no_protocol_head) << "client protocol head is null.";
+	}
+	else if (m_protocol.get() == nullptr)
+	{
+		e.id(e_client_no_protocol_head) << "client protocol is null.";
+	}
+	else if (m_balancer.m_address_set.empty())
+	{
+		e.id(e_client_no_address) << "client has no server address.";
+	}
+	if (e)
+	{
+		EcoLog(error, 512) << logging() << EcoFmte(e);
+		return;
+	}
 
 	// init tcp client worker. 
 	if (!m_init.is_ok())
@@ -116,12 +127,47 @@ void TcpClient::Impl::async_connect()
 		set_tick_timer();
 		m_init.ok();
 	}
-	m_balancer.load_server();
+	
+	if (m_balancer.load_server())
+	{
+		EcoLog(info, 512) << logging();
+	}
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::release()
+inline eco::FixBuffer<512> TcpClient::Impl::logging()
+{
+	eco::FixBuffer<512> log;
+	eco::String address(128, true);
+	auto it = m_balancer.m_address_set.begin();
+	for (; it != m_balancer.m_address_set.end(); ++it)
+	{
+		address.append((m_balancer.m_address_cur == *it)
+			? "@[addr] " : "-[addr] ");
+		address.append(it->m_address.get_host_name());
+		address.append(':');
+		address.append(it->m_address.get_service_name());
+		address.append(" (");
+		address.append(it->m_address.get_name());
+		address.append(")\n");
+	}
+	sprintf(log.buffer(0), "\n+[tcp client %s]\n%s"
+		"-[mode] io delay(%c), websocket(%c), sessions(%c)\n"
+		"-[tick] %ds, lost server %ds, heartbeat %ds reconnect %ds\n",
+		m_option.get_service_name(), address.c_str(),
+		eco::yn(m_option.no_delay()),
+		eco::yn(m_option.websocket()), eco::yn(session_mode()),
+		m_option.get_tick_time(),
+		m_option.get_heartbeat_recv_tick() * m_option.get_tick_time(),
+		m_option.get_heartbeat_send_tick() * m_option.get_tick_time(),
+		m_option.get_auto_reconnect_tick() * m_option.get_tick_time());
+	return log;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::close()
 {
 	eco::Mutex::ScopeLock lock(m_mutex);
 	if (m_init.is_ok())
@@ -181,7 +227,7 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 	meta.set_request_data(session_key);
 	if (!m_protocol->encode(pack->m_request, pack->m_request_start, meta, e))
 	{
-		EcoError << "tcp client async auth: encode data fail." << EcoFmt(e);
+		EcoError << "tcp client async auth: encode data fail." << EcoFmte(e);
 		return;
 	}
 	async_send(pack);
@@ -192,6 +238,10 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 void TcpClient::Impl::on_connect()
 {
 	eco::Mutex::ScopeLock lock(m_mutex);
+	// set peer option: no delay.
+	m_balancer.m_peer->set_option(m_option.no_delay());
+
+	// reconnect to server: session authority.
 	for (auto it = m_authority_map.begin(); it != m_authority_map.end(); ++it)
 	{
 		eco::String data;
@@ -201,7 +251,12 @@ void TcpClient::Impl::on_connect()
 	}
 	m_balancer.m_peer->impl().make_connection_data(
 		m_make_connection, m_protocol.get());
-	EcoNetLog(EcoDebug, peer()) << "connected.";
+
+	// logging.
+	char log[128] = {0};
+	sprintf(log, "\n+[tcp client %s] %llu connected.", 
+		m_option.get_service_name(), peer().get_id());
+	EcoInfo << log;
 }
 
 
@@ -248,20 +303,19 @@ void TcpClient::Impl::on_timer(IN const eco::Error* e)
 		return;
 	}
 	m_option.step_tick();
-	EcoDebug << "...tcp client on tick........................................";
 
 	// send rhythm heartbeat.
 	if (m_option.get_heartbeat_send_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_send_tick() == 0)
 	{
-		//async_send_heartbeat();
+		async_send_heartbeat();
 	}
 
 	// #.auto reconnect.
 	if (m_option.auto_reconnect_tick() > 0 &&
 		m_option.tick_count() % m_option.auto_reconnect_tick() == 0)
 	{
-		//async_connect();
+		async_connect();
 	}
 
 	set_tick_timer();		// set next timer.
@@ -287,9 +341,14 @@ void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 	impl().m_make_session = make;
 }
 
-void TcpClient::release()
+bool TcpClient::session_mode() const
 {
-	impl().release();
+	return impl().session_mode();
+}
+
+void TcpClient::close()
+{
+	impl().close();
 }
 
 void TcpClient::set_protocol_head(IN ProtocolHead* heap)
@@ -302,9 +361,20 @@ void TcpClient::set_protocol(IN Protocol* heap)
 	impl().m_protocol.reset(heap);
 }
 
-void TcpClient::async_connect(IN eco::net::AddressSet& service_addr)
+void TcpClient::set_address(IN eco::net::AddressSet& addr)
 {
-	impl().async_connect(service_addr);
+	impl().update_address(addr);
+	impl().m_option.set_service_name(addr.get_name());
+}
+
+void TcpClient::async_connect()
+{
+	impl().async_connect();
+}
+
+void TcpClient::async_connect(IN eco::net::AddressSet& addr)
+{
+	impl().async_connect(addr);
 }
 
 void TcpClient::async_send(IN eco::String& data, IN const uint32_t start)

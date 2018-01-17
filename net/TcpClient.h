@@ -39,18 +39,19 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TcpClient
 {
-	ECO_OBJECT_API(TcpClient);
+	ECO_SHARED_API(TcpClient);
 public:
-	// service name.
-	void set_service_name(IN const char*);
-	const char* get_service_name() const;
-	TcpClient& service_name(IN const char*);
-
 	// network server option.
 	void set_option(IN const TcpClientOption&);
 	TcpClientOption& option();
 	const TcpClientOption& get_option() const;
 	TcpClient& option(IN const TcpClientOption&);
+
+	// service name.
+	inline const char* get_service_name() const
+	{
+		return get_option().get_service_name();
+	}
 
 	// protocol head.
 	template<typename ProtocolHeadT>
@@ -85,26 +86,23 @@ public:
 		set_session_data(&make_session_data<SessionDataT>);
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
+	bool session_mode() const;
 
 	// dispatch.
 	DispatchRegistry& dispatcher();
 
-	// produce next request id.
-	// TODO
-	uint32_t next_request_id();
-
 	// release client.
-	void release();
+	void close();
 
 //////////////////////////////////////////////////////////////////// ROUTER MODE
 public:
 	// router mode: async call cluster init router.
-	void async_init_router(
+	void async_connect_router(
 		IN const char* router_name,
 		IN eco::net::AddressSet& router_addr);
 
 	// router mode: async connect to service of router.
-	void async_init(
+	void async_connect(
 		IN const char* router_name,
 		IN const char* service_name);
 
@@ -112,6 +110,11 @@ public:
 public:
 	// open session.
 	TcpSession open_session();
+
+	// service mode: set address ready to connect to service.
+	void set_address(
+		IN eco::net::AddressSet& service_addr);
+	void async_connect();
 
 	// service mode: async connect to service.
 	void async_connect(

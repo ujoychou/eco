@@ -92,15 +92,15 @@ ECO_PROPERTY_BOL_IMPL(TcpServerOption, websocket);
 ECO_PROPERTY_BOL_IMPL(TcpServerOption, io_heartbeat);
 ECO_PROPERTY_BOL_IMPL(TcpServerOption, rhythm_heartbeat);
 ECO_PROPERTY_BOL_IMPL(TcpServerOption, response_heartbeat);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint32_t, port);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint32_t, tick_time);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint32_t, max_session_size);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint32_t, max_connection_size);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint32_t, heartbeat_send_tick);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint32_t, heartbeat_recv_tick);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint32_t, clean_inactive_peer_tick);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint16_t, io_thread_size);
-ECO_PROPERTY_VAL_IMPL(TcpServerOption, uint16_t, business_thread_size);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, port);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, tick_time);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, max_session_size);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, max_connection_size);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, heartbeat_send_tick);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, heartbeat_recv_tick);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, clean_inactive_peer_tick);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint16_t, io_thread_size);
+ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint16_t, business_thread_size);
 
 
 

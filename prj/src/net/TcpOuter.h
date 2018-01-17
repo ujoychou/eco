@@ -102,9 +102,8 @@ public:
 	{
 		assert(m_owner.m_owner != nullptr);
 		auto* owner = m_owner.m_owner;
-		return (m_owner.m_server)
-			? ((TcpServer::Impl*)owner)->m_option.response_heartbeat()
-			: ((TcpClient::Impl*)owner)->m_option.response_heartbeat();
+		return m_owner.m_server 
+			&& ((TcpServer::Impl*)owner)->m_option.response_heartbeat();
 	}
 
 	inline ProtocolHead* protocol_head() const

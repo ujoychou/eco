@@ -34,8 +34,8 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 enum  
 {
-	service_mode		= 0x0001,		// C\S架构服务
-	router_mode			= 0X0002,		// 路由架构服务
+	service_mode		= 1,		// C\S架构服务
+	router_mode			= 2,		// 路由架构服务
 };
 typedef uint16_t ServiceMode;
 
@@ -51,15 +51,20 @@ public:
 	* @ para.addr_str: net address string.
 	"ip:port": 127.0.0.1:80" "host_name:server_name": zhouyu:datetime"
 	*/
-	void reset(IN const char* addr = nullptr);
+	void set(IN const char* addr = nullptr);
 
 	/*@ set net address.
 	* @ para.ip: net address string. exp:"127.0.0.1"
 	* @ para.port: net address port number. exp:"80"
 	*/
-	void reset(
+	void set(
 		IN const char* ip,
 		IN const uint32_t port);
+
+	// address name or alias that easy to remember.
+	void set_name(const char*);
+	const char* get_name() const;
+	Address& name(const char*);
 
 	// host name
 	void set_host_name(const char*);
@@ -133,11 +138,16 @@ public:
 	const Address& at(IN const int i) const;
 
 public:
-	// service mode.
-	ServiceMode& service_mode();
-	const ServiceMode& get_service_mode() const;
-	void set_service_mode(IN const ServiceMode&);
-	AddressSet& service_mode(IN const ServiceMode&);
+	// module name or alias that easy to remember.
+	void set_name(const char*);
+	const char* get_name() const;
+	AddressSet& name(const char*);
+
+	// service mode or router mode.
+	const ServiceMode get_mode() const;
+	void set_mode(IN const ServiceMode);
+	ServiceMode mode();
+	AddressSet& mode(IN const ServiceMode);
 };
 
 

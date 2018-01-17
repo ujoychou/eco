@@ -13,8 +13,10 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class Address::Impl
 {
+	ECO_IMPL_INIT(Address);
 public:
-	void init(IN Address&) {}
+	// "上海电信"/"测试地址1" and so on.
+	std::string m_name;
 
 	// server ip address or host name.
 	// exp: ip-"127.0.0.1"; hostname-"shjiyin888.xicp.net";
@@ -26,52 +28,55 @@ public:
 };
 class AddressSet::Impl
 {
+	ECO_IMPL_INIT(AddressSet);
 public:
-	void init(IN AddressSet&) {}
+	inline Impl() : m_mode(0) {}
 
+	ServiceMode m_mode;
+	std::string m_name;
 	std::vector<Address> m_items;
-	ServiceMode m_service_mode;
+	
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_VALUE_IMPL(Address);
+ECO_PROPERTY_STR_IMPL(Address, name);
 ECO_PROPERTY_STR_IMPL(Address, host_name);
 ECO_PROPERTY_STR_IMPL(Address, service_name);
 ECO_SHARED_IMPL(AddressSet);
 ECO_PROPERTY_SET_IMPL(AddressSet, Address);
-ECO_PROPERTY_VAL_IMPL(AddressSet, ServiceMode, service_mode);
+ECO_PROPERTY_STR_IMPL(AddressSet, name);
+ECO_PROPERTY_VAV_IMPL(AddressSet, ServiceMode, mode);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 Address::Address(IN const char* v)
 {
 	m_impl = new Impl();
-	reset(v);
+	set(v);
 }
-void Address::reset(IN const char* v)
+void Address::set(IN const char* v)
 {
 	impl().m_host_name.clear();
 	impl().m_service_name.clear();
-	if (v == nullptr)
+	if (v != nullptr)
 	{
-		return;
-	}
-
-	// format "x:y"
-	std::string addr(v);
-	size_t pos = addr.find(':');
-	if (pos != std::string::npos)
-	{
-		impl().m_host_name = addr.substr(0, pos);
-		pos = pos + 1;
-		impl().m_service_name = addr.substr(pos, addr.size() - pos);
+		// format "x:y"
+		std::string addr(v);
+		size_t pos = addr.find(':');
+		if (pos != std::string::npos)
+		{
+			impl().m_host_name = addr.substr(0, pos);
+			pos = pos + 1;
+			impl().m_service_name = addr.substr(pos, addr.size() - pos);
+		}
 	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Address::reset(IN const char* ip, IN const uint32_t port)
+void Address::set(IN const char* ip, IN const uint32_t port)
 {
 	impl().m_host_name = ip;
 	impl().m_service_name = eco::Integer<uint32_t>(port).c_str();

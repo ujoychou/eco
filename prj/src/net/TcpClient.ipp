@@ -32,7 +32,7 @@ public:
 
 	inline void clear()
 	{
-		m_address.reset();
+		m_address.set();
 		m_workload = 0;
 		m_flag = 0;
 	}
@@ -71,7 +71,7 @@ public:
 		m_client = &v;
 	}
 
-	void load_server();
+	bool load_server();
 	void update_address(IN AddressSet& addr);
 };
 
@@ -213,9 +213,10 @@ public:
 		async_connect();
 	}
 	inline void async_connect();
+	inline eco::FixBuffer<512> logging();
 
 	// release tcp client and connection.
-	void release();
+	void close();
 
 	// set a tick timer to do some work in regular intervals.
 	inline void set_tick_timer()
@@ -236,10 +237,7 @@ public:
 	inline void async_send_heartbeat()
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		if (m_option.rhythm_heartbeat())
-			m_balancer.m_peer->impl().async_send_heartbeat(*m_prot_head);
-		else
-			m_balancer.m_peer->impl().async_send_live_heartbeat(*m_prot_head);
+		m_balancer.m_peer->impl().async_send_heartbeat(*m_prot_head);
 	}
 
 	inline void async_send(IN MessageMeta& meta)
@@ -249,7 +247,7 @@ public:
 		uint32_t start = 0;
 		if (!m_protocol->encode(data, start, meta, e))
 		{
-			EcoError << "tcp client encode data fail." << EcoFmt(e);
+			EcoError << "tcp client encode data fail." << EcoFmte(e);
 			return;
 		}
 		async_send(data, start);

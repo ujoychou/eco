@@ -10,10 +10,7 @@
 
 namespace eco{;
 namespace net{;
-
-
-//##############################################################################
-//##############################################################################
+////////////////////////////////////////////////////////////////////////////////
 void TcpServer::Impl::start()
 {
 	// verify data.
@@ -60,6 +57,27 @@ void TcpServer::Impl::start()
 		//eco::service::dev::get_cluster().register_service(
 		//	m_option.get_name(), m_option.get_router(), m_option.get_port());
 	}
+
+	// logging.
+	char log[1024] = { 0 };
+	sprintf(log, "\n+[tcp server %s %d]\n"
+		"-[mode] io delay(%c), websocket(%c)\n"
+		"-[tick] unit %ds, lost client %ds, heartbeat %ds\n"
+		"-[beat] io(%c), rhythm(%c), response(%c)\n"
+		"-[capacity] %d connections, %d sessions(%c)\n"
+		"-[parallel] %d io thread, %d business thread\n",
+		m_option.get_name(), m_option.get_port(),
+		eco::yn(m_option.no_delay()), eco::yn(m_option.websocket()),
+		m_option.get_tick_time(),
+		m_option.get_heartbeat_recv_tick() * m_option.get_tick_time(),
+		m_option.get_heartbeat_send_tick() * m_option.get_tick_time(),
+		eco::yn(m_option.io_heartbeat()),
+		eco::yn(m_option.rhythm_heartbeat()),
+		eco::yn(m_option.response_heartbeat()),
+		m_option.get_max_connection_size(),
+		m_option.get_max_session_size(), eco::yn(session_mode()),
+		m_option.get_io_thread_size(), m_option.get_business_thread_size());
+	EcoLog(info, 1024) << log;
 }
 
 
@@ -98,11 +116,11 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 {
 	if (e)	// error
 	{
-		EcoError << "tcp server on timer error: " << EcoFmt(*e);
+		EcoError << "tcp server on timer error: " << EcoFmte(*e);
 		return;
 	}
 
-	EcoDebug << "...tcp server on tick........................................";
+	EcoDebug << "... ...";
 	m_option.step_tick();
 
 	// send rhythm heartbeat.
