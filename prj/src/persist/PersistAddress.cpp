@@ -18,9 +18,11 @@ public:
 	{
 		m_port = 0;
 		m_type = 0;
+		m_char_set = char_set_gbk;
 	}
 
 	SourceType	m_type;
+	CharSet		m_char_set;
 	uint32_t	m_port;
 	std::string m_name;
 	std::string m_host;
@@ -45,6 +47,7 @@ ECO_PROPERTY_STR_IMPL(Address, database);
 ECO_PROPERTY_STR_IMPL(Address, password);
 ECO_PROPERTY_VAV_IMPL(Address, uint32_t, port);
 ECO_PROPERTY_VAV_IMPL(Address, SourceType, type);
+ECO_PROPERTY_VAV_IMPL(Address, CharSet, char_set);
 ECO_SHARED_IMPL(AddressSet);
 ECO_PROPERTY_SET_IMPL(AddressSet, Address);
 
@@ -56,6 +59,14 @@ void Address::set_type(const char* type)
 		set_type(source_mysql);
 	else if (strcmp(type, "sqlite") == 0)
 		set_type(source_sqlite);
+}
+const char* Address::get_type_name() const
+{
+	if (impl().m_type == source_mysql)
+		return "mysql";
+	else if (impl().m_type == source_sqlite)
+		return "sqlite";
+	return "unknown";
 }
 
 

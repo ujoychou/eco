@@ -30,37 +30,40 @@ logging.
 ////////////////////////////////////////////////////////////////////////////////
 #define EcoTrace\
 	if (eco::log::trace >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(__FILE__, __LINE__, eco::log::trace).stream()
+		eco::log::FixPusher().set(__FILE__, __LINE__, eco::log::trace).stream()
 
 #define EcoDebug\
 	if (eco::log::debug >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(__FILE__, __LINE__, eco::log::debug).stream()
+		eco::log::FixPusher().set(__FILE__, __LINE__, eco::log::debug).stream()
 
 #define EcoInfo\
 	if (eco::log::info  >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(__FILE__, __LINE__, eco::log::info).stream()
+		eco::log::FixPusher().set(__FILE__, __LINE__, eco::log::info).stream()
 
 #define EcoWarn\
 	if (eco::log::warn  >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(__FILE__, __LINE__, eco::log::warn).stream()
+		eco::log::FixPusher().set(__FILE__, __LINE__, eco::log::warn).stream()
 
 #define EcoError\
 	if (eco::log::error >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(__FILE__, __LINE__, eco::log::error).stream()
+		eco::log::FixPusher().set(__FILE__, __LINE__, eco::log::error).stream()
 
 #define EcoFatal\
 	if (eco::log::fatal >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(__FILE__, __LINE__, eco::log::fatal).stream()
+		eco::log::FixPusher().set(__FILE__, __LINE__, eco::log::fatal).stream()
 
-#define EcoLog(sev)\
+#define EcoLog(sev, size)\
 	if (eco::log::##sev  >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(\
+		eco::log::FixPusherT<size>().set(\
 		__FILE__, __LINE__, eco::log::##sev).stream()
 
-#define EcoDomain(sev, domain)\
+/* log message with heap memory, it has no length limit instead of FixPusher.
+it's buffer implement is eco::String, so you can dedicated a reserve size.
+*/
+#define EcoLogStr(sev, size)\
 	if (eco::log::##sev  >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher().set(\
-		__FILE__, __LINE__, eco::log::##sev, domain).stream()
+		eco::log::Pusher(size).set(\
+		__FILE__, __LINE__, eco::log::##sev).stream()
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif

@@ -46,32 +46,32 @@ public:
 	Core& severity_level(IN const SeverityLevel&);
 
 	/*@ option: synchronous.*/
-	void set_sync(IN const bool);
-	bool sync() const;
-	Core& sync(IN const bool);
+	void set_async(IN const bool);
+	bool async() const;
+	Core& async(IN const bool);
 
 	/*@ set message queue capacity.*/
-	void set_capacity(IN const uint32_t& v);
-	uint32_t& capacity();
-	const uint32_t& get_capacity() const;
-	Core& capacity(IN const uint32_t&);
+	void set_capacity(IN const uint32_t v);
+	uint32_t capacity();
+	const uint32_t get_capacity() const;
+	Core& capacity(IN const uint32_t);
 
 	/*@ set message queue max sync interval mill seconds.*/
-	void set_max_sync_interval(IN const uint32_t& v);
-	uint32_t& max_sync_interval();
-	const uint32_t& get_max_sync_interval() const;
-	Core& max_sync_interval(IN const uint32_t&);
+	void set_async_flush(IN const uint32_t v);
+	uint32_t async_flush();
+	const uint32_t get_async_flush() const;
+	Core& async_flush(IN const uint32_t);
 
 	/*@ option: sink option.*/
-	void set_sink_option(IN const SinkOption&);
-	SinkOption& sink_option();
-	const SinkOption& get_sink_option() const;
-	Core& sink_option(IN const SinkOption&);
+	void set_sink_option(IN const SinkOption);
+	SinkOption sink_option();
+	const SinkOption get_sink_option() const;
+	Core& sink_option(IN const SinkOption);
 
 	/*@ option: add\remove sink option.*/
-	void add_file_sink(IN bool is_add);
+	void add_file_sink(IN bool);
 	bool has_file_sink() const;
-	void add_console_sink(IN bool is_add);
+	void add_console_sink(IN bool);
 	bool has_console_sink() const;
 
 	/*@ option: file sink file name.*/
@@ -85,16 +85,10 @@ public:
 	Core& file_name(IN const char*);
 
 	/*@ option: file sink file size, bytes.*/
-	void set_file_roll_size(IN const uint32_t&);
-	uint32_t& file_roll_size();
-	const uint32_t& get_file_roll_size() const;
-	Core& file_roll_size(IN const uint32_t&);
-
-	/*@ option: file sink flush interval seconds.*/
-	void set_flush_interval(IN const uint32_t&);
-	uint32_t& flush_interval();
-	const uint32_t& get_flush_interval() const;
-	Core& flush_interval(IN const uint32_t&);
+	void set_file_roll_size(IN const uint32_t);
+	uint32_t file_roll_size();
+	const uint32_t get_file_roll_size() const;
+	Core& file_roll_size(IN const uint32_t);
 
 	/*@ file sink: logging file changed callback.*/
 	void set_file_on_create(
@@ -113,7 +107,7 @@ public:
 	bool is_running() const;
 
 	/*@ append log info.*/
-	void append(IN const Text& buf);
+	void append(IN const eco::Bytes& buf);
 };
 
 

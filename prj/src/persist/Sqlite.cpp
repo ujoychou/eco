@@ -5,9 +5,15 @@
 #include <eco/Error.h>
 #include <eco/thread/Atomic.h>
 #include <eco/thread/Mutex.h>
-#include <eco/log/Log.h>
 #include <vector>
 #include <sqlite/sqlite3.h>
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco::Database* create()
+{
+	return new eco::Sqlite();
+}
 
 
 namespace eco{;
@@ -62,31 +68,30 @@ public:
 		close();
 	}
 	
-
-	void set_charset(IN const Database::CharSet v)
+	inline void set_charset(IN const persist::CharSet v)
 	{
 		switch (v)
 		{
-		case Database::char_set_gbk :
+		case persist::char_set_gbk :
 			m_char_set = "gbk";
 			return ;
-		case Database::char_set_gb2312 :
+		case persist::char_set_gb2312 :
 			m_char_set = "gb2312";
 			return ;
-		case Database::char_set_utf8 :
+		case persist::char_set_utf8 :
 			m_char_set = "utf8";
 			return ;
-		case Database::char_set_utf16 :
+		case persist::char_set_utf16 :
 			m_char_set = "utf16";
 			return ;
-		case Database::char_set_utf32 :
+		case persist::char_set_utf32 :
 			m_char_set = "utf32";
 			return ;
 		}
 		m_char_set = "gbk";	// default is gbk.
 	}
 
-	void open()
+	inline void open()
 	{
 		// create sqlite instance.
 		if (sqlite3_open(m_db_name.c_str(), &m_sqlite))
@@ -115,19 +120,7 @@ public:
 	}
 
 	// throw error.
-	inline void close_and_throw_error()
-	{
-		int err_no = sqlite3_errcode(m_sqlite);
-		std::string msg("mysql open database fail: ");
-		msg += sqlite3_errmsg(m_sqlite);
-		eco::Error e(err_no, msg);
-		close();
-		throw e;
-	}
-
-	// throw error.
-	inline void throw_error(
-		IN const std::string& sql = std::string())
+	inline void throw_error(IN const char* sql = nullptr)
 	{
 		throw_error(sql, sqlite3_errcode(m_sqlite),
 			sqlite3_errmsg(m_sqlite));
@@ -135,18 +128,17 @@ public:
 
 	// throw error.
 	inline void throw_error(
-		IN const std::string& sql,
+		IN const char* sql,
 		IN int err_no,
 		IN const char* err_msg)
 	{
 		std::string msg("sqlite fail: ");
 		msg += err_msg;
-		if (!sql.empty())
+		if (sql != nullptr)
 		{
 			msg += " sql:";
 			msg += sql;
 		}
-		std::cout << msg;
 		throw std::logic_error(msg);
 	}
 
@@ -162,12 +154,17 @@ public:
 	}
 };
 ECO_SHARED_IMPL(Sqlite);
+////////////////////////////////////////////////////////////////////////////////
+void Sqlite::open(IN const persist::Address& addr)
+{
+	open(addr.get_database(), addr.get_char_set());
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::open(
 	IN const char* db_name,
-	IN const CharSet char_set)
+	IN const persist::CharSet char_set)
 {
 	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex);
 	impl().m_db_name = db_name;

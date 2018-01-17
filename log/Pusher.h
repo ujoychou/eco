@@ -24,6 +24,8 @@ logger.
 
 *******************************************************************************/
 #include <eco/log/Type.h>
+#include <eco/filesystem/SourceFile.h>
+
 
 
 namespace eco{;
@@ -46,20 +48,56 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API Pusher
+template<typename Stream>
+class PusherT
 {
-	ECO_SHARED_API(Pusher);
 public:
+	typedef Stream Stream;
+
+	inline PusherT() : m_severity(eco::log::none)
+	{}
+	~PusherT();
+
 	/*@ logging collector. domain has 'logging', 'monitor', 'report'
 	*/
-	Pusher& set(
+	PusherT& set(
 		IN const char* file_name,
 		IN int file_line,
 		IN SeverityLevel sev_level,
 		IN const char* domain = nullptr);
 
 	/*@ log stream.*/
-	LogStream& stream();
+	inline Stream& stream()
+	{
+		return m_stream;
+	}
+
+protected:
+	Stream m_stream;
+	SeverityLevel m_severity;
+	std::auto_ptr<eco::filesystem::SourceFile> m_src;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Pusher : public PusherT<eco::Stream>
+{
+public:
+	inline Pusher(IN const uint32_t size)
+	{
+		m_stream.buffer().reserve(size);
+	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<uint32_t size>
+class FixPusherT : public PusherT<eco::StreamT<FixBuffer<size> > >
+{};
+typedef FixPusherT<log_text_size> FixPusher;
+typedef FixPusher::Stream LogStream;
+
+////////////////////////////////////////////////////////////////////////////////
 }}
+#include <eco/log/Pusher.inl>
 #endif
