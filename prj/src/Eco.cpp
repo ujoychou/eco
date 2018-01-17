@@ -214,7 +214,7 @@ Timer& Eco::timer()
 
 ////////////////////////////////////////////////////////////////////////////////
 static std::auto_ptr<Eco> s_eco;
-void init_eco()
+void create_eco()
 {
 	s_eco.reset(new Eco);
 }
