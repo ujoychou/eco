@@ -452,23 +452,16 @@ public:
 	}
 
 	// Find a field adapter.
-	inline PropertyMapping* find_field(IN const char* field_name)
+	inline const PropertyMapping* find_field(IN const char* field) const
 	{
-		auto it = std::find(m_prop_map.begin(), m_prop_map.end(), field_name);
-		if (it != m_prop_map.end())
-		{
-			return &*it;
-		}
-		return nullptr;
+		auto it = std::find(m_prop_map.begin(), m_prop_map.end(), field);
+		return (it != m_prop_map.end()) ? &*it : nullptr;
 	}
-	inline const PropertyMapping* find_field(IN const char* field_name) const
+	inline PropertyMapping* find_field(IN const char* field)
 	{
-		auto it = std::find(m_prop_map.begin(), m_prop_map.end(), field_name);
-		if (it != m_prop_map.end())
-		{
-			return &*it;
-		}
-		return nullptr;
+		const ObjectMapping* that = this;
+		const PropertyMapping* map = that->find_field(field);
+		return const_cast<PropertyMapping*>(map);
 	}
 
 	// find pk property mapping.
@@ -483,6 +476,14 @@ public:
 				return &*it;
 		}
 		return nullptr;
+	}
+	inline PropertyMapping* find_property(
+		IN const char* prop,
+		IN const uint16_t constraint = 0)
+	{
+		const ObjectMapping* that = this;
+		const PropertyMapping* map = that->find_property(prop, constraint);
+		return const_cast<PropertyMapping*>(map);
 	}
 
 	// get pk filed count

@@ -22,6 +22,7 @@
 #include <eco/persist/Recordset.h>
 #include <eco/persist/JoinMapping.h>
 #include <eco/persist/DatabaseConfig.h>
+#include <eco/persist/Address.h>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,32 +91,25 @@ class ECO_API Database
 {
 	ECO_OBJECT(Database);
 public:
-	// datasouce client character set.
-	enum CharSet
-	{
-		char_set_gbk = 1,
-		char_set_gb2312,
-		char_set_utf8,
-		char_set_utf16,
-		char_set_utf32,
-	};
-
-public:
 	inline Database() {}
+
+	// connect to database address.
+	virtual void open(
+		IN const persist::Address& addr) {};
 
 	// connect to server and login database.
 	virtual void open(
 		IN const char* server_ip,
-		IN const int port,
+		IN const uint32_t port,
 		IN const char* db_name,
 		IN const char* user_id,
 		IN const char* password,
-		IN const CharSet char_set = char_set_gbk) {};
+		IN const persist::CharSet char_set = persist::char_set_gbk) {};
 
 	// connect to sqlite database.
 	virtual void open(
 		IN const char* db_name,
-		IN const CharSet char_set = char_set_gbk) {};
+		IN const persist::CharSet char_set = persist::char_set_gbk) {};
 
 	// disconnect to server
 	virtual void close() = 0;
@@ -343,6 +337,7 @@ public:
 };
 
 
+ECO_API eco::Database* create_database(IN const persist::SourceType v);
 ////////////////////////////////////////////////////////////////////////////////
 }// ns::eco
 #endif

@@ -25,6 +25,9 @@
 #	endif
 #endif
 
+extern "C" ECO_API eco::Database* create();
+
+
 namespace eco{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Sqlite : public eco::Database
@@ -32,10 +35,14 @@ class ECO_API Sqlite : public eco::Database
 	ECO_SHARED_API(Sqlite);
 ////////////////////////////////////////////////////////////////////////////////
 public:
+	// connect to database address.
+	virtual void open(
+		IN const persist::Address& addr) override;
+
 	// connect to server and login database.
 	virtual void open(
 		IN const char* db_name,
-		IN const CharSet char_set = char_set_gbk) override;
+		IN const persist::CharSet char_set = persist::char_set_gbk) override;
 
 	// disconnect to server
 	virtual void close() override;

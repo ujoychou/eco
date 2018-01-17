@@ -24,24 +24,28 @@
 #		pragma comment(lib, "eco_mysql.lib")
 #	endif
 #endif
+extern "C" ECO_API eco::Database* create();
+
 
 namespace eco{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API MySql : public eco::Database
 {
 	ECO_SHARED_API(MySql);
 ////////////////////////////////////////////////////////////////////////////////
 public:
+	// connect to database address.
+	virtual void open(
+		IN const persist::Address& addr) override;
+
 	// connect to server and login database.
 	virtual void open(
 		IN const char* server_ip,
-		IN const int port,
+		IN const uint32_t port,
 		IN const char* db_name,
 		IN const char* user_id,
 		IN const char* password,
-		IN const CharSet char_set = char_set_gbk) override;
+		IN const persist::CharSet char_set = persist::char_set_gbk) override;
 
 	// disconnect to server
 	virtual void close() override;

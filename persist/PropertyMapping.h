@@ -32,6 +32,8 @@ enum DataType
 	type_char_array,
 	type_varchar,
 	type_double,
+	type_text,
+	type_blob,
 
 	// database relative datatype.
 	type_date_time,		// 2017-08-29 09:56:30
@@ -130,7 +132,21 @@ public:
 	inline PropertyMapping& vchar_middle()
 	{
 		m_field_type = type_varchar;
-		m_field_size = 65535;
+		m_field_size = 8192;	// detail in mysql limited.
+		return *this;
+	}
+
+	inline PropertyMapping& text()
+	{
+		m_field_type = type_text;
+		m_field_size = 65535;		// sqlite/mysql defined.
+		return *this;
+	}
+
+	inline PropertyMapping& blob()
+	{
+		m_field_type = type_blob;
+		m_field_size = 65535;		// sqlite/mysql defined.
 		return *this;
 	}
 
@@ -222,6 +238,12 @@ public:
 			field_sql = "VARCHAR(";
 			field_sql += eco::cast<std::string>(field_size);
 			field_sql += ")";
+			break;
+		case type_text:
+			field_sql = "TEXT";
+			break;
+		case type_blob:
+			field_sql = "BLOB";
 			break;
 		case type_double:
 			field_sql = "DOUBLE";

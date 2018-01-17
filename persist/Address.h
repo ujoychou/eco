@@ -26,14 +26,25 @@
 namespace eco{;
 namespace persist{;
 
-// datasouce type.
+// data souce type.
 enum 
 {
 	source_mysql		= 1,
 	source_sqlite		= 2,
 };
-typedef uint32_t SourceType;
+typedef uint16_t SourceType;
 
+
+// data source client character set.
+enum
+{
+	char_set_gbk		= 1,
+	char_set_gb2312		= 2,
+	char_set_utf8		= 3,
+	char_set_utf16		= 4,
+	char_set_utf32		= 5,
+};
+typedef uint16_t CharSet;
 
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Address
@@ -44,42 +55,50 @@ public:
 	Address& set(IN const char* addr);
 
 	// data source type.
-	void set_type(const SourceType);
+	void set_type(IN const SourceType);
 	const SourceType get_type() const;
 	SourceType type();
-	Address& type(const SourceType);
-	void set_type(const char*);
+	Address& type(IN const SourceType);
+	// type string: mysql/sqlite/.
+	void set_type(IN const char* type);
+	const char* get_type_name() const;
+
+	// data source char set.
+	void set_char_set(IN const CharSet = char_set_gbk);
+	const CharSet get_char_set() const;
+	CharSet char_set();
+	Address& char_set(IN const CharSet = char_set_gbk);
 
 	// host name
-	void set_name(const char*);
+	void set_name(IN const char*);
 	const char* get_name() const;
-	Address& name(const char*);
+	Address& name(IN const char*);
 
 	// host ip
-	void set_host(const char*);
+	void set_host(IN const char*);
 	const char* get_host() const;
-	Address& host(const char*);
+	Address& host(IN const char*);
 
 	// port
-	void set_port(const uint32_t);
+	void set_port(IN const uint32_t);
 	uint32_t port();
 	const uint32_t get_port() const;
-	Address& port(const uint32_t);
+	Address& port(IN const uint32_t);
 
 	// database
-	void set_database(const char*);
+	void set_database(IN const char*);
 	const char* get_database() const;
-	Address& database(const char*);
+	Address& database(IN const char*);
 
 	// user
-	void set_user(const char*);
+	void set_user(IN const char*);
 	const char* get_user() const;
-	Address& user(const char*);
+	Address& user(IN const char*);
 
 	// password
-	void set_password(const char*);
+	void set_password(IN const char*);
 	const char* get_password() const;
-	Address& password(const char*);
+	Address& password(IN const char*);
 };
 
 
