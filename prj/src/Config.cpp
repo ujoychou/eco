@@ -96,7 +96,7 @@ public:
 		}
 		catch (const std::exception& e)
 		{
-			EcoThrowError << "init config fail, " << e.what();
+			EcoThrowX << "init config fail, " << e.what();
 		}
 	}
 

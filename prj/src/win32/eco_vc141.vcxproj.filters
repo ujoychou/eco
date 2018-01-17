@@ -156,9 +156,6 @@
     <ClCompile Include="..\thread\ThreadWin.cpp">
       <Filter>src\thread</Filter>
     </ClCompile>
-    <ClCompile Include="..\log\Pusher.cpp">
-      <Filter>src\log</Filter>
-    </ClCompile>
     <ClCompile Include="..\process\ProcessWin.cpp">
       <Filter>src\process</Filter>
     </ClCompile>
@@ -304,6 +301,9 @@
       <Filter>src\persist</Filter>
     </ClCompile>
     <ClCompile Include="..\persist\Persist.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\Recordset.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
   </ItemGroup>
@@ -795,6 +795,9 @@
     </None>
     <None Include="..\net\TcpOuter.h">
       <Filter>src\net</Filter>
+    </None>
+    <None Include="..\..\..\log\Pusher.inl">
+      <Filter>lib\log</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

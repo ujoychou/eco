@@ -8,6 +8,13 @@
 #include <mysql/mysql.h>
 
 
+////////////////////////////////////////////////////////////////////////////////
+eco::Database* create()
+{
+	return new eco::MySql();
+}
+
+
 namespace eco{;
 ////////////////////////////////////////////////////////////////////////////////
 __declspec(thread) uint32_t	t_trans_level = 0;
@@ -64,23 +71,23 @@ public:
 		close();
 	}
 
-	void set_charset(IN const Database::CharSet v)
+	void set_charset(IN const persist::CharSet v)
 	{
 		switch (v)
 		{
-		case Database::char_set_gbk :
+		case persist::char_set_gbk :
 			m_char_set = "gbk";
 			return ;
-		case Database::char_set_gb2312 :
+		case persist::char_set_gb2312 :
 			m_char_set = "gb2312";
 			return ;
-		case Database::char_set_utf8 :
+		case persist::char_set_utf8 :
 			m_char_set = "utf8";
 			return ;
-		case Database::char_set_utf16 :
+		case persist::char_set_utf16 :
 			m_char_set = "utf16";
 			return ;
-		case Database::char_set_utf32 :
+		case persist::char_set_utf32 :
 			m_char_set = "utf32";
 			return ;
 		}
@@ -89,11 +96,13 @@ public:
 
 	void open()
 	{
+		close();
+
 		// init mysql instance.
 		m_mysql = mysql_init(nullptr);
 		if (nullptr == m_mysql)
 		{
-			throw_error();
+			throw_error("mysql init", nullptr, nullptr, 0);
 		}
 
 		// connect to mysql server fail.
@@ -104,27 +113,27 @@ public:
 			m_db_name.c_str(),
 			m_port, nullptr, 0))
 		{
-			throw_error();
+			close_throw_open_error("connect");
 		}
 
 		// set autocommit=0 transaction.
 		if (mysql_autocommit(m_mysql, false) != 0)
 		{
-			throw_error();
+			close_throw_open_error("auto commit");
 		}
 
 		// set mysql client options.
 		// set mysql client character set.
 		if (mysql_set_character_set(m_mysql, m_char_set.c_str()) != 0)
 		{
-			throw_error();
+			close_throw_open_error("charset");
 		}
 
 		// connect to mysql server success.
 		// connect to dedicated server.
 		if (0 != mysql_select_db(m_mysql, m_db_name.c_str()))
 		{
-			close_and_throw_error();
+			close_throw_open_error("select db");
 		}
 	}
 
@@ -153,27 +162,62 @@ public:
 		return (mysql_ping(m_mysql) == 0) ? true : false;
 	}
 
-	// throw error.
-	inline void close_and_throw_error()
+public:
+	// throw open error.
+	inline void close_throw_open_error(IN const char* t)
 	{
-		std::string msg("mysql connect database fail: ");
-		msg += mysql_error(m_mysql);
-		eco::Error e(mysql_errno(m_mysql), msg);
 		close();
-		throw e;
+		std::string title("mysql open ");
+		title += t;
+		throw_error(title.c_str(), nullptr,
+			mysql_error(m_mysql), mysql_errno(m_mysql));
 	}
 
-	// throw error.
-	inline void throw_error(
-		IN const std::string& sql = std::string(),
-		IN const int err_no = 0)
+	// throw result error.
+	inline void throw_result_error(IN const char* sql)
 	{
-		std::string msg("mysql connect database fail: ");
-		msg += mysql_error(m_mysql);
-		msg += " sql:";
-		msg += sql;
-		throw std::logic_error(msg);
+		throw_error("mysql result", sql,
+			mysql_error(m_mysql), mysql_errno(m_mysql));
 	}
+
+	// throw query error.
+	inline void throw_query_error(IN const char* sql, IN int err_no)
+	{
+		if (err_no == 0)
+		{
+			err_no = mysql_errno(m_mysql);
+		}
+		throw_error("mysql query", sql, mysql_error(m_mysql), err_no);
+	}
+
+	// throw detail error.
+	inline void throw_error(
+		IN const char* title,
+		IN const char* sql,
+		IN const char* err,
+		IN int eno)
+	{
+		std::string msg(title);
+		msg.reserve(256);
+		msg += " fail:";
+		if (err != nullptr)
+		{
+			msg += err;
+		}
+		if (eno != 0)
+		{
+			msg += " #e";
+			msg += eco::cast<std::string>(eno);
+		}
+		if (sql != nullptr)
+		{
+			msg += " sql:";
+			msg += sql;
+		}
+		throw std::logic_error(msg.c_str());
+	}
+
+	
 
 	// reconnect mysql.
 	inline void reconnect()
@@ -187,8 +231,10 @@ public:
 				open();
 				break;
 			}
-			catch (...)
-			{}
+			catch (std::exception& e)
+			{
+				e.what();
+			}
 		}// end for.
 	}
 
@@ -202,28 +248,34 @@ public:
 			// 1146: table doesn't exist.
 			if (eno == 1064 || eno == 1146)
 			{
-				throw_error(sql, eno);
+				throw_query_error(sql, eno);
 			}
 
 			reconnect();
 			if (0 != mysql_query(m_mysql, sql))
 			{
-				throw_error(sql);
+				throw_query_error(sql, 0);
 			}
 		}// end if.
 	}
 };
 ECO_SHARED_IMPL(MySql);
+////////////////////////////////////////////////////////////////////////////////
+void MySql::open(IN const persist::Address& addr) 
+{
+	open(addr.get_host(), addr.get_port(), addr.get_database(),
+		addr.get_user(), addr.get_password(), addr.get_char_set());
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void MySql::open(
 	IN const char* server_ip,
-	IN const int port,
+	IN const uint32_t port,
 	IN const char* db_name,
 	IN const char* user_id,
 	IN const char* password,
-	IN const CharSet char_set)
+	IN const persist::CharSet char_set)
 {
 	eco::Mutex::ScopeLock lock(impl().m_mysql_mutex);
 	impl().m_port = port;
@@ -279,7 +331,7 @@ void MySql::select(
 	MYSQL_RES* res = mysql_store_result(impl().m_mysql);
 	if (nullptr == res)
 	{
-		impl().throw_error();
+		impl().throw_result_error(sql);
 	}
 
 	// get data row size.(object size.)

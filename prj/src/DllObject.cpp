@@ -32,7 +32,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_SHARED_IMPL(DllObject);
+ECO_OBJECT_IMPL(DllObject);
 ECO_PROPERTY_STR_IMPL(DllObject, dll_name);
 const char* DllObject::get_dll_path() const
 {

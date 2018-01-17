@@ -31,7 +31,7 @@ namespace log{;
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename HandlerT>
-class Server : public eco::detail::MessageServer<Text, HandlerT, Queue>
+class Server : public eco::detail::MessageServer<eco::Bytes, HandlerT, Queue>
 {
 	ECO_OBJECT(Server);
 public:
@@ -39,9 +39,9 @@ public:
 	{}
 
 	/*@ set message queue max sync interval mill seconds.*/
-	inline void set_max_sync_interval(IN const uint32_t millsec)
+	inline void set_sync_interval(IN const uint32_t millsec)
 	{
-		m_message_queue.set_max_sync_interval(millsec);
+		m_message_queue.set_sync_interval(millsec);
 	}
 
 	/*@ work thread method.	*/
@@ -63,7 +63,7 @@ public:
 		}
 		catch (std::exception& e)
 		{
-			fprintf(stderr, "message server caught exception: %s\n", e.what());
+			fprintf(stderr, "logging server caught exception: %s\n", e.what());
 		}
 	}
 };

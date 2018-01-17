@@ -36,8 +36,8 @@ public:
 	static void post_task(IN Btask& task);
 
 public:
-	// 构建生命
-	Being(IN uint32_t live_ticks);
+	// 构建生命。默认时间 = live_ticks * unit_live_tick_seconds = 30s.
+	Being(IN uint32_t live_ticks = 6);
 
 	// 析构生命
 	virtual ~Being();
@@ -51,8 +51,14 @@ public:
 	// 生命是否已开始
 	bool is_born() const;
 
-	// 得到生命活动频率
+	// 生命活动频率
+	void set_live_ticks(IN const uint32_t ticks);
 	const uint32_t get_live_ticks() const;
+
+	// 生命体名称
+	void set_name(IN const char*);
+	const char* get_name() const;
+	Being& name(IN const char*);
 
 protected:
 	// 创建生命：初始化

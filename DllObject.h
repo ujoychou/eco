@@ -37,7 +37,7 @@ ECO_API DllFunc get_function(IN void* dll_handle, IN const char* func_name);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API DllObject
 {
-	ECO_SHARED_API(DllObject);
+	ECO_OBJECT_API(DllObject);
 public:
 	void set_dll(
 		IN const char* dll_name,

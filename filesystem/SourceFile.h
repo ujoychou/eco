@@ -22,15 +22,11 @@ source file.
 * copyright(c) 2016 - 2018, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
-
-
+#include <cstring>
 
 
 namespace eco{;
 namespace filesystem{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API SourceFile
 {

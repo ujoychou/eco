@@ -30,7 +30,10 @@
     <ClCompile Include="..\persist\Recordset.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
-    <ClCompile Include="..\persist\Mysql.cpp">
+    <ClCompile Include="..\persist\PersistAddress.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\MySql.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
   </ItemGroup>

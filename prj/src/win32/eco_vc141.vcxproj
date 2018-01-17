@@ -240,7 +240,6 @@
     <ClCompile Include="..\DllObject.cpp" />
     <ClCompile Include="..\DllObjectWin.cpp" />
     <ClCompile Include="..\HeapOperators.cpp" />
-    <ClCompile Include="..\log\Pusher.cpp" />
     <ClCompile Include="..\log\Core.cpp" />
     <ClCompile Include="..\log\FileSink.cpp" />
     <ClCompile Include="..\media\MediaWin.cpp" />
@@ -320,6 +319,7 @@
     <ClCompile Include="..\persist\CsvSource.cpp" />
     <ClCompile Include="..\persist\Persist.cpp" />
     <ClCompile Include="..\persist\PersistAddress.cpp" />
+    <ClCompile Include="..\persist\Recordset.cpp" />
     <ClCompile Include="..\PrecHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -589,6 +589,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
+    <None Include="..\..\..\log\Pusher.inl" />
     <None Include="..\..\..\net\TcpSession.inl" />
     <None Include="..\cmd\Engine.ipp" />
     <None Include="..\Eco.h" />

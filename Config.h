@@ -59,6 +59,13 @@ public:
 	void get_property_set(
 		OUT eco::Context& context_set,
 		IN  const char* node_key) const;
+
+	/*@ has key return true, else false.*/
+	inline bool has(IN const char* key) const
+	{
+		eco::StringAny v;
+		return find(v, key);
+	}
 };
 
 

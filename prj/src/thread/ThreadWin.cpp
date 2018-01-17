@@ -111,7 +111,7 @@ unsigned __stdcall work(IN void* tdata)
 	}
 	catch (eco::Error& e)
 	{
-		EcoError << EcoFmt(e);
+		EcoError << EcoFmte(e);
 	}
 	catch (const std::exception& e)
 	{

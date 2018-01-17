@@ -56,7 +56,7 @@ public:
 	}
 
 	// set logging sync max interval.
-	inline void set_max_sync_interval(IN const uint32_t millsecs)
+	inline void set_sync_interval(IN const uint32_t millsecs)
 	{
 		m_max_sync_interval = millsecs;
 	}
@@ -93,6 +93,7 @@ public:
 		m_logging_cond_var.notify_all();
 	}
 
+	template<typename Text>
 	void post(IN const Text& text)
 	{
 		// text size is too large.

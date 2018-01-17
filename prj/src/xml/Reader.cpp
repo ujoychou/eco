@@ -4,7 +4,6 @@
 #include <eco/Project.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/algorithm/string.hpp>
 #include <eco/Typex.h>
 
 
@@ -36,7 +35,7 @@ void read_node(
 		{
 			for (auto itc=it->second.begin(); itc!=itc->second.end(); ++itc)
 			{
-				if (boost::algorithm::iequals(itc->first, "value"))
+				if (itc->first == "value")
 				{
 					vals.add().key(xml_node_name.c_str())
 						.value(itc->second.data().c_str());
@@ -97,20 +96,20 @@ bool get_node(
 		for (; itc != xml_it->second.end(); ++itc)
 		{
 			// <key value="xxx"/>
-			if (boost::algorithm::iequals(itc->first, "value"))
+			if (itc->first == "value")
 			{
 				node.set_name(node_name.c_str());
 				node.set_value(itc->second.data().c_str());
 			}
 			// <key enable="true"/>
-			else if (boost::algorithm::iequals(itc->first, "enable"))
+			else if (itc->first == "enable")
 			{
 				if (!StringAny(itc->second.data().c_str()))
 				{
 					return false;
 				}
 			}
-			else
+			else if (itc->first != "note")
 			{
 				auto& param = node.property_set().add();
 				param.set_key(itc->first.c_str());

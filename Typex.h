@@ -131,7 +131,9 @@ public:
 	const Parameter& at(IN const int i) const;
 
 public:
-	const StringAny& at(IN const char* key) const;
+	bool has(IN const char* key) const;
+	bool find(OUT StringAny& v, IN const char* key) const;
+	StringAny at(IN const char* key) const;
 };
 
 

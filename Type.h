@@ -140,11 +140,27 @@ public:
 	inline Bytes() : m_data(nullptr), m_size(0)
 	{}
 
+	inline Bytes(IN char* data, IN const uint32_t size)
+		: m_data(data), m_size(size)
+	{}
+
+	inline const char* c_str() const
+	{
+		return m_data;
+	}
+
+	inline const uint32_t size() const
+	{
+		return m_size;
+	}
+
 	inline void clear()
 	{
 		m_data = nullptr;
 		m_size = 0;
 	}
+
+	
 };
 
 
@@ -280,6 +296,19 @@ public:
 	inline void append(IN const eco::Bytes& str)
 	{
 		append(str.m_data, str.m_size);
+	}
+
+	// compatible with "FixBuffer".
+	inline uint32_t force_append(IN const char* buf, IN uint32_t buf_size)
+	{
+		append(buf, buf_size);
+		return buf_size;
+	}
+	// compatible with "FixBuffer".
+	inline uint32_t force_append(IN const char v)
+	{
+		append(v);
+		return 1;
 	}
 
 	inline void resize(IN uint32_t s)
@@ -428,7 +457,12 @@ public:
 	template<uint32_t size_n>
 	inline uint32_t append(IN const FixBuffer<size_n>& buf)
 	{
-		return append(buf, buf.size());
+		return append(buf.m_data, buf.size());
+	}
+
+	inline uint32_t append(IN const eco::Bytes& buf)
+	{
+		return append(buf.c_str(), buf.size());
 	}
 
 	inline uint32_t append(IN const char* buf)
@@ -519,90 +553,88 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<int size>
-class FixStream
+template<typename Buffer>
+class StreamT
 {
 public:
-	typedef FixBuffer<size> Buffer;
-
-	inline FixStream& operator<<(IN bool v)
+	inline StreamT& operator<<(IN bool v)
 	{
 		(*this) << eco::cast<std::string>(v).c_str();
 		return *this;
 	}
-	inline FixStream& operator<<(IN char v)
+	inline StreamT& operator<<(IN char v)
 	{
 		m_buffer.append(v);
 		return *this;
 	}
-	inline FixStream& operator<<(IN unsigned char v)
+	inline StreamT& operator<<(IN unsigned char v)
 	{
 		m_buffer.append(static_cast<char>(v));
 		return *this;
 	}
-	inline FixStream& operator<<(IN int16_t v)
+	inline StreamT& operator<<(IN int16_t v)
 	{
 		Integer<int16_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline FixStream& operator<<(IN uint16_t v)
+	inline StreamT& operator<<(IN uint16_t v)
 	{
 		Integer<uint16_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline FixStream& operator<<(IN int32_t v)
+	inline StreamT& operator<<(IN int32_t v)
 	{
 		Integer<int32_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline FixStream& operator<<(IN uint32_t v)
+	inline StreamT& operator<<(IN uint32_t v)
 	{
 		Integer<uint32_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline FixStream& operator<<(IN long v)
+	inline StreamT& operator<<(IN long v)
 	{
 		return operator<<(int32_t(v));
 	}
-	inline FixStream& operator<<(IN unsigned long v)
+	inline StreamT& operator<<(IN unsigned long v)
 	{
 		return operator<<(uint32_t(v));
 	}
-	inline FixStream& operator<<(IN int64_t v)
+	inline StreamT& operator<<(IN int64_t v)
 	{
 		Integer<int64_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline FixStream& operator<<(IN uint64_t v)
+	inline StreamT& operator<<(IN uint64_t v)
 	{
 		Integer<uint64_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline FixStream& operator<<(IN double v)
+	inline StreamT& operator<<(IN double v)
 	{
 		Double str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline FixStream& operator<<(IN const char* v)
+	inline StreamT& operator<<(IN const char* v)
 	{
 		m_buffer.append(v);
 		return *this;
 	}
-	inline FixStream& operator<<(IN const std::string& v)
+	inline StreamT& operator<<(IN const std::string& v)
 	{
 		m_buffer.append(v.c_str(), static_cast<uint32_t>(v.size()));
 		return *this;
 	}
 
 	template<typename Object>
-	inline FixStream& operator>>(IN Object& v)
+	inline StreamT& operator>>(IN Object& v)
 	{
 		v >> (*this);
 		return *this;
@@ -617,6 +649,11 @@ public:
 		return m_buffer;
 	}
 
+	inline const Bytes get_bytes() const
+	{
+		return Bytes((char*)m_buffer.c_str(), m_buffer.size());
+	}
+
 	inline operator const char*() const
 	{
 		return m_buffer.c_str();
@@ -627,11 +664,19 @@ public:
 		return m_buffer.c_str();
 	}
 
+	inline const uint32_t size() const
+	{
+		return m_buffer.size();
+	}
+
 private:
 	Buffer m_buffer;
 };
-#define EcoStr eco::FixStream<256>()
-#define EcoString(len) eco::FixStream<len>()
+
+////////////////////////////////////////////////////////////////////////////////
+// eco string stream, heap memory.
+typedef eco::StreamT<String> Stream;
+#define EcoStr(len) eco::StreamT<FixBuffer<256> >
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -728,7 +773,10 @@ inline void set_double(OUT int& d, IN const double v, IN int def = -1)
 {
 	d = (eco::is_nan(v) || eco::is_infinity(v)) ? def : (int)v;
 }
-
+inline char yn(IN const bool v)
+{
+	return v ? 'y' : 'n';
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 #define EcoFmti(instance) '[' << instance << ']'

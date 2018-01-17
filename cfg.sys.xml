@@ -7,17 +7,16 @@
 
   <!--#.日志选项-->
   <logging>
-    <sync  value="false"/>
     <level value="info"/>
+    <async value="false"/>
+    <async_flush value="1000"/>
     <memcache value="5M"/>
     <file_sink value="true">
       <file_path>./log/</file_path>
       <roll_size>100M</roll_size>
-      <flush_inverval>0</flush_inverval>
       <full_path>20170104-160222.ujoychou-PC.00051124.log</full_path>
     </file_sink>
     <console_sink value="true"/>
-    <max_sync_millsecs value="3000"/>
   </logging>
 
   <!--#.生命机制-->
@@ -38,11 +37,11 @@
 
   <!--#.路由中心-->
   <router enable="true">
-    <front_router enable="false">
+    <front_router>
       <addr_shdx>127.0.0.1:40001</addr_shdx>
       <addr_shlt>127.0.0.1:40002</addr_shlt>
     </front_router>
-    <trade_router enable="false">
+    <trade_router enable="true">
       <addr_shdx>127.0.0.1:40003</addr_shdx>
       <addr_shlt>127.0.0.1:40004</addr_shlt>
     </trade_router>
@@ -67,30 +66,29 @@
   </provider>
 
   <!--#.消费者-->
-  <customer enable="true">
-    <!--路由中心：交易-->
-    <sub_account_centre router="trade_router"/>
-    <!--路由中心：查询-->
-    <sub_account_trade router="trade_router"/>
+  <consumer enable="true">
     <!--团队服务-->
-    <team>
-      <addr_shdx>127.0.0.1:50011</addr_shdx>
-      <addr_shlt>127.0.0.1:50012</addr_shlt>
+    <team enable="true">
+      <address>
+        <dev_env>39.104.67.41:40001</dev_env>
+        <test_env>39.104.67.41:50001</test_env>
+      </address>
+      <no_delay  value="true"/>
+      <tick_time value="5"/>
+      <websocket value="false"/>
+      <auto_reconnect_tick value="1"/>
+      <heartbeat_recv_tick value="0"/>
+      <heartbeat_send_tick value="0"/>
     </team>
-    <!--行情服务-->
-    <market>
-      <addr_shdx>127.0.0.1:50013</addr_shdx>
-      <addr_shlt>127.0.0.1:50014</addr_shlt>
-    </market>
-  </customer>
+  </consumer>
 
   <!--#.数据库-->
   <persist enable="true">
-    <aliyun type="mysql">
+    <test_env type="mysql">
       <user value="root"/>
       <password value="123456"/>
-      <database value="develop"/>
+      <database value="dev"/>
       <address  value="127.0.0.1:3306"/>
-    </aliyun>
+    </test_env>
   </persist>
 </root>

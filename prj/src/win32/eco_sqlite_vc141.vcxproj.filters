@@ -42,6 +42,9 @@
     <ClCompile Include="..\persist\Sqlite.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
+    <ClCompile Include="..\persist\PersistAddress.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\contrib\sqlite\sqlite3.h">

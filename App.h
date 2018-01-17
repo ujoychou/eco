@@ -56,11 +56,19 @@ public:
 	typedef App* (*CreateAppFunc)(void);
 	virtual ~App();
 
+	/*@ get app instance.*/
+	static App& instance();
+
 	/*@ get command param size. it's parse from argc and argv.*/
 	static uint32_t get_param_size();
 
 	/*@ get command param string.*/
 	static const char* get_param(IN const int i);
+
+	/*@ get app config.*/
+	void set_name(IN const char*);
+	const char* get_name() const;
+	App& name(IN const char*);
 
 	/*@ system config file path, default: "cfg.sys.xml"; */
 	void set_sys_config_file(IN const char*);
@@ -78,6 +86,9 @@ public:
 
 	// command home dir.
 	cmd::Group home();
+
+	// get consumer.
+	net::TcpClient get_consumer(IN const char* name);
 
 	// service provider.
 	net::TcpServer& provider();

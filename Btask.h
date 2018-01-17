@@ -114,7 +114,7 @@ public:
 		catch (eco::Error& e)
 		{
 			result = false;
-			EcoError << get_type() << ": " << EcoFmt(e);
+			EcoError << get_type() << ": " << EcoFmte(e);
 		}
 		catch (std::exception& e)
 		{

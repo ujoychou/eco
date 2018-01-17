@@ -195,7 +195,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\persist\Mysql.cpp" />
+    <ClCompile Include="..\persist\MySql.cpp" />
+    <ClCompile Include="..\persist\PersistAddress.cpp" />
     <ClCompile Include="..\persist\Recordset.cpp" />
     <ClCompile Include="..\PrecHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

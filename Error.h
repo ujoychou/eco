@@ -29,7 +29,7 @@ error and error thrower.
 
 
 namespace eco{;
-
+typedef eco::StreamT<FixBuffer<256> > ErrorStream;
 ////////////////////////////////////////////////////////////////////////////////
 // get default Error log format.
 class Error
@@ -103,10 +103,12 @@ public:
 	}
 
 private:
+	
 	int m_id;
-	FixStream<256> m_msg;
+	ErrorStream m_msg;
 };
-#define EcoFmt(err) (err).message() << " e" << (err).id()
+#define EcoFmteid(id) " (e" << id << ')'
+#define EcoFmte(err) (err).message() << EcoFmteid((err).id())
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +129,7 @@ private:
 	friend class Thrower;
 	friend class LogicThrower;
 	int m_eid;
-	FixStream<256> m_msg;
+	ErrorStream m_msg;
 };
 
 
@@ -143,7 +145,7 @@ public:
 };
 // throw error with stream input way.
 #define EcoThrow(eid) eco::Thrower() = eco::ErrorRecord(eid)
-#define EcoThrowError eco::Thrower() = eco::ErrorRecord(eco::error)
+#define EcoThrowX eco::Thrower() = eco::ErrorRecord(eco::error)
 
 
 

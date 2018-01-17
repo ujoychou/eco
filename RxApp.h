@@ -42,6 +42,7 @@ typedef eco::Result (*RxEntryPoint)(IN eco::RxMessageId msg, IN void* ap);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API RxDll : public DllObject
 {
+	ECO_OBJECT(RxDll);
 public:
 	inline RxDll(
 		IN const char* dll_name,

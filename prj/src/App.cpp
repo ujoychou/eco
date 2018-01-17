@@ -15,21 +15,28 @@ namespace eco{;
 
 const char* sys_cfg_file = "cfg.sys.xml";
 const char* app_cfg_file = "cfg.app.xml";
+extern void create_eco();
 ////////////////////////////////////////////////////////////////////////////////
 class App::Impl
 {
+	ECO_IMPL_INIT(App);
 public:
-	void init(IN App& ap) {}
+	static App* s_app;
+	static App::CreateAppFunc s_create_app;
+	static std::vector<std::string> s_params;
+
+public:
+	std::string m_name;
 	std::string m_sys_config_file;
 	std::string m_app_config_file;
 	eco::Config m_app_config;
 	eco::Config m_sys_config;
-	std::vector<RxDll> m_erx_set;
-	eco::net::TcpServer m_provider;
+	std::vector<RxDll::ptr> m_erx_set;
 	eco::Persist m_persist;
-	static App::CreateAppFunc s_create_app;
-	static std::vector<std::string> s_params;
-
+	net::TcpServer m_provider;
+	std::vector<net::TcpClient> m_consumer_set;
+	std::vector<net::AddressSet> m_router_set;
+	
 public:
 	inline Impl()
 		: m_sys_config_file(sys_cfg_file)
@@ -50,9 +57,10 @@ public:
 
 public:
 	// eco cmd
-	inline bool enable_eco() const;
+	inline void init_eco();
 	inline bool enable_command() const;
 	inline void init_command(IN App& app);
+	inline void start_command();
 
 	// erx dll
 	inline bool enable_erx() const;
@@ -61,18 +69,20 @@ public:
 	inline void on_rx_exit();
 
 	// service
-	inline bool enable_consumer() const;
+	inline void init_router();
 	inline void init_consumer();
-	inline bool enable_provider() const;
+	inline void start_consumer();
 	inline void init_provider();
 	inline void start_provider();
+	inline net::AddressSet find_router(IN const char* name);
 
 	// persist
-	inline bool enable_persist() const;
 	inline void init_persist();
 	inline void start_persist();
 };
-
+App* App::Impl::s_app = nullptr;
+std::vector<std::string> App::Impl::s_params;
+App::CreateAppFunc App::Impl::s_create_app(nullptr);
 
 //##############################################################################
 //##############################################################################
@@ -86,30 +96,64 @@ inline void App::Impl::join()
 
 inline void App::Impl::stop()
 {
-	if (!m_provider.null())
-	{
-		m_provider.stop();
-	}
-	if (enable_consumer())
-	{
-	}
-	on_rx_exit();
+	/* release order depend on it's dependency relationship.
+	1.eco obj: persist.on_live/erx.on_live <- erx;
+	2.logging <- persist <- consumer <- provider <- erx.on_exit;
+	3.task server <- all object; but task server can close first.
+	*/
 
-	if (enable_eco() && get_eco())
+	if (get_eco())					// #.1 eco & being & task server.
 	{
 		get_eco()->stop();
 	}
-	eco::log::get_core().stop();
+
+	on_rx_exit();					// #.2 erx plugin exit.
+
+	if (!m_provider.null())			// #.3 provider(tcp server).
+	{
+		m_provider.stop();
+	}
+
+	if (!m_consumer_set.empty())	// #.4 consumer(tcp client).
+	{
+		auto it = m_consumer_set.begin();
+		for (; it != m_consumer_set.end(); ++it)
+		{
+			it->close();
+		}
+	}
+
+	if (!m_persist.null())			// #.5 persist.
+	{
+		m_persist.close();
+	}
+
+	eco::log::get_core().stop();	// #.6 logging.
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool App::Impl::enable_eco() const
+inline void App::Impl::init_eco()
 {
-	StringAny v;
-	return m_sys_config.find(v, "eco");
+	if (!get_eco())
+	{
+		create_eco();
+		StringAny v;
+		if (m_sys_config.find(v, "eco/being/unit_live_tick"))
+			get_eco()->set_unit_live_tick_seconds(v);
+		if (m_sys_config.find(v, "eco/task_server_thread_size"))
+			get_eco()->set_task_server_thread_size(v);
+		// set default value.
+		if (get_eco()->get_unit_live_tick_seconds() == 0)
+			get_eco()->set_unit_live_tick_seconds(5);
+		if (get_eco()->get_unit_live_tick_seconds() == 0)
+			get_eco()->set_task_server_thread_size(2);
+		get_eco()->start();
+	}
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
 inline bool App::Impl::enable_command() const
 {
 	StringAny v;
@@ -122,6 +166,13 @@ inline void App::Impl::init_command(IN App& app)
 	{
 		app.on_cmd();
 		on_rx_cmd();
+	}
+}
+
+inline void App::Impl::start_command()
+{
+	if (enable_command())
+	{
 		eco::cmd::get_engine().run();
 	}
 }
@@ -145,13 +196,14 @@ inline void App::Impl::on_rx_init(IN App& ap)
 		// load erx dll
 		for (auto it = rx_set.begin(); it != rx_set.end(); ++it)
 		{
-			m_erx_set.push_back(RxDll(it->get_key(), it->get_value()));
+			RxDll::ptr rx(new RxDll(it->get_key(), it->get_value()));
+			m_erx_set.push_back(rx);
 		}
 
 		// notify erx to init.
 		for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
 		{
-			it->on_init_app(&ap);
+			(**it).on_init_app(&ap);
 		}
 	}
 }
@@ -165,7 +217,7 @@ inline void App::Impl::on_rx_cmd()
 		// notify erx to init command.
 		for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
 		{
-			it->on_init_cmd();
+			(**it).on_init_cmd();
 		}
 	}
 }
@@ -174,92 +226,155 @@ inline void App::Impl::on_rx_cmd()
 ////////////////////////////////////////////////////////////////////////////
 inline void App::Impl::on_rx_exit()
 {
-	if (enable_erx())
+	try 
 	{
-		// notify erx to exit.
-		for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
+		if (enable_erx())
 		{
-			if (it->get_cur_message() >= rx_msg_init_app)
+			// notify erx to exit.
+			for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
 			{
-				it->on_exit_app();
+				if ((**it).get_cur_message() >= rx_msg_init_app)
+				{
+					(**it).on_exit_app();
+				}
 			}
+			// unload erx.
+			m_erx_set.clear();
 		}
-
-		// unload erx.
-		m_erx_set.clear();
+	}
+	catch (eco::Error& e)
+	{
+		EcoError << EcoFmte(e);
+	}
+	catch (std::exception& e)
+	{
+		EcoError << e.what();
 	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////
-inline bool App::Impl::enable_consumer() const
+inline void App::Impl::init_router()
 {
-	StringAny v;
-	return m_sys_config.find(v, "consumer");
+	// #.init router.
+	eco::ContextNodeSet nodes;
+	m_sys_config.get_children(nodes, "router");
+	for (auto r = nodes.begin(); r != nodes.end(); ++r)
+	{
+		// router/front_router/
+		eco::net::AddressSet addr_set;
+		addr_set.set_name(r->get_name());
+		// router/front_router/sh_dx.
+		auto& prop_set = r->get_property_set();
+		for (auto it = prop_set.begin(); it != prop_set.end(); ++it)
+		{
+			addr_set.add().name(it->get_key()).set(it->get_value());
+		}
+		m_router_set.push_back(addr_set);
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+inline eco::net::AddressSet App::Impl::find_router(IN const char* name)
+{
+	for (auto it = m_router_set.begin(); it != m_router_set.end(); ++it)
+	{
+		if (strcmp(it->get_name(), name) == 0)
+		{
+			return *it;
+		}
+	}
+	return eco::null;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////
 inline void App::Impl::init_consumer()
 {
-	if (!enable_consumer())
+	eco::ContextNodeSet nodes;
+	m_sys_config.get_children(nodes, "consumer");
+	if (nodes.size() == 0)
 	{
 		return;
 	}
 
-	// #.init router.
-	eco::ContextNodeSet nodes;
-	std::map<std::string, eco::net::AddressSet> router_map;
-	m_sys_config.get_children(nodes, "router");
-	for (auto router = nodes.begin(); router != nodes.end(); ++router)
+	// #.init consumer that this service depends on.
+	StringAny v;
+	for (auto it = nodes.begin(); it != nodes.end(); ++it)
 	{
-		eco::net::AddressSet addrset;
-		auto addr = router->get_children().begin();
-		for (; addr != router->get_children().end(); ++addr)
+		// children: consumer address.
+		if (!it->has_children() ||
+			strcmp(it->get_children().at(0).get_name(), "address") != 0)
 		{
-			addrset.add().reset(addr->get_value());
+			EcoThrowX << it->get_name() << " has no address config.";
 		}
-	}
+		eco::net::AddressSet addr_set;
+		auto& child = it->get_children().at(0);
+		if (child.get_property_set().find(v, "router"))
+		{
+			auto router = find_router(v.c_str());
+			if (router.null() || router.empty())
+			{
+				EcoThrowX << it->get_name() << " has no router " << v.c_str();
+			}
+			addr_set.add_copy(router);
+			addr_set.set_mode(eco::net::router_mode);
+		}
+		else
+		{
+			auto& props = child.get_property_set();
+			for (auto it = props.begin(); it != props.end(); ++it)
+			{
+				addr_set.add().name(it->get_key()).set(it->get_value());
+			}
+			addr_set.set_mode(eco::net::service_mode);
+		}
+		addr_set.set_name(it->get_name());
 
-	// #.init the service that this service depends on.
-	m_sys_config.get_children(nodes, "customer");
-	for (auto customer = nodes.begin(); customer != nodes.end(); ++customer)
-	{
-		eco::net::AddressSet addrset;
-		auto addr = customer->get_children().begin();
-		for (; addr != customer->get_children().end(); ++addr)
+		// property_set: consumer config.
+		eco::net::TcpClientOption option;
+		auto& props = it->get_property_set();
+		for (auto it = props.begin(); it != props.end(); ++it)
 		{
-			if (strcmp(addr->get_name(), "router") == 0)		// router mode.
-			{
-				addrset.set_service_mode(eco::net::router_mode);
-				auto r_addr = router_map.find(addr->get_value());
-				if (r_addr == router_map.end())
-				{
-					EcoThrowError << "router address is invalid: "
-						<< addr->get_name() << " " << addr->get_value();
-				}
-				addrset = r_addr->second;
-				break;
-			}
-			else
-			{
-				addrset.set_service_mode(eco::net::service_mode);
-				addrset.add().reset(addr->get_value());		// direct mode.
-			}
+			if (strcmp(it->get_key(), "no_delay") == 0)
+				option.set_no_delay(it->get_value());
+			else if (strcmp(it->get_key(), "websocket") == 0)
+				option.set_websocket(it->get_value());
+			else if (strcmp(it->get_key(), "tick_time") == 0)
+				option.set_tick_time(it->get_value());
+			else if (strcmp(it->get_key(), "auto_reconnect_tick") == 0)
+				option.set_auto_reconnect_tick(it->get_value());
+			else if (strcmp(it->get_key(), "heartbeat_recv_tick") == 0)
+				option.set_heartbeat_recv_tick(it->get_value());
+			else if (strcmp(it->get_key(), "heartbeat_send_tick") == 0)
+				option.set_heartbeat_send_tick(it->get_value());
 		}
+
+		eco::net::TcpClient client;
+		client.set_option(option);
+		client.set_address(addr_set);
+		m_consumer_set.push_back(client);
 	}
 
 	// note: save service address in local to access it by app next time.
 	// and it will avoid app can't start up when ops has error.
-	// 1) get router service; 2) if step 1 fail, get cs service by local storage.
+	// 1) get router service;
+	// 2) if step 1 fail, get cs service by local storage.
 }
 
 
-////////////////////////////////////////////////////////////////////////////
-inline bool App::Impl::enable_provider() const
+////////////////////////////////////////////////////////////////////////////////
+inline void App::Impl::start_consumer()
 {
-	StringAny v;
-	return m_sys_config.find(v, "provider");
+	if (!m_consumer_set.empty())
+	{
+		// connect to service to access business data.
+		for (auto it = m_consumer_set.begin(); it != m_consumer_set.end(); ++it)
+		{
+			it->async_connect();
+		}
+	}
 }
 
 
@@ -267,14 +382,14 @@ inline bool App::Impl::enable_provider() const
 inline void App::Impl::init_provider()
 {
 	// #.create a new tcp server.
-	if (!enable_provider())
+	if (!m_sys_config.has("provider"))
 	{
 		return;
 	}
-	m_provider = eco::heap;
-
+	
 	// #.init provider service option.
 	StringAny v;
+	m_provider = eco::heap;
 	eco::net::TcpServerOption& option = m_provider.option();
 	if (m_sys_config.find(v, "provider/router"))
 		option.set_router(v.c_str());
@@ -306,6 +421,12 @@ inline void App::Impl::init_provider()
 		option.set_io_thread_size(v);
 	if (m_sys_config.find(v, "provider/business_thread_size"))
 		option.set_business_thread_size(v);
+
+	// #.set app name if it is empty.
+	if (m_name.empty())
+	{
+		m_name = option.get_name();
+	}
 }
 
 
@@ -320,54 +441,43 @@ inline void App::Impl::start_provider()
 
 
 ////////////////////////////////////////////////////////////////////////////
-inline bool App::Impl::enable_persist() const
-{
-	StringAny v;
-	return m_sys_config.find(v, "persist");
-}
-
-
-////////////////////////////////////////////////////////////////////////////
 inline void App::Impl::init_persist()
 {
-	if (!enable_persist())
+	eco::ContextNodeSet nodes;
+	m_sys_config.get_children(nodes, "persist");
+	if (nodes.size() == 0)
 	{
 		return;
 	}
 
 	// read persist address(persist).
 	eco::persist::AddressSet addr_set;
-	eco::ContextNodeSet nodes;
-	m_sys_config.get_children(nodes, "persist");
 	for (auto it = nodes.begin(); it != nodes.end(); ++it)
 	{
-		// database/aliyun
-		auto db = it->get_children().begin();
-		for (; db != it->get_children().end(); ++db)
+		// database/aliyun/property
+		eco::persist::Address& addr = addr_set.add().name(it->get_name());
+		auto& prop_set = it->get_property_set();
+		for (auto p = prop_set.begin(); p != prop_set.end(); ++p)
 		{
-			// database/aliyun/property
-			eco::persist::Address& addr = addr_set.add();
-			auto& prop_set = db->get_property_set();
-			for (auto p = prop_set.begin(); p != prop_set.end(); ++p)
-			{
-				if (strcmp(p->get_key(), "type"))
-					addr.set_type(p->get_value().c_str());
-				else if (strcmp(p->get_key(), "user"))
-					addr.set_user(p->get_value());
-				else if (strcmp(p->get_key(), "password"))
-					addr.set_password(p->get_value());
-				else if (strcmp(p->get_key(), "database"))
-					addr.set_database(p->get_value());
-				else if (strcmp(p->get_key(), "address"))
-					addr.set(p->get_value());
-			}
+			if (strcmp(p->get_key(), "type") == 0)
+				addr.set_type(p->get_value().c_str());
+			else if (strcmp(p->get_key(), "user") == 0)
+				addr.set_user(p->get_value());
+			else if (strcmp(p->get_key(), "password") == 0)
+				addr.set_password(p->get_value());
+			else if (strcmp(p->get_key(), "database") == 0)
+				addr.set_database(p->get_value());
+			else if (strcmp(p->get_key(), "address") == 0)
+				addr.set(p->get_value());
 		}
 	}
 
 	// init persist with address set.
 	if (!addr_set.empty())
 	{
+		m_persist = eco::heap;
 		m_persist.set_address(addr_set);
+		init_eco();
 	}
 }
 
@@ -377,7 +487,7 @@ inline void App::Impl::start_persist()
 {
 	if (!m_persist.null())
 	{
-		m_persist.born();
+		m_persist.live();
 	}
 }
 
@@ -385,6 +495,7 @@ inline void App::Impl::start_persist()
 //##############################################################################
 //##############################################################################
 ECO_TYPE_IMPL(App);
+ECO_PROPERTY_STR_IMPL(App, name);
 void App::set_sys_config_file(IN const char* v)
 {
 	impl().m_sys_config_file = v;
@@ -394,6 +505,10 @@ const char* App::get_sys_config_file() const
 	return impl().m_sys_config_file.c_str();
 }
 
+App& App::instance()
+{
+	return *Impl::s_app;
+}
 void App::set_create_app_func(IN CreateAppFunc func)
 {
 	App::Impl::s_create_app = func;
@@ -435,12 +550,19 @@ eco::net::TcpServer& App::provider()
 {
 	return impl().m_provider;
 }
+net::TcpClient App::get_consumer(IN const char* name)
+{
+	auto it = impl().m_consumer_set.begin();
+	for (; it != impl().m_consumer_set.end(); ++it)
+	{
+		if (strcmp(it->get_service_name(), name) == 0)
+			return *it;
+	}
+	return eco::null;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::string> App::Impl::s_params;
-App::CreateAppFunc App::Impl::s_create_app(nullptr);
-extern void init_eco();
 extern "C" ECO_API void init_app(IN eco::App& ap)
 {
 	eco::App::Impl& impl = ap.impl();
@@ -450,6 +572,8 @@ extern "C" ECO_API void init_app(IN eco::App& ap)
 	// #.init app config.
 	eco::StringAny v;
 	if (impl.m_app_config_file.empty()) {
+		if (impl.m_sys_config.find(v, "config/app_name"))
+			impl.m_name = v.c_str();
 		if (impl.m_sys_config.find(v, "config/file_path"))
 			impl.m_app_config_file = v.c_str();
 		else
@@ -458,14 +582,14 @@ extern "C" ECO_API void init_app(IN eco::App& ap)
 	impl.m_app_config.init(impl.m_app_config_file);
 
 	// #.read logging config.
-	if (impl.m_sys_config.find(v, "logging/sync"))
-		eco::log::get_core().set_sync(v);
+	if (impl.m_sys_config.find(v, "logging/async"))
+		eco::log::get_core().set_async(v);
 	if (impl.m_sys_config.find(v, "logging/level"))
 		eco::log::get_core().set_severity_level(v.c_str());
 	if (impl.m_sys_config.find(v, "logging/memcache"))
 		eco::log::get_core().set_capacity(uint32_t(double(v) * 1024 * 1024));
-	if (impl.m_sys_config.find(v, "logging/max_sync_millsecs"))
-		eco::log::get_core().set_max_sync_interval(v);
+	if (impl.m_sys_config.find(v, "logging/async_flush"))
+		eco::log::get_core().set_async_flush(v);
 	if (impl.m_sys_config.find(v, "logging/file_sink"))
 		eco::log::get_core().add_file_sink(v);
 	if (impl.m_sys_config.find(v, "logging/console_sink"))
@@ -477,25 +601,18 @@ extern "C" ECO_API void init_app(IN eco::App& ap)
 		if (impl.m_sys_config.find(v, "logging/file_sink/roll_size"))
 			eco::log::get_core().set_file_roll_size(
 				uint32_t(double(v) * 1024 * 1024));
-		if (impl.m_sys_config.find(v, "logging/file_sink/flush_inverval"))
-			eco::log::get_core().set_flush_interval(v);
 	}
 	eco::log::get_core().run();
 
 	// #.init eco.
-	if (impl.enable_eco())
+	if (impl.m_sys_config.has("eco"))
 	{
-		init_eco();
-		if (impl.m_sys_config.find(v, "eco/being/unit_live_tick"))
-			get_eco()->set_unit_live_tick_seconds(v);
-		if (impl.m_sys_config.find(v, "eco/task_server_thread_size"))
-			get_eco()->set_task_server_thread_size(v);
-		get_eco()->start();
+		impl.init_eco();
 	}
 
-	// #.init consumer.
+	// #.init service.
+	impl.init_router();
 	impl.init_consumer();
-	// #.init provider.
 	impl.init_provider();
 
 	// #.init persist.
@@ -517,6 +634,7 @@ int App::main(IN int argc, IN char* argv[])
 			Impl::s_params.push_back(param);
 		}
 		std::shared_ptr<App> app(Impl::s_create_app());
+		Impl::s_app = app.get();
 
 		// 1.must wait app object construct over.
 		// and it can set the sys config path in "derived app()".
@@ -526,13 +644,18 @@ int App::main(IN int argc, IN char* argv[])
 		app->impl().on_rx_init(*app);
 		// init app business object.
 		app->on_init();
-		// init command based on app business object and service.
+		// init group and command tree.
 		app->impl().init_command(*app);
 
-		// start persist database.
+		// start persist & service.
 		app->impl().start_persist();
-		// start service provider.
+		app->impl().start_consumer();
 		app->impl().start_provider();
+		// start command based on app business object and service.
+		app->impl().start_command();
+
+		// init app data. todo.
+		// app->on_data();
 
 		// join app.
 		app->impl().join();
@@ -540,11 +663,11 @@ int App::main(IN int argc, IN char* argv[])
 		// exit application.
 		app->on_exit();
 		// clear resource and data when has exception.
-		// ~app().
+		// app->~App();
 	}
 	catch (eco::Error& e)
 	{
-		EcoCout << "[error] " << EcoFmt(e);
+		EcoCout << "[error] " << EcoFmte(e);
 		getch_exit();
 	}
 	catch (std::exception& e)

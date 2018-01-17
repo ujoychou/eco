@@ -17,11 +17,13 @@ public:
 	// 生命活动的频率。（心跳频率）
 	uint32_t m_live_ticks;
 	eco::atomic::State m_born;
+	std::string m_name;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_IMPL(Being);
+ECO_PROPERTY_STR_IMPL(Being, name);
 Being::Being(IN const uint32_t live_ticks)
 {
 	m_impl = new Impl();
@@ -46,21 +48,23 @@ const uint32_t Being::get_live_ticks() const
 {
 	return impl().m_live_ticks;
 }
+void Being::set_live_ticks(IN const uint32_t ticks)
+{
+	impl().m_live_ticks = ticks;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void Being::born()
 {
-	if (impl().m_born.is_ok())
+	if (!impl().m_born.is_ok())
 	{
-		return;
-	}
-
-	if (on_born())	// 生命初始化
-	{
-		get_eco()->add_being(this);
-		impl().m_born.ok();
-	}
+		if (on_born())	// 生命初始化
+		{
+			get_eco()->add_being(this);
+			impl().m_born.ok();
+		}
+	}	
 }
 
 
@@ -68,14 +72,22 @@ void Being::born()
 void Being::live()
 {
 	// 开启生命活动
-	try
+	if (!impl().m_born.is_ok())
 	{
-		born();
-		on_live();
-	}
-	catch (std::exception& e)
-	{
-		EcoWarn << "live : " << e.what();
+		if (on_born())
+		{
+			try
+			{
+				on_live();
+			}
+			catch (std::exception& e) 
+			{
+				EcoError << impl().m_name << " live: " << e.what();
+			}
+			// 避免多个线程同时访问"on_live()";
+			get_eco()->add_being(this);
+			impl().m_born.ok();
+		}
 	}
 }
 

@@ -154,20 +154,38 @@ Parameter::operator const bool() const
 ////////////////////////////////////////////////////////////////////////////////
 ECO_VALUE_IMPL(Context);
 ECO_PROPERTY_SET_IMPL(Context, Parameter);
-const StringAny& Context::at(IN const char* key) const
+bool Context::has(IN const char* key) const
+{
+	StringAny v;
+	return find(v, key);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool Context::find(OUT StringAny& v, IN const char* key) const
 {
 	auto it = impl().m_items.begin();
 	for (; it != impl().m_items.end(); ++it)
 	{
 		if (strcmp(it->get_key(), key) == 0)
 		{
-			return it->get_value();
+			v = it->get_value();
+			return true;
 		}
 	}
+	return false;
+}
 
-	EcoThrowError << "find parameter fail: key=" << key;
-	static StringAny s_empty_str_any;
-	return s_empty_str_any;
+
+////////////////////////////////////////////////////////////////////////////////
+StringAny Context::at(IN const char* key) const
+{
+	StringAny v;
+	if (!find(v, key))
+	{
+		EcoThrowX << "find parameter fail: key=" << key;
+	}
+	return v;
 }
 
 
