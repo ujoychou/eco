@@ -82,7 +82,7 @@ public:
 	TcpPeerHandler& handler();
 
 	// tcp peer identity which is the address of connector.
-	int64_t get_id() const;
+	ConnectionId get_id() const;
 
 	// tcp peer connection state.
 	TcpState& state();

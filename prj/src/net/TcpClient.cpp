@@ -110,7 +110,7 @@ void TcpClient::Impl::async_connect()
 	}
 	if (e)
 	{
-		EcoLog(error, 512) << logging() << EcoFmte(e);
+		EcoLog(error, 512) << logging() << e;
 		return;
 	}
 
@@ -153,9 +153,10 @@ inline eco::FixBuffer<512> TcpClient::Impl::logging()
 		address.append(")\n");
 	}
 	sprintf(log.buffer(0), "\n+[tcp client %s]\n%s"
+		"-[addr] %s\n"
 		"-[mode] io delay(%c), websocket(%c), sessions(%c)\n"
 		"-[tick] %ds, lost server %ds, heartbeat %ds reconnect %ds\n",
-		m_option.get_service_name(), address.c_str(),
+		m_option.get_service_name(), address.c_str(), get_ip(),
 		eco::yn(m_option.no_delay()),
 		eco::yn(m_option.websocket()), eco::yn(session_mode()),
 		m_option.get_tick_time(),
@@ -227,7 +228,7 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 	meta.set_request_data(session_key);
 	if (!m_protocol->encode(pack->m_request, pack->m_request_start, meta, e))
 	{
-		EcoError << "tcp client async auth: encode data fail." << EcoFmte(e);
+		EcoError << "tcp client async auth: encode data fail." << e;
 		return;
 	}
 	async_send(pack);
@@ -253,10 +254,7 @@ void TcpClient::Impl::on_connect()
 		m_make_connection, m_protocol.get());
 
 	// logging.
-	char log[128] = {0};
-	sprintf(log, "\n+[tcp client %s] %llu connected.", 
-		m_option.get_service_name(), peer().get_id());
-	EcoInfo << log;
+	EcoInfo << NetLog(peer().get_id(), ECO_FUNC) << "connected.";
 }
 
 
@@ -277,7 +275,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		EcoNet(EcoError, *peer_impl, "on_read", e);
+		EcoError << NetLog(peer_impl->get_id(), ECO_FUNC) << e;
 		return;
 	}
 

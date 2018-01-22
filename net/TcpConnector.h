@@ -25,6 +25,7 @@
 *******************************************************************************/
 #include <eco/Project.h>
 #include <eco/net/Address.h>
+#include <eco/net/Net.h>
 
 
 
@@ -76,7 +77,7 @@ public:
 		IN std::weak_ptr<TcpPeer>& peer);
 
 	// get tcp connection id.
-	int64_t get_id() const;
+	ConnectionId get_id() const;
 
 	// get tcp connection socket.
 	TcpSocket* socket();

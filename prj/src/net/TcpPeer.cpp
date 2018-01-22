@@ -34,7 +34,7 @@ void TcpPeer::Impl::on_connect(
 {
 	if (!is_connected)
 	{
-		EcoNet(EcoError, *this, "connect", *e);
+		EcoError << NetLog(get_id(), ECO_FUNC) << *e;
 		return;
 	}
 
@@ -66,14 +66,15 @@ inline void TcpPeer::Impl::handle_websocket_shakehand(
 	// handle websockets shakehands head : "Get ..."
 	if (eco::find(data_head, head_size, "GET ") != data_head)
 	{
-		EcoNetLog(EcoError, *this)
+		EcoError << NetLog(get_id(), ECO_FUNC) 
 			<< "web socket shakehand invalid 'Get '.";
 		return;
 	}
 	WebSocketShakeHand shake_hand;
 	if (!shake_hand.parse(data_head))
 	{
-		EcoNetLog(EcoError, *this) << "web socket shakehand invalid.";
+		EcoError << NetLog(get_id(), ECO_FUNC)
+			<< "web socket shakehand invalid.";
 		notify_close(nullptr);
 		return;
 	}
@@ -90,7 +91,7 @@ void TcpPeer::Impl::on_read_head(
 {
 	if (err != nullptr)	// if peerection occur error, close it.
 	{
-		EcoNet(EcoWarn, *this, "recv_head", *err);
+		EcoError << NetLog(get_id(), ECO_FUNC) << *err;
 		notify_close(err);
 		return; 
 	}
@@ -100,7 +101,7 @@ void TcpPeer::Impl::on_read_head(
 	uint32_t data_size = 0;
 	if (!protocol_head().decode_data_size(data_size, data_head, head_size, e))
 	{
-		EcoNet(EcoError, *this, "recv_head", e);
+		EcoError << NetLog(get_id(), ECO_FUNC) << e;
 		notify_close(&e);
 		return;
 	}
@@ -131,7 +132,7 @@ void TcpPeer::Impl::on_read_data(
 {
 	if (e != nullptr)	// if peer occur error, release it.
 	{
-		EcoNet(EcoWarn, *this, "recv_data", *e);
+		EcoError << NetLog(get_id(), ECO_FUNC) << *e;
 		notify_close(e);
 		return;
 	}
@@ -191,7 +192,7 @@ ConnectionData* TcpPeer::data()
 {
 	return impl().m_data.get();
 }
-int64_t TcpPeer::get_id() const
+size_t TcpPeer::get_id() const
 {
 	return impl().get_id();
 }

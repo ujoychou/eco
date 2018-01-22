@@ -27,11 +27,14 @@
 #include <eco/net/TcpPeer.h>
 #include <eco/net/TcpConnector.h>
 #include <eco/net/Context.h>
-#include <eco/log/Log.h>
+#include <eco/net/Log.h>
 
 
 namespace eco{;
 namespace net{;
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 class TcpPeer::Impl : public TcpConnectorHandler
 {
@@ -71,6 +74,7 @@ public:
 			m_data.reset(make_func());
 			m_data->m_wptr = m_peer_observer;
 			m_data->m_prot = prot;
+			m_data->m_id = get_id();
 		}
 	}
 
@@ -99,7 +103,7 @@ public:
 	}
 
 	// tcp peer identity which is the address of connector.
-	inline int64_t get_id() const
+	inline size_t get_id() const
 	{
 		return m_connector->get_id();
 	}
@@ -147,14 +151,14 @@ public:
 		m_connector->async_write(data, start);
 	}
 
-	inline void async_send(IN MessageMeta& meta, IN Protocol& prot)
+	inline void async_send(IN const MessageMeta& meta, IN Protocol& prot)
 	{
 		eco::Error e;
 		eco::String data;
 		uint32_t start = 0;
 		if (!prot.encode(data, start, meta, e))
 		{
-			EcoNet(EcoError,*this, "async_send", e);
+			ECO_LOG_NET(get_id(), meta.m_session_id, e);
 			return;
 		}
 		async_send(data, start);

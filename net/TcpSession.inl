@@ -105,7 +105,7 @@ inline std::shared_ptr<SessionDataT> TcpSession::cast()
 	return std::dynamic_pointer_cast<SessionDataT>(data());
 }
 
-uint32_t TcpSession::get_session_id() const
+const SessionId TcpSession::get_id() const
 {
 	return m_impl.m_session_id;
 }

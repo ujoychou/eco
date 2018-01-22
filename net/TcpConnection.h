@@ -39,29 +39,34 @@ template<typename ConnectionDataT>
 class ConnectionDataPtr
 {
 	ECO_OBJECT(ConnectionDataPtr);
-	ECO_PTR_MEMBER(ConnectionDataT,
-		static_cast<ConnectionDataT*>(m_peer->data()));
+	ECO_PTR_MEMBER(ConnectionDataT, m_data);
 public:
-	inline ConnectionDataPtr(IN TcpPeer::ptr& peer) : m_peer(peer)
+	inline ConnectionDataPtr(IN TcpPeer::ptr& peer)
+		: m_peer(peer), m_data(static_cast<ConnectionDataT*>(m_peer->data()))
 	{}
 
 	inline ConnectionDataPtr(IN ConnectionDataPtr&& v)
 		: m_peer(std::move(v.peer))
+		, m_data(static_cast<ConnectionDataT*>(v.m_data))
 	{}
 
 private:
 	TcpPeer::ptr m_peer;
+	ConnectionDataT* m_data;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 class TcpConnection
 {
 public:
-	inline TcpConnection() : m_prot(nullptr)
+	inline TcpConnection() : m_prot(nullptr), m_id(0)
 	{}
 
-	inline TcpConnection(IN TcpPeer::wptr& wptr, IN Protocol& prot)
-		: m_peer(wptr), m_prot(&prot)
+	inline TcpConnection(
+		IN TcpPeer::wptr& wptr, 
+		IN Protocol& prot,
+		IN const size_t id)
+		: m_peer(wptr), m_prot(&prot), m_id(id)
 	{}
 
 	inline TcpConnection(IN const TcpConnection& other) :
@@ -100,15 +105,10 @@ public:
 	// check whether this connection has been authed.
 	inline bool authed() const;
 
-	// get session data.
-	inline uint64_t get_id() const
+	// get tcp connection id.
+	inline ConnectionId get_id() const
 	{
-		TcpPeer::ptr peer = m_peer.lock();
-		if (peer != nullptr)
-		{
-			return peer->get_id();
-		}
-		return 0;
+		return m_id;
 	}
 
 	template<typename ConnectionDataT>
@@ -175,6 +175,7 @@ private:
 
 	TcpPeer::wptr	m_peer;
 	Protocol*		m_prot;
+	size_t			m_id;
 	friend class TcpConnectionOuter;
 };
 
@@ -185,13 +186,18 @@ class ConnectionData : public eco::HeapOperators
 {
 	ECO_OBJECT(ConnectionData);
 public:
-	inline  ConnectionData() : m_prot(nullptr) {}
-	virtual ~ConnectionData() {}
+	inline ConnectionData() : m_prot(nullptr), m_id(0)
+	{}
 
 	// get connection object.
 	inline TcpConnection connection()
 	{
-		return TcpConnection(m_wptr, *m_prot);
+		return TcpConnection(m_wptr, *m_prot, m_id);
+	}
+
+	inline const ConnectionId get_id() const
+	{
+		return m_id;
 	}
 
 	// whether this connection has authorized.
@@ -200,9 +206,22 @@ public:
 		return false;
 	}
 
+	// get user id.
+	virtual const uint64_t get_user_id() const
+	{
+		return 0;
+	}
+
+	// get user name.
+	virtual const char* get_user_name() const
+	{
+		return nullptr;
+	}
+
 private:
 	TcpPeer::wptr m_wptr;
 	Protocol* m_prot;
+	size_t  m_id;
 	friend class TcpPeer;
 };
 

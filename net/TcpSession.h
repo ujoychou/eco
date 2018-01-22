@@ -72,7 +72,7 @@ public:
 	inline const TcpConnection& get_connection() const;
 
 	// get session data.
-	inline uint32_t get_session_id() const;
+	inline const SessionId get_id() const;
 
 	// get session data.
 	inline SessionData::ptr data();
@@ -93,7 +93,7 @@ public:
 		IN const MessageCategory category = category_message)
 	{
 		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, get_session_id(), type, category);
+		MessageMeta meta(codec, get_id(), type, category);
 		async_send(meta);
 	}
 

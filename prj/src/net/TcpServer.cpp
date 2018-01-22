@@ -87,18 +87,16 @@ SessionData::ptr TcpServer::Impl::add_session(
 {
 	if (m_make_session == nullptr)
 	{
-		eco::Error e(e_server_no_support_session);
-		e << "tcp server don't supoort session, it's in a connection mode.";
-		EcoNet(EcoError, peer, "", e);
+		EcoError << NetLog(peer.get_id(), ECO_FUNC)
+			<= "this is connection mode, don't supoort session.";
 		return SessionData::ptr();
 	}
 	// session overloaded.
 	if (m_session_map.size() >= m_option.get_max_session_size())
 	{
-		eco::Error e(e_session_over_max_size);
-		e << "tcp server session has reached max size: " 
+		EcoError << NetLog(peer.get_id(), ECO_FUNC) 
+			<< "session has reached max size: "
 			<< m_option.get_max_session_size();
-		EcoNet(EcoError, peer, "", e);
 		return SessionData::ptr();
 	}
 
@@ -107,6 +105,7 @@ SessionData::ptr TcpServer::Impl::add_session(
 	SessionData::ptr new_sess(m_make_session(sess_id));
 	m_session_map.set(sess_id, new_sess);
 	peer.impl().add_session(sess_id);
+	EcoInfo << NetLog(peer.get_id(), ECO_FUNC, sess_id);
 	return new_sess;
 }
 
@@ -116,7 +115,7 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 {
 	if (e)	// error
 	{
-		EcoError << "tcp server on timer error: " << EcoFmte(*e);
+		EcoError << "tcp server on timer error: " << *e;
 		return;
 	}
 
@@ -185,17 +184,16 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& p, IN const eco::Error* e)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
+void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 {
-	auto* peer_impl = static_cast<TcpPeer::Impl*>(peer);
+	auto* peer = static_cast<TcpPeer::Impl*>(impl);
 
 	// #.parse message head.
 	eco::Error e;
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		e << " tcp server decode head fail.";
-		EcoNet(EcoError, *peer_impl, "on_read", e);
+		EcoError << NetLog(peer->get_id(), ECO_FUNC) << e;
 		return;
 	}
 
@@ -208,29 +206,29 @@ void TcpServer::Impl::on_read(IN void* peer, IN eco::String& data)
 		{
 			e.id(e_message_unknown) << "tcp server have no protocol: "
 				<< head.m_version;
-			EcoNet(EcoError, *peer_impl, "on_read", e);
+			EcoError << NetLog(peer->get_id(), ECO_FUNC) << e;
 			return;
 		}
 		// this is thread safe:
 		// 1)one peer in one thread; 
 		// 2)all connection data access after this sentense(create data).
-		peer_impl->make_connection_data(m_make_connection, prot);
+		peer->make_connection_data(m_make_connection, prot);
 	}
 	
 	// #.send heartbeat.
 	if (eco::has(head.m_category, category_heartbeat) &&
 		m_option.io_heartbeat())
 	{
-		peer_impl->state().set_peer_live(true);
+		peer->state().set_peer_live(true);
 		if (m_option.response_heartbeat())
-			peer_impl->async_send_heartbeat(*m_prot_head);		
+			peer->async_send_heartbeat(*m_prot_head);		
 		return;
 	}
 
 	// #.dispatch data context.
 	TcpSessionOwner owner(*(TcpServerImpl*)this);
 	eco::net::DataContext dc(&owner);
-	peer_impl->get_data_context(dc, head.m_category, data, prot);
+	peer->get_data_context(dc, head.m_category, data, prot);
 	m_dispatch.post(dc);
 }
 

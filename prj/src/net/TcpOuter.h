@@ -74,6 +74,11 @@ public:
 		m_conn.m_prot = &prot;
 	}
 
+	inline void set_id(IN const size_t id)
+	{
+		m_conn.m_id = id;
+	}
+
 	inline Protocol& protocol()
 	{
 		return *m_conn.m_prot;

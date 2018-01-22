@@ -101,7 +101,6 @@ class TcpClient::Impl : public TcpPeerHandler
 {
 public:
 	typedef std::auto_ptr<ProtocolHead> ProtocolHeadPtr;
-	std::string		m_service_name;	// the service that this client connect to.
 	LoadBalancer	m_balancer;		// load balance for multi server.
 	TcpClientOption	m_option;		// client option.
 	ProtocolHeadPtr m_prot_head;	// client protocol head.
@@ -247,7 +246,7 @@ public:
 		uint32_t start = 0;
 		if (!m_protocol->encode(data, start, meta, e))
 		{
-			EcoError << "tcp client encode data fail." << EcoFmte(e);
+			EcoError << "tcp client encode data fail." << e;
 			return;
 		}
 		async_send(data, start);
