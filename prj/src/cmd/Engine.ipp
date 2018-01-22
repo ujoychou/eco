@@ -48,6 +48,12 @@ public:
 	void work();
 	void run();
 	bool run_inner_command(IN const Context& context);
+
+	inline Group home()
+	{
+		// app group index is 1; and sys group index is 0;
+		return m_root_group.group_set().at(1);
+	}
 };
 
 

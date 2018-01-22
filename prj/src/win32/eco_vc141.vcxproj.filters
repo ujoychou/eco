@@ -97,9 +97,6 @@
     <Filter Include="lib\net\protocol">
       <UniqueIdentifier>{1c05ee55-869a-4dad-be64-953fb8806af8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lib\service\proto">
-      <UniqueIdentifier>{898d672f-2c3c-4879-a138-ee26771f1905}</UniqueIdentifier>
-    </Filter>
     <Filter Include="lib\thread\topic">
       <UniqueIdentifier>{bd36def5-7436-4889-a96b-5880443e30cc}</UniqueIdentifier>
     </Filter>
@@ -135,6 +132,9 @@
     </Filter>
     <Filter Include="src\net\protocol">
       <UniqueIdentifier>{1caaef26-d6d5-420b-b507-14b6b5b197eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\proto">
+      <UniqueIdentifier>{da8a0393-bcd0-496b-a16d-6ae69da1f78e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -219,12 +219,6 @@
     <ClCompile Include="..\net\Address.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.cc">
-      <Filter>lib\service\proto</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.cc">
-      <Filter>lib\service\proto</Filter>
-    </ClCompile>
     <ClCompile Include="..\service\Cluster.cpp">
       <Filter>src\service</Filter>
     </ClCompile>
@@ -306,6 +300,9 @@
     <ClCompile Include="..\persist\Recordset.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\proto\Object.pb.cc">
+      <Filter>lib\proto</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\log\Queue.h">
@@ -333,9 +330,6 @@
       <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Error.h">
       <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h">
@@ -527,15 +521,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\service\ServiceRuntime.h">
       <Filter>lib\service</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.h">
-      <Filter>lib\service\proto</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Proto.h">
-      <Filter>lib\service\proto</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.h">
-      <Filter>lib\service\proto</Filter>
-    </ClInclude>
     <ClInclude Include="..\service\Impl.h">
       <Filter>src\service</Filter>
     </ClInclude>
@@ -573,9 +558,6 @@
       <Filter>lib\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Context.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestFilter.h">
       <Filter>lib\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Atomic.h">
@@ -743,6 +725,18 @@
     <ClInclude Include="..\..\..\persist\Address.h">
       <Filter>lib\persist</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\net\AsyncHandlerMap.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Log.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\proto\Object.pb.h">
+      <Filter>lib\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\proto\Proto.h">
+      <Filter>lib\proto</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cmd\Engine.ipp">
@@ -750,15 +744,6 @@
     </None>
     <None Include="..\net\TcpServer.ipp">
       <Filter>src\net</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\__proto.bat">
-      <Filter>lib\service\proto</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Error.proto">
-      <Filter>lib\service\proto</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Service.proto">
-      <Filter>lib\service\proto</Filter>
     </None>
     <None Include="..\net\TcpPeer.ipp">
       <Filter>src\net</Filter>
@@ -798,6 +783,15 @@
     </None>
     <None Include="..\..\..\log\Pusher.inl">
       <Filter>lib\log</Filter>
+    </None>
+    <None Include="..\..\..\proto\__proto.bat">
+      <Filter>lib\proto</Filter>
+    </None>
+    <None Include="..\..\..\proto\Object.proto">
+      <Filter>lib\proto</Filter>
+    </None>
+    <None Include="..\..\..\proto\Service.proto">
+      <Filter>lib\proto</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

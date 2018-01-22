@@ -66,7 +66,7 @@ public:
 		m_fp = ::fopen(file_path, open_mode);
 		if (null())
 		{
-			EcoThrowX << "open file fail: " << file_path;
+			EcoThrow << "open file fail: " << file_path;
 		}
 	}
 
@@ -116,7 +116,7 @@ public:
 		int result = ::stat(file_path, &buf);
 		if (result != 0)
 		{
-			EcoThrowX << "get file size by ::stat() fail.";
+			EcoThrow << "get file size by ::stat() fail.";
 		}
 		return buf.st_size;
 	}

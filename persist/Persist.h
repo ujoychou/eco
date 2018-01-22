@@ -5,6 +5,9 @@
 
 
 @ function
+using persist in two way:
+1.implement persist handler, and access handler.persist();
+2.use app.persist() directly, no using upgrade solution and default orm & meta.
 
 
 --------------------------------------------------------------------------------
@@ -126,6 +129,8 @@ public:
 
 	// get persist.
 	inline Persist& persist();
+	// get persist master.
+	inline eco::Database& master();
 
 private:
 	friend class Persist;
@@ -168,7 +173,9 @@ inline Persist& PersistHandler::persist()
 {
 	return *m_persist;
 }
-
-
+inline eco::Database& PersistHandler::master()
+{
+	return persist().master();
+}
 ECO_NS_END(eco);
 #endif

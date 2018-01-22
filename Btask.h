@@ -24,7 +24,6 @@ business object.
 *******************************************************************************/
 #include <eco/Bobject.h>
 #include <eco/log/Log.h>
-#include <eco/Error.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -114,7 +113,7 @@ public:
 		catch (eco::Error& e)
 		{
 			result = false;
-			EcoError << get_type() << ": " << EcoFmte(e);
+			EcoError << get_type() << ": " << e;
 		}
 		catch (std::exception& e)
 		{

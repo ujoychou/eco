@@ -101,7 +101,6 @@ output parameters are located in front of the input parameters.
 #	define FCALL __cdecl
 #endif
 
-
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 template<typename type_t = int>
@@ -207,8 +206,8 @@ public:\
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// for create shared object.
 ECO_NS_BEGIN(eco);
+// for create shared object.
 struct Heap {};
 struct Null {};
 const Heap heap;
@@ -262,6 +261,11 @@ template<typename ObjectT>
 inline void del(ObjectT& obj, uint32_t v)
 {
 	obj &= ~v;
+}
+template<typename ObjectT>
+inline void toggle(ObjectT& obj, uint32_t v)
+{
+	obj ^= v;
 }
 template<typename ObjectT>
 inline void set(ObjectT& obj, uint32_t v, bool is)

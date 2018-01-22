@@ -45,6 +45,20 @@ public:
 		, m_persist(eco::null)
 	{}
 
+	inline void set_name(IN const char* v)
+	{
+		m_name = v;
+		if (eco::empty(eco::cmd::get_engine().home().get_name()))
+			eco::cmd::get_engine().home().name(m_name.c_str());
+	}
+
+	inline void set_provider_service(IN const char* v)
+	{
+		m_provider.option().set_name(v);
+		if (m_name.empty())
+			set_name(v);
+	}
+
 	// exit app and clear provider and consumer.
 	inline ~Impl()
 	{
@@ -58,7 +72,6 @@ public:
 public:
 	// eco cmd
 	inline void init_eco();
-	inline bool enable_command() const;
 	inline void init_command(IN App& app);
 	inline void start_command();
 
@@ -88,10 +101,7 @@ App::CreateAppFunc App::Impl::s_create_app(nullptr);
 //##############################################################################
 inline void App::Impl::join()
 {
-	if (enable_command())
-	{
-		eco::cmd::get_engine().join();
-	}
+	eco::cmd::get_engine().join();
 }
 
 inline void App::Impl::stop()
@@ -101,7 +111,6 @@ inline void App::Impl::stop()
 	2.logging <- persist <- consumer <- provider <- erx.on_exit;
 	3.task server <- all object; but task server can close first.
 	*/
-
 	if (get_eco())					// #.1 eco & being & task server.
 	{
 		get_eco()->stop();
@@ -154,33 +163,20 @@ inline void App::Impl::init_eco()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool App::Impl::enable_command() const
-{
-	StringAny v;
-	return m_sys_config.find(v, "command");
-}
-
 inline void App::Impl::init_command(IN App& app)
 {
-	if (enable_command())
-	{
-		app.on_cmd();
-		on_rx_cmd();
-	}
+	app.on_cmd();
+	on_rx_cmd();
 }
 
 inline void App::Impl::start_command()
 {
-	if (enable_command())
-	{
-		eco::cmd::get_engine().run();
-	}
+	eco::cmd::get_engine().run();
 }
 
 inline bool App::Impl::enable_erx() const
 {
-	StringAny v;
-	return m_sys_config.find(v, "erx");
+	return m_sys_config.has("erx");
 }
 
 
@@ -244,7 +240,7 @@ inline void App::Impl::on_rx_exit()
 	}
 	catch (eco::Error& e)
 	{
-		EcoError << EcoFmte(e);
+		EcoError << e;
 	}
 	catch (std::exception& e)
 	{
@@ -307,7 +303,7 @@ inline void App::Impl::init_consumer()
 		if (!it->has_children() ||
 			strcmp(it->get_children().at(0).get_name(), "address") != 0)
 		{
-			EcoThrowX << it->get_name() << " has no address config.";
+			EcoThrow << it->get_name() << " has no address config.";
 		}
 		eco::net::AddressSet addr_set;
 		auto& child = it->get_children().at(0);
@@ -316,7 +312,7 @@ inline void App::Impl::init_consumer()
 			auto router = find_router(v.c_str());
 			if (router.null() || router.empty())
 			{
-				EcoThrowX << it->get_name() << " has no router " << v.c_str();
+				EcoThrow << it->get_name() << " has no router " << v.c_str();
 			}
 			addr_set.add_copy(router);
 			addr_set.set_mode(eco::net::router_mode);
@@ -394,7 +390,7 @@ inline void App::Impl::init_provider()
 	if (m_sys_config.find(v, "provider/router"))
 		option.set_router(v.c_str());
 	if (m_sys_config.find(v, "provider/service"))
-		option.set_name(v.c_str());
+		set_provider_service(v.c_str());
 	if (m_sys_config.find(v, "provider/port"))
 		option.set_port(v);
 	if (m_sys_config.find(v, "provider/tick_time"))
@@ -421,12 +417,6 @@ inline void App::Impl::init_provider()
 		option.set_io_thread_size(v);
 	if (m_sys_config.find(v, "provider/business_thread_size"))
 		option.set_business_thread_size(v);
-
-	// #.set app name if it is empty.
-	if (m_name.empty())
-	{
-		m_name = option.get_name();
-	}
 }
 
 
@@ -539,8 +529,7 @@ void App::set_log_file_on_changed(IN eco::log::OnChangedLogFile func)
 }
 eco::cmd::Group App::home()
 {
-	// app group index is 1; and sys group index is 0;
-	return eco::cmd::get_engine().root().group_set().at(1);
+	return eco::cmd::get_engine().home();
 }
 Timer& App::timer()
 {
@@ -572,8 +561,8 @@ extern "C" ECO_API void init_app(IN eco::App& ap)
 	// #.init app config.
 	eco::StringAny v;
 	if (impl.m_app_config_file.empty()) {
-		if (impl.m_sys_config.find(v, "config/app_name"))
-			impl.m_name = v.c_str();
+		if (impl.m_sys_config.find(v, "config/name"))
+			impl.set_name(v.c_str());
 		if (impl.m_sys_config.find(v, "config/file_path"))
 			impl.m_app_config_file = v.c_str();
 		else
@@ -654,8 +643,8 @@ int App::main(IN int argc, IN char* argv[])
 		// start command based on app business object and service.
 		app->impl().start_command();
 
-		// init app data. todo.
-		// app->on_data();
+		// finish app config and start business object, load app business data.
+		app->on_load();
 
 		// join app.
 		app->impl().join();
@@ -667,7 +656,7 @@ int App::main(IN int argc, IN char* argv[])
 	}
 	catch (eco::Error& e)
 	{
-		EcoCout << "[error] " << EcoFmte(e);
+		EcoCout << "[error] " << e.what();
 		getch_exit();
 	}
 	catch (std::exception& e)

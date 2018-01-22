@@ -111,7 +111,7 @@ unsigned __stdcall work(IN void* tdata)
 	}
 	catch (eco::Error& e)
 	{
-		EcoError << EcoFmte(e);
+		EcoError << e;
 	}
 	catch (const std::exception& e)
 	{
@@ -153,9 +153,9 @@ uint32_t Thread::get_thread_count()
 {
 	return Thread::Impl::s_thread_count;
 }
-int64_t Thread::get_id() const
+size_t Thread::get_id() const
 {
-	return impl().m_handle;
+	return static_cast<size_t>(impl().m_handle);
 }
 const char* Thread::get_id_string()
 {

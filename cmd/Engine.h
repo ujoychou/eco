@@ -51,6 +51,9 @@ public:
 	/*@ get current command group.*/
 	Group current();
 	const Group get_current() const;
+
+	/*@ get home.*/
+	Group home();
 };
 
 

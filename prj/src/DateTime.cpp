@@ -272,10 +272,10 @@ double get_duration_size(
 	catch (std::exception& e) 
 	{
 		e.what();
-		EcoThrowX << "get_duration_size error time: "
+		EcoThrow << "get_duration_size error time: "
 			<< s_dt << " " << e_dt;
 	}
-	EcoThrowX << "get_duration_size error type:" << t_type;
+	EcoThrow << "get_duration_size error type:" << t_type;
 	return v;
 }
 
@@ -349,10 +349,10 @@ int get_duration_unit(
 	catch (std::exception& e)
 	{
 		e.what();
-		EcoThrowX << "get_duration_unit error time: "
+		EcoThrow << "get_duration_unit error time: "
 			<< s_dt << " " << e_dt;
 	}
-	EcoThrowX << "get_duration_unit error type:" << t_type;
+	EcoThrow << "get_duration_unit error type:" << t_type;
 	return v;
 }
 
@@ -415,7 +415,7 @@ std::string get_unit_time(
 	catch (std::exception& e)
 	{
 		e.what();
-		EcoThrowX << "get_unit_time error time: " << start_dt;
+		EcoThrow << "get_unit_time error time: " << start_dt;
 	}
 	assert(false);
 	return "";

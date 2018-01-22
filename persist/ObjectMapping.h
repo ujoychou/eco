@@ -153,20 +153,23 @@ public:
 
 		// sql format: 
 		// delete from table where field1='value1' and field2='value2',...
-		sql.reserve(64);
-		sql = "delete from ";
-		sql += m_table;
-		sql += " where ";
+		std::string cond_sql;
+		cond_sql.reserve(64);
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
 			if (it->is_pk())
 			{
-				sql += it->get_field();
-				sql += "='" + meta.get_value(it->get_property(), "eco_db");
-				sql += "',";
+				cond_sql += cond_sql.empty() ? " where " : " and ";
+				cond_sql += it->get_field();
+				cond_sql += "='" + meta.get_value(it->get_property(), "eco_db");
+				cond_sql += "'";
 			}
 		}
-		sql.resize(sql.size() - 1);
+		sql.reserve(64);
+		sql = "delete from ";
+		sql += m_table;
+		sql += ' ';
+		sql += cond_sql;
 	}
 
 	template<typename meta_t, typename object_t>

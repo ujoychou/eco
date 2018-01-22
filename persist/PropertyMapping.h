@@ -16,8 +16,7 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Cast.h>
-#include <eco/Error.h>
+#include <eco/Type.h>
 #include <eco/Implement.h>
 #include <eco/persist/DatabaseConfig.h>
 

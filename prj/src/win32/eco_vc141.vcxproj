@@ -195,26 +195,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.cc">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.cc">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\..\..\codec\base64.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -222,6 +202,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\..\codec\sha1.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\proto\Object.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -404,7 +390,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Context.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchRegistry.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchServer.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestFilter.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Ecode.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestHandler.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\ProtobufHandler.h" />
@@ -439,24 +424,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\Horizontal.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\service\DidProtocol.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\service\Machine.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Proto.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\service\Service.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\service\ServiceRuntime.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Btask.h" />
@@ -487,7 +454,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\topic\TopicServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Error.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\SourceFile.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h" />
@@ -525,6 +491,8 @@
     <ClInclude Include="..\..\..\codec\Zlib.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
+    <ClInclude Include="..\..\..\net\AsyncHandlerMap.h" />
+    <ClInclude Include="..\..\..\net\Log.h" />
     <ClInclude Include="..\..\..\net\protocol\StringCodec.h" />
     <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h" />
     <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
@@ -532,6 +500,8 @@
     <ClInclude Include="..\..\..\persist\Address.h" />
     <ClInclude Include="..\..\..\persist\Persist.h" />
     <ClInclude Include="..\..\..\persist\Database.h" />
+    <ClInclude Include="..\..\..\proto\Object.pb.h" />
+    <ClInclude Include="..\..\..\proto\Proto.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
@@ -558,24 +528,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Error.proto">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Service.proto">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\__proto.bat">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </None>
     <None Include="..\..\..\..\..\contrib\eco\Typex.ipp" />
     <None Include="..\..\..\..\..\contrib\eco\web\html.ut.html">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -591,6 +543,9 @@
     </None>
     <None Include="..\..\..\log\Pusher.inl" />
     <None Include="..\..\..\net\TcpSession.inl" />
+    <None Include="..\..\..\proto\Object.proto" />
+    <None Include="..\..\..\proto\Service.proto" />
+    <None Include="..\..\..\proto\__proto.bat" />
     <None Include="..\cmd\Engine.ipp" />
     <None Include="..\Eco.h" />
     <None Include="..\net\TcpClient.ipp" />

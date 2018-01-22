@@ -27,10 +27,6 @@
     <task_server_thread_size value="2"/>
   </eco>
 
-  <!--#.命令模式-->
-  <command enable="true">
-  </command>
-
   <!--#.插件管理-->
   <erx enable="false">
   </erx>

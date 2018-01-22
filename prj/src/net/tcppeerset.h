@@ -24,7 +24,7 @@
 
 *******************************************************************************/
 #include <eco/thread/Mutex.h>
-#include <eco/log/Log.h>
+#include <eco/net/Log.h>
 #include <unordered_map>
 #include "TcpPeer.ipp"
 
@@ -93,7 +93,7 @@ public:
 		auto it = m_peer_map.find(conn_id);
 		if (it != m_peer_map.end())
 		{
-			EcoNetLog(EcoDebug, *it->second) << "tcp_peer_set erase peer.";
+			EcoError << NetLog(it->second->get_id(), ECO_FUNC);
 			m_peer_map.erase(it);
 		}
 	}

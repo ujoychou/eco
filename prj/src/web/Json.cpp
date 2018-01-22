@@ -195,7 +195,7 @@ JsonObject JsonObject::AddChild(
 	JsonClass child_class = impl().m_class.FindChild(class_name);
 	if (child_class.null())
 	{
-		EcoThrowX << "find child class fail:" << class_name;
+		EcoThrow << "find child class fail:" << class_name;
 	}
 	JsonObject child;
 	child.impl().m_class = child_class;

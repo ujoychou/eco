@@ -89,6 +89,10 @@ void Engine::Impl::work()
 ////////////////////////////////////////////////////////////////////////////////
 void Engine::Impl::run()
 {
+	if (eco::empty(home().get_name()))
+	{
+		home().name("app");
+	}
 	m_thread.run(std::bind(&Engine::Impl::work, this), "cmd");
 }
 
@@ -112,7 +116,7 @@ void Engine::Impl::init(Engine&)
 	// init engine: root_group "root->sys/app;"
 	m_root_group.name("root").alias("/");
 	m_root_group.add_group().name("sys");
-	m_curr_group = m_root_group.add_group().name("app");
+	m_curr_group = m_root_group.add_group().name("");
 }
 
 
@@ -141,6 +145,10 @@ void Engine::run()
 void Engine::join()
 {
 	m_impl->m_thread.join();
+}
+Group Engine::home()
+{
+	return impl().home();
 }
 
 

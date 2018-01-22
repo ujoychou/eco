@@ -128,7 +128,7 @@ void run_command(IN const Context& context, OUT Group::Impl& data)
 	}
 	catch (eco::Error& e)
 	{
-		EcoError << "execute command error: " << EcoFmte(e);
+		EcoError << "execute command error: " << e;
 	}
 	catch (std::exception& e)
 	{

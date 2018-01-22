@@ -1,7 +1,7 @@
 #include "PrecHeader.h"
 #include <eco/persist/MySql.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Error.h>
+#include <eco/Type.h>
 #include <eco/thread/Atomic.h>
 #include <eco/thread/Mutex.h>
 #include <vector>

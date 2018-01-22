@@ -53,7 +53,7 @@ public:
 class Persist::Impl
 {
 public:
-	PersistHandler*			m_handler;
+	PersistHandler*			m_handler;			// it can be nullptr.
 	eco::Database::ptr		m_master;
 	std::vector<Upgrade>	m_upgrade_seq;
 	eco::ObjectMapping		m_orm_version;
@@ -65,7 +65,7 @@ public:
 
 	inline void init(IN Persist& parent)
 	{
-		parent.set_live_ticks(1);	// 30秒
+		parent.set_live_ticks(1);	// 30 second.
 		m_orm_version.id("version").table("version");
 		m_orm_version.add().property("value").field("version").pk(true).int_type();
 		m_orm_version.add().property("module").field("module").pk(true).vchar_small();
@@ -78,17 +78,42 @@ public:
 
 ECO_OBJECT_IMPL(Persist);
 ////////////////////////////////////////////////////////////////////////////////
+bool Persist::on_born()
+{
+	if (impl().m_address_set.empty())
+	{
+		return false;
+	}
+
+	if (impl().m_handler != nullptr)
+	{
+		// 1.init object mapping.(orm object using with meta.)
+		impl().m_handler->on_mapping();
+
+		// 2.register upgrade function.
+		impl().m_handler->on_upgrade();
+		std::sort(impl().m_upgrade_seq.begin(), impl().m_upgrade_seq.end());
+	}
+
+	// 3.create database config in "sys.xml".
+	eco::persist::Address& addr = impl().m_address_set.at(0);
+	impl().m_master.reset(create_database(addr.get_type()));
+	return (impl().m_master != nullptr);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Persist::Impl::on_live()
 {
 	try
 	{
-		// 4.连接数据库
+		// 4.connect to database server.
 		if (!m_master->is_open())
 		{
 			eco::persist::Address& addr = m_address_set.at(0);
 			m_master->open(addr);
 
-			// 日志信息
+			// logging persist detail info.
 			char log[128] = { 0 };
 			sprintf(log, "\n+[persist %s %s]\n""-open %s by %s(%s) at %s:%d\n",
 				addr.get_type_name(), addr.get_name(),
@@ -97,10 +122,10 @@ void Persist::Impl::on_live()
 			EcoInfo << log;
 		}
 
-		// 5.升级数据库（根据当前版本升级数据库）
+		// 5.upgrade database according to it's current version.
 		if (!m_state.has(eco::atomic::State::_a))
 		{
-			// 查询版本信息
+			// get database version.
 			char cond_sql[64] = { 0 };
 			const char* app_name = eco::App::instance().get_name();
 			sprintf(cond_sql, "where module='%s' order by %s desc",
@@ -110,13 +135,13 @@ void Persist::Impl::on_live()
 			m_master->read<eco::persist::VersionMeta>(
 				version, m_orm_version, cond_sql);
 
-			// 升级数据库
+			// upgrade database.
 			auto it = m_upgrade_seq.begin();
 			for (; it != m_upgrade_seq.end(); ++it)
 			{
 				if (it->m_version > version.m_value)
 				{
-					// 若升级失败，事务将回滚数据操作
+					// upgrade fail, transaction will rollback it's operation.
 					eco::Database::Transaction trans(*m_master);
 					it->m_func();
 					m_master->save<persist::VersionMeta>(
@@ -127,7 +152,7 @@ void Persist::Impl::on_live()
 			m_state.add(eco::atomic::State::_a);
 		}
 
-		// 6.初始化业务数据
+		// 6.init business data from persist.
 		if (!m_state.has(eco::atomic::State::_b))
 		{
 			if (m_handler != nullptr)
@@ -140,37 +165,12 @@ void Persist::Impl::on_live()
 	catch (std::exception& e)
 	{
 		const char* emsg = e.what();
-		EcoLogStr(error, strlen(emsg)) << emsg;
+		EcoLogStr(error, static_cast<uint32_t>(strlen(emsg))) << emsg;
 	}
 	catch (eco::Error& e)
 	{
-		EcoError << EcoFmte(e);
+		EcoError << e;
 	}
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-bool Persist::on_born()
-{
-	if (impl().m_address_set.empty())
-	{
-		return false;
-	}
-
-	if (impl().m_handler != nullptr)
-	{
-		// 1.初始化映射关系
-		impl().m_handler->on_mapping();
-
-		// 2.初始化数据库升级
-		impl().m_handler->on_upgrade();
-		std::sort(impl().m_upgrade_seq.begin(), impl().m_upgrade_seq.end());
-	}
-
-	// 3.初始化数据库
-	eco::persist::Address& addr = impl().m_address_set.at(0);
-	impl().m_master.reset(create_database(addr.get_type()));
-	return (impl().m_master != nullptr);
 }
 
 

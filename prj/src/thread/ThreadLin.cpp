@@ -14,7 +14,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
 namespace this_thread{;
-__thread int64_t	t_tid;
+__thread size_t	t_tid;
 __thread char[64]	t_tid_string;
 __thread char[16]	t_tname;
 
@@ -22,7 +22,7 @@ void sleep(IN int millisecond)
 {
 	usleep(millisecond * 1000);		// micro seconds.
 }
-int64_t get_id()
+size_t get_id()
 {
 	return t_tid;
 }

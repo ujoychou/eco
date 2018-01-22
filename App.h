@@ -40,14 +40,17 @@ class ECO_API App : public HeapOperators
 	ECO_IMPL_API();
 	ECO_NONCOPYABLE(App);
 protected:
-	// must be derived.
+	// this is a base class, must be derived.
 	App();
 
-	// app init.
+	// init app config.
 	virtual void on_init() {}
 
 	// init command.
 	virtual void on_cmd() {}
+
+	// load app business data after app init finish.
+	virtual void on_load() {}
 
 	// app exit.
 	virtual void on_exit() {}

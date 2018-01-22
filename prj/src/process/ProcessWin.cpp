@@ -11,7 +11,7 @@
 namespace eco{;
 namespace this_process{;
 static char s_pid_str[64] = {0};
-int64_t get_id()
+size_t get_id()
 {
 	return ::getpid();
 }

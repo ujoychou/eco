@@ -271,12 +271,12 @@ const char* const g_sev_name[] =
 };
 const char* const g_sev_display[] =
 {
-	"Trace",
-	"Debug",
-	"Info ",
-	"Warn ",
-	"Error",
-	"Fatal",
+	"[trace]",
+	"[debug]",
+	"[info ]",
+	"[warn ]",
+	"[error]",
+	"[fatal]",
 };
 
 

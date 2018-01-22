@@ -24,7 +24,6 @@
 #include <eco/Memory.h>
 #include <eco/Cast.h>
 #include <eco/Type.h>
-#include <eco/Error.h>
 #include <eco/Object.h>
 
 

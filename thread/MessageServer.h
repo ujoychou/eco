@@ -189,7 +189,7 @@ protected:
 			try {
 				m_message_handler(msg);
 			} catch (eco::Error& e) {
-				EcoError << "message server: " << EcoFmte(e);
+				EcoError << "message server: " << e;
 			} catch (std::exception& e) {
 				EcoError << "message server: " << e.what();
 			}

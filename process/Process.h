@@ -29,7 +29,7 @@ namespace this_process{;
 
 ////////////////////////////////////////////////////////////////////////////////
 // get current thread id.
-int64_t get_id();
+size_t get_id();
 const char* get_id_string();
 }}
 

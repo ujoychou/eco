@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <ActiveQt/qaxobject.h> 
 #include <QtCore/qfileinfo.h>
-#include <eco/Error.h>
 
 namespace art {;
 

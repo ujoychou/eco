@@ -27,7 +27,7 @@ public:
 		IN  const char* parent_key,
 		IN  const ContextNodeSet& node_set) const
 	{
-		int node_end = eco::find_first_of(parent_key, '/');
+		int node_end = eco::find_first(parent_key, '/');
 		for (auto it = node_set.begin(); it != node_set.end(); ++it)
 		{
 			// find the key node.
@@ -56,7 +56,7 @@ public:
 		IN  const char* parent_key,
 		IN  const ContextNodeSet& node_set) const
 	{
-		int node_end = eco::find_first_of(parent_key, '/');
+		int node_end = eco::find_first(parent_key, '/');
 		for (auto it = node_set.begin(); it != node_set.end(); ++it)
 		{
 			// find the key node.
@@ -96,7 +96,7 @@ public:
 		}
 		catch (const std::exception& e)
 		{
-			EcoThrowX << "init config fail, " << e.what();
+			EcoThrow << "init config fail, " << e.what();
 		}
 	}
 

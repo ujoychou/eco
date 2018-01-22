@@ -55,7 +55,7 @@ public:
 	static uint32_t get_thread_count();
 
 	// get thread id;
-	int64_t get_id() const;
+	size_t get_id() const;
 	const char* get_id_string();
 
 	// thread name.

@@ -183,7 +183,7 @@ StringAny Context::at(IN const char* key) const
 	StringAny v;
 	if (!find(v, key))
 	{
-		EcoThrowX << "find parameter fail: key=" << key;
+		EcoThrow << "find parameter fail: key=" << key;
 	}
 	return v;
 }

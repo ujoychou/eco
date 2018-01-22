@@ -2,7 +2,6 @@
 #include <eco/persist/Sqlite.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Project.h>
-#include <eco/Error.h>
 #include <eco/thread/Atomic.h>
 #include <eco/thread/Mutex.h>
 #include <vector>
