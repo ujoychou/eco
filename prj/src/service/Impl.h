@@ -21,7 +21,6 @@
 *******************************************************************************/
 #include <eco/ExportApi.h>
 #include <eco/service/Service.h>
-#include <eco/service/proto/Service.pb.h>
 
 
 
@@ -34,8 +33,6 @@ class Service::Impl
 {
 public:
 	void init(IN Service&) {}
-
-	proto::Service m_service;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

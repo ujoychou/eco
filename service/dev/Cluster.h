@@ -60,7 +60,7 @@ public:
 		IN eco::net::AddressSet& router_addrset);
 
 	// get router service.
-	const eco::service::Service register_service(
+	/*const eco::service::Service register_service(
 		IN const char* service_name,
 		IN const char* router_name,
 		IN const int port);
@@ -68,7 +68,7 @@ public:
 	// get router service who has no status.
 	const eco::service::Service get_service(
 		IN const char* router_name,
-		IN const char* service_name);
+		IN const char* service_name);*/
 
 	// call a router service who has data status with horizontal split.
 	eco::net::TcpClient get_horizontal(

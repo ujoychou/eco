@@ -11,6 +11,7 @@ namespace service { ;
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_SHARED_IMPL(Service);
+/*
 void Service::set_process_name(IN const char* v)
 {
 	impl().m_service.set_process_name(v);
@@ -71,7 +72,7 @@ void Service::set_horizontal_virtual_service_number(int32_t v)
 int32_t Service::get_horizontal_virtual_service_number() const
 {
 	return impl().m_service.horizontal_virtual_service_number();
-}
+}*/
 
 
 ////////////////////////////////////////////////////////////////////////////////

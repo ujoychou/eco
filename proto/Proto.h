@@ -1,5 +1,5 @@
-#ifndef VALUES_TRADE_FRONT_PROTO_H
-#define VALUES_TRADE_FRONT_PROTO_H
+#ifndef ECO_PROTO_H
+#define ECO_PROTO_H
 /*******************************************************************************
 @ 名称
 
@@ -17,21 +17,25 @@
 * 版权所有(c) 2016 - 2019, siberia corp, 保留所有权利。
 
 *******************************************************************************/
-#include <eco/Project.h>
-
-
-namespace eco{;
-namespace service{;
+#include <eco/net/Log.h>
+#include "Object.pb.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
-enum ProtoType
+template<typename Stream>
+Stream& operator<<(OUT Stream& stream, IN const ::proto::Property& p)
 {
-	proto_service_req				= 0x1001,
-	proto_service_rsp				= 0x1002,
-};
+	return stream << p.user_id() << '-' << p.object_id()
+		<< p.name() << p.value();
+}
+
+template<typename Stream>
+Stream& operator<<(OUT Stream& stream, IN const ::proto::Error& e)
+{
+	return stream << e.message() << " #" << e.id();
+}
 
 
-////////////////////////////////////////////////////////////////////////////////
-}}
+ECO_NS_BEGIN(eco);
+ECO_NS_END(eco);
 #endif

@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/service/dev/Cluster.h>
 #include <eco/service/dev/Ecode.h>
-#include <eco/service/proto/Service.pb.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Project.h>
 #include <eco/Repository.h>
@@ -37,14 +36,14 @@ ECO_TYPE_IMPL(Cluster);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-const eco::service::Service Cluster::register_service(
+/*const eco::service::Service Cluster::register_service(
 	IN const char* service_name,
 	IN const char* router_name,
 	IN const int port)
 {
 	eco::service::Service service;
 	return service;
-}
+}*/
 
 
 ////////////////////////////////////////////////////////////////////////////////

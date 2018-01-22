@@ -1,0 +1,48 @@
+syntax = "proto3";
+package proto;
+
+////////////////////////////////////////////////////////////////////////////////
+// 错误信息
+message Error
+{
+	int32  id		= 1;		// 错误ID
+	bytes  message	= 2;		// 错误信息
+}
+
+
+/////////////////////////////////////////////////////////////////////// 对象管理
+// 查询对象请求（当前用户有权限的对象）
+message GetRequest
+{
+	uint64 user_id = 10;
+}
+
+// 订阅对象请求（当前用户有权限的对象）
+message SubRequest
+{
+	uint64 user_id = 10;
+}
+
+// 删除对象请求
+message RemoveRequest
+{
+	uint64 object_id = 10;
+	uint64 user_id = 11;
+}
+
+// 对象回报（订阅/保存/删除/更新属性）
+message Response
+{
+	proto.Error error = 1;
+	uint64 object_id = 10;
+	uint64 user_id = 11;
+}
+
+// 更新属性(Req)/发布属性（Pub）
+message Property
+{
+	uint64 user_id = 10;
+	uint64 object_id = 11;
+	string name = 12;
+	bytes  value = 13;
+}
