@@ -95,37 +95,35 @@ inline const char* find(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline uint32_t find_first_of(IN const char* key, IN const char flag)
+inline uint32_t find_first(IN const char* key, IN const char flag)
 {
-	// key format: "logging/file_link/roll_size".
 	uint32_t pos = 0;
 	for (; *key != 0 && *key != flag; ++key, ++pos) {}
-
-	if (*key == 0) 
-		pos = -1;
-
-	return pos;
+	return (*key == 0) ? - 1 : pos;
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-inline uint32_t find_of(
-	IN const char* key, 
-	IN const char  flag,
-	IN const uint32_t seq)
+inline uint32_t find_last(IN const char* key, IN const uint32_t end,
+	IN const char flag)
+{
+	const char* it = key + end - 1;
+	for (; *it != flag && it >= key; --it) {}
+	return static_cast<uint32_t>(it - key);
+}
+inline uint32_t find_last(IN const char* key, IN const char flag)
+{
+	// key format: "logging/file_link/roll_size".
+	uint32_t len = static_cast<uint32_t>(strlen(key));
+	return find_last(key, len, flag);
+}
+inline uint32_t find_nth(const char* key, const char flag, const uint32_t nth)
 {
 	uint32_t pos = 0;
 	uint32_t cur_seq = 0;
 	for (; *key != 0; ++key, ++pos)
 	{
-		if (*key == flag)
-			if (++cur_seq == seq)
-				break;
+		if (*key == flag && ++cur_seq == nth)
+			break;
 	}
-
-	if (*key == 0)
-		pos = -1;
-	return pos;
+	return (*key == 0) ? -1 : pos;
 }
 
 
