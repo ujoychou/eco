@@ -21,7 +21,7 @@ protocol stack structure like this:
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/Error.h>
+#include <eco/Type.h>
 #include <string>
 
 

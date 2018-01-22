@@ -24,7 +24,6 @@ logger.
 
 *******************************************************************************/
 #include <eco/log/Type.h>
-#include <eco/filesystem/SourceFile.h>
 
 
 
@@ -54,8 +53,7 @@ class PusherT
 public:
 	typedef Stream Stream;
 
-	inline PusherT() : m_severity(eco::log::none)
-	{}
+	inline PusherT();
 	~PusherT();
 
 	/*@ logging collector. domain has 'logging', 'monitor', 'report'
@@ -63,8 +61,7 @@ public:
 	PusherT& set(
 		IN const char* file_name,
 		IN int file_line,
-		IN SeverityLevel sev_level,
-		IN const char* domain = nullptr);
+		IN SeverityLevel sev_level);
 
 	/*@ log stream.*/
 	inline Stream& stream()
@@ -75,7 +72,8 @@ public:
 protected:
 	Stream m_stream;
 	SeverityLevel m_severity;
-	std::auto_ptr<eco::filesystem::SourceFile> m_src;
+	uint32_t	m_file_line;
+	const char* m_file_name;
 };
 
 
@@ -93,7 +91,12 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 template<uint32_t size>
 class FixPusherT : public PusherT<eco::StreamT<FixBuffer<size> > >
-{};
+{
+	typedef PusherT<eco::StreamT<FixBuffer<size> > > Super;
+public:
+	inline FixPusherT()
+	{}
+};
 typedef FixPusherT<log_text_size> FixPusher;
 typedef FixPusher::Stream LogStream;
 

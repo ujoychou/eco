@@ -467,7 +467,7 @@ public:
 		if (!head.decode_head(fin, frame, payload_len, mask,
 			pos, bytes.c_str(), bytes.size(), e))
 		{
-			EcoError << EcoFmte(e);
+			EcoError << e;
 			return nullptr;
 		}
 		if (mask)

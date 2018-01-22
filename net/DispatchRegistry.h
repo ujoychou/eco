@@ -38,25 +38,25 @@ inline void handle_context(IN Context& c)
 	const TcpConnection& conn = c.m_session.get_connection();
 
 	// 1.filter request
-	const char* error = nullptr;
+	const char* e = nullptr;
 	if (c.m_session.session_mode())
 	{
-		if (HandlerT::get_filter().authed() && !c.m_session.authed())
-			error = "session should be authed when recv message: ";
-		if (!HandlerT::get_filter().authed() && c.m_session.authed())
-			error = "session should be not authed when recv message: ";
+		if (HandlerT::authed() && !c.m_session.authed())
+			e = "session isn't authed when recv";
+		if (!HandlerT::authed() && c.m_session.authed())
+			e = "session is authed when recv";
 	}
 	else
 	{
-		if (HandlerT::get_filter().authed() && !conn.authed())
-			error = "connection should be authed when recv message: ";
-		if (!HandlerT::get_filter().authed() && conn.authed())
-			error = "connection should be not authed when recv message: ";
+		if (HandlerT::authed() && !conn.authed())
+			e = "connection isn't authed when recv";
+		if (!HandlerT::authed() && conn.authed())
+			e = "connection is authed when recv";
 	}
-	if (error != nullptr)
+	if (e != nullptr)
 	{
-		EcoNetIdLog(EcoWarn, conn.get_id())
-			<< error << c.m_meta.m_message_type;
+		EcoInfo(eco::net::req) << Log(c.m_session, 
+			c.m_meta.m_message_type, HandlerT::name()) << e;
 		return;
 	}
 	
@@ -72,21 +72,11 @@ inline void handle_context(IN Context& c)
 		c.release_data();		// release io raw data to save memory.
 		hdl->context() = std::move(c);
 
-		// 3.logging request.
-		if (HandlerT::auto_logging())
-		{
-			uint32_t type = static_cast<uint32_t>(c.m_meta.m_message_type);
-			EcoInfo << "req > "
-				<< eco::Integer<uint32_t>(type, eco::dec, 4).c_str()
-				<< " " << HandlerT::get_request_type_name()
-				<< " " >> HandlerT::Logging(*hdl);
-		}
-
-		// 4.handle request.
+		// 3.handle request.
 		hdl->on_request();
 	} 
 	catch (eco::Error& e) {
-		EcoError << EcoFmte(e);
+		EcoError << e;
 	}
 	catch (std::exception& e) {
 		EcoError << e.what();
@@ -181,7 +171,7 @@ public:
 	template<typename HandlerT>
 	inline void register_handler()
 	{
-		register_handler(HandlerT::get_request_type(),
+		register_handler(HandlerT::get_type(),
 			std::bind(&handle_context<HandlerT>, std::placeholders::_1));
 	}
 

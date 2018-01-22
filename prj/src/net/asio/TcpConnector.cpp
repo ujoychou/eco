@@ -405,7 +405,7 @@ void TcpConnector::async_write(IN eco::String& data, IN const uint32_t start)
 	m_impl->async_write(data, start);
 }
 
-int64_t TcpConnector::get_id() const
+size_t TcpConnector::get_id() const
 {
 	return impl().get_id();
 }

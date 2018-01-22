@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/net/TcpPeer.h>
 #include <eco/net/TcpConnection.h>
+#include <eco/net/Log.h>
 #include "TcpOuter.h"
 #include "TcpServer.ipp"
 #include "TcpClient.ipp"
@@ -112,9 +113,7 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	c.m_meta.m_category = dc.m_category;
 	if (!dc.m_prot->decode(c.m_meta, c.m_message, dc.m_data, e))
 	{
-		e << (dc.m_session_owner.m_server ? "tcp server" : "tcp client")
-			<< " decode fail.";
-		EcoNet(EcoError, *peer, "dispatch", e);
+		ECO_LOG_NET(peer->get_id(), c.m_meta.m_session_id, e);
 		return;
 	}
 
@@ -125,6 +124,7 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	sess.impl().m_owner = dc.m_session_owner;
 	conn.set_peer(dc.m_peer_wptr);
 	conn.set_protocol(*dc.m_prot);
+	conn.set_id(peer->get_id());
 	c.m_data = std::move(dc.m_data);
 	if (dc.m_session_owner.m_server && handle_server_context(c, *peer) ||
 		!dc.m_session_owner.m_server && handle_client_context(c, *peer))

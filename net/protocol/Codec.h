@@ -26,7 +26,6 @@
 #include <eco/ExportApi.h>
 #include <eco/net/Ecode.h>
 #include <eco/Type.h>
-#include <eco/Error.h>
 
 
 namespace eco{;

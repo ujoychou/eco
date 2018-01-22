@@ -24,7 +24,7 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/Error.h>
+#include <eco/Type.h>
 #include <eco/net/Net.h>
 #include <eco/net/Ecode.h>
 

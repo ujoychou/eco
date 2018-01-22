@@ -118,7 +118,7 @@ private:
 			{
 				// format: "Sec-WebSocket-Key: t/b9b1gBUKvemepe7PhatQ=="
 				key_end += 2;	// skip ": ", note there is a space.
-				server_key.asign(key_end, val_end - key_end);
+				server_key.asign(key_end, static_cast<uint32_t>(val_end - key_end));
 				if (server_key[server_key.size() - 1] == '\r')
 				{
 					server_key.resize(server_key.size() - 1);

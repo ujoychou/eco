@@ -40,19 +40,15 @@ or send a response, so get the request and response info.
 2.req\rsp detail.
 */
 
-#define EcoNet(EcoLog, peer, func, e) \
-EcoLog << (peer).get_id() << " " << func << ": " << EcoFmte(e);
-#define EcoNetId(EcoLog, id, func, e) \
-EcoLog << id << " " << func << ": " << EcoFmte(e);
-#define EcoNetLog(EcoLog, peer) EcoLog << (peer).get_id() << " "
-#define EcoNetIdLog(EcoLog, id) EcoLog << id << " "
-
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
 namespace net{;
 
 
+typedef uint32_t SessionId;
+typedef size_t ConnectionId;
+const SessionId none_session = 0;
 ////////////////////////////////////////////////////////////////////////////////
 // get local machine network info: ip\hostname\mac address.
 ECO_API const char* get_ip();

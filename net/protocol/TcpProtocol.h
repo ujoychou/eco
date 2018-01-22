@@ -162,15 +162,6 @@ private:
 		size_type			= 2,
 		size_req4			= 4,
 		size_req8			= 8,
-		// #.parameter topic
-		size_topic_type		= 2,
-		size_topic_prop		= 2,
-		size_topic_value	= 8,
-
-		size_topic_all		= size_topic_type,
-		size_topic_set		= size_topic_type + 
-							  size_topic_prop + size_topic_value,
-		size_topic_str		= 1,
 	};
 
 	inline uint32_t get_model_pos(IN  const uint32_t head_size) const
@@ -204,19 +195,6 @@ private:
 		else if (eco::has(meta.m_option, option_req8))
 		{
 			pos += size_req8;
-		}
-		
-		if (meta.model_topic_all())
-		{
-			pos += size_topic_all;
-		}
-		else if (meta.model_topic_set())
-		{
-			pos += size_topic_set;
-		}
-		else if (meta.model_topic_str())
-		{
-			pos += 1; // topic str length.
 		}
 		return pos;
 	}
@@ -305,33 +283,6 @@ public:
 		{
 			ntoh(meta.m_request_data, pos, &bytes[pos]);
 		}
-		
-		// get subscription topic info.
-		if (meta.model_topic_all())
-		{
-			ntoh(meta.m_topic_type, pos, &bytes[pos]);
-		}
-		else if (meta.model_topic_set())
-		{
-			ntoh(meta.m_topic_type, pos, &bytes[pos]);
-			ntoh(meta.m_topic_prop, pos, &bytes[pos]);
-			ntoh(meta.m_topic_value, pos, &bytes[pos]);
-		}
-		else if (meta.model_topic_str())
-		{
-			// validate topic str_len size.
-			meta.m_topic_str.m_size = bytes[pos++];
-			meta.m_topic_str.m_data = &bytes[pos];
-			pos += meta.m_topic_str.m_size;
-			// validate topic str size.
-			if (bytes.size() < pos + 1)
-			{
-				e.id(e_protocol_parameter)
-					<< "message size is smaller than meta topic str size: "
-					<< bytes.size() << '<' << pos + 1;
-				return false;
-			}
-		}
 
 		// message data bytes.
 		data.m_data = &bytes[pos];
@@ -351,10 +302,6 @@ public:
 		eco::net::TcpProtocolHead prot_head;
 		uint16_t head_size = prot_head.size();		// @head size.
 		uint32_t byte_size = get_meta_size(meta);		// #@meta size.
-		if (meta.m_topic_str.m_size > 0)
-		{
-			byte_size += meta.m_topic_str.m_size;		// #@topic str size.
-		}
 		uint32_t code_size = meta.m_codec->get_byte_size();	// #@message size.	
 		byte_size += code_size;
 		if (eco::has(meta.m_category, category_encrypted) && m_crypt != nullptr)
@@ -393,22 +340,6 @@ public:
 		else if (eco::has(meta.m_option, option_req8))
 		{
 			append_hton(bytes, meta.m_request_data);
-		}
-
-		// 4.init message topic.
-		if (meta.model_topic_all())
-		{
-			append_hton(bytes, meta.m_topic_type);
-		}
-		else if (meta.model_topic_set())
-		{
-			append_hton(bytes, meta.m_topic_type);
-			append_hton(bytes, meta.m_topic_prop);
-			append_hton(bytes, meta.m_topic_value);
-		}
-		else if (meta.model_topic_str())
-		{
-			bytes.append(meta.m_topic_str);
 		}
 
 		// 5.encode message object.

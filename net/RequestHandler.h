@@ -27,8 +27,7 @@
 #include <eco/net/Context.h>
 #include <eco/net/TcpSession.h>
 #include <eco/net/TcpConnection.h>
-#include <eco/net/RequestFilter.h>
-#include <eco/log/Log.h>
+#include <eco/net/Log.h>
 
 
 namespace eco{;
@@ -36,29 +35,74 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class MessageHandler : public eco::Object<MessageHandler>
-{
-public:
-	virtual ~MessageHandler() = 0 {}
-};
+#define ECO_LOG_RSP(rsp, hdl, type) \
+if (rsp.has_error()){ \
+EcoError(eco::net::rsp) << MessageHandler::Log(hdl, type) << rsp.error(); \
+}else \
+EcoInfo(eco::net::rsp) << MessageHandler::Log(hdl, type)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template <typename RequestHandler>
-class RequestLogging
+class MessageHandler : public eco::Object<MessageHandler>
 {
-public:
-	inline RequestLogging(RequestHandler& h) : m_handler(h)
+protected:
+	virtual ~MessageHandler() = 0 
 	{}
 
-	inline RequestLogging& operator>>(OUT eco::log::LogStream& logger)
+	// message name.
+	virtual const char* get_name() const = 0;
+
+public:
+	// logging.
+	class Log : public eco::net::Log
 	{
-		m_handler.on_logging(logger);
-		return *this;
+	public:
+		inline Log(
+			IN const MessageHandler* handler,
+			IN const uint32_t type = 0) : eco::net::Log(handler->session(),
+				type == 0 ? handler->get_type() : type, handler->get_name())
+		{}
+
+		inline Log(
+			IN const MessageHandler& handler,
+			IN const uint32_t type = 0) : eco::net::Log(handler.session(),
+				type == 0 ? handler.get_type() : type, handler.get_name())
+		{}
+
+		inline Log(
+			IN const MessageHandler* handler,
+			IN const std::string& user_name) : eco::net::Log(
+				handler->connection().get_id(), handler->session().get_id(),
+				handler->get_type(), handler->get_name(), user_name.c_str())
+		{}
+	};
+
+	// message type.
+	inline const uint32_t get_type() const
+	{
+		return m_context.m_meta.m_message_type;
 	}
 
-private:
-	RequestHandler& m_handler;
+	// context/session/connection receive from peer.
+	inline Context& context()
+	{
+		return m_context;
+	}
+	inline const Context& get_context() const
+	{
+		return m_context;
+	}
+	inline TcpSession& session() const
+	{
+		return (TcpSession&)m_context.m_session;
+	}
+	inline TcpConnection& connection() const
+	{
+		return session().connection();
+	}
+
+protected:
+	Context m_context;
 };
 
 
@@ -74,30 +118,11 @@ public:
 		IN const char* bytes,
 		IN const uint32_t size) = 0;
 
-	// format request logging.
-	virtual void on_logging(
-		OUT eco::log::LogStream& logger) const
-	{}
-
 	// receiving request notify, and handle request object.
 	virtual void on_request()
 	{}
 
 public:
-	typedef RequestHandler<Request> Handler;
-	typedef RequestLogging<Handler> Logging;
-	friend class RequestLogging<Handler>;
-
-	// context that recv from client.
-	inline Context& context()
-	{
-		return m_context;
-	}
-	inline const Context& get_context() const
-	{
-		return m_context;
-	}
-
 	// request that recv from remote peer.
 	inline Request& request()
 	{
@@ -106,18 +131,6 @@ public:
 	inline const Request& get_request() const
 	{
 		return m_request;
-	}
-
-	// context that recv from remote peer.
-	inline TcpSession& session() const
-	{
-		return (TcpSession&)m_context.m_session;
-	}
-
-	// context that recv from remote peer.
-	inline TcpConnection& connection() const
-	{
-		return session().connection();
 	}
 
 	// response message to the request.
@@ -148,32 +161,28 @@ public:
 
 protected:
 	Request m_request;
-	Context m_context;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_HANDLER(request_type, request_type_name, auto_log, filter_authed)\
+#define ECO_HANDLER(request_type, request_name, is_authed)\
 public:\
-	inline static uint64_t get_request_type()\
+	inline static const uint32_t get_type()\
 	{\
 		return request_type;\
 	}\
-	inline static const char* get_request_type_name()\
+	inline static const char* name()\
 	{\
-		return request_type_name;\
+		return request_name;\
 	}\
-	inline static eco::net::RequestFilter get_filter()\
+	virtual const char* get_name() const override\
 	{\
-		eco::net::RequestFilter f;\
-		f.set_authed(filter_authed);\
-		return f;\
+		return request_name;\
 	}\
-	inline static bool auto_logging()\
+	inline static bool authed()\
 	{\
-		return auto_log;\
+		return is_authed;\
 	}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

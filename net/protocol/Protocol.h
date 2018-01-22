@@ -36,16 +36,21 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
-	model_none				= 0x00,
+	// ftdc; logging;
+	req				= 0x01,
+	rsp				= 0x02,
+	sub				= 0x04,
+	pub				= 0x08,
+	all				= 0x10,
+	set				= 0x20,
+	str				= 0x40,
 
-	// none using.(once for ftdc.)
-	model_req1				= 0x80,
-	model_rsp2				= 0x40,
-
-	// object all.
+	// object all.(no using current, only for understand topic.)
 	// case: tid = (product_type, 0, 0), all product.
-	model_sub_all			= 0x01,
-	model_pub_all			= 0x02,
+	sub_all_req		= sub | all | req,
+	sub_all_rsp		= sub | all | rsp,
+	pub_all			= pub | all,
+
 	/* object set: type + property condition set.
 	case: product of the user whose id=2.
 	tid = (product_type, userid, 2), 
@@ -55,11 +60,13 @@ enum
 	tid = (product_type, data_privilege, 1)
 	data_privilege = 1 means {data_type=product_type, userid=2, type=stock;}
 	*/
-	model_sub_set			= 0x03,
-	model_pub_set			= 0x04,
+	sub_set_req		= sub | set | req,
+	sub_set_rsp		= sub | set | rsp,
+	pub_set			= pub | set,
 	// object set & all. topic id = "string topic id";
-	model_sub_str			= 0x05,
-	model_pub_str			= 0x06,
+	sub_str_req		= sub | str | req,
+	sub_str_rsp		= sub | str | rsp,
+	pub_str			= pub | str,
 };
 // for user define: MessageCategory is uint16_t.
 typedef uint16_t MessageModel;
@@ -97,14 +104,9 @@ public:
 	uint32_t		m_session_id;
 	uint32_t		m_message_type;
 	uint64_t		m_request_data;
-	// meta option data topic.
-	uint16_t		m_topic_type;
-	uint16_t		m_topic_prop;
-	uint64_t		m_topic_value;
-	eco::Bytes		m_topic_str;
 	// meta coder.
 	Codec*			m_codec;
-
+	
 public:
 	inline MessageMeta()
 	{
@@ -170,22 +172,31 @@ public:
 		eco::set(m_option, option_req4, eco::has(opt, option_req4));
 		eco::set(m_option, option_req8, eco::has(opt, option_req8));
 	}
+	inline const uint32_t get_req4() const
+	{
+		return static_cast<uint32_t>(m_request_data);
+	}
+	inline const uint64_t get_req8() const
+	{
+		return m_request_data;
+	}
 
+public:
 	inline bool model_topic() const
 	{
-		return model_sub_all <= m_model && m_model <= model_pub_str;
+		return eco::has(m_model, sub | pub);
 	}
 	inline bool model_topic_all() const
 	{
-		return model_sub_all <= m_model && m_model <= model_pub_all;
+		return eco::has(m_model, all);
 	}
 	inline bool model_topic_set() const
 	{
-		return model_sub_set <= m_model && m_model <= model_pub_set;
+		return eco::has(m_model, set);
 	}
 	inline bool model_topic_str() const
 	{
-		return model_sub_str <= m_model && m_model <= model_pub_str;
+		return eco::has(m_model, str);
 	}
 };
 

@@ -26,6 +26,7 @@
 #include <eco/ExportApi.h>
 #include <eco/Type.h>
 #include <eco/HeapOperators.h>
+#include <eco/net/Net.h>
 
 
 namespace eco{;
@@ -36,9 +37,6 @@ class TcpServerImpl;
 class Protocol;
 class ProtocolHead;
 ////////////////////////////////////////////////////////////////////////////////
-typedef uint32_t SessionId;
-const SessionId none_session = 0;
-
 // client access user handler, and user access client.
 typedef std::shared_ptr<int> ClientUser;
 typedef std::weak_ptr<int> ClientUserObserver;
