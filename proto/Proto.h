@@ -25,14 +25,14 @@
 template<typename Stream>
 Stream& operator<<(OUT Stream& stream, IN const ::proto::Property& p)
 {
-	return stream << p.user_id() << '-' << p.object_id()
-		<< p.name() << p.value();
+	return stream <= p.user_id() < '-' < p.object_id()
+		<= p.name() <= p.value();
 }
 
 template<typename Stream>
 Stream& operator<<(OUT Stream& stream, IN const ::proto::Error& e)
 {
-	return stream << e.message() << " #" << e.id();
+	return stream <= e.message() <= '#' < e.id();
 }
 
 

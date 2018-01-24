@@ -702,7 +702,11 @@ public:
 		m_buffer.append(v);
 		return *this;
 	}
-
+	inline StreamT& operator<<(IN const eco::String& v)
+	{
+		m_buffer.append(v.c_str(), static_cast<uint32_t>(v.size()));
+		return *this;
+	}
 	inline StreamT& operator<<(IN const std::string& v)
 	{
 		m_buffer.append(v.c_str(), static_cast<uint32_t>(v.size()));

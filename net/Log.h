@@ -182,8 +182,7 @@ private:
 	uint64_t	m_user_id;
 };
 
-#define ECO_LOG_NET(conn_id, sess_id, e) \
-EcoError << NetLog(conn_id, ECO_FUNC, sess_id) << e
+
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Stream>
 Stream& operator<<(OUT Stream& stream, IN const eco::net::Log& log)

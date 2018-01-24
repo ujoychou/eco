@@ -53,6 +53,12 @@ public:
 		set_max_connection_size(max_conn_size);
 	}
 
+	// disconnect and clear all client peer.
+	inline void clear()
+	{
+		m_peer_map.clear();
+	}
+
 	/*@ set max connection number.
 	* @ para.max_conn_size: this server suport how many connections.
 	*/
@@ -93,7 +99,7 @@ public:
 		auto it = m_peer_map.find(conn_id);
 		if (it != m_peer_map.end())
 		{
-			EcoError << NetLog(it->second->get_id(), ECO_FUNC);
+			EcoInfo << NetLog(conn_id, ECO_FUNC) <= it->second.use_count();
 			m_peer_map.erase(it);
 		}
 	}
@@ -132,7 +138,8 @@ public:
 			else
 			{
 				// 1.close state;2.close socket.3.remove.
-				EcoDebug << "clean dead peer: " << it->first;
+				EcoInfo << NetLog(it->first, ECO_FUNC)
+					<= it->second.use_count();
 				it->second->close();
 				it = m_peer_map.erase(it);
 			}
@@ -153,7 +160,8 @@ public:
 			else
 			{
 				// 1.close state;2.close socket.3.remove.
-				EcoDebug << "clean inactive peer: " << it->first;
+				EcoInfo << NetLog(it->first, ECO_FUNC)
+					<= it->second.use_count();
 				it->second->close();
 				it = m_peer_map.erase(it);
 			}

@@ -113,7 +113,8 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	c.m_meta.m_category = dc.m_category;
 	if (!dc.m_prot->decode(c.m_meta, c.m_message, dc.m_data, e))
 	{
-		ECO_LOG_NET(peer->get_id(), c.m_meta.m_session_id, e);
+		EcoError << NetLog(peer->get_id(), ECO_FUNC,
+			c.m_meta.m_session_id) <= e;
 		return;
 	}
 

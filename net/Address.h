@@ -96,6 +96,12 @@ public:
 			&& strcmp(addr1.get_service_name(), addr2.get_service_name()) == 0;
 	}
 };
+template<typename Stream>
+Stream& operator<<(OUT Stream& stream, IN const Address& v)
+{
+	return stream < v.get_host_name() < ':' < v.get_service_name()
+		< eco::group(v.get_name());
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

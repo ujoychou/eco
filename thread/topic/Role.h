@@ -39,19 +39,32 @@ public:
 
 	inline TopicId(
 		IN const uint32_t type,
-		IN const uint32_t prop,
+		IN const uint32_t prop	= 0,
 		IN const uint64_t value = 0)
 		: m_type(type), m_prop(prop), m_value(value)
 	{}
 
-	inline void set(
+	inline TopicId& set(
 		IN const uint32_t type,
-		IN const uint32_t prop,
+		IN const uint32_t prop  = 0,
 		IN const uint64_t value = 0)
 	{
 		m_type = type;
 		m_prop = prop;
 		m_value = value;
+		return *this;
+	}
+
+	inline TopicId& type(IN const uint32_t v)
+	{
+		m_type = v;
+		return *this;
+	}
+
+	inline TopicId& prop(IN const uint32_t v)
+	{
+		m_prop = v;
+		return *this;
 	}
 
 	inline uint64_t hash_value() const

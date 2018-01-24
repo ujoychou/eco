@@ -86,7 +86,7 @@ class SessionData : public eco::HeapOperators
 	ECO_OBJECT(SessionData);
 public:
 	inline  SessionData()  {}
-	virtual ~SessionData() {}
+	virtual ~SessionData() = 0 {}
 };
 
 // default session factory function.

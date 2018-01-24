@@ -24,8 +24,9 @@
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-class AsyncHandlerMap : public eco::Object<AsyncHandlerMap>
+class AsyncHandlerMap
 {
+	ECO_OBJECT(AsyncHandlerMap);
 public:
 	inline AsyncHandlerMap() {};
 

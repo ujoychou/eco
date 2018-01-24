@@ -130,9 +130,6 @@
     <Filter Include="lib\codec">
       <UniqueIdentifier>{05509480-6f77-4a39-bf04-bc1b6c4b6ea6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\net\protocol">
-      <UniqueIdentifier>{1caaef26-d6d5-420b-b507-14b6b5b197eb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="lib\proto">
       <UniqueIdentifier>{da8a0393-bcd0-496b-a16d-6ae69da1f78e}</UniqueIdentifier>
     </Filter>
