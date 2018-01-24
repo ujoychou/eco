@@ -144,23 +144,43 @@ protected:
 
 //##############################################################################
 //##############################################################################
-template<typename object_id, typename object_t, typename topic_id_t>
-inline object_id get_set_topic_object_id(
-	IN const object_t& obj, IN const topic_id_t& tid)
+class SetTopicAdapter
 {
-	return obj.get_id();
-}
+public:
+	template<typename Object, typename ObjectId, typename TopicId>
+	inline void operator()(
+		OUT ObjectId& id,
+		IN  const Object& obj,
+		IN  const TopicId& tid)
+	{
+		id = obj.get_id();
+	}
 
-/* template partitial specialization example:
-template<> inline std::string get_set_topic_object_id(
-	IN const object_t& obj, IN const topic_id_t& tid)
-{
-	return obj.get_target_id();
-}
-*/
+	template<typename Object, typename ObjectId, typename TopicId>
+	inline void operator()(
+		OUT ObjectId& id,
+		IN  const Object* obj,
+		IN  const TopicId& tid)
+	{
+		id = obj->get_id();
+	}
+
+	template<typename Object, typename ObjectId, typename TopicId>
+	inline void operator()(
+		OUT ObjectId& id, 
+		IN  const std::shared_ptr<Object>& obj,
+		IN  const TopicId& tid)
+	{
+		id = obj->get_id();
+	}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Object, typename ObjectId, typename TopicId = eco::TopicId,
+template<
+	typename Object, 
+	typename ObjectId,
+	typename ObjectIdAdapter = SetTopicAdapter,
+	typename TopicId = eco::TopicId,
 	typename ObjectMap = std::unordered_map<ObjectId, eco::Content::ptr>>
 class SetTopic : public TopicT<TopicId>
 {
@@ -240,8 +260,9 @@ public:
 	virtual void append(IN eco::Content::ptr& newc) override
 	{
 		eco::Mutex::ScopeLock lock(mutex());
-		ObjectId obj_id = get_set_topic_object_id<
-			ObjectId>(*(Object*)newc->get_set_topic_object(), m_id);
+		ObjectId obj_id;
+		Object* obj = (Object*)newc->get_set_topic_object();
+		ObjectIdAdapter()(obj_id, *obj, m_id);
 
 		// fuzzy updated state, newc can be "inserted" or "updated".
 		auto it = m_objects.find(obj_id);
@@ -265,8 +286,8 @@ public:
 				}
 			}
 		}
-		// insert item.
-		else
+		// insert item, ignore removed item.
+		else if (!newc->get_timestamp().is_removed())
 		{
 			newc->timestamp().set_value(eco::meta::inserted);
 			// set the new content with a identity if newc don't have that.
@@ -298,8 +319,9 @@ protected:
 		new_set.reserve(m_new_set.size());
 		for (auto it = m_new_set.begin(); it != m_new_set.end(); ++it)
 		{
-			ObjectId obj_id = get_set_topic_object_id<
-				ObjectId>(*(Object*)(**it).get_set_topic_object(), m_id);
+			ObjectId obj_id;
+			Object* obj = (Object*)(**it).get_set_topic_object();
+			ObjectIdAdapter()(obj_id, *obj, m_id);
 
 			// update item or insert item.
 			if ((**it).get_timestamp().is_updated()  ||

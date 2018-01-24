@@ -82,6 +82,7 @@ public:
 			topic_id, obj, topic_t::make, remove_obj);
 	}
 
+public:
 	// subscribe topic.
 	template<typename topic_id_t>
 	inline bool subscribe(
@@ -101,6 +102,7 @@ public:
 		}
 		return false;
 	}
+
 	template<typename topic_t, typename topic_id_t>
 	inline bool subscribe(
 		IN const topic_id_t& topic_id,
@@ -130,6 +132,16 @@ public:
 		return false;
 	}
 
+	template<typename topic_id_t>
+	inline bool has_subscriber(
+		IN const topic_id_t& topic_id,
+		IN Subscriber* subscriber)
+	{
+		Topic::ptr topic = find_topic(topic_id);
+		return (topic == nullptr) ? false : topic->has_subscriber(subscriber);
+	}
+
+public:
 	// create topic.
 	template<typename topic_id_t>
 	inline void create_topic(
