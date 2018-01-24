@@ -23,7 +23,7 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/HeapOperators.h>
 #include <eco/Type.h>
 #include <eco/net/Net.h>
 #include <eco/net/Ecode.h>
@@ -69,7 +69,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ProtocolHead
+class ProtocolHead : public eco::HeapOperators
 {
 public:
 	// get message head size. max head "size = 32 = sizeof(s_head_data[])".

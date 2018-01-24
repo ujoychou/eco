@@ -202,7 +202,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API Protocol
+class ECO_API Protocol : public eco::HeapOperators
 {
 	ECO_OBJECT(Protocol);
 public:
