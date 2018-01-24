@@ -77,12 +77,20 @@ public:
 		IN IoService* io,
 		IN TcpPeerHandler* handler);
 
+	// constructor
+	TcpPeer(
+		IN IoService* io,
+		IN TcpPeerHandler* hdl);
+
 	// tcp peer callback handler.
-	void set_handler(IN TcpPeerHandler*);
+	//void set_handler(IN TcpPeerHandler*);
 	TcpPeerHandler& handler();
 
 	// tcp peer identity which is the address of connector.
 	ConnectionId get_id() const;
+
+	// tcp remote client peer ip.
+	const eco::String get_ip() const;
 
 	// tcp peer connection state.
 	TcpState& state();

@@ -38,29 +38,35 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpPeer::Impl : public TcpConnectorHandler
 {
+	ECO_IMPL_INIT(TcpPeer);
 public:
 	TcpState m_state;
 	TcpPeer::wptr m_peer_observer;
 	TcpPeerHandler* m_handler;
-	std::auto_ptr<TcpConnector> m_connector;
+	TcpConnector m_connector;
 	std::auto_ptr<ConnectionData> m_data;
 	// the session of tcp peer.
 	//std::vector<uint32_t> m_session_id;
 	//eco::Mutex m_session_id_mutex;
 
 public:
-	Impl() : m_handler(nullptr)
-	{}
-
-	inline void init(IN TcpPeer&)
-	{}
-
-	inline void make(IN IoService* io, IN TcpPeerHandler* handler)
+	// never be called, this is just for complie success.
+	inline Impl() : m_handler(nullptr), m_connector(nullptr)
 	{
+		assert(false);
+	}
+
+	inline Impl(IN IoService* io, IN TcpPeerHandler* hdl)
+		: m_handler(hdl), m_connector(io)
+	{}
+
+	// peer must be created in the heap(by new).
+	inline void prepare(IN TcpPeer::ptr& peer)
+	{
+		peer->impl().m_peer_observer = peer;
+
 		// init io service and set tcp server.
-		m_connector.reset(new TcpConnector(io));
-		m_connector->register_handler(*this, m_peer_observer);
-		set_handler(handler);
+		m_connector.register_handler(*this, m_peer_observer);
 
 		// init state: prepare for first heartbeat.
 		m_state.set_self_live(false);
@@ -79,10 +85,6 @@ public:
 	}
 
 	// tcp peer callback handler.
-	inline void set_handler(IN TcpPeerHandler* v)
-	{
-		m_handler = v;
-	}
 	inline TcpPeerHandler& handler()
 	{
 		return *m_handler;
@@ -99,13 +101,18 @@ public:
 	// raw io socket related by the net framework: exp boost::asio\libevent.
 	inline TcpSocket* socket()
 	{
-		return m_connector->socket();
+		return m_connector.socket();
 	}
 
 	// tcp peer identity which is the address of connector.
 	inline size_t get_id() const
 	{
-		return m_connector->get_id();
+		return m_connector.get_id();
+	}
+
+	inline const eco::String get_ip() const
+	{
+		return (eco::String&&)m_connector.get_ip();
 	}
 
 	// tcp peer connection state.
@@ -127,7 +134,7 @@ public:
 	// ready to receive data head.
 	inline void async_connect(IN const Address& addr)
 	{
-		m_connector->async_connect(addr);
+		m_connector.async_connect(addr);
 	}
 	inline void async_recv_next();
 
@@ -148,7 +155,7 @@ public:
 		IN const uint32_t start)
 	{
 		m_state.set_self_live(true);
-		m_connector->async_write(data, start);
+		m_connector.async_write(data, start);
 	}
 
 	inline void async_send(IN const MessageMeta& meta, IN Protocol& prot)
@@ -158,7 +165,7 @@ public:
 		uint32_t start = 0;
 		if (!prot.encode(data, start, meta, e))
 		{
-			ECO_LOG_NET(get_id(), meta.m_session_id, e);
+			EcoError << NetLog(get_id(), ECO_FUNC, meta.m_session_id) <= e;
 			return;
 		}
 		async_send(data, start);
@@ -195,7 +202,7 @@ public:
 			m_state.set_closed();
 
 			// 2.close socket.
-			m_connector->close();
+			m_connector.close();
 		}
 	}
 
