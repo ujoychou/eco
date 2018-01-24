@@ -489,6 +489,16 @@ public:
 		return const_cast<PropertyMapping*>(map);
 	}
 
+	// get pk property
+	inline const PropertyMapping* find_pk() const
+	{
+		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
+		{
+			if (it->is_pk()) return &*it;
+		}
+		return nullptr;
+	}
+
 	// get pk filed count
 	inline int get_pk_count() const
 	{

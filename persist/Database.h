@@ -334,6 +334,26 @@ public:
 	{
 		return 'A' + i;
 	}
+
+public:
+	inline uint64_t get_max_id(IN const ObjectMapping& mapping)
+	{
+		// sql: "select max(id) from table".
+		auto* pk = mapping.find_pk();
+		if (pk == nullptr)
+		{
+			EcoThrow << "get max id fail, pk isn't exist.";
+		}
+		eco::Stream sql;
+		sql.buffer().reserve(64);
+		sql << "select max(" << pk->get_property() 
+			<< ") from " << mapping.get_table();
+
+		// get max id.
+		eco::Record rd;
+		select(rd, sql.c_str());
+		return eco::cast<uint64_t>(rd[0]);
+	}
 };
 
 
