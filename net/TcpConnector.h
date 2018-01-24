@@ -79,6 +79,9 @@ public:
 	// get tcp connection id.
 	ConnectionId get_id() const;
 
+	// get remote ip address.
+	const eco::String get_ip() const;
+
 	// get tcp connection socket.
 	TcpSocket* socket();
 

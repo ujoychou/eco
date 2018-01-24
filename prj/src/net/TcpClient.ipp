@@ -60,19 +60,17 @@ public:
 	TcpPeer::ptr				m_peer;
 	AddressLoad					m_address_cur;
 	std::vector<AddressLoad>	m_address_set;
-	TcpClient::Impl*			m_client;
 
 public:
-	inline LoadBalancer()
-	{}
-
-	inline void init(IN TcpClient::Impl& v)
+	inline void release()
 	{
-		m_client = &v;
+		m_peer->close();
+		// release peer before io service stop.
+		m_peer.reset();
 	}
 
-	bool load_server();
 	void update_address(IN AddressSet& addr);
+	bool connect();		// connect to server by blance algorithm.
 };
 
 
@@ -99,6 +97,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 class TcpClient::Impl : public TcpPeerHandler
 {
+	ECO_IMPL_INIT(TcpClient);
 public:
 	typedef std::auto_ptr<ProtocolHead> ProtocolHeadPtr;
 	LoadBalancer	m_balancer;		// load balance for multi server.
@@ -126,11 +125,6 @@ public:
 public:
 	inline Impl() : m_make_connection(nullptr), m_make_session(nullptr)
 	{}
-
-	inline void init(IN TcpClient& v)
-	{
-		m_balancer.init(*this);
-	}
 
 	// register protocol.
 	inline void set_protocol_head(IN ProtocolHead* v)
@@ -212,7 +206,7 @@ public:
 		async_connect();
 	}
 	inline void async_connect();
-	inline eco::FixBuffer<512> logging();
+	inline String logging();
 
 	// release tcp client and connection.
 	void close();
@@ -229,14 +223,14 @@ public:
 	inline void async_send(IN eco::String& data, IN const uint32_t start)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		m_balancer.m_peer->async_send(data, start);
+		peer().impl().async_send(data, start);
 	}
 
 	// async send data.
 	inline void async_send_heartbeat()
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		m_balancer.m_peer->impl().async_send_heartbeat(*m_prot_head);
+		peer().impl().async_send_heartbeat(*m_prot_head);
 	}
 
 	inline void async_send(IN MessageMeta& meta)
@@ -246,7 +240,6 @@ public:
 		uint32_t start = 0;
 		if (!m_protocol->encode(data, start, meta, e))
 		{
-			EcoError << "tcp client encode data fail." << e;
 			return;
 		}
 		async_send(data, start);
@@ -260,9 +253,9 @@ public:
 		// client isn't ready and connected when first send authority.
 		// because of before that client is async connect.
 		eco::Mutex::ScopeLock lock(m_mutex);
-		if (m_balancer.m_peer->get_state().connected())
+		if (peer().impl().get_state().connected())
 		{
-			m_balancer.m_peer->async_send(data, pack->m_request_start);
+			peer().impl().async_send(data, pack->m_request_start);
 		}
 	}
 

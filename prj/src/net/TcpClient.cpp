@@ -44,21 +44,14 @@ void LoadBalancer::update_address(IN eco::net::AddressSet& addr)
 		if (m_address_cur == *it)
 		{
 			m_address_cur.clear();
-			m_peer->close();
 		}
 	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool LoadBalancer::load_server()
+bool LoadBalancer::connect()
 {
-	if (m_peer == nullptr)
-	{
-		auto* io_srv = (IoService*)m_client->m_worker.get_io_service();
-		m_peer = TcpPeer::make(io_srv, m_client);
-	}
-
 	// this client has connect to server.
 	if (m_peer->get_state().connected())
 	{
@@ -110,7 +103,7 @@ void TcpClient::Impl::async_connect()
 	}
 	if (e)
 	{
-		EcoLog(error, 512) << logging() << e;
+		EcoLogStr(info, 512) << logging() << e;
 		return;
 	}
 
@@ -119,51 +112,54 @@ void TcpClient::Impl::async_connect()
 	{
 		// start io server, timer and dispatch server.
 		m_worker.run();
-		m_dispatcher.run();		
+		m_dispatcher.run();	
+		// create peer.
+		m_balancer.m_peer = TcpPeer::make(m_worker.get_io_service(), this);
 		// start timer.
 		m_timer.set_io_service(*(IoService*)m_worker.get_io_service());
-		m_timer.register_on_timer(std::bind(
-			&Impl::on_timer, this, std::placeholders::_1));
+		m_timer.register_on_timer(
+			std::bind(&Impl::on_timer, this, std::placeholders::_1));
 		set_tick_timer();
 		m_init.ok();
 	}
 	
-	if (m_balancer.load_server())
+	if (m_balancer.connect())
 	{
-		EcoLog(info, 512) << logging();
+		EcoLogStr(info, 512) << logging();
 	}
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-inline eco::FixBuffer<512> TcpClient::Impl::logging()
+inline String TcpClient::Impl::logging()
 {
-	eco::FixBuffer<512> log;
-	eco::String address(128, true);
-	auto it = m_balancer.m_address_set.begin();
-	for (; it != m_balancer.m_address_set.end(); ++it)
+	Stream log;
+	log.buffer().reserve(512);
+	log << "\n+[tcp client " << m_option.get_service_name() << "]\n";
+
+	// log address set and cur address.
+	auto addr_set = m_balancer.m_address_set;
+	for (auto it = addr_set.begin(); it != addr_set.end(); ++it)
 	{
-		address.append((m_balancer.m_address_cur == *it)
-			? "@[addr] " : "-[addr] ");
-		address.append(it->m_address.get_host_name());
-		address.append(':');
-		address.append(it->m_address.get_service_name());
-		address.append(" (");
-		address.append(it->m_address.get_name());
-		address.append(")\n");
+		if (m_balancer.m_address_cur == *it)
+			log < "@[addr]" <= it->m_address < '\n';
+		else
+			log < "-[addr]" <= it->m_address < '\n';
 	}
-	sprintf(log.buffer(0), "\n+[tcp client %s]\n%s"
-		"-[addr] %s\n"
-		"-[mode] io delay(%c), websocket(%c), sessions(%c)\n"
-		"-[tick] %ds, lost server %ds, heartbeat %ds reconnect %ds\n",
-		m_option.get_service_name(), address.c_str(), get_ip(),
-		eco::yn(m_option.no_delay()),
-		eco::yn(m_option.websocket()), eco::yn(session_mode()),
-		m_option.get_tick_time(),
-		m_option.get_heartbeat_recv_tick() * m_option.get_tick_time(),
-		m_option.get_heartbeat_send_tick() * m_option.get_tick_time(),
-		m_option.get_auto_reconnect_tick() * m_option.get_tick_time());
-	return log;
+
+	// log tcp client option.
+	auto lost = m_option.get_heartbeat_recv_tick() * m_option.get_tick_time();
+	auto send = m_option.get_heartbeat_send_tick() * m_option.get_tick_time();
+	auto conn = m_option.get_auto_reconnect_tick() * m_option.get_tick_time();
+	log << "-[this] " << get_ip() << '\n';
+	log << "-[mode] io delay" << eco::group(eco::yn(m_option.no_delay()))
+		<< ", websocket" << eco::group(eco::yn(m_option.websocket()))
+		<< ", sessions" << eco::group(eco::yn(session_mode())) << '\n'
+		<< "-[tick] " << m_option.get_tick_time() << 's'
+		<< ", lost server " << lost << 's'
+		<< ", heartbeat " << send << 's'
+		<< ", reconnect " << conn << "s\n";
+	return std::move(log.buffer());
 }
 
 
@@ -173,13 +169,13 @@ void TcpClient::Impl::close()
 	eco::Mutex::ScopeLock lock(m_mutex);
 	if (m_init.is_ok())
 	{
-		EcoInfo << "tcp client closing.";
+		auto id = peer().get_id();
 		m_timer.cancel();
-		m_balancer.m_peer->close();
+		m_balancer.release();
 		m_worker.stop();
 		m_dispatcher.stop();
 		m_init.none();
-		EcoInfo << "tcp client closed.";
+		EcoInfo << NetLog(id, ECO_FUNC);
 	}
 }
 
@@ -195,9 +191,9 @@ TcpSession TcpClient::Impl::open_session()
 	TcpConnectionOuter conn(sess.impl().m_conn);
 	sess.impl().m_owner.set(*(TcpClientImpl*)this);
 	sess.impl().m_session_wptr = pack->m_session;
-	sess.impl().m_peer = m_balancer.m_peer.get();
+	sess.impl().m_peer = &peer();
 	sess.make_client_session();
-	conn.set_peer(sess.impl().m_peer->impl().m_peer_observer);
+	conn.set_peer(peer().impl().m_peer_observer);
 	conn.set_protocol(*m_protocol);
 	pack->m_user_observer = sess.impl().m_user;
 	
@@ -240,7 +236,7 @@ void TcpClient::Impl::on_connect()
 {
 	eco::Mutex::ScopeLock lock(m_mutex);
 	// set peer option: no delay.
-	m_balancer.m_peer->set_option(m_option.no_delay());
+	peer().set_option(m_option.no_delay());
 
 	// reconnect to server: session authority.
 	for (auto it = m_authority_map.begin(); it != m_authority_map.end(); ++it)
@@ -250,11 +246,8 @@ void TcpClient::Impl::on_connect()
 		data.asign(pack.m_request.c_str(), pack.m_request.size());
 		async_send(data, pack.m_request_start);
 	}
-	m_balancer.m_peer->impl().make_connection_data(
-		m_make_connection, m_protocol.get());
-
-	// logging.
-	EcoInfo << NetLog(peer().get_id(), ECO_FUNC) << "connected.";
+	peer().impl().make_connection_data(m_make_connection, m_protocol.get());
+	EcoInfo << NetLog(peer().get_id(), ECO_FUNC);
 }
 
 
@@ -275,7 +268,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		EcoError << NetLog(peer_impl->get_id(), ECO_FUNC) << e;
+		EcoError << NetLog(peer_impl->get_id(), ECO_FUNC) <= e;
 		return;
 	}
 

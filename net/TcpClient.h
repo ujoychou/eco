@@ -112,13 +112,11 @@ public:
 	TcpSession open_session();
 
 	// service mode: set address ready to connect to service.
-	void set_address(
-		IN eco::net::AddressSet& service_addr);
-	void async_connect();
+	void set_address(IN eco::net::AddressSet&);
 
 	// service mode: async connect to service.
-	void async_connect(
-		IN eco::net::AddressSet& service_addr);
+	void async_connect(IN eco::net::AddressSet&);
+	void async_connect();
 
 	// async send request to server.
 	void async_auth(IN TcpSession& session, IN MessageMeta& meta);

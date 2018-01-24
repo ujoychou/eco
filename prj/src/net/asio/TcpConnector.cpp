@@ -26,9 +26,8 @@ public:
 	eco::Mutex m_send_msg_mutex;
 #endif
 
-	// peer handler.
-	TcpConnectorHandler* m_handler;
-	std::weak_ptr<TcpPeer> m_peer_observer;
+	TcpConnectorHandler* m_handler;				// handler.
+	std::weak_ptr<TcpPeer> m_peer_observer;		// parent peer.
 
 public:
 	Impl(IN boost::asio::io_service& srv)
@@ -36,14 +35,17 @@ public:
 	{}
 
 	~Impl()
-	{
-		boost::system::error_code ec;
-		m_socket.close(ec);
-	}
+	{}
 
 	inline size_t get_id() const
 	{
 		return reinterpret_cast<size_t>(this);
+	}
+
+	inline const eco::String get_ip() const
+	{
+		std::string ip = m_socket.remote_endpoint().address().to_string();
+		return eco::String(ip.c_str());
 	}
 
 	inline void async_connect(IN const Address& addr)
@@ -81,24 +83,24 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			EcoInfo << "on_connect peer null: " << ec.message()
-				<< '@' << ec.value();
 			return;
 		}
 
-		if (ec) {
+		if (ec) 
+		{
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_connect(false, &e);
-		} else {
-			set_option(true);
-			m_handler->on_connect(true, nullptr);
+			return;
 		}
+		set_option(true);
+		m_handler->on_connect(true, nullptr);
 	}
 
 	// close socket.
 	inline void close()
 	{
 		boost::system::error_code ec;
+		m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 		m_socket.close(ec);
 	}
 
@@ -137,10 +139,9 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			EcoInfo << "on_read_until peer null: " << ec.message()
-				<< '@' << ec.value();
 			return;
 		}
+
 		if (ec)
 		{
 			eco::Error e(ec.message(), ec.value());
@@ -182,17 +183,16 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			EcoInfo << "on_read_head peer null: " << ec.message() 
-				<< '@' << ec.value();
 			return;
 		}
 
-		if (ec) {
+		if (ec)
+		{
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_read_head(data, size, &e);
-		} else {
-			m_handler->on_read_head(data, size, nullptr);
+			return;
 		}
+		m_handler->on_read_head(data, size, nullptr);
 	}
 
 	inline void async_read_data(
@@ -219,18 +219,17 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			EcoInfo << "on_read_data peer null: " << ec.message()
-				<< '@' << ec.value();
 			return;
 		}
 
-		if (ec) {
+		if (ec) 
+		{
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_read_data(data, &e);
+			return;
 		}
-		else {
-			m_handler->on_read_data(data, nullptr);
-		}
+		
+		m_handler->on_read_data(data, nullptr);
 	}
 
 public:
@@ -259,8 +258,6 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			EcoInfo << "on_write peer null: " << ec.message()
-				<< '@' << ec.value();
 			return;
 		}
 
@@ -268,11 +265,9 @@ public:
 		{
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_write((uint32_t)bytes_transferred, &e);
+			return;
 		}
-		else 
-		{
-			m_handler->on_write((uint32_t)bytes_transferred, nullptr);
-		}// end if.
+		m_handler->on_write((uint32_t)bytes_transferred, nullptr);
 	}
 
 #else
@@ -306,8 +301,6 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
-			EcoInfo << "on_write peer null: " << ec.message()
-				<< '@' << ec.value();
 			return;
 		}
 
@@ -315,26 +308,25 @@ public:
 		{
 			eco::Error e(ec.message(), ec.value());
 			m_handler->on_write((uint32_t)bytes_transferred, &e);
+			return;
 		} 
-		else 
-		{
-			m_handler->on_write((uint32_t)bytes_transferred, nullptr);
 
-			// release sended data and send next msg.
+		m_handler->on_write((uint32_t)bytes_transferred, nullptr);
+
+		// release sended data and send next msg.
+		{
+			eco::Mutex::ScopeLock lock(m_send_msg_mutex);
+			m_send_msg.pop_front();
+			if (!m_send_msg.empty())
 			{
-				eco::Mutex::ScopeLock lock(m_send_msg_mutex);
-				m_send_msg.pop_front();
-				if (!m_send_msg.empty())
-				{
-					eco::String sd(std::move(m_send_msg.front()));
-					boost::asio::async_write(m_socket,
-						boost::asio::buffer(&sd[0], sd.size()),
-						boost::bind(&Impl::on_write, this,
+				eco::String sd(std::move(m_send_msg.front()));
+				boost::asio::async_write(m_socket,
+					boost::asio::buffer(&sd[0], sd.size()),
+					boost::bind(&Impl::on_write, this,
 						boost::asio::placeholders::error,
 						boost::asio::placeholders::bytes_transferred));
-				}
 			}
-		}// end if.
+		}
 	}
 #endif
 };
@@ -408,6 +400,11 @@ void TcpConnector::async_write(IN eco::String& data, IN const uint32_t start)
 size_t TcpConnector::get_id() const
 {
 	return impl().get_id();
+}
+
+const eco::String TcpConnector::get_ip() const
+{
+	return (eco::String&&)(impl().get_ip());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

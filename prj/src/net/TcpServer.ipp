@@ -78,6 +78,9 @@ public:
 		m_next_session_id = none_session;
 	}
 
+	inline ~Impl()
+	{}
+
 	// eco implment object init by api object(parent).
 	inline void init(TcpServer& server)
 	{
@@ -175,7 +178,12 @@ public:
 	inline void stop()
 	{
 		m_timer.cancel();
+		// destroy all io resource(should call constructor) before io server.
+		// close peer set before server stop.
+		m_peer_set.clear();
+		// close acceptor and stop io server.
 		m_acceptor.stop();
+		// stop business server.
 		m_dispatch.stop();
 	}
 

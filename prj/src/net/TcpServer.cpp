@@ -95,8 +95,8 @@ SessionData::ptr TcpServer::Impl::add_session(
 	if (m_session_map.size() >= m_option.get_max_session_size())
 	{
 		EcoError << NetLog(peer.get_id(), ECO_FUNC) 
-			<< "session has reached max size: "
-			<< m_option.get_max_session_size();
+			<= "session has reached max size: "
+			< m_option.get_max_session_size();
 		return SessionData::ptr();
 	}
 
@@ -193,7 +193,7 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		EcoError << NetLog(peer->get_id(), ECO_FUNC) << e;
+		EcoError << NetLog(peer->get_id(), ECO_FUNC) <= e;
 		return;
 	}
 
@@ -206,7 +206,7 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 		{
 			e.id(e_message_unknown) << "tcp server have no protocol: "
 				<< head.m_version;
-			EcoError << NetLog(peer->get_id(), ECO_FUNC) << e;
+			EcoError << NetLog(peer->get_id(), ECO_FUNC) <= e;
 			return;
 		}
 		// this is thread safe:

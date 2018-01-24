@@ -111,6 +111,18 @@ public:
 		return m_id;
 	}
 
+	// get tcp connection remote client ip.
+	inline const eco::String get_ip() const
+	{
+		TcpPeer::ptr peer = m_peer.lock();
+		if (peer == nullptr)
+		{
+			EcoThrow(e_peer_expired)
+				<< "get_ip fail peer has expired, it has been closed.";
+		}
+		return (eco::String&&)peer->get_ip();
+	}
+
 	template<typename ConnectionDataT>
 	inline ConnectionDataPtr<ConnectionDataT> cast() const
 	{
@@ -118,7 +130,7 @@ public:
 		if (peer == nullptr)
 		{
 			EcoThrow(e_peer_expired)
-				<< "peer has expired, it has been closed.";
+				<< "cast data fail peer has expired, it has been closed.";
 		}
 		return ConnectionDataPtr<ConnectionDataT>(peer);
 	}
@@ -188,6 +200,7 @@ class ConnectionData : public eco::HeapOperators
 public:
 	inline ConnectionData() : m_prot(nullptr), m_id(0)
 	{}
+	virtual ~ConnectionData() = 0 {}
 
 	// get connection object.
 	inline TcpConnection connection()

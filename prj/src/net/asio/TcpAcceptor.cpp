@@ -34,9 +34,6 @@ public:
 		m_server = nullptr;
 	}
 
-	inline ~Impl()
-	{}
-
 	/*@ async accept peer.*/
 	inline void async_accept()
 	{
@@ -73,6 +70,10 @@ public:
 
 	inline void stop()
 	{
+		m_acceptor->close();
+		// destroy acceptor before worker stop.
+		m_acceptor.reset();
+		// stop worker.
 		m_worker.stop();
 		m_worker_pool.stop();
 	}
