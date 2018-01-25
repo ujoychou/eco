@@ -29,6 +29,7 @@ eco basic type.
 #include <limits>
 #include <map>
 #include <eco/Cast.h>
+#include <eco/Memory.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -830,9 +831,11 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 // eco string stream, heap memory.
+const uint32_t fix_size = 256;
 typedef eco::StreamT<String> Stream;
-typedef eco::StreamT<FixBuffer<256> > ErrorStream;
-#define EcoStr(len) eco::StreamT<FixBuffer<256> >
+typedef eco::StreamT<FixBuffer<fix_size> > ErrorStream;
+#define EcoStream(len) eco::StreamT<eco::FixBuffer<len> >()
+#define EcoFixStream eco::StreamT<eco::FixBuffer<fix_size> >()
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1079,6 +1082,59 @@ void split(
 		set.push_back(str.substr(start_pos, str.size() - start_pos));
 	}
 }
+
+
+//###############################################################################
+template<uint32_t size>
+class Format
+{
+public:
+	inline explicit Format(IN const char* v = nullptr)
+		: m_format(v), m_cur_pos(0)
+	{}
+
+	inline void reset(IN const char* v)
+	{
+		m_format = v;
+		m_cur_pos = 0;
+	}
+
+	template<typename T>
+	inline Format& operator%(IN const T v)
+	{
+		if (m_cur_pos == -1)
+		{
+			return *this;
+		}
+
+		const char* str = m_format + m_cur_pos;
+		m_cur_pos = eco::find_first(str, '@');
+		if (m_cur_pos == -1)
+		{
+			m_stream << str;
+			return *this;
+		}
+		m_stream.buffer().append(str, m_cur_pos);
+		m_stream << v;
+		return *this;
+	}
+
+	inline operator const char* ()
+	{
+		if (m_cur_pos != -1)
+		{
+			const char* str = m_format + m_cur_pos;
+			m_stream << str;
+		}
+		return m_stream.c_str();
+	}
+
+private:
+	const char* m_format;
+	uint32_t m_cur_pos;
+	eco::StreamT<eco::FixBuffer<size> > m_stream;
+};
+typedef Format<fix_size> FixFormat;
 
 
 ////////////////////////////////////////////////////////////////////////////////
