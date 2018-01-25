@@ -45,23 +45,25 @@ public:
 	inline void publish(
 		IN const topic_id_t& topic_id,
 		IN const object_t& obj,
-		IN Topic* (*f)(IN const topic_id_t&) = nullptr,
+		IN Topic* (*make)(IN const topic_id_t&) = nullptr,
 		IN bool remove_obj = false)
 	{
-		__publish<object_t, object_t>(topic_id, obj, f, remove_obj);
+		__publish<object_t, object_t>(topic_id, obj, make, remove_obj);
 	}
+
+	// publish object to topic, and create topic if "make != nullptr".
 	template<typename object_t, typename topic_id_t>
 	inline void publish(
 		IN const topic_id_t& topic_id,
 		IN const std::shared_ptr<object_t>& obj,
-		IN Topic* (*f)(IN const topic_id_t&) = nullptr,
+		IN Topic* (*make)(IN const topic_id_t&) = nullptr,
 		IN bool remove_obj = false)
 	{
-		__publish<object_t, std::shared_ptr<object_t>>(
-			topic_id, obj, f, remove_obj);
+		__publish<object_t, std::shared_ptr<object_t> >(
+			topic_id, obj, make, remove_obj);
 	}
 
-	// publish new data from data source. 
+	// publish object to topic, and create topic.
 	template<typename topic_t, typename object_t, typename topic_id_t>
 	inline void publish(
 		IN const topic_id_t& topic_id,
@@ -71,15 +73,46 @@ public:
 		__publish<object_t, object_t>(
 			topic_id, obj, topic_t::make, remove_obj);
 	}
+
+	// publish "object to be removed."
 	template<typename topic_t, typename object_t, typename topic_id_t>
 	inline void publish(
 		IN const topic_id_t& topic_id,
 		IN const std::shared_ptr<object_t>& obj,
 		IN bool remove_obj = false)
 	{
-		typedef std::shared_ptr<object_t> object_ptr;
-		__publish<object_t, object_ptr>(
+		__publish<object_t, std::shared_ptr<object_t> >(
 			topic_id, obj, topic_t::make, remove_obj);
+	}
+
+	// publish object set to topic, and create topic.
+	template<typename topic_t, typename object_set_t, typename topic_id_t>
+	inline void publish_set(
+		IN const topic_id_t& topic_id,
+		IN const object_set_t& obj_set)
+	{
+		for (auto it = obj_set.begin(); it != obj_set.end(); ++it)
+		{
+			publish<topic_t>(topic_id, *it);
+		}
+	}
+
+	// publish "object to be removed."
+	template<typename set_topic_t, typename object_id_t, typename topic_id_t>
+	inline void remove(
+		IN const topic_id_t& topic_id,
+		IN const object_id_t& obj_id)
+	{
+		Topic::ptr topic = find_topic(topic_id);
+		if (topic != nullptr)
+		{
+			auto* set_topic = static_cast<set_topic_t*>(topic.get());
+			Content::ptr content = set_topic->find(obj_id);
+			content->timestamp().remove();
+			topic->append(content);
+			m_publish_server.post(
+				Publisher(topic, Publisher::mode_publish_new));
+		}
 	}
 
 public:

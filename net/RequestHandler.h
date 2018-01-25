@@ -28,6 +28,7 @@
 #include <eco/net/TcpSession.h>
 #include <eco/net/TcpConnection.h>
 #include <eco/net/Log.h>
+#include <eco/proto/Proto.h>
 
 
 namespace eco{;

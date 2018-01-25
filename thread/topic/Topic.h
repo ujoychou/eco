@@ -257,6 +257,14 @@ public:
 		return true;
 	}
 
+	// find content by identity.
+	inline eco::Content::ptr find(IN const ObjectId& id) const
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		auto it = m_objects.find(id);
+		return (it != m_objects.end()) ? it->second : nullptr;
+	}
+
 	virtual void append(IN eco::Content::ptr& newc) override
 	{
 		eco::Mutex::ScopeLock lock(mutex());
