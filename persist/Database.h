@@ -195,40 +195,85 @@ public:
 
 	// save data to database.
 	template<typename meta_t, typename object_t>
-	inline void save(
+	inline uint64_t save(
 		IN const object_t& obj,
 		IN const ObjectMapping& mapping)
 	{
 		meta_t meta;
 		meta.attach(obj);
+		uint64_t rows = save<meta_t>(
+			obj, mapping, meta.timestamp().get_value());
+		// update and insert object will reset timestamp to original.
+		meta.timestamp().origin();
+		return rows;
+	}
 
+	// save data to database.
+	template<typename meta_t, typename object_t>
+	inline uint64_t save(
+		IN const object_t& obj,
+		IN const ObjectMapping& mapping,
+		IN const eco::meta::TimestampState state)
+	{
 		std::string sql;
-		if (meta.timestamp().is_original())		// origin object.
+		eco::meta::Timestamp timestamp(state);
+		if (timestamp.is_original())		// origin object.
 		{
-			return ;	// no need to save.
+			return 0;	// no need to save.
 		}
-		else if (meta.timestamp().is_inserted())	// insert object.
+		else if (timestamp.is_inserted())	// insert object.
 		{
 			mapping.get_insert_sql<meta_t>(sql, obj);
 		}
-		else if (meta.timestamp().is_updated())	// update object.
+		else if (timestamp.is_updated())	// update object.
 		{
 			mapping.get_update_sql<meta_t>(sql, obj);
 		}
-		else if (meta.timestamp().is_removed())	// delete object.
+		else if (timestamp.is_removed())	// delete object.
 		{
 			mapping.get_delete_sql<meta_t>(sql, obj);
 		}
 		else
 		{
-			throw std::logic_error("save object failed, timestamp is invalid.");
+			EcoThrow << "save object failed, timestamp is invalid.";
 		}
 
 		// execute sql to save data.
 		uint64_t rows = execute_sql(sql.c_str());
+		return rows;
+	}
 
-		// that update and insert object need to reset timestamp to original.
-		meta.timestamp().origin();
+	// update object property value.
+	template<typename meta_t, typename object_t>
+	inline uint64_t update(
+		IN object_t& obj,
+		IN const char* prop,
+		IN const char* value,
+		IN const ObjectMapping& mapping)
+	{
+		auto* p = mapping.find_property(prop);
+		if (p == nullptr)
+		{
+			EcoThrow << "property isn't exist: " << prop;
+		}
+
+		meta_t meta;
+		meta.attach(obj);
+		// sql: "update set prop='value' where pk='v'"
+		std::string sql("update ");
+		sql.reserve(128);
+		sql += mapping.get_table();
+		sql += " set ";
+		sql += p->get_field();
+		sql += "='";
+		sql += meta.get_value(prop, eco_db);
+		sql += "'";
+		// condition sql: "where pk='v'"
+		std::string cond_sql;
+		mapping.get_condition_sql(cond_sql, meta);
+		sql += cond_sql;
+		uint64_t rows = execute_sql(sql.c_str());
+		return rows;
 	}
 
 	// removed all data from table.
@@ -258,7 +303,7 @@ public:
 
 		Record rd;
 		select(rd, sql.c_str());
-		mapping.decode<meta_t>(obj, rd, "eco_db");
+		mapping.decode<meta_t>(obj, rd, eco_db);
 	}
 
 	// read data from database.
@@ -274,7 +319,7 @@ public:
 
 		Record rd;
 		select(rd, sql.c_str());
-		mapping.decode<meta_t>(obj, rd, "eco_db");
+		mapping.decode<meta_t>(obj, rd, eco_db);
 	}
 
 	// save data to database.
@@ -289,7 +334,7 @@ public:
 		mapping.get_select_sql(sql, cond_sql, lias_table);
 		Recordset rd_set;
 		select(rd_set, sql.c_str());
-		mapping.decode_some<meta_t>(obj_set, rd_set, "eco_db");
+		mapping.decode_some<meta_t>(obj_set, rd_set, eco_db);
 	}
 
 	// save data to database.
@@ -305,7 +350,7 @@ public:
 		select(rd_set, sql.c_str());
 		
 		// decode meta.
-		join_map.decode_join(obj_set, rd_set, "eco_db");
+		join_map.decode_join(obj_set, rd_set, eco_db);
 	}
 
 	// is exist record in table.

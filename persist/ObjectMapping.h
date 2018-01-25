@@ -25,6 +25,7 @@
 
 
 namespace eco{;
+const char* const eco_db = "eco_db";	// using by meta, get/set object value.
 ////////////////////////////////////////////////////////////////////////////////
 class ObjectMapping : public eco::Object<ObjectMapping>
 {
@@ -70,7 +71,7 @@ public:
 			field_sql += it->get_field();
 			field_sql += ',';
 			value_sql += '\'';
-			value_sql += meta.get_value(it->get_property(), "eco_db");
+			value_sql += meta.get_value(it->get_property(), eco_db);
 			value_sql += "',";
 		}
 		// remove end ','.
@@ -111,60 +112,33 @@ public:
 		sql += m_table;
 		sql += " set ";
 		std::string cond_sql;
+		get_condition_sql(cond_sql, meta);
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
-			if (it->is_pk())
-			{
-				if (!cond_sql.empty()) {
-					cond_sql += (" and ");
-				}
-				cond_sql += it->get_field();
-				cond_sql += "='";
-				cond_sql += meta.get_value(it->get_property(), "eco_db");
-				cond_sql += "'";
-			}
-			else
+			if (!it->is_pk())
 			{
 				sql += it->get_field();
 				sql += "='";
-				sql += meta.get_value(it->get_property(), "eco_db");
+				sql += meta.get_value(it->get_property(), eco_db);
 				sql += "',";
 			}
 		}
 		sql.resize(sql.size() - 1);
-		sql += " where ";
 		sql += cond_sql;
 	}
 
 	template<typename meta_t, typename object_t>
-	void get_delete_sql(
+	inline void get_delete_sql(
 		OUT std::string& sql,
 		IN  const object_t& obj) const
 	{
 		meta_t meta;
 		meta.attach(obj);
 
-		// mapping is empty, return a empty sql.
-		if (get_pk_count() == 0)
-		{
-			sql.clear();
-			throw_error();
-		}
-
 		// sql format: 
 		// delete from table where field1='value1' and field2='value2',...
 		std::string cond_sql;
-		cond_sql.reserve(64);
-		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
-		{
-			if (it->is_pk())
-			{
-				cond_sql += cond_sql.empty() ? " where " : " and ";
-				cond_sql += it->get_field();
-				cond_sql += "='" + meta.get_value(it->get_property(), "eco_db");
-				cond_sql += "'";
-			}
-		}
+		get_condition_sql(cond_sql, meta);
 		sql.reserve(64);
 		sql = "delete from ";
 		sql += m_table;
@@ -172,8 +146,10 @@ public:
 		sql += cond_sql;
 	}
 
+	
+
 	template<typename meta_t, typename object_t>
-	void get_select_sql(
+	inline void get_select_sql(
 		OUT std::string& sql,
 		IN  const object_t& obj) const
 	{
@@ -189,19 +165,7 @@ public:
 
 		// construct condition sql.
 		std::string cond_sql;
-		for (auto it=m_prop_map.begin(); it!=m_prop_map.end(); ++it)
-		{
-			if (!it->is_pk())
-			{
-				continue;
-			}
-			cond_sql += !cond_sql.empty() ? " and " : "where ";
-			cond_sql += it->get_field();
-			cond_sql += "='";
-			cond_sql += meta.get_value(it->get_property(), "eco_db");
-			cond_sql += "'";
-		}
-
+		get_condition_sql(cond_sql, meta);
 		get_select_sql(sql, cond_sql.c_str(), 0);
 	}
 
@@ -228,6 +192,31 @@ public:
 		{
 			sql += ' ';
 			sql += cond_sql;
+		}
+	}
+
+public:
+	template<typename meta_t>
+	void get_condition_sql(
+		OUT std::string& cond_sql,
+		IN  meta_t& meta) const
+	{
+		// sql format: 
+		// where field1='value1' and field2='value2',...
+		cond_sql.reserve(64);
+		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
+		{
+			if (it->is_pk())
+			{
+				cond_sql += cond_sql.empty() ? " where " : " and ";
+				cond_sql += it->get_field();
+				cond_sql += "='" + meta.get_value(it->get_property(), eco_db);
+				cond_sql += "'";
+			}
+		}
+		if (cond_sql.empty())
+		{
+			throw_error();
 		}
 	}
 
