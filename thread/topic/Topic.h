@@ -144,7 +144,40 @@ protected:
 
 //##############################################################################
 //##############################################################################
-class SetTopicAdapter
+class IdAdapter
+{
+public:
+	template<typename Object, typename ObjectId, typename TopicId>
+	inline void operator()(
+		OUT ObjectId& id,
+		IN  const Object& obj,
+		IN  const TopicId& tid)
+	{
+		id = obj.id();
+	}
+
+	template<typename Object, typename ObjectId, typename TopicId>
+	inline void operator()(
+		OUT ObjectId& id,
+		IN  const Object* obj,
+		IN  const TopicId& tid)
+	{
+		id = obj->id();
+	}
+
+	template<typename Object, typename ObjectId, typename TopicId>
+	inline void operator()(
+		OUT ObjectId& id,
+		IN  const std::shared_ptr<Object>& obj,
+		IN  const TopicId& tid)
+	{
+		id = obj->id();
+	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class GetIdAdapter
 {
 public:
 	template<typename Object, typename ObjectId, typename TopicId>
@@ -175,11 +208,12 @@ public:
 	}
 };
 
+
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename Object, 
 	typename ObjectId,
-	typename ObjectIdAdapter = SetTopicAdapter,
+	typename ObjectIdAdapter = GetIdAdapter,
 	typename TopicId = eco::TopicId,
 	typename ObjectMap = std::unordered_map<ObjectId, eco::Content::ptr>>
 class SetTopic : public TopicT<TopicId>
