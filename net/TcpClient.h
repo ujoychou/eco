@@ -71,13 +71,8 @@ public:
 	void set_protocol(IN Protocol*);
 	Protocol& protocol() const;
 
-	// set connection data class.
-	template<typename ConnectionDataT>
-	inline void set_connection_data()
-	{
-		set_connection_data(&make_connection_data<ConnectionDataT>);
-	}
-	void set_connection_data(IN MakeConnectionDataFunc make);
+	// get connection id.
+	ConnectionId get_id();
 
 	// set session data class and tcp session mode.
 	template<typename SessionDataT>
@@ -87,6 +82,9 @@ public:
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
 	bool session_mode() const;
+
+	// register connection event
+	void set_event(IN OnConnectFunc on_connect, IN OnCloseFunc on_close);
 
 	// dispatch.
 	DispatchRegistry& dispatcher();

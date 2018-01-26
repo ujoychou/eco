@@ -246,8 +246,13 @@ void TcpClient::Impl::on_connect()
 		data.asign(pack.m_request.c_str(), pack.m_request.size());
 		async_send(data, pack.m_request_start);
 	}
-	peer().impl().make_connection_data(m_make_connection, m_protocol.get());
 	EcoInfo << NetLog(peer().get_id(), ECO_FUNC);
+
+	// notify on connect.
+	if (m_on_connect)
+	{
+		m_on_connect();
+	}
 }
 
 
@@ -255,6 +260,13 @@ void TcpClient::Impl::on_connect()
 void TcpClient::Impl::on_close(IN uint64_t peer_id)
 {
 	m_session_map.clear();
+	EcoInfo << NetLog(peer_id, ECO_FUNC);
+
+	// notify on close.
+	if (m_on_close)
+	{
+		m_on_close();
+	}
 }
 
 
@@ -322,9 +334,10 @@ DispatchRegistry& TcpClient::dispatcher()
 	return impl().m_dispatcher;
 }
 
-void TcpClient::set_connection_data(IN MakeConnectionDataFunc make)
+void TcpClient::set_event(IN OnConnectFunc on_connect, IN OnCloseFunc on_close)
 {
-	impl().m_make_connection = make;
+	impl().m_on_close = on_close;
+	impl().m_on_connect = on_connect;
 }
 
 void TcpClient::set_session_data(IN MakeSessionDataFunc make)
@@ -335,6 +348,11 @@ void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 bool TcpClient::session_mode() const
 {
 	return impl().session_mode();
+}
+
+ConnectionId TcpClient::get_id()
+{
+	return impl().peer().get_id();
 }
 
 void TcpClient::close()

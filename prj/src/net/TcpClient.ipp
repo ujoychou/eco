@@ -112,7 +112,8 @@ public:
 	eco::atomic::State		m_init;			// server init state.
 
 	// connection data factory.
-	MakeConnectionDataFunc m_make_connection;
+	OnCloseFunc m_on_close;
+	OnConnectFunc m_on_connect;
 	// session data management.
 	MakeSessionDataFunc m_make_session;
 	// all session that client have, diff by "&session".
@@ -123,7 +124,7 @@ public:
 	mutable eco::Mutex	m_mutex;
 
 public:
-	inline Impl() : m_make_connection(nullptr), m_make_session(nullptr)
+	inline Impl() : m_make_session(nullptr)
 	{}
 
 	// register protocol.
