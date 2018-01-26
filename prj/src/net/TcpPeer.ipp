@@ -84,7 +84,6 @@ public:
 		}
 	}
 
-	// tcp peer callback handler.
 	inline TcpPeerHandler& handler()
 	{
 		return *m_handler;
@@ -207,7 +206,7 @@ public:
 	}
 
 	// close peer and notify peer handler.
-	inline void notify_close(IN const eco::Error* e)
+	inline void close_and_notify(IN const eco::Error* e)
 	{
 		close();
 		m_handler->on_close(get_id());

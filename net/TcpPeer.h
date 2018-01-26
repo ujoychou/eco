@@ -82,8 +82,6 @@ public:
 		IN IoService* io,
 		IN TcpPeerHandler* hdl);
 
-	// tcp peer callback handler.
-	//void set_handler(IN TcpPeerHandler*);
 	TcpPeerHandler& handler();
 
 	// tcp peer identity which is the address of connector.
@@ -115,7 +113,7 @@ public:
 	void close();
 
 	// close peer and notify peer handler.
-	void notify_close(IN const eco::Error* e);
+	void close_and_notify(IN const eco::Error* e);
 
 	// async send string message.
 	void async_send(IN eco::String& data, IN const uint32_t start);

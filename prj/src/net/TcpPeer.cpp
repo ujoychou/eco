@@ -39,7 +39,7 @@ void TcpPeer::Impl::on_connect(
 	}
 
 	// "client" connect callback.
-	set_connected();				// set peer state.
+	set_connected();					// set peer state.
 	if (handler().websocket())
 	{
 		assert(false);
@@ -48,7 +48,7 @@ void TcpPeer::Impl::on_connect(
 	else
 	{
 		m_state.set_ready();
-		m_handler->on_connect();	// notify handler.
+		m_handler->on_connect();		// notify handler.
 		async_recv_next();
 	}
 }
@@ -75,7 +75,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand(
 	{
 		EcoError << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid.";
-		notify_close(nullptr);
+		close_and_notify(nullptr);
 		return;
 	}
 	async_send(shake_hand.response(), 0);
@@ -92,7 +92,7 @@ void TcpPeer::Impl::on_read_head(
 	if (err != nullptr)	// if peerection occur error, close it.
 	{
 		EcoError << NetLog(get_id(), ECO_FUNC) <= *err;
-		notify_close(err);
+		close_and_notify(err);
 		return; 
 	}
 
@@ -102,7 +102,7 @@ void TcpPeer::Impl::on_read_head(
 	if (!protocol_head().decode_data_size(data_size, data_head, head_size, e))
 	{
 		EcoError << NetLog(get_id(), ECO_FUNC) <= e;
-		notify_close(&e);
+		close_and_notify(&e);
 		return;
 	}
 
@@ -133,7 +133,7 @@ void TcpPeer::Impl::on_read_data(
 	if (e != nullptr)	// if peer occur error, release it.
 	{
 		EcoError << NetLog(get_id(), ECO_FUNC) <= *e;
-		notify_close(e);
+		close_and_notify(e);
 		return;
 	}
 
@@ -160,7 +160,7 @@ void TcpPeer::Impl::on_write(IN const uint32_t size, IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
-		notify_close(e);
+		close_and_notify(e);
 		return;
 	}
 
@@ -246,9 +246,9 @@ void TcpPeer::close()
 {
 	impl().close();
 }
-void TcpPeer::notify_close(IN const eco::Error* e)
+void TcpPeer::close_and_notify(IN const eco::Error* e)
 {
-	impl().notify_close(e);
+	impl().close_and_notify(e);
 }
 void TcpPeer::async_resp(IN Codec& codec, IN const uint32_t type,
 	IN const Context& c, IN Protocol& prot, IN const bool last)
