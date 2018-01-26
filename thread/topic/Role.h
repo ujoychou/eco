@@ -67,6 +67,12 @@ public:
 		return *this;
 	}
 
+	inline TopicId& value(IN const uint64_t v)
+	{
+		m_value = v;
+		return *this;
+	}
+
 	inline uint64_t hash_value() const
 	{
 		uint64_t result = m_type;
