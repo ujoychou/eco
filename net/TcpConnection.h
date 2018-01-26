@@ -86,7 +86,7 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			peer->notify_close(nullptr);
+			peer->close_and_notify(nullptr);
 		}
 	}
 
@@ -192,26 +192,14 @@ private:
 };
 
 
-////////////////////////////////////////////////////////////////////////////////
-// define session data holder. (using the boost::any<type> mechanism)
+////////////////////////////////////////////////////////////////////// TcpServer
 class ConnectionData : public eco::HeapOperators
 {
 	ECO_OBJECT(ConnectionData);
 public:
-	inline ConnectionData() : m_prot(nullptr), m_id(0)
+	// #.event: after server connection close.
+	virtual ~ConnectionData() = 0
 	{}
-	virtual ~ConnectionData() = 0 {}
-
-	// get connection object.
-	inline TcpConnection connection()
-	{
-		return TcpConnection(m_wptr, *m_prot, m_id);
-	}
-
-	inline const ConnectionId get_id() const
-	{
-		return m_id;
-	}
 
 	// whether this connection has authorized.
 	virtual bool authed() const
@@ -231,22 +219,28 @@ public:
 		return nullptr;
 	}
 
+public:
+	// #.event: after server connection connect.
+	inline ConnectionData() : m_prot(nullptr), m_id(0)
+	{}
+
+	// get connection object.
+	inline TcpConnection connection()
+	{
+		return TcpConnection(m_wptr, *m_prot, m_id);
+	}
+
+	inline const ConnectionId get_id() const
+	{
+		return m_id;
+	}
+
 private:
 	TcpPeer::wptr m_wptr;
 	Protocol* m_prot;
 	size_t  m_id;
 	friend class TcpPeer;
 };
-
-// default session factory function.
-template<typename ConnectionDataT>
-inline static ConnectionData* make_connection_data()
-{
-	return new ConnectionDataT();
-}
-
-// set session factory to create session of tcp server peer.
-typedef ConnectionData* (*MakeConnectionDataFunc)();
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -256,6 +250,21 @@ inline bool TcpConnection::authed() const
 	return peer != nullptr && peer->data() != nullptr
 		&& peer->data()->authed();
 }
+
+// default connection factory function.
+template<typename ConnectionDataT>
+inline static ConnectionData* make_connection_data()
+{
+	return new ConnectionDataT();
+}
+// set connection factory to create connection of tcp server peer.
+typedef ConnectionData* (*MakeConnectionDataFunc)();
+
+
+////////////////////////////////////////////////////////////////////// TcpClient
+typedef void (*OnConnectFunc) ();		// tcp client on connect event.
+typedef void (*OnCloseFunc) ();			// tcp client on close event.
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
