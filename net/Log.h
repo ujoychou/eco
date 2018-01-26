@@ -150,15 +150,14 @@ public:
 		, m_user_id(0)
 	{}
 
+	// scene: message handler logging.
 	inline Log(
 		IN const uint64_t conn_id,
-		IN const uint32_t sess_id,
 		IN const uint32_t type,
-		IN const char* func,
-		IN const std::string& user_name)
-		: NetLog(conn_id, func, sess_id)
+		IN const char* func)
+		: NetLog(conn_id, func, 0)
 		, m_type(type)
-		, m_user_name(user_name.c_str())
+		, m_user_name(0)
 		, m_user_id(0)
 	{}
 

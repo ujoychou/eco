@@ -191,7 +191,7 @@ protected:
 			} catch (eco::Error& e) {
 				EcoError << "message server: " << e;
 			} catch (std::exception& e) {
-				EcoError << "message server: " << e.what();
+				EcoLogStr(error, 512) << "message server: " << e.what();
 			}
 		}// end while
 	}

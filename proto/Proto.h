@@ -21,6 +21,7 @@
 #include "Object.pb.h"
 
 
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Stream>
 Stream& operator<<(OUT Stream& stream, IN const ::proto::Property& p)
@@ -36,6 +37,6 @@ Stream& operator<<(OUT Stream& stream, IN const ::proto::Error& e)
 }
 
 
-ECO_NS_BEGIN(eco);
+////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);
 #endif

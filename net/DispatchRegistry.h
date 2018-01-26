@@ -79,7 +79,7 @@ inline void handle_context(IN Context& c)
 		EcoError << e;
 	}
 	catch (std::exception& e) {
-		EcoError << e.what();
+		EcoLogStr(error, 0) << e.what();
 	}
 }
 
