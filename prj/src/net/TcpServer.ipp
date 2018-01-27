@@ -29,7 +29,7 @@
 #include <eco/net/TcpAcceptor.h>
 #include <eco/net/DispatchServer.h>
 #include <eco/net/protocol/ProtocolHead.h>
-#include <eco/Repository.h>
+#include <eco/thread/Map.h>
 #include <eco/thread/Atomic.h>
 #include <map>
 #include <vector>
@@ -70,7 +70,7 @@ public:
 	MakeSessionDataFunc m_make_session;
 	eco::Atomic<SessionId> m_next_session_id;
 	std::vector<SessionId> m_left_session_ids;
-	eco::Repository<SessionId, SessionData::ptr> m_session_map;
+	eco::HashMap<SessionId, SessionData::ptr> m_session_map;
 
 public:
 	inline Impl() : m_make_connection(nullptr), m_make_session(nullptr)

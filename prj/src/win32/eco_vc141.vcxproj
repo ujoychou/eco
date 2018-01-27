@@ -471,7 +471,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\process\Process.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Repository.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\RxApp.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CallOnce.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ConditionVariable.h" />
@@ -502,6 +501,7 @@
     <ClInclude Include="..\..\..\persist\Database.h" />
     <ClInclude Include="..\..\..\proto\Object.pb.h" />
     <ClInclude Include="..\..\..\proto\Proto.h" />
+    <ClInclude Include="..\..\..\thread\Map.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />

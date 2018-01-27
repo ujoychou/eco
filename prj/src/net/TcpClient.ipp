@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Project.h>
 #include <eco/thread/State.h>
-#include <eco/Repository.h>
+#include <eco/thread/Map.h>
 #include <eco/net/Worker.h>
 #include <eco/net/IoTimer.h>
 #include <eco/net/DispatchServer.h>
@@ -119,7 +119,7 @@ public:
 	// all session that client have, diff by "&session".
 	std::unordered_map<void*, SessionDataPack::ptr> m_authority_map;
 	// connected session that has id build by server.
-	eco::Repository<uint32_t, SessionDataPack::ptr> m_session_map;
+	eco::HashMap<uint32_t, SessionDataPack::ptr> m_session_map;
 
 	mutable eco::Mutex	m_mutex;
 

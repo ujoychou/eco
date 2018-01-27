@@ -338,9 +338,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h">
       <Filter>lib\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Repository.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h">
       <Filter>lib\app</Filter>
     </ClInclude>
@@ -733,6 +730,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\proto\Proto.h">
       <Filter>lib\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Map.h">
+      <Filter>lib\thread</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

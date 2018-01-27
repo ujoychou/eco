@@ -2,7 +2,7 @@
 #include <eco/Config.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Project.h>
-#include <eco/Repository.h>
+#include <eco/thread/Map.h>
 #include <eco/xml/Reader.h>
 
 
@@ -19,7 +19,7 @@ public:
 	ContextNode m_root;
 
 	// index of config nodes.
-	eco::Repository<std::string, StringAny> m_data;
+	eco::HashMap<std::string, StringAny> m_data;
 
 public:
 	inline void get_property_set_raw(

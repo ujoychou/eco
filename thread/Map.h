@@ -1,8 +1,8 @@
-#ifndef ECO_REPOSITORY_H
-#define ECO_REPOSITORY_H
+#ifndef ECO_THREAD_MAP_H
+#define ECO_THREAD_MAP_H
 /*******************************************************************************
 @ name
-data repository.
+data map.
 
 @ function
 it shared the data in the program, and it manage data's life cycle.
@@ -33,12 +33,11 @@ template<
 	typename identity_t, 
 	typename value_t,
 	typename container = std::unordered_map<identity_t, value_t >>
-class Repository : public eco::Object<Repository<identity_t, value_t, container> >
+class MapT : public eco::Object<MapT<identity_t, value_t, container> >
 {
 public:
 	typedef identity_t identity;
 	typedef value_t value;
-	typedef Repository<identity_t, value_t, container> repository;
 
 	template<typename value_iterator_find>
 	class MapFinder
@@ -64,21 +63,16 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 public:
 	/*@ constructor. */
-	Repository()
-	{}
+	inline MapT() {}
 
-	/*@ destructor. */
-	virtual ~Repository()
-	{}
-
-	// repository size.
+	// map size.
 	inline size_t size() const
 	{
 		eco::Mutex::ScopeLock lock(m_data_map_mutex);
 		return m_data_map.size();
 	}
 
-	/*@ add object to repository.*/
+	/*@ add object to map.*/
 	inline void set(
 		IN const identity& id,
 		IN const value& val)
@@ -96,54 +90,54 @@ public:
 		return obj;
 	}
 
-	/*@ get object from repository, create object derived from value object.
+	/*@ get object from map, create object derived from value object.
 	*/
 	template<typename object_t>
 	inline value get_object(
 		IN const identity& id,
 		IN object_t*(*make_func)(IN const identity&)
-		= &repository::make_object<object_t, identity>)
+		= &make_object<object_t, identity>)
 	{
-		// find data in repository.
+		// find data in map.
 		eco::Mutex::ScopeLock lock(m_data_map_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
 			return it->second;
 		}
-		// add val to repository.
+		// add val to map.
 		return (m_data_map[id] = value(make_func(id)));
 	}
 
-	/*@ get value from repository.
+	/*@ get value from map.
 	*/
 	inline value get(IN const identity& id)
 	{
-		// find data in repository.
+		// find data in map.
 		eco::Mutex::ScopeLock lock(m_data_map_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
 			return it->second;
 		}
-		// add val to repository.
+		// add val to map.
 		return m_data_map[id];
 	}
 
-	/*@ get object from repository, if find failed throw exception.
+	/*@ get object from map, if find failed throw exception.
 	*/
 	inline value at(IN const identity& id) const
 	{
-		// find data in repository.
+		// find data in map.
 		value val;
 		if (!find(val, id))
 		{
-			EcoThrow(-1);
+			EcoThrow << "get object from eco map fail.";
 		}
 		return val;
 	}
 
-	/*@ find object from repository.
+	/*@ find object from map.
 	*/
 	inline bool find(OUT value& val, IN  const identity& id) const
 	{
@@ -157,7 +151,7 @@ public:
 		return true;
 	}
 
-	/*@ find object from repository.
+	/*@ find object from map.
 	*/
 	template<typename function_t>
 	inline bool find_if(OUT value& val, IN function_t func) const
@@ -180,18 +174,18 @@ public:
 		return (m_data_map.find(id) != m_data_map.end());
 	}
 
-	/*@ remove object from repository.*/
+	/*@ remove object from map.*/
 	inline value pop(IN const identity& id)
 	{
 		int eid = 0;
 		value v = pop(id, eid);
 		if (eid != 0)
 		{
-			EcoThrow(eid) << "repository pop fail.";
+			EcoThrow(eid) << "map pop fail.";
 		}
 		return v;
 	}
-	/*@ remove object from repository.*/
+	/*@ remove object from map.*/
 	inline value pop(IN const identity& id, OUT int& eid)
 	{
 		eco::Mutex::ScopeLock lock(m_data_map_mutex);
@@ -209,7 +203,7 @@ public:
 		return v;
 	}
 
-	/*@ remove object from repository.*/
+	/*@ remove object from map.*/
 	inline void erase(IN const identity& id)
 	{
 		eco::Mutex::ScopeLock lock(m_data_map_mutex);
@@ -254,12 +248,12 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<
-	typename Identity,
-	typename Value,
-	typename Container = std::map < Identity, Value >>
-class MapRepository : public Repository<Identity, Value, Container>
-{};
+template<typename identity_t, typename value_t>
+class HashMap : public MapT<identity_t, value_t> {};
+
+template<typename identity_t, typename value_t>
+class Map : public MapT<identity_t, value_t, std::map<identity_t, value_t> > {};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }// ns::eco
