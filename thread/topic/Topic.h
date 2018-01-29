@@ -40,7 +40,7 @@ protected:
 	{
 		if (m_snap.get() != nullptr)
 		{
-			m_snap->timestamp().origin();
+			eco::meta::clear(m_snap->timestamp());
 			suber.on_publish(m_id, m_snap);
 		}
 	}
@@ -155,24 +155,6 @@ public:
 	{
 		id = obj.id();
 	}
-
-	template<typename Object, typename ObjectId, typename TopicId>
-	inline void operator()(
-		OUT ObjectId& id,
-		IN  const Object* obj,
-		IN  const TopicId& tid)
-	{
-		id = obj->id();
-	}
-
-	template<typename Object, typename ObjectId, typename TopicId>
-	inline void operator()(
-		OUT ObjectId& id,
-		IN  const std::shared_ptr<Object>& obj,
-		IN  const TopicId& tid)
-	{
-		id = obj->id();
-	}
 };
 
 
@@ -188,89 +170,25 @@ public:
 	{
 		id = obj.get_id();
 	}
-
-	template<typename Object, typename ObjectId, typename TopicId>
-	inline void operator()(
-		OUT ObjectId& id,
-		IN  const Object* obj,
-		IN  const TopicId& tid)
-	{
-		id = obj->get_id();
-	}
-
-	template<typename Object, typename ObjectId, typename TopicId>
-	inline void operator()(
-		OUT ObjectId& id, 
-		IN  const std::shared_ptr<Object>& obj,
-		IN  const TopicId& tid)
-	{
-		id = obj->get_id();
-	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<
-	typename Object, 
-	typename ObjectId,
+template<typename ObjectId, typename Object, 
 	typename ObjectIdAdapter = GetIdAdapter,
 	typename TopicId = eco::TopicId,
-	typename ObjectMap = std::unordered_map<ObjectId, eco::Content::ptr>>
+	typename ObjectMap = std::unordered_map<ObjectId, eco::Content::ptr> >
 class SetTopic : public TopicT<TopicId>
 {
 	ECO_TOPIC(SetTopic);
 public:
-	typedef std::function<void(
-		IN eco::Content::ptr& newc)> OnErrorFunc;
-	typedef std::function<bool(
-		IN eco::Content::ptr& newc)> OnInsertFunc;
-	typedef std::function<bool(
-		IN eco::Content::ptr& newc,
-		IN eco::Content::ptr& oldc)> OnUpdateFunc;
-
-	inline static void on_error(
-		IN eco::Content::ptr& newc)
-	{}
-
-	inline static bool on_insert(
-		IN eco::Content::ptr& newc)
-	{
-		return true;
-	}
-
-	inline static bool on_update(
-		IN eco::Content::ptr& newc,
-		IN eco::Content::ptr& oldc)
-	{
-		return true;
-	}
-
-public:
-	// constructor.
-	inline SetTopic()
-	{
-		m_on_error  = on_error;
-		m_on_insert = on_insert;
-		m_on_update = on_update;
-	}
-
-	// set callback function
-	inline void set_function(
-		IN OnErrorFunc e,
-		IN OnInsertFunc i,
-		IN OnInsertFunc u)
-	{
-		m_on_error  = e;
-		m_on_insert = i;
-		m_on_update = u;
-	}
+	inline SetTopic(){};
 
 	// content mutex.
 	inline eco::Mutex& mutex() const
 	{
 		return m_content_mutex;
 	}
-
 	// get objects map.
 	inline const ObjectMap& get_object_map() const
 	{
@@ -278,8 +196,8 @@ public:
 	}
 
 	// find object by identity.
-	template<typename Object>
-	inline bool find(OUT Object& obj, IN  const ObjectId& id) const
+	template<typename value_t>
+	inline bool find(OUT value_t& v, IN  const ObjectId& id) const
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		auto it = m_objects.find(id);
@@ -287,7 +205,7 @@ public:
 		{
 			return false;
 		}
-		obj = *(Object*)it->second->get_value();
+		v = *(value_t*)it->second->get_value();
 		return true;
 	}
 
@@ -311,33 +229,26 @@ public:
 		if (it != m_objects.end())
 		{
 			// remove item.
-			if (newc->get_timestamp().is_removed())
+			if (eco::meta::removed(newc->get_timestamp()))
 			{
-				it->second->timestamp().set_value(eco::meta::removed);
+				it->second->timestamp() = eco::meta::v_remove;
 				m_new_set.push_back(it->second);
 				m_objects.erase(it);
 			}
 			// update item.
 			else
 			{
-				newc->timestamp().set_value(eco::meta::updated);
-				if (m_on_update(newc, it->second))
-				{
-					m_new_set.push_back(newc);
-					it->second = newc;
-				}
+				newc->timestamp() = eco::meta::v_update;
+				m_new_set.push_back(newc);
+				it->second = newc;
 			}
 		}
 		// insert item, ignore removed item.
-		else if (!newc->get_timestamp().is_removed())
+		else if (!eco::meta::removed(newc->get_timestamp()))
 		{
-			newc->timestamp().set_value(eco::meta::inserted);
-			// set the new content with a identity if newc don't have that.
-			if (m_on_insert(newc))
-			{
-				m_new_set.push_back(newc);
-				m_objects[obj_id] = newc;
-			}
+			newc->timestamp() = eco::meta::v_insert;
+			m_new_set.push_back(newc);
+			m_objects[obj_id] = newc;
 		}
 	}
 
@@ -364,25 +275,20 @@ protected:
 			ObjectId obj_id;
 			Object* obj = (Object*)(**it).get_set_topic_object();
 			ObjectIdAdapter()(obj_id, *obj, m_id);
-
-			// update item or insert item.
-			if ((**it).get_timestamp().is_updated()  ||
-				(**it).get_timestamp().is_inserted() ||
-				(**it).get_timestamp().is_original())
-			{
-				new_set.push_back(*it);
-				m_snap_set[obj_id] = *it;
-			}
-			// remove item.
-			else if ((**it).get_timestamp().is_removed())
+			if (eco::meta::removed((**it).get_timestamp()))
 			{
 				auto it_snap = m_snap_set.find(obj_id);
 				if (it_snap != m_snap_set.end())
 				{
-					it_snap->second->timestamp().remove();
+					eco::meta::remove(it_snap->second->timestamp());
 					new_set.push_back(it_snap->second);
 					m_snap_set.erase(it_snap);
 				}
+			}
+			else
+			{
+				new_set.push_back(*it);
+				m_snap_set[obj_id] = *it;
 			}
 		}
 		m_new_set.clear();
@@ -405,11 +311,6 @@ protected:
 	// new data that never sended to subscriber.
 	std::vector<eco::Content::ptr> m_new_set;
 	mutable eco::Mutex m_content_mutex;
-
-	// on function.
-	OnErrorFunc		m_on_error;
-	OnInsertFunc	m_on_insert;
-	OnUpdateFunc	m_on_update;
 };
 
 

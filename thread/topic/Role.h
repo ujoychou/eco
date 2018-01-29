@@ -111,9 +111,7 @@ class Content
 {
 	ECO_OBJECT(Content);
 public:
-	inline Content(
-		IN const eco::meta::TimestampState state)
-		: m_timestamp(state)
+	inline Content(IN const eco::meta::Timestamp v)	: m_timestamp(v)
 	{}
 
 	// destructor.
@@ -138,7 +136,7 @@ public:
 	template<typename value_t>
 	inline value_t* cast_ptr()
 	{
-		return get_type_id() == eco::TypeId<value_t>::value()
+		return get_type_id() == eco::TypeId<value_t>::value
 			? static_cast<value_t*>(get_value()) : nullptr;
 	}
 
@@ -161,8 +159,8 @@ template<typename Object, typename Value>
 class ContentT : public eco::Content
 {
 public:
-	inline ContentT(IN const Value& v, IN eco::meta::TimestampState state)
-		: m_value((Value&)v), eco::Content(state)
+	inline ContentT(IN const Value& v, IN eco::meta::Timestamp ts)
+		: m_value((Value&)v), eco::Content(ts)
 	{}
 
 	virtual ~ContentT() override
@@ -170,7 +168,7 @@ public:
 
 	virtual const uint32_t get_type_id() const override
 	{
-		return eco::TypeId<Value>::value();
+		return eco::TypeId<Value>::value;
 	}
 
 	virtual void* get_value() override

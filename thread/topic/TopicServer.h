@@ -108,7 +108,7 @@ public:
 		{
 			auto* set_topic = static_cast<set_topic_t*>(topic.get());
 			Content::ptr content = set_topic->find(obj_id);
-			content->timestamp().remove();
+			eco::meta::remove(content->timestamp());
 			topic->append(content);
 			m_publish_server.post(
 				Publisher(topic, Publisher::mode_publish_new));
@@ -168,7 +168,7 @@ public:
 	template<typename topic_id_t>
 	inline bool has_subscriber(
 		IN const topic_id_t& topic_id,
-		IN Subscriber* subscriber)
+		IN Subscriber* subscriber) const
 	{
 		Topic::ptr topic = find_topic(topic_id);
 		return (topic == nullptr) ? false : topic->has_subscriber(subscriber);
@@ -235,7 +235,7 @@ public:
 
 	// find derived topic.
 	template<typename topic_t, typename topic_id_t>
-	inline std::shared_ptr<topic_t> find_topic(IN const topic_id_t& topic_id)
+	inline std::shared_ptr<topic_t> find_topic(IN const topic_id_t& topic_id) const
 	{
 		Topic::ptr topic = find_topic(topic_id);
 		return std::dynamic_pointer_cast<topic_t>(topic);
@@ -249,13 +249,13 @@ public:
 		return std::dynamic_pointer_cast<topic_t>(topic);
 	}
 
-	// find shared content in repository topic.
+	// find content in repository topic.
 	template<typename set_topic_t, typename topic_id_t,
 		typename object_t, typename object_id_t>
 	inline bool find_content(
 		OUT object_t& obj,
 		IN  const topic_id_t& topic_id,
-		IN  const object_id_t& object_id)
+		IN  const object_id_t& object_id) const
 	{
 		Topic::ptr topic = find_topic(topic_id);
 		if (topic != nullptr)
@@ -264,6 +264,21 @@ public:
 			return set_topic->find(obj, object_id);
 		}
 		return false;
+	}
+
+	// find content in repository topic.
+	template<typename set_topic_t, typename topic_id_t, typename object_id_t>
+	inline eco::Content::ptr find_content(
+			IN  const topic_id_t& topic_id,
+			IN  const object_id_t& object_id) const
+	{
+		Topic::ptr topic = find_topic(topic_id);
+		if (topic != nullptr)
+		{
+			auto* set_topic = static_cast<set_topic_t*>(topic.get());
+			return set_topic->find(object_id);
+		}
+		return nullptr;
 	}
 
 	// clear topic's content.
@@ -329,8 +344,8 @@ private:
 		Topic::ptr topic = get_topic(topic_id, f);
 		if (topic != nullptr)
 		{
-			auto state = remove_obj ? eco::meta::removed : eco::meta::inserted;
-			Content::ptr content(new ContentT<object_t, value_t>(obj, state));
+			auto ts = remove_obj ? eco::meta::v_remove : eco::meta::v_insert;
+			Content::ptr content(new ContentT<object_t, value_t>(obj, ts));
 			topic->append(content);
 			m_publish_server.post(
 				Publisher(topic, Publisher::mode_publish_new));
