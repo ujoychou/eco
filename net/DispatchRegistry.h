@@ -171,7 +171,7 @@ public:
 	template<typename HandlerT>
 	inline void register_handler()
 	{
-		register_handler(HandlerT::get_type(),
+		register_handler(HandlerT::request_type(),
 			std::bind(&handle_context<HandlerT>, std::placeholders::_1));
 	}
 

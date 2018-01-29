@@ -116,19 +116,14 @@ template<typename type_t>
 class TypeId
 {
 public:
-	inline static const uint32_t value()
-	{
-		return s_type_id;
-	}
 	inline operator const uint32_t() const
 	{
-		return s_type_id;
+		return value;
 	}
-private:
-	static uint32_t s_type_id;
+	static uint32_t value;
 };
 template<typename type_t>
-uint32_t TypeId<type_t>::s_type_id = TypeCount<>::s_type_count++;
+uint32_t TypeId<type_t>::value = TypeCount<>::s_type_count++;
 
 template<typename type_t>
 inline const char* get_type()
@@ -144,7 +139,7 @@ ECO_NS_END(eco);
 public:\
 	inline static const uint32_t type_id()\
 	{\
-		return eco::TypeId<object_t>::value();\
+		return eco::TypeId<object_t>::value;\
 	}\
 	virtual const uint32_t get_type_id() const\
 	{\

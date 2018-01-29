@@ -23,11 +23,11 @@ eco basic type.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <map>
+#include <limits>
 #include <functional>
 #include <iostream>
 #include <unordered_map>
-#include <limits>
-#include <map>
 #include <eco/Cast.h>
 #include <eco/Memory.h>
 
@@ -127,6 +127,25 @@ inline eco::Movable<Object> move(IN Object& obj)
 {
 	return eco::Movable<Object>(obj);
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<
+	typename KeyOne, typename KeyTwo,
+	typename OneMap = std::unordered_map<KeyOne, KeyTwo>,
+	typename TwoMap = std::unordered_map<KeyTwo, KeyOne> >
+class BidiMap
+{
+public:
+	OneMap m_one_map;
+	TwoMap m_two_map;
+
+	inline void set_value(IN const KeyOne& key_one, IN const KeyTwo& key_two)
+	{
+		m_one_map[key_one] = key_two;
+		m_two_map[key_two] = key_one;
+	}
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -956,44 +975,6 @@ inline Cout cout(IN uint8_t turn_line = 1)
 	return Cout(turn_line);
 }
 #define EcoCout eco::cout()
-
-
-////////////////////////////////////////////////////////////////////////////////
-template<
-	typename KeyOne, typename KeyTwo,
-	typename OneMap = std::unordered_map<KeyOne, KeyTwo>,
-	typename TwoMap = std::unordered_map<KeyTwo, KeyOne> >
-class BidiMap
-{
-public:
-	OneMap m_one_map;
-	TwoMap m_two_map;
-
-	inline void set_value(
-		IN const KeyOne& key_one,
-		IN const KeyTwo& key_two)
-	{
-		m_one_map[key_one] = key_two;
-		m_two_map[key_two] = key_one;
-	}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class BindV
-{
-public:
-	inline BindV(IN std::string& val)
-		: m_value(std::move(val))
-	{}
-
-	inline operator const char*() const
-	{
-		return m_value.c_str();
-	}
-
-	std::string m_value;
-};
 
 
 ////////////////////////////////////////////////////////////////////////////////

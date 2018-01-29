@@ -120,11 +120,13 @@ public:
 	std::unordered_map<void*, SessionDataPack::ptr> m_authority_map;
 	// connected session that has id build by server.
 	eco::HashMap<uint32_t, SessionDataPack::ptr> m_session_map;
-
 	mutable eco::Mutex	m_mutex;
 
 public:
-	inline Impl() : m_make_session(nullptr)
+	inline Impl() 
+		: m_make_session(nullptr)
+		, m_on_connect(nullptr)
+		, m_on_close(nullptr)
 	{}
 
 	// register protocol.

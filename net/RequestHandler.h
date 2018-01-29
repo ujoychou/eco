@@ -36,6 +36,8 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+#define ECO_LOG_REQ EcoInfo(eco::net::req) << Log(this)
+
 #define ECO_LOG_RSP(rsp, hdl, type) \
 if (rsp.has_error()){ \
 EcoError(eco::net::rsp) << MessageHandler::Log(hdl, type) << rsp.error(); \
@@ -46,13 +48,6 @@ EcoInfo(eco::net::rsp) << MessageHandler::Log(hdl, type)
 ////////////////////////////////////////////////////////////////////////////////
 class MessageHandler : public eco::Object<MessageHandler>
 {
-protected:
-	virtual ~MessageHandler() = 0 
-	{}
-
-	// message name.
-	virtual const char* get_name() const = 0;
-
 public:
 	// logging.
 	class Log : public eco::net::Log
@@ -61,25 +56,41 @@ public:
 		inline Log(
 			IN const MessageHandler* handler,
 			IN const uint32_t type = 0) : eco::net::Log(handler->session(),
-				type == 0 ? handler->get_type() : type, handler->get_name())
+				type == 0 ? handler->get_request_type() : type,
+				handler->get_name())
 		{}
 
 		inline Log(
 			IN const MessageHandler& handler,
 			IN const uint32_t type = 0) : eco::net::Log(handler.session(),
-				type == 0 ? handler.get_type() : type, handler.get_name())
+				type == 0 ? handler.get_request_type() : type,
+				handler.get_name())
 		{}
 
 		inline Log(
 			IN const MessageHandler* handler,
 			IN const std::string& user_name) : eco::net::Log(
 				handler->connection().get_id(), handler->session().get_id(),
-				handler->get_type(), handler->get_name(), user_name.c_str())
+				handler->get_request_type(),
+				handler->get_name(), user_name.c_str())
 		{}
 	};
 
+public:
+	virtual ~MessageHandler() = 0 
+	{}
+
+	// message name.
+	virtual const char* get_name() const = 0;
+
+	// message response type.
+	virtual const uint32_t get_response_type() const
+	{
+		return 0;
+	}
+
 	// message type.
-	inline const uint32_t get_type() const
+	inline const uint32_t get_request_type() const
 	{
 		return m_context.m_meta.m_message_type;
 	}
@@ -137,9 +148,11 @@ public:
 	// response message to the request.
 	inline void async_resp(
 		IN Codec& codec, 
-		IN const uint32_t type,
+		IN uint32_t type = 0,
 		IN bool last = true)
 	{
+		if (type == 0) type = get_response_type();
+
 		if (session().session_mode())
 			session().async_resp(codec, type, m_context, last);
 		else
@@ -166,23 +179,34 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_HANDLER(request_type, request_name, is_authed)\
+#define ECO_HANDLER(req_type, req_name, is_authed)\
 public:\
-	inline static const uint32_t get_type()\
+	inline static const uint32_t request_type()\
 	{\
-		return request_type;\
+		return req_type;\
 	}\
 	inline static const char* name()\
 	{\
-		return request_name;\
-	}\
-	virtual const char* get_name() const override\
-	{\
-		return request_name;\
+		return req_name;\
 	}\
 	inline static bool authed()\
 	{\
 		return is_authed;\
+	}\
+	virtual const char* get_name() const override\
+	{\
+		return req_name; \
+	}
+
+#define ECO_RESPONSE(rsp_type)\
+public:\
+	virtual const uint32_t get_response_type() const override\
+	{\
+		return rsp_type;\
+	}\
+	inline static const uint32_t response_type()\
+	{\
+		return rsp_type;\
 	}
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -50,9 +50,11 @@ public:
 	// response message to the request.
 	inline void async_resp(
 		IN google::protobuf::Message& msg,
-		IN const uint32_t type,
+		IN uint32_t type = 0,
 		IN const bool last = true)
 	{
+		if (type == 0) type = get_response_type();
+
 		if (session().session_mode())
 			session().async_resp(msg, type, m_context, last);
 		else

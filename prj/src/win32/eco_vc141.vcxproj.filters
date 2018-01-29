@@ -734,6 +734,9 @@
     <ClInclude Include="..\..\..\thread\Map.h">
       <Filter>lib\thread</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\thread\Index.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cmd\Engine.ipp">

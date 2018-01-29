@@ -501,6 +501,7 @@
     <ClInclude Include="..\..\..\persist\Database.h" />
     <ClInclude Include="..\..\..\proto\Object.pb.h" />
     <ClInclude Include="..\..\..\proto\Proto.h" />
+    <ClInclude Include="..\..\..\thread\Index.h" />
     <ClInclude Include="..\..\..\thread\Map.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
