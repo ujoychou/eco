@@ -59,10 +59,7 @@ public:
 	{
 		m_value = v;
 		m_update_time = eco::date_time::Timestamp(eco::date_time::fmt_std);
-		if (!new_record)
-			m_timestamp.update();
-		else
-			m_timestamp.set_value(eco::meta::inserted);
+		m_timestamp = new_record ? eco::meta::v_insert : eco::meta::v_update;
 		return *this;
 	}
 };

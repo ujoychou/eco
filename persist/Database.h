@@ -192,6 +192,19 @@ public:
 			save<meta_t>(*it, mapping);
 		}
 	}
+	// save data to database.
+	template<typename meta_t, typename object_set_t>
+	inline void save_all(
+		IN const object_set_t& obj_set,
+		IN const ObjectMapping& mapping,
+		IN const eco::meta::Timestamp ts)
+	{
+		object_set_t::const_iterator it = obj_set.begin();
+		for (; it != obj_set.end(); ++it)
+		{
+			save<meta_t>(*it, mapping, ts);
+		}
+	}
 
 	// save data to database.
 	template<typename meta_t, typename object_t>
@@ -201,10 +214,9 @@ public:
 	{
 		meta_t meta;
 		meta.attach(obj);
-		uint64_t rows = save<meta_t>(
-			obj, mapping, meta.timestamp().get_value());
+		uint64_t rows = save<meta_t>(obj, mapping, meta.timestamp());
 		// update and insert object will reset timestamp to original.
-		meta.timestamp().origin();
+		eco::meta::clear(meta.timestamp());
 		return rows;
 	}
 
@@ -213,23 +225,22 @@ public:
 	inline uint64_t save(
 		IN const object_t& obj,
 		IN const ObjectMapping& mapping,
-		IN const eco::meta::TimestampState state)
+		IN const eco::meta::Timestamp ts)
 	{
 		std::string sql;
-		eco::meta::Timestamp timestamp(state);
-		if (timestamp.is_original())		// origin object.
+		if (eco::meta::cleared(ts))		// origin object.
 		{
 			return 0;	// no need to save.
 		}
-		else if (timestamp.is_inserted())	// insert object.
+		else if (eco::meta::inserted(ts))	// insert object.
 		{
 			mapping.get_insert_sql<meta_t>(sql, obj);
 		}
-		else if (timestamp.is_updated())	// update object.
+		else if (eco::meta::updated(ts))	// update object.
 		{
 			mapping.get_update_sql<meta_t>(sql, obj);
 		}
-		else if (timestamp.is_removed())	// delete object.
+		else if (eco::meta::removed(ts))	// delete object.
 		{
 			mapping.get_delete_sql<meta_t>(sql, obj);
 		}

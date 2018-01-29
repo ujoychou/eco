@@ -12,109 +12,78 @@ namespace meta{ ;
 // timestamp state.
 enum
 {
-	original	= 0,		// original object, a not changed object.
-	inserted	= 1,		// inserted object, a new object.
-	updated		= 2,		// updated object.
-	removed		= 3,		// removed object.
+	v_clear				= 0,		// original object, a not changed object.
+	v_insert			= 1,		// inserted object, a new object.
+	v_update			= 2,		// updated object.
+	v_remove			= 3,		// removed object.
 };
-typedef uint16_t TimestampState;
+typedef uint32_t Timestamp;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Timestamp
+inline bool cleared(IN const Timestamp v)
 {
-public:
-	/*@ constructor. */
-	explicit Timestamp(IN const uint16_t v = inserted) : m_timestamp(v)
-	{}
-
-	// reset object a original state.
-	inline void origin()
-	{
-		if (!is_removed())
-			m_timestamp = original;
-	}
-	inline bool is_original() const
-	{
-		return (m_timestamp == original);
-	}
-
-	// set object a inserted state which is a new object.
-	inline void insert()
-	{
-		m_timestamp = inserted;
-	}
-	inline bool is_inserted() const
-	{
-		return (m_timestamp == inserted);
-	}
-
-	// updated state.
-	inline void update()
-	{
-		if (is_original())
-			m_timestamp = updated;
-	}
-	inline bool is_updated() const
-	{
-		return (m_timestamp == updated);
-	}
-
-	// removed state. 
-	inline void remove()
-	{
-		if (is_original() || is_updated())
-		{
-			m_timestamp = removed;
-		}
-	}
-	inline bool is_removed() const
-	{
-		return (m_timestamp == removed);
-	}
-
-	inline Timestamp& timestamp()
-	{
-		return *this;
-	}
-
-	// get timestamp text.
-	inline const char* get_text() const
-	{
-		switch (m_timestamp)
-		{
-		case original:
-			return "ori";
-		case inserted:
-			return "ins";
-		case updated:
-			return "upd";
-		case removed:
-			return "rem";
-		}
-		return "non";
-	}
-
-	// set timestamp value.
-	inline void set_value(IN const uint16_t v)
-	{
-		m_timestamp = v;
-	}
-	inline uint16_t get_value() const
-	{
-		return m_timestamp;
-	}
-
-private:
-	uint16_t m_timestamp;
-};
+	return (v == v_clear);
+}
+inline bool removed(IN const Timestamp v)
+{
+	return (v == v_remove);
+}
+inline bool updated(IN const Timestamp v)
+{
+	return (v == v_update);
+}
+inline bool inserted(IN const Timestamp v)
+{
+	return (v == v_insert);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline Timestamp& empty_timestamp()
+inline void clear(OUT Timestamp& v)
 {
-	static Timestamp s_instance(original);
-	return s_instance;
+	if (!removed(v))
+		v = v_clear;
+}
+inline void remove(OUT Timestamp& v)
+{
+	if (cleared(v) || updated(v))
+		v = v_remove;
+}
+inline void insert(OUT Timestamp& v)
+{
+	v = v_insert;
+}
+inline void update(OUT Timestamp& v)
+{
+	if (cleared(v))
+		v = v_update;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// get timestamp text.
+inline const char* get_text(IN const Timestamp v)
+{
+	switch (v)
+	{
+	case v_clear:
+		return "clear";
+	case v_insert:
+		return "insert";
+	case v_update:
+		return "update";
+	case v_remove:
+		return "remove";
+	}
+	return "none";
+}
+
+
+inline eco::meta::Timestamp& timestamp()
+{
+	static eco::meta::Timestamp ts = v_clear;
+	return ts;
 }
 
 

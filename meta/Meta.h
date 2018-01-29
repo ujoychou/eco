@@ -26,7 +26,10 @@ public:
 		IN const char* view = nullptr);
 
 	// get timestamp.
-	inline eco::meta::Timestamp& timestamp();
+	inline eco::meta::Timestamp& timestamp()
+	{
+		return eco::meta::timestamp();
+	}
 
 	// create new object: value\raw_ptr\shared_ptr.
 	inline void* create()

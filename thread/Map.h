@@ -68,7 +68,7 @@ public:
 	// map size.
 	inline size_t size() const
 	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		return m_data_map.size();
 	}
 
@@ -77,7 +77,7 @@ public:
 		IN const identity& id,
 		IN const value& val)
 	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		m_data_map[id] = val;
 	}
 
@@ -99,7 +99,7 @@ public:
 		= &make_object<object_t, identity>)
 	{
 		// find data in map.
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
@@ -114,7 +114,7 @@ public:
 	inline value get(IN const identity& id)
 	{
 		// find data in map.
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
@@ -141,24 +141,8 @@ public:
 	*/
 	inline bool find(OUT value& val, IN  const identity& id) const
 	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		typename container::const_iterator it = m_data_map.find(id);
-		if (it == m_data_map.end())
-		{
-			return false;
-		}
-		val = it->second;
-		return true;
-	}
-
-	/*@ find object from map.
-	*/
-	template<typename function_t>
-	inline bool find_if(OUT value& val, IN function_t func) const
-	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
-		auto it = std::find_if(m_data_map.begin(), 
-			m_data_map.end(), MapFinder<function_t>(func));
 		if (it == m_data_map.end())
 		{
 			return false;
@@ -170,7 +154,7 @@ public:
 	/*@ whether has the object.*/
 	inline bool has(IN const identity& id) const
 	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		return (m_data_map.find(id) != m_data_map.end());
 	}
 
@@ -188,7 +172,7 @@ public:
 	/*@ remove object from map.*/
 	inline value pop(IN const identity& id, OUT int& eid)
 	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		value v;
 		auto it = m_data_map.find(id);
 		if (it == m_data_map.end())
@@ -206,7 +190,7 @@ public:
 	/*@ remove object from map.*/
 	inline void erase(IN const identity& id)
 	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
@@ -217,7 +201,7 @@ public:
 	/*@ clear object in this map.*/
 	inline void clear()
 	{
-		eco::Mutex::ScopeLock lock(m_data_map_mutex);
+		eco::Mutex::ScopeLock lock(m_mutex);
 		m_data_map.clear();
 	}
 
@@ -236,14 +220,14 @@ public:
 	/*@ get raw data set.*/
 	inline eco::Mutex& mutex() const
 	{
-		return m_data_map_mutex;
+		return m_mutex;
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 protected:
 	// data map.
 	container m_data_map;
-	mutable eco::Mutex m_data_map_mutex;
+	mutable eco::Mutex m_mutex;
 };
 
 

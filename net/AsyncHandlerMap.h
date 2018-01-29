@@ -17,7 +17,7 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Repository.h>
+#include <eco/thread/Map.h>
 #include <eco/net/RequestHandler.h>
 
 
@@ -57,7 +57,7 @@ public:
 
 private:
 	eco::Atomic<uint32_t> m_request_id;
-	eco::Repository<uint32_t, eco::net::MessageHandler::ptr> m_async_map;
+	eco::HashMap<uint32_t, eco::net::MessageHandler::ptr> m_async_map;
 };
 
 
