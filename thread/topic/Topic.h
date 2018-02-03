@@ -21,14 +21,14 @@ public:
 	inline OneTopic()
 	{}
 
-	inline eco::Mutex& content_mutex() const
+	inline eco::Mutex& mutex() const
 	{
 		return m_content_mutex;
 	}
 
 	virtual void append(IN eco::Content::ptr& content) override
 	{
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		if (content.get() != nullptr)
 		{
 			m_new = content;
@@ -47,7 +47,7 @@ protected:
 
 	virtual bool do_move(OUT std::vector<eco::Content::ptr>& new_set) override
 	{
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		if (m_new == nullptr)
 		{
 			return false;
@@ -62,7 +62,7 @@ protected:
 	virtual void do_clear() override
 	{
 		m_snap.reset();
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		m_new.reset();
 	}
 
@@ -86,14 +86,14 @@ public:
 	inline SeqTopic()
 	{}
 
-	inline eco::Mutex& content_mutex() const
+	inline eco::Mutex& mutex() const
 	{
 		return m_content_mutex;
 	}
 
 	virtual void append(IN eco::Content::ptr& content) override
 	{
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		m_new_set.push_back(content);
 	}
 
@@ -108,7 +108,7 @@ protected:
 
 	virtual bool do_move(OUT std::vector<eco::Content::ptr>& new_set) override
 	{
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		if (m_new_set.empty())
 		{
 			return false;
@@ -117,11 +117,11 @@ protected:
 		// get new data.
 		new_set.reserve(m_new_set.size());
 		// update snap.
-		std::for_each(m_new_set.begin(), m_new_set.end(), 
-			[&](eco::Content::ptr& item) {
-			new_set.push_back(item);
-			m_snap_set.push_back(item);
-		});
+		for (auto it = m_new_set.begin(); it != m_new_set.end(), ++it)
+		{
+			new_set.push_back(*it);
+			m_snap_set.push_back(*it);
+		}
 		m_new_set.clear();
 		return true;
 	}
@@ -129,7 +129,7 @@ protected:
 	virtual void do_clear() override
 	{
 		m_snap_set.clear();
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		m_new_set.clear();
 	}
 
@@ -147,26 +147,17 @@ protected:
 class IdAdapter
 {
 public:
-	template<typename Object, typename ObjectId, typename TopicId>
-	inline void operator()(
-		OUT ObjectId& id,
-		IN  const Object& obj,
-		IN  const TopicId& tid)
+	template<typename ObjectId, typename Object, typename TopicId>
+	inline void get_id(ObjectId& id, const Object& obj, const TopicId& tid)
 	{
 		id = obj.id();
 	}
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
 class GetIdAdapter
 {
 public:
-	template<typename Object, typename ObjectId, typename TopicId>
-	inline void operator()(
-		OUT ObjectId& id,
-		IN  const Object& obj,
-		IN  const TopicId& tid)
+	template<typename ObjectId, typename Object, typename TopicId>
+	inline void get_id(ObjectId& id, const Object& obj, const TopicId& tid)
 	{
 		id = obj.get_id();
 	}
@@ -221,8 +212,8 @@ public:
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		ObjectId obj_id;
-		Object* obj = (Object*)newc->get_set_topic_object();
-		ObjectIdAdapter()(obj_id, *obj, m_id);
+		ObjectIdAdapter adapt;
+		adapt.get_id(obj_id, *(Object*)newc->get_set_topic_object(), m_id);
 
 		// fuzzy updated state, newc can be "inserted" or "updated".
 		auto it = m_objects.find(obj_id);
@@ -273,23 +264,20 @@ protected:
 		for (auto it = m_new_set.begin(); it != m_new_set.end(); ++it)
 		{
 			ObjectId obj_id;
-			Object* obj = (Object*)(**it).get_set_topic_object();
-			ObjectIdAdapter()(obj_id, *obj, m_id);
+			ObjectIdAdapter adapt;
+			adapt.get_id(obj_id, *(Object*)(**it).get_set_topic_object(), m_id);
+			// sync snap data.
 			if (eco::meta::removed((**it).get_timestamp()))
 			{
 				auto it_snap = m_snap_set.find(obj_id);
 				if (it_snap != m_snap_set.end())
-				{
-					eco::meta::remove(it_snap->second->timestamp());
-					new_set.push_back(it_snap->second);
 					m_snap_set.erase(it_snap);
-				}
 			}
 			else
 			{
-				new_set.push_back(*it);
 				m_snap_set[obj_id] = *it;
 			}
+			new_set.push_back(*it);
 		}
 		m_new_set.clear();
 		return new_set.size() > 0;
@@ -324,14 +312,14 @@ public:
 	inline PopTopic()
 	{}
 
-	inline eco::Mutex& content_mutex() const
+	inline eco::Mutex& mutex() const
 	{
 		return m_content_mutex;
 	}
 
 	virtual void append(IN eco::Content::ptr& content) override
 	{
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		m_new_set.push_back(content);
 	}
 
@@ -341,7 +329,7 @@ protected:
 
 	virtual bool do_move(OUT std::vector<eco::Content::ptr>& new_set) override
 	{
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		if (m_new_set.empty())
 			return false;
 
@@ -357,7 +345,7 @@ protected:
 
 	virtual void do_clear() override
 	{
-		eco::Mutex::ScopeLock lock(content_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		m_new_set.clear();
 	}
 

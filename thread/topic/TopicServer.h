@@ -40,7 +40,7 @@ public:
 	}
 
 public:
-	// publish new data from data source. 
+	// publish object to topic, create object if "make != nullptr". 
 	template<typename object_t, typename topic_id_t>
 	inline void publish(
 		IN const topic_id_t& topic_id,
@@ -48,19 +48,11 @@ public:
 		IN Topic* (*make)(IN const topic_id_t&) = nullptr,
 		IN bool remove_obj = false)
 	{
-		__publish<object_t, object_t>(topic_id, obj, make, remove_obj);
-	}
-
-	// publish object to topic, and create topic if "make != nullptr".
-	template<typename object_t, typename topic_id_t>
-	inline void publish(
-		IN const topic_id_t& topic_id,
-		IN const std::shared_ptr<object_t>& obj,
-		IN Topic* (*make)(IN const topic_id_t&) = nullptr,
-		IN bool remove_obj = false)
-	{
-		__publish<object_t, std::shared_ptr<object_t> >(
-			topic_id, obj, make, remove_obj);
+		Topic::ptr topic = get_topic(topic_id, make);
+		if (topic != nullptr)
+		{
+			publish_new(topic, obj, remove_obj);
+		}
 	}
 
 	// publish object to topic, and create topic.
@@ -70,19 +62,11 @@ public:
 		IN const object_t& obj,
 		IN bool remove_obj = false)
 	{
-		__publish<object_t, object_t>(
-			topic_id, obj, topic_t::make, remove_obj);
-	}
-
-	// publish "object to be removed."
-	template<typename topic_t, typename object_t, typename topic_id_t>
-	inline void publish(
-		IN const topic_id_t& topic_id,
-		IN const std::shared_ptr<object_t>& obj,
-		IN bool remove_obj = false)
-	{
-		__publish<object_t, std::shared_ptr<object_t> >(
-			topic_id, obj, topic_t::make, remove_obj);
+		Topic::ptr topic = get_topic(topic_id, topic_t::make);
+		if (topic != nullptr)
+		{
+			publish_new(topic, obj, remove_obj);
+		}
 	}
 
 	// publish object set to topic, and create topic.
@@ -113,6 +97,33 @@ public:
 			m_publish_server.post(
 				Publisher(topic, Publisher::mode_publish_new));
 		}
+	}
+
+	// publish object to topic.
+	template<typename object_t>
+	inline void publish_new(
+		IN Topic::ptr& topic,
+		IN const object_t& obj,
+		IN bool remove_obj = false)
+	{
+		auto ts = remove_obj ? eco::meta::v_remove : eco::meta::v_insert;
+		Content::ptr content(new ContentT<object_t, object_t>(obj, ts));
+		topic->append(content);
+		m_publish_server.post(Publisher(topic, Publisher::mode_publish_new));
+	}
+
+	// publish shared object to topic.
+	template<typename object_t>
+	inline void publish_new(
+		IN Topic::ptr& topic,
+		IN const std::shared_ptr<object_t>& obj,
+		IN bool remove_obj = false)
+	{
+		typedef std::shared_ptr<object_t> value_t;
+		auto ts = remove_obj ? eco::meta::v_remove : eco::meta::v_insert;
+		Content::ptr content(new ContentT<object_t, value_t>(obj, ts));
+		topic->append(content);
+		m_publish_server.post(Publisher(topic, Publisher::mode_publish_new));
 	}
 
 public:
@@ -188,11 +199,24 @@ public:
 			__get_topic_map(topic_id)[topic_id].reset(f(topic_id));
 		}
 	}
+	template<typename topic_t, typename topic_id_t>
+	inline void create_topic(IN const topic_id_t& topic_id)
+	{
+		create_topic(topic_id, topic_t::make);
+	}
+
+	// get derived topic.
+	template<typename topic_t, typename topic_id_t>
+	inline std::shared_ptr<topic_t> cast_topic(IN const topic_id_t& topic_id)
+	{
+		Topic::ptr topic = get_topic(topic_id, topic_t::make);
+		return std::dynamic_pointer_cast<topic_t>(topic);
+	}
 
 	template<typename topic_id_t>
 	inline Topic::ptr get_topic(
 		IN const topic_id_t& topic_id,
-		IN Topic* (*f)(IN const topic_id_t&))
+		IN Topic* (*f)(IN const topic_id_t&) = nullptr)
 	{
 		return __get_topic(topic_id, __get_topic_map(topic_id), f);
 	}
@@ -238,14 +262,6 @@ public:
 	inline std::shared_ptr<topic_t> find_topic(IN const topic_id_t& topic_id) const
 	{
 		Topic::ptr topic = find_topic(topic_id);
-		return std::dynamic_pointer_cast<topic_t>(topic);
-	}
-
-	// get derived topic.
-	template<typename topic_t, typename topic_id_t>
-	inline std::shared_ptr<topic_t> get_topic(IN const topic_id_t& topic_id)
-	{
-		Topic::ptr topic = get_topic(topic_id, topic_t::make);
 		return std::dynamic_pointer_cast<topic_t>(topic);
 	}
 
@@ -331,25 +347,6 @@ private:
 		__get_topic_map(const TopicId&) const
 	{
 		return m_tid_topics;
-	}
-
-	// publish new data from data source. 
-	template<typename object_t, typename value_t, typename topic_id_t>
-	inline void __publish(
-		IN const topic_id_t& topic_id,
-		IN const value_t& obj,
-		IN Topic* (*f)(IN const topic_id_t&) = nullptr,
-		IN bool remove_obj = false)
-	{
-		Topic::ptr topic = get_topic(topic_id, f);
-		if (topic != nullptr)
-		{
-			auto ts = remove_obj ? eco::meta::v_remove : eco::meta::v_insert;
-			Content::ptr content(new ContentT<object_t, value_t>(obj, ts));
-			topic->append(content);
-			m_publish_server.post(
-				Publisher(topic, Publisher::mode_publish_new));
-		}
 	}
 
 	// get and create topic.
