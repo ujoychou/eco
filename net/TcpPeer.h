@@ -122,7 +122,7 @@ public:
 	void async_send(IN MessageMeta& meta, IN Protocol& prot);
 
 	// async response message.
-	void async_resp(
+	void async_response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,

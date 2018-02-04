@@ -24,7 +24,7 @@
 
 *******************************************************************************/
 #include <eco/log/Log.h>
-#include <eco/net/TcpSession.h>
+#include <eco/net/Context.h>
 
 
 namespace eco{;
@@ -130,6 +130,21 @@ public:
 		, m_type(type), m_user_id(0), m_user_name(nullptr)
 	{
 		auto data = sess.get_connection().cast<ConnectionData>();
+		if (!data.null())
+		{
+			m_user_id = data->get_user_id();
+			m_user_name = data->get_user_name();
+		}
+	}
+
+	inline Log(
+		IN const Context& c,
+		IN const uint32_t type,
+		IN const char* func)
+		: NetLog(c.get_connection().get_id(), func, c.get_session().get_id())
+		, m_type(type), m_user_id(0), m_user_name(nullptr)
+	{
+		auto data = c.get_connection().cast<ConnectionData>();
 		if (!data.null())
 		{
 			m_user_id = data->get_user_id();

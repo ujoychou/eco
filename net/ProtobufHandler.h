@@ -48,17 +48,14 @@ public:
 	}
 
 	// response message to the request.
-	inline void async_resp(
+	inline void async_response(
 		IN google::protobuf::Message& msg,
 		IN uint32_t type = 0,
 		IN const bool last = true)
 	{
-		if (type == 0) type = get_response_type();
-
-		if (session().session_mode())
-			session().async_resp(msg, type, m_context, last);
-		else
-			connection().async_resp(msg, type, m_context, last);
+		if (type == 0)
+			type = get_response_type();
+		context().async_response(ProtobufCodec(msg), type, last);
 	}
 };
 

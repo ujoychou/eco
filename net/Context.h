@@ -99,6 +99,29 @@ public:
 	inline Context()
 	{}
 
+	inline TcpSession& session()
+	{
+		return m_session;
+	}
+	inline const TcpSession& get_session() const
+	{
+		return m_session;
+	}
+
+	inline TcpConnection& connection()
+	{
+		return m_session.connection();
+	}
+	inline const TcpConnection& get_connection() const
+	{
+		return m_session.get_connection();
+	}
+
+	inline const uint32_t get_type() const
+	{
+		return m_meta.m_message_type;
+	}
+
 	inline void release_data()
 	{
 		m_data.release();
@@ -112,6 +135,17 @@ public:
 		m_meta = c.m_meta;
 		m_session = c.m_session;
 		return *this;
+	}
+
+	inline void async_response(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN bool last = true)
+	{
+		if (m_session.session_mode())
+			m_session.async_response(codec, type, *this, last);
+		else
+			m_session.connection().async_response(codec, type, *this, last);
 	}
 };
 

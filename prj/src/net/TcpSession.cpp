@@ -105,7 +105,7 @@ void TcpSessionInner::async_auth(IN MessageMeta& meta)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSessionInner::async_resp(
+void TcpSessionInner::async_response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& c,

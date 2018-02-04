@@ -250,7 +250,7 @@ void TcpPeer::close_and_notify(IN const eco::Error* e)
 {
 	impl().close_and_notify(e);
 }
-void TcpPeer::async_resp(IN Codec& codec, IN const uint32_t type,
+void TcpPeer::async_response(IN Codec& codec, IN const uint32_t type,
 	IN const Context& c, IN Protocol& prot, IN const bool last)
 {
 	MessageMeta meta(codec, none_session, type, c.m_meta.m_category);

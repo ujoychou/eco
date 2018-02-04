@@ -109,19 +109,19 @@ public:
 	}
 
 	// async send response to client by context.
-	inline void async_resp(
+	inline void async_response(
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
 		IN const bool last = false)
 	{
 		ProtobufCodec codec(msg);
-		async_resp(codec, type, context, last);
+		async_response(codec, type, context, last);
 	}
 #endif
 
 	// async response message.
-	inline void async_resp(
+	inline void async_response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,

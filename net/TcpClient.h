@@ -139,6 +139,11 @@ public:
 		async_send(meta);
 	}
 #endif
+
+public:
+	// req/rsp mode: send message and get a response.
+	void request(IN MessageMeta& req_meta, IN MessageMeta& rsp_meta);
+
 };
 
 

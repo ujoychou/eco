@@ -54,7 +54,7 @@ private:
 	bool session_mode() const;
 	void async_send(IN MessageMeta& meta);
 	void async_auth(IN MessageMeta& meta);
-	void async_resp(
+	void async_response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& c,
@@ -116,14 +116,14 @@ bool TcpSession::session_mode() const
 	return inner.session_mode();
 }
 
-void TcpSession::async_resp(
+void TcpSession::async_response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& context,
 	IN const bool last)
 {
 	TcpSessionInner inner(m_impl);
-	return inner.async_resp(codec, type, context, last);
+	return inner.async_response(codec, type, context, last);
 }
 
 void TcpSession::async_send(IN MessageMeta& meta)

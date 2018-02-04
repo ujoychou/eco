@@ -137,7 +137,7 @@ public:
 
 public:
 	// async response message.
-	inline void async_resp(
+	inline void async_response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
@@ -146,7 +146,7 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			return peer->async_resp(codec, type, context, *m_prot);
+			return peer->async_response(codec, type, context, *m_prot);
 		}
 	}
 
@@ -163,14 +163,14 @@ public:
 	}
 
 	// async send response to client by context.
-	inline void async_resp(
+	inline void async_response(
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
 		IN const bool last = true)
 	{
 		ProtobufCodec codec(msg);
-		async_resp(codec, type, context, last);
+		async_response(codec, type, context, last);
 	}
 #endif
 
