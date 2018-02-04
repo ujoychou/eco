@@ -58,21 +58,21 @@ typedef int SinkOption;
 
 enum 
 {
-	log_text_size = 256,
-	log_pack_size = 8192,
+	text_size = 256,
+	pack_size = 8192,
 	// min size
-	log_min_queue_size = 1 * 1024 * 1024,		// 3M
-	log_min_file_roll_size = 10 * 1024 * 1024,	// 10M
-	log_min_sync_interval = 1000,				// 1 millsec
+	min_queue_size = 1 * 1024 * 1024,		// 3M
+	min_file_roll_size = 10 * 1024 * 1024,	// 10M
+	min_sync_interval = 1000,				// 1 millsec
 	// default size
-	log_queue_size = 3 * 1024 * 1024,			// 3M
-	log_file_roll_size = 50 * 1024 * 1024,		// 50M
-	log_sync_interval = 3000,					// 3 millsec
+	queue_size = 3 * 1024 * 1024,			// 3M
+	file_roll_size = 50 * 1024 * 1024,		// 50M
+	sync_interval = 3000,					// 3 millsec
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-typedef eco::FixBuffer<log_pack_size>	Pack;
+typedef eco::FixBuffer<pack_size>	Pack;
 typedef void (*OnChangedLogFile)(IN const char* file_path);
 
 

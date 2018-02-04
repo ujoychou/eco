@@ -46,11 +46,11 @@ public:
 	*/
 	inline explicit Queue()
 		: m_cur_size(0)
-		, m_capacity(log_queue_size)
+		, m_capacity(queue_size)
 		, m_mutex()
 		, m_avail_cond_var(&m_mutex)
 		, m_logging_cond_var(&m_mutex)
-		, m_max_sync_interval(log_sync_interval)
+		, m_max_sync_interval(sync_interval)
 	{
 		open();
 	}

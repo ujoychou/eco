@@ -118,8 +118,8 @@ const SeverityLevel& Core::get_severity_level() const
 Core::Impl::Impl()
 	: m_async(true)
 	, m_severity_level(eco::log::info)
-	, m_capacity(log_queue_size)
-	, m_file_roll_size(log_file_roll_size)
+	, m_capacity(queue_size)
+	, m_file_roll_size(eco::log::file_roll_size)
 	, m_file_path("./log/")
 	, m_on_create(nullptr)
 	, m_sink_option(eco::log::file_sink)
@@ -166,10 +166,10 @@ void Core::run()
 	{
 		impl().m_server.reset(new Server<Handler>);
 		impl().m_server->set_message_handler(Handler(impl()));
-		if (impl().m_capacity < log_min_queue_size)
-			impl().m_capacity = log_min_queue_size;
-		if (impl().m_async_flush < log_min_sync_interval)
-			impl().m_async_flush = log_min_sync_interval;
+		if (impl().m_capacity < min_queue_size)
+			impl().m_capacity = min_queue_size;
+		if (impl().m_async_flush < min_sync_interval)
+			impl().m_async_flush = min_sync_interval;
 		impl().m_server->run(1, "log");
 		impl().m_server->set_capacity(impl().m_capacity);
 		impl().m_server->set_sync_interval(impl().m_async_flush);
@@ -184,8 +184,8 @@ void Core::run()
 	// file logging output.
 	if (eco::has(impl().m_sink_option, eco::log::file_sink))
 	{
-		if (impl().m_file_roll_size < log_min_file_roll_size)
-			impl().m_file_roll_size = log_min_file_roll_size;
+		if (impl().m_file_roll_size < min_file_roll_size)
+			impl().m_file_roll_size = min_file_roll_size;
 
 		// logging file flush is 0, use async flush interval instead.
 		impl().m_file_sink.reset(new FileSink(

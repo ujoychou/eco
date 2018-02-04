@@ -97,7 +97,7 @@ public:
 	inline FixPusherT()
 	{}
 };
-typedef FixPusherT<log_text_size> FixPusher;
+typedef FixPusherT<text_size> FixPusher;
 typedef FixPusher::Stream LogStream;
 
 ////////////////////////////////////////////////////////////////////////////////
