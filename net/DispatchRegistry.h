@@ -55,7 +55,7 @@ inline void handle_context(IN Context& c)
 	}
 	if (e != nullptr)
 	{
-		EcoInfo(eco::net::req) << Log(c.m_session, 
+		EcoError(eco::net::req) << Log(c.m_session,
 			c.m_meta.m_message_type, HandlerT::name()) << e;
 		return;
 	}

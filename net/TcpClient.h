@@ -125,6 +125,19 @@ public:
 	// async send message.
 	void async_send(IN MessageMeta& meta);
 
+	// req/rsp mode: send message and get a response.
+	template<typename codec_t, typename req_t, typename rsp_t>
+	inline void request(
+			IN const uint32_t req_type, IN req_t& req,
+			IN const uint32_t rsp_type, IN rsp_t& rsp,
+			IN const MessageCategory category = category_message)
+	{
+		codec_t codec_req(req);
+		codec_t codec_rsp(rsp);
+		MessageMeta meta_req(codec_req, none_session, req_type, category);
+		request(meta_req, codec_rsp);
+	}
+
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void async_send(
@@ -138,12 +151,24 @@ public:
 		meta.set_request_data(request_data);
 		async_send(meta);
 	}
+
+	// async send protobuf.
+	inline void request(
+		IN const uint32_t req_type,
+		IN google::protobuf::Message& req_msg,
+		IN const uint32_t rsp_type,
+		IN google::protobuf::Message& rsp_msg,
+		IN const MessageCategory category = category_message)
+	{
+		return request<ProtobufCodec>(
+			req_type, req_msg, rsp_type, rsp_msg, category);
+	}
 #endif
 
-public:
-	// req/rsp mode: send message and get a response.
-	void request(IN MessageMeta& req_meta, IN MessageMeta& rsp_meta);
+	
 
+private:
+	void request(IN MessageMeta& req, IN Codec& rsp);
 };
 
 

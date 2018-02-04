@@ -6,6 +6,7 @@
 #include <eco/Project.h>
 #include <eco/thread/State.h>
 #include <eco/thread/Map.h>
+#include <eco/thread/Monitor.h>
 #include <eco/net/Worker.h>
 #include <eco/net/IoTimer.h>
 #include <eco/net/DispatchServer.h>
@@ -95,6 +96,16 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+class AsyncRequest : public eco::Object<AsyncRequest>
+{
+public:
+	inline AsyncRequest(IN Codec& rsp_codec) : m_rsp_codec(&rsp_codec) {}
+	Codec* m_rsp_codec;
+	eco::Monitor m_monitor;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 class TcpClient::Impl : public TcpPeerHandler
 {
 	ECO_IMPL_INIT(TcpClient);
@@ -122,11 +133,17 @@ public:
 	eco::HashMap<uint32_t, SessionDataPack::ptr> m_session_map;
 	mutable eco::Mutex	m_mutex;
 
+	// async management.
+	eco::Atomic<uint32_t> m_request_id;
+	uint32_t m_timeout_millsec;
+	std::unordered_map<uint32_t, AsyncRequest::ptr> m_async_manager;
+
 public:
 	inline Impl() 
 		: m_make_session(nullptr)
 		, m_on_connect(nullptr)
 		, m_on_close(nullptr)
+		, m_timeout_millsec(2000)
 	{}
 
 	// register protocol.
@@ -185,6 +202,32 @@ public:
 		{
 			eco::thread::release(v);
 		}
+	}
+
+	// async management post item.
+	inline AsyncRequest::ptr post_async(
+		IN const uint32_t req_id,
+		IN Codec& rsp_codec)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		auto& ptr = m_async_manager[req_id];
+		if (ptr == nullptr)
+			ptr.reset(new AsyncRequest(rsp_codec));
+		return ptr;
+	}
+
+	// async management pop item.
+	inline AsyncRequest::ptr pop_async(IN const uint32_t req_id)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		auto it = m_async_manager.find(req_id);
+		if (it != m_async_manager.end())
+		{
+			auto req = it->second;
+			m_async_manager.erase(it);
+			return req;
+		}
+		return AsyncRequest::ptr();
 	}
 
 public:
@@ -263,6 +306,7 @@ public:
 	}
 
 	inline void async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta);
+	inline void request(IN MessageMeta& req, IN Codec& rsp);
 
 public:
 	// when peer has connected to server.

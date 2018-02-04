@@ -80,6 +80,23 @@ bool handle_client_context(
 		}
 	}
 
+	// #.handle sync request.
+	if (eco::has(c.m_meta.m_category, category_sync))
+	{
+		auto async = client->pop_async(c.m_meta.get_req4());
+		if (async != nullptr)
+		{
+			if (!async->m_rsp_codec->decode(
+				c.m_message.m_data, c.m_message.m_size))
+			{
+				EcoError(eco::net::rsp) << Log(c.m_session,
+					c.m_meta.m_message_type, nullptr) <= "decode fail.";
+			}
+			async->m_monitor.finish_one();		// only one.
+		}
+		return false;
+	}
+
 	// #.handle request.
 	return eco::has(c.m_meta.m_category, category_message);
 }
