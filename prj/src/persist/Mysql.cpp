@@ -244,13 +244,21 @@ public:
 		if (0 != mysql_query(m_mysql, sql))
 		{
 			uint32_t eno = mysql_errno(m_mysql);
-			// 1064: sql syntax error.
-			// 1146: table doesn't exist.
-			if (eno == 1064 || eno == 1146)
+			// 2013: lost connetion during query.
+			// 2006
+			if (eno == 2013 || eno == 2006)
+			{
+				const char* err = mysql_error(m_mysql);
+				close();
+				throw_error("mysql query", sql, err, eno);
+			}
+			if (eno != 0)
 			{
 				throw_query_error(sql, eno);
 			}
 
+			// 1064: sql syntax error.
+			// 1146: table doesn't exist.
 			reconnect();
 			if (0 != mysql_query(m_mysql, sql))
 			{

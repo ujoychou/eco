@@ -124,6 +124,9 @@ public:
 	// it will throw exception when has error.
 	virtual void on_init() {}
 
+	// event: release business data when persist exit.
+	virtual void on_exit() {}
+
 	// get persist.
 	inline Persist& persist();
 	// get persist master.

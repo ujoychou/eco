@@ -18,7 +18,6 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/meta/Meta.h>
 #include <eco/persist/Recordset.h>
 #include <eco/persist/JoinMapping.h>
 #include <eco/persist/DatabaseConfig.h>
@@ -52,11 +51,15 @@ public:
 	// auto rollback when hasn't call commit explicit.
 	inline ~Transaction()
 	{
-		if (!m_commited)
+		try
 		{
-			m_db.rollback();
-			m_db.transaction_level() = 0;
+			if (!m_commited)
+			{
+				m_db.rollback();
+				m_db.transaction_level() = 0;
+			}
 		}
+		catch (...)	{}
 	}
 
 	// commit when database operation finished.
@@ -186,11 +189,13 @@ public:
 		IN const object_set_t& obj_set,
 		IN const ObjectMapping& mapping)
 	{
+		Transaction trans(*this);
 		object_set_t::const_iterator it = obj_set.begin();
 		for (; it != obj_set.end(); ++it)
 		{
 			save<meta_t>(*it, mapping);
 		}
+		trans.commit();
 	}
 	// save data to database.
 	template<typename meta_t, typename object_set_t>
@@ -199,11 +204,13 @@ public:
 		IN const ObjectMapping& mapping,
 		IN const eco::meta::Timestamp ts)
 	{
+		Transaction trans(*this);
 		object_set_t::const_iterator it = obj_set.begin();
 		for (; it != obj_set.end(); ++it)
 		{
 			save<meta_t>(*it, mapping, ts);
 		}
+		trans.commit();
 	}
 
 	// save data to database.
@@ -277,7 +284,7 @@ public:
 		sql += " set ";
 		sql += p->get_field();
 		sql += "='";
-		sql += meta.get_value(prop, eco_db);
+		sql += value;
 		sql += "'";
 		// condition sql: "where pk='v'"
 		std::string cond_sql;
@@ -285,6 +292,16 @@ public:
 		sql += cond_sql;
 		uint64_t rows = execute_sql(sql.c_str());
 		return rows;
+	}
+	template<typename meta_t, typename object_t>
+	inline uint64_t update(
+		IN object_t& obj,
+		IN const std::string& prop,
+		IN const std::string& value,
+		IN const ObjectMapping& mapping)
+	{
+		return update<meta_t, object_t>(
+			obj, prop.c_str(), value.c_str(), mapping);
 	}
 
 	// removed all data from table.

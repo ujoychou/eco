@@ -217,6 +217,12 @@ void Persist::close()
 		impl().m_master->close();
 		impl().m_master.reset();
 	}
+
+	if (impl().m_handler != nullptr)
+	{
+		impl().m_handler->on_exit();
+		impl().m_handler = nullptr;
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
