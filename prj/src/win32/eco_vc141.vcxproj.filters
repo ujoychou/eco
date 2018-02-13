@@ -737,6 +737,9 @@
     <ClInclude Include="..\..\..\thread\Index.h">
       <Filter>lib\thread</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\persist\Model.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cmd\Engine.ipp">

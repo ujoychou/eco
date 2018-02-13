@@ -40,13 +40,14 @@ ECO_NS_BEGIN(eco);
 typedef std::function<void(void)> Closure;
 
 // function general result.
-enum Result
+enum 
 {
 	ok				=  0,
 	fail			= -1,
 	error			= -2,
 	timeout			= -3,
 };
+typedef int Result;
 
 
 ////////////////////////////////////////////////////////////////////////////////

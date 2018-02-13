@@ -497,6 +497,7 @@
     <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
     <ClInclude Include="..\..\..\net\TcpConnection.h" />
     <ClInclude Include="..\..\..\persist\Address.h" />
+    <ClInclude Include="..\..\..\persist\Model.h" />
     <ClInclude Include="..\..\..\persist\Persist.h" />
     <ClInclude Include="..\..\..\persist\Database.h" />
     <ClInclude Include="..\..\..\proto\Object.pb.h" />

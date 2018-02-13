@@ -92,7 +92,7 @@ public:
 		{
 			auto* set_topic = static_cast<set_topic_t*>(topic.get());
 			Content::ptr content = set_topic->find(obj_id);
-			eco::meta::remove(content->timestamp());
+			content->timestamp() = eco::meta::v_remove;
 			topic->append(content);
 			m_publish_server.post(
 				Publisher(topic, Publisher::mode_publish_new));

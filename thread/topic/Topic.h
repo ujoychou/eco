@@ -268,15 +268,10 @@ protected:
 			adapt.get_id(obj_id, *(Object*)(**it).get_set_topic_object(), m_id);
 			// sync snap data.
 			if (eco::meta::removed((**it).get_timestamp()))
-			{
-				auto it_snap = m_snap_set.find(obj_id);
-				if (it_snap != m_snap_set.end())
-					m_snap_set.erase(it_snap);
-			}
+				m_snap_set.erase(obj_id);
 			else
-			{
 				m_snap_set[obj_id] = *it;
-			}
+
 			new_set.push_back(*it);
 		}
 		m_new_set.clear();

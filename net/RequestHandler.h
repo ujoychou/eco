@@ -40,13 +40,13 @@ namespace net{;
 EcoLog(sev, eco::log::text_size)(eco::net::req) << Log(*this)
 #define ECO_LOG_SUB(sev) \
 EcoLog(sev, eco::log::text_size)(eco::net::sub) << Log(*this)
-#define ECO_LOG_RSP(sev, rsp, handle) \
+#define ECO_LOG_RSP(sev, rsp, handler) \
 if (rsp.has_error()){ \
-	EcoError(eco::net::rsp) << MessageHandler::Log(handle, response_type()) \
+	EcoError(eco::net::rsp) << MessageHandler::Log(handler, response_type()) \
 	<= rsp.error(); \
 }else \
 	EcoLog(sev, eco::log::text_size)(eco::net::rsp) \
-	<< MessageHandler::Log(handle, response_type())
+	<< MessageHandler::Log(handler, response_type())
 
 
 ////////////////////////////////////////////////////////////////////////////////
