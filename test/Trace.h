@@ -76,7 +76,7 @@ public:
 	// get trace format string.
 	inline std::string Format() const
 	{
-		eco::FixStream<512> fmt;
+		eco::FixStream fmt;
 		fmt << m_file_path << ", " << m_func_name << ", " << m_file_line;
 		return fmt.c_str();
 	}

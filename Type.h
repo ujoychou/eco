@@ -853,9 +853,9 @@ private:
 // eco string stream, heap memory.
 const uint32_t fix_size = 256;
 typedef eco::StreamT<String> Stream;
-typedef eco::StreamT<FixBuffer<fix_size> > ErrorStream;
+typedef eco::StreamT<FixBuffer<fix_size> > FixStream;
 #define EcoStream(len) eco::StreamT<eco::FixBuffer<len> >()
-#define EcoFixStream eco::StreamT<eco::FixBuffer<fix_size> >()
+#define EcoFix eco::FixStream()
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -934,7 +934,7 @@ public:
 
 private:
 	int m_id;
-	ErrorStream m_msg;
+	FixStream m_msg;
 };
 #define EcoThrow throw eco::Error()
 template<typename Buffer>
@@ -1039,8 +1039,8 @@ inline char yn(IN const bool v)
 	return v ? 'y' : 'n';
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
-#define EcoFmti(instance) '[' << instance << ']'
 const std::string empty_str;
 
 
@@ -1066,7 +1066,7 @@ void split(
 }
 
 
-//###############################################################################
+////////////////////////////////////////////////////////////////////////////////
 template<uint32_t size>
 class Format
 {

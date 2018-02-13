@@ -16,7 +16,7 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Repository.h>
+#include <eco/thread/Map.h>
 #include <eco/Typex.h>
 
 
@@ -27,10 +27,10 @@ namespace test{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Context : public eco::Repository<std::string, eco::StringAny>
+class Context : public eco::HashMap<std::string, eco::StringAny>
 {
 public:
-	typedef eco::Repository<std::string, eco::StringAny> repository;
+	typedef eco::HashMap<std::string, eco::StringAny> repository;
 
 	inline const eco::StringAny GetValue(IN const std::string& key)
 	{

@@ -171,7 +171,7 @@ const eco::StringAny Config::at(IN const char* key) const
 	eco::StringAny v;
 	if (!impl().m_data.find(v, key))
 	{
-		EcoThrow(-1) << "config can't find key: " << key;
+		EcoThrow << "config can't find key: " << key;
 	}
 	return v;
 }

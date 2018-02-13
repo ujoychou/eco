@@ -213,7 +213,7 @@ public:
 						it->get_property(), record_set[r][field++], view);
 				}
 			}
-			m_main_meta->timestamp().origin();
+			eco::meta::clear(m_main_meta->timestamp());
 			obj_set.push_back(obj);
 		}
 	}

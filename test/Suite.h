@@ -36,7 +36,7 @@ protected:
 	{
 		Runner::OnBegin();
 
-		eco::FixStream<512> fmt;
+		eco::FixStream fmt;
 		fmt << "[##########] ";
 		fmt << "suite: ";
 		fmt << GetResultSet().m_total_case << " case, ";
@@ -49,7 +49,7 @@ protected:
 	{
 		Scene::OnSceneEnd();
 
-		eco::FixStream<512> fmt;
+		eco::FixStream fmt;
 		fmt << "[##########] ";
 		fmt << "suite: ";
 		fmt << "scene ";

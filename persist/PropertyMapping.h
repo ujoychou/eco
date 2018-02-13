@@ -260,7 +260,7 @@ public:
 		}
 		if (temp.empty())
 		{
-			EcoThrow(-1) << "invalid database field type: " << m_field_type;
+			EcoThrow << "invalid database field type: " << m_field_type;
 		}
 		return temp;
 	}

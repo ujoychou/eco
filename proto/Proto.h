@@ -1,5 +1,6 @@
 #ifndef ECO_PROTO_H
 #define ECO_PROTO_H
+#ifndef ECO_NO_PROTOBUF
 /*******************************************************************************
 @ Ãû³Æ
 
@@ -39,4 +40,5 @@ Stream& operator<<(OUT Stream& stream, IN const ::proto::Error& e)
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);
+#endif
 #endif

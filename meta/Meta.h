@@ -119,5 +119,21 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+class BindV
+{
+public:
+	inline BindV(IN std::string& val) : m_value(std::move(val))
+	{}
+
+	inline operator const char*() const
+	{
+		return m_value.c_str();
+	}
+
+	std::string m_value;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 }// ns
 #endif

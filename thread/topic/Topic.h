@@ -117,7 +117,7 @@ protected:
 		// get new data.
 		new_set.reserve(m_new_set.size());
 		// update snap.
-		for (auto it = m_new_set.begin(); it != m_new_set.end(), ++it)
+		for (auto it = m_new_set.begin(); it != m_new_set.end(); ++it)
 		{
 			new_set.push_back(*it);
 			m_snap_set.push_back(*it);

@@ -46,7 +46,7 @@ public:
 
 	virtual std::string Format() const
 	{
-		eco::FixStream<256> fmt;
+		eco::FixStream fmt;
 		fmt << "[   fail   ] ";
 		fmt << "false = expect : actual ";
 		fmt << "{" << m_detail << "}";
@@ -68,12 +68,12 @@ public:
 		IN const std::string& expect_detail,
 		IN const std::string& actual_detail)
 	{
-		m_detail = EcoStr << expect_detail << "!=" << actual_detail;
+		m_detail = EcoFix << expect_detail << "!=" << actual_detail;
 	}
 
 	virtual std::string Format() const
 	{
-		eco::FixStream<256> buf;
+		eco::FixStream buf;
 		buf << "[   fail   ] " << m_expect
 		<< " = expect : actual = " << m_actual << " "
 		<< "{" << m_detail << "}"
@@ -90,7 +90,7 @@ class TestLogicSuccess : public TestCheck
 public:
 	virtual std::string Format() const
 	{
-		eco::FixStream<512> fmt; 
+		eco::FixStream fmt; 
 		fmt << "[   pass   ] " << "true  = expect : actual";
 		return fmt.c_str();
 	}
@@ -105,7 +105,7 @@ public:
 public:
 	virtual std::string Format() const
 	{
-		eco::FixStream<512> fmt; 
+		eco::FixStream fmt; 
 		fmt << "[   pass   ] " << m_expect << " = expect : actual";
 		return fmt.c_str();
 	}
