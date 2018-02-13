@@ -127,7 +127,7 @@ public:
 
 	// req/rsp mode: send message and get a response.
 	template<typename codec_t, typename req_t, typename rsp_t>
-	inline void request(
+	inline eco::Result request(
 			IN const uint32_t req_type, IN req_t& req,
 			IN const uint32_t rsp_type, IN rsp_t& rsp,
 			IN const MessageCategory category = category_message)
@@ -135,7 +135,18 @@ public:
 		codec_t codec_req(req);
 		codec_t codec_rsp(rsp);
 		MessageMeta meta_req(codec_req, none_session, req_type, category);
-		request(meta_req, codec_rsp);
+		return request(meta_req, codec_rsp);
+	}
+	template<typename codec_t, typename msg_t>
+	inline eco::Result request(
+		IN const uint32_t req_type,
+		IN const uint32_t rsp_type,
+		IN msg_t& msg,
+		IN const MessageCategory category = category_message)
+	{
+		codec_t codec_rsp(msg);
+		MessageMeta meta_req(codec_t(msg), none_session, req_type, category);
+		return request(meta_req, codec_rsp);
 	}
 
 #ifndef ECO_NO_PROTOBUF
@@ -152,8 +163,8 @@ public:
 		async_send(meta);
 	}
 
-	// async send protobuf.
-	inline void request(
+	// sync request protobuf.
+	inline eco::Result request(
 		IN const uint32_t req_type,
 		IN google::protobuf::Message& req_msg,
 		IN const uint32_t rsp_type,
@@ -163,12 +174,20 @@ public:
 		return request<ProtobufCodec>(
 			req_type, req_msg, rsp_type, rsp_msg, category);
 	}
+
+	// sync request protobuf.
+	inline eco::Result request(
+		IN const uint32_t req_type,
+		IN const uint32_t rsp_type,
+		IN google::protobuf::Message& msg,
+		IN const MessageCategory category = category_message)
+	{
+		return request<ProtobufCodec>(req_type, rsp_type, msg, category);
+	}
 #endif
 
-	
-
 private:
-	void request(IN MessageMeta& req, IN Codec& rsp);
+	eco::Result request(IN MessageMeta& req, IN Codec& rsp);
 };
 
 

@@ -232,7 +232,7 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::request(IN MessageMeta& req, IN Codec& rsp)
+eco::Result TcpClient::Impl::request(IN MessageMeta& req, IN Codec& rsp)
 {
 	// async manager.
 	uint32_t req_id = ++m_request_id;
@@ -242,10 +242,12 @@ void TcpClient::Impl::request(IN MessageMeta& req, IN Codec& rsp)
 
 	// send message.
 	async_send(req);
-	if (!async->m_monitor.timed_wait(m_timeout_millsec))
+	auto result = async->m_monitor.timed_wait(m_timeout_millsec);
+	if (result != eco::ok)
 	{
 		pop_async(req_id);
 	}
+	return result;
 }
 
 
@@ -299,12 +301,6 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	if (!m_prot_head->decode(head, data, e))
 	{
 		EcoError << NetLog(peer_impl->get_id(), ECO_FUNC) <= e;
-		return;
-	}
-
-	// ignore sync request: don't support sync mode.
-	if (eco::has(head.m_category, category_sync))
-	{
 		return;
 	}
 
@@ -425,9 +421,9 @@ void TcpClient::async_auth(IN TcpSession& session, IN MessageMeta& meta)
 	impl().async_auth(outer.impl(), meta);
 }
 
-void TcpClient::request(IN MessageMeta& req, IN Codec& rsp)
+eco::Result TcpClient::request(IN MessageMeta& req, IN Codec& rsp)
 {
-	impl().request(req, rsp);
+	return impl().request(req, rsp);
 }
 
 

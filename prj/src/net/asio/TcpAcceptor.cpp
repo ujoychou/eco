@@ -70,9 +70,12 @@ public:
 
 	inline void stop()
 	{
-		m_acceptor->close();
-		// destroy acceptor before worker stop.
-		m_acceptor.reset();
+		if (m_acceptor != nullptr)
+		{
+			m_acceptor->close();
+			// destroy acceptor before worker stop.
+			m_acceptor.reset();
+		}
 		// stop worker.
 		m_worker.stop();
 		m_worker_pool.stop();

@@ -143,7 +143,7 @@ public:
 		: m_make_session(nullptr)
 		, m_on_connect(nullptr)
 		, m_on_close(nullptr)
-		, m_timeout_millsec(2000)
+		, m_timeout_millsec(5000)
 	{}
 
 	// register protocol.
@@ -306,7 +306,7 @@ public:
 	}
 
 	inline void async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta);
-	inline void request(IN MessageMeta& req, IN Codec& rsp);
+	inline eco::Result request(IN MessageMeta& req, IN Codec& rsp);
 
 public:
 	// when peer has connected to server.
