@@ -12,10 +12,10 @@ namespace meta{ ;
 // timestamp state.
 enum
 {
-	v_clear				= 0,		// original object, a not changed object.
-	v_insert			= 1,		// inserted object, a new object.
-	v_update			= 2,		// updated object.
-	v_remove			= 3,		// removed object.
+	v_insert			= 0,		// inserted object, a new object.
+	v_update			= 1,		// updated object.
+	v_remove			= 2,		// removed object.
+	v_clear				= 3,		// original object, a not changed object.
 };
 typedef uint32_t Timestamp;
 

@@ -44,7 +44,7 @@ public:
 	eco::meta::Timestamp m_timestamp;
 
 public:
-	inline Version() : m_value(0)
+	inline Version() : m_timestamp(eco::meta::v_insert), m_value(0)
 	{}
 
 	inline Version(IN const char* name) : m_value(0), m_module(name)

@@ -62,23 +62,26 @@ public:
 	// exit app and clear provider and consumer.
 	inline ~Impl()
 	{
-		stop();
+		exit();
 	}
 
 	// wait command and provider thread.
-	inline void join();
-	inline void stop();
+	void init();
+	void load();
+	void join();
+	void exit();
 
 public:
 	// eco cmd
 	inline void init_eco();
-	inline void init_command(IN App& app);
+	inline void init_command();
 	inline void start_command();
 
 	// erx dll
 	inline bool enable_erx() const;
-	inline void on_rx_init(IN App& ap);
+	inline void on_rx_init();
 	inline void on_rx_cmd();
+	inline void on_rx_load();
 	inline void on_rx_exit();
 
 	// service
@@ -104,7 +107,7 @@ inline void App::Impl::join()
 	eco::cmd::get_engine().join();
 }
 
-inline void App::Impl::stop()
+inline void App::Impl::exit()
 {
 	/* release order depend on it's dependency relationship.
 	1.eco obj: persist.on_live/erx.on_live <- erx;
@@ -116,7 +119,7 @@ inline void App::Impl::stop()
 		get_eco()->stop();
 	}
 
-	on_rx_exit();					// #.2 erx plugin exit.
+	on_rx_exit();				// #.2 erx plugin exit.
 
 	if (!m_provider.null())			// #.3 provider(tcp server).
 	{
@@ -163,9 +166,9 @@ inline void App::Impl::init_eco()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void App::Impl::init_command(IN App& app)
+inline void App::Impl::init_command()
 {
-	app.on_cmd();
+	s_app->on_cmd();
 	on_rx_cmd();
 }
 
@@ -181,7 +184,7 @@ inline bool App::Impl::enable_erx() const
 
 
 ////////////////////////////////////////////////////////////////////////////
-inline void App::Impl::on_rx_init(IN App& ap)
+inline void App::Impl::on_rx_init()
 {
 	if (enable_erx())
 	{
@@ -199,7 +202,7 @@ inline void App::Impl::on_rx_init(IN App& ap)
 		// notify erx to init.
 		for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
 		{
-			(**it).on_init_app(&ap);
+			(**it).on_init(*s_app);
 		}
 	}
 }
@@ -213,7 +216,21 @@ inline void App::Impl::on_rx_cmd()
 		// notify erx to init command.
 		for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
 		{
-			(**it).on_init_cmd();
+			(**it).on_cmd();
+		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+inline void App::Impl::on_rx_load()
+{
+	if (enable_erx())
+	{
+		// notify erx to init command.
+		for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
+		{
+			(**it).on_load();
 		}
 	}
 }
@@ -229,9 +246,9 @@ inline void App::Impl::on_rx_exit()
 			// notify erx to exit.
 			for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
 			{
-				if ((**it).get_cur_message() >= rx_msg_init_app)
+				if ((**it).get_cur_message() >= rx_msg_init)
 				{
-					(**it).on_exit_app();
+					(**it).on_exit();
 				}
 			}
 			// unload erx.
@@ -552,60 +569,91 @@ net::TcpClient App::get_consumer(IN const char* name)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-extern "C" ECO_API void init_app(IN eco::App& ap)
+extern "C" ECO_API void make_app(IN App& app)
 {
-	eco::App::Impl& impl = ap.impl();
+	App::Impl::s_app = &app;
+}
+extern "C" ECO_API void init_app(IN App& app)
+{
+	app.impl().init();
+}
+void App::Impl::init()
+{
 	// #.init system config.
-	impl.m_sys_config.init(impl.m_sys_config_file);
+	m_sys_config.init(m_sys_config_file);
 
 	// #.init app config.
 	eco::StringAny v;
-	if (impl.m_app_config_file.empty()) {
-		if (impl.m_sys_config.find(v, "config/name"))
-			impl.set_name(v.c_str());
-		if (impl.m_sys_config.find(v, "config/file_path"))
-			impl.m_app_config_file = v.c_str();
+	if (m_app_config_file.empty()) {
+		if (m_sys_config.find(v, "config/name"))
+			set_name(v.c_str());
+		if (m_sys_config.find(v, "config/file_path"))
+			m_app_config_file = v.c_str();
 		else
-			impl.m_app_config_file = app_cfg_file;
+			m_app_config_file = app_cfg_file;
 	}
-	impl.m_app_config.init(impl.m_app_config_file);
+	m_app_config.init(m_app_config_file);
 
 	// #.read logging config.
-	if (impl.m_sys_config.find(v, "logging/async"))
+	if (m_sys_config.find(v, "logging/async"))
 		eco::log::get_core().set_async(v);
-	if (impl.m_sys_config.find(v, "logging/level"))
+	if (m_sys_config.find(v, "logging/level"))
 		eco::log::get_core().set_severity_level(v.c_str());
-	if (impl.m_sys_config.find(v, "logging/memcache"))
+	if (m_sys_config.find(v, "logging/memcache"))
 		eco::log::get_core().set_capacity(uint32_t(double(v) * 1024 * 1024));
-	if (impl.m_sys_config.find(v, "logging/async_flush"))
+	if (m_sys_config.find(v, "logging/async_flush"))
 		eco::log::get_core().set_async_flush(v);
-	if (impl.m_sys_config.find(v, "logging/file_sink"))
+	if (m_sys_config.find(v, "logging/file_sink"))
 		eco::log::get_core().add_file_sink(v);
-	if (impl.m_sys_config.find(v, "logging/console_sink"))
+	if (m_sys_config.find(v, "logging/console_sink"))
 		eco::log::get_core().add_console_sink(v);
 	if (eco::log::get_core().has_file_sink())
 	{
-		if (impl.m_sys_config.find(v, "logging/file_sink/file_path"))
+		if (m_sys_config.find(v, "logging/file_sink/file_path"))
 			eco::log::get_core().set_file_path(v.c_str());
-		if (impl.m_sys_config.find(v, "logging/file_sink/roll_size"))
+		if (m_sys_config.find(v, "logging/file_sink/roll_size"))
 			eco::log::get_core().set_file_roll_size(
 				uint32_t(double(v) * 1024 * 1024));
 	}
 	eco::log::get_core().run();
 
 	// #.init eco.
-	if (impl.m_sys_config.has("eco"))
+	if (m_sys_config.has("eco"))
 	{
-		impl.init_eco();
+		init_eco();
 	}
 
 	// #.init service.
-	impl.init_router();
-	impl.init_consumer();
-	impl.init_provider();
+	init_router();
+	init_consumer();
+	init_provider();
 
 	// #.init persist.
-	impl.init_persist();
+	init_persist();
+
+	// init erx that ready for "app on_init" using.
+	on_rx_init();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+extern "C" ECO_API void load_app(IN App& app)
+{
+	app.impl().load();
+}
+void App::Impl::load()
+{
+	// init group and command tree.
+	init_command();
+
+	// start persist & service.
+	start_persist();
+	start_consumer();
+	start_provider();
+	// start command based on app business object and service.
+	start_command();
+
+	on_rx_load();
 }
 
 
@@ -623,27 +671,15 @@ int App::main(IN int argc, IN char* argv[])
 			Impl::s_params.push_back(param);
 		}
 		std::shared_ptr<App> app(Impl::s_create_app());
-		Impl::s_app = app.get();
+		make_app(*app);
 
 		// 1.must wait app object construct over.
 		// and it can set the sys config path in "derived app()".
-		eco::init_app(*app);
-
-		// init erx that ready for "app on_init" using.
-		app->impl().on_rx_init(*app);
-		// init app business object.
+		app->impl().init();
 		app->on_init();
-		// init group and command tree.
-		app->impl().init_command(*app);
-
-		// start persist & service.
-		app->impl().start_persist();
-		app->impl().start_consumer();
-		app->impl().start_provider();
-		// start command based on app business object and service.
-		app->impl().start_command();
 
 		// finish app config and start business object, load app business data.
+		app->impl().load();
 		app->on_load();
 
 		// join app.

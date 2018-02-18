@@ -10,7 +10,9 @@
 
 
 ECO_NS_BEGIN(eco);
+extern "C" void make_app(IN App& ap);
 extern "C" void init_app(IN App& ap);
+extern "C" void load_app(IN App& ap);
 ECO_NS_BEGIN(art);
 static bool s_run_once(true);
 static AppWork::createAppFunc s_create_app(nullptr);
@@ -46,25 +48,42 @@ int AppWork::main(int argc, char* argv[])
 		log(err += e.what());
 	}
 	return 0;
-
-	
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 int AppWork::run(QApplication& qt_app)
 {
-	// 创建APP对象
-	m_app.reset(s_create_app());
-	eco::init_app(*m_app);
+	try
+	{
+		// 创建APP对象
+		m_app.reset(s_create_app());
+		eco::make_app(*m_app);
 
-	// 运行程序
-	m_app->on_init();
-	qt_app.exec();
+		// 初始化
+		eco::init_app(*m_app);
+		m_app->on_init();
 
-	// 释放APP对象
-	m_app->on_exit();
-	m_app.reset();
+		// 加载数据
+		eco::load_app(*m_app);
+		m_app->on_load();
+
+		qt_app.exec();
+
+		// 释放APP对象
+		m_app->on_exit();
+		m_app.reset();
+	}
+	catch (eco::Error& e)
+	{
+		EcoCout << "[error] " << e.what();
+		getch_exit();
+	}
+	catch (std::exception& e)
+	{
+		EcoCout << "[error] " << e.what();
+		getch_exit();
+	}
 	return 0;
 }
 

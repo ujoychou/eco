@@ -32,9 +32,10 @@ namespace eco {;
 // app message send to erx dll.
 enum RxMessageId
 {
-	rx_msg_init_app		= 0x0001,
-	rx_msg_init_cmd		= 0x0002,
-	rx_msg_exit_app		= 0x0003,
+	rx_msg_init			= 0x0001,
+	rx_msg_cmd			= 0x0002,
+	rx_msg_load			= 0x0003,
+	rx_msg_exit			= 0x0004,
 };
 
 
@@ -54,23 +55,30 @@ public:
 	}
 
 	// notify erx when app init.
-	inline eco::Result on_init_app(IN eco::App* ap)
+	inline eco::Result on_init(IN eco::App& app)
 	{
-		m_rx_msg = rx_msg_init_app;
-		return m_entry_point(RxMessageId(m_rx_msg), ap);
+		m_rx_msg = rx_msg_init;
+		return m_entry_point(RxMessageId(m_rx_msg), &app);
 	}
 
 	// notify erx init command.
-	inline eco::Result on_init_cmd()
+	inline eco::Result on_cmd()
 	{
-		m_rx_msg = rx_msg_init_cmd;
+		m_rx_msg = rx_msg_cmd;
+		return m_entry_point(RxMessageId(m_rx_msg), nullptr);
+	}
+
+	// notify erx load data.
+	inline eco::Result on_load()
+	{
+		m_rx_msg = rx_msg_load;
 		return m_entry_point(RxMessageId(m_rx_msg), nullptr);
 	}
 
 	// notify erx when app exit.
-	inline eco::Result on_exit_app()
+	inline eco::Result on_exit()
 	{
-		m_rx_msg = rx_msg_exit_app;
+		m_rx_msg = rx_msg_exit;
 		return m_entry_point(RxMessageId(m_rx_msg), nullptr);
 	}
 
@@ -90,19 +98,25 @@ class ECO_API RxApp
 {
 protected:
 	// notify erx when app init.
-	virtual eco::Result on_init_app()
+	virtual eco::Result on_init()
 	{
 		return eco::ok;
 	}
 
 	// notify erx init command.
-	virtual eco::Result on_init_cmd()
+	virtual eco::Result on_cmd()
+	{
+		return eco::ok;
+	}
+
+	// notify erx load data.
+	virtual eco::Result on_load()
 	{
 		return eco::ok;
 	}
 
 	// notify erx when app exit.
-	virtual eco::Result on_exit_app()
+	virtual eco::Result on_exit()
 	{
 		return eco::ok;
 	}
@@ -136,17 +150,19 @@ public:
 	// erx dll entry point.
 	inline eco::Result entry_point(
 		IN const eco::RxMessageId msg,
-		IN void* ap)
+		IN void* app)
 	{
 		switch (msg)
 		{
-		case eco::rx_msg_init_app:
-			m_app = static_cast<eco::App*>(ap);
-			return on_init_app();
-		case eco::rx_msg_init_cmd:
-			return on_init_cmd();
-		case eco::rx_msg_exit_app:
-			return on_exit_app();
+		case eco::rx_msg_init:
+			m_app = static_cast<eco::App*>(app);
+			return on_init();
+		case eco::rx_msg_cmd:
+			return on_cmd();
+		case eco::rx_msg_load:
+			return on_load();
+		case eco::rx_msg_exit:
+			return on_exit();
 		}
 		return eco::ok;
 	}
