@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/net/SessionData.h>
 #include <eco/net/protocol/Codec.h>
 #include <eco/net/protocol/ProtocolHead.h>
 
@@ -86,7 +85,7 @@ enum
 	// option: message has a session id.
 	option_sess				= 0x10,
 	// option: auto authority(support for auto login).
-	option_auto				= 0x20,
+	//option_auto			= 0x20,
 };
 // for user define: MessageOption is uint16_t.
 typedef uint32_t MessageOption;
@@ -123,10 +122,14 @@ public:
 		IN Codec& codec,
 		IN const uint32_t session_id,
 		IN const uint32_t type,
-		IN const MessageCategory category = category_message)
+		IN const bool encrypted)
 	{
 		memset(this, 0, sizeof(*this));
-		m_category = category;
+		m_category = category_message;
+		if (encrypted)
+			eco::add(m_category, category_encrypted);
+		if (session_id != none_session)
+			eco::add(m_category, category_session);
 		set_session_id(session_id);
 		set_message_type(type);
 		m_codec = &codec;

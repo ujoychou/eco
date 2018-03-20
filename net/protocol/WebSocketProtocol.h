@@ -167,6 +167,11 @@ public:
 			head.m_version  = (bytes[pos] ^ masking_key[0]);
 			head.m_category = (bytes[pos + 1] ^ masking_key[1]);
 		}
+		else
+		{
+			head.m_version = bytes[pos];
+			head.m_category = bytes[pos + 1];
+		}
 		return true;
 	}
 
@@ -481,7 +486,7 @@ public:
 		EcoInfo << "[WebSocket] " 
 			<< " fin=" << int(fin)
 			<< " opcode=" << int(frame)
-			<< " mask=" << bool(mask)
+			<< " mask=" << bool(mask != 0)
 			<< " payload len=" << payload_len
 			<< " payload=" << &bytes[pos];
 		return &bytes[pos];

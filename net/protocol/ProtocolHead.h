@@ -51,6 +51,8 @@ enum
 	category_encrypted			= 0x10,
 	// category: sync request, else aysnc.
 	category_sync				= 0x20,
+	// category: session mode.
+	category_session			= 0x40,
 };
 // for user define: MessageCategory is uint16_t.
 typedef uint16_t MessageCategory;

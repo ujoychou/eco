@@ -57,11 +57,51 @@ public:
 		return m_resp;
 	}
 
-	// parse websocket request shakehand.
-	inline bool parse(IN const char* request)
+	inline eco::String& format()
+	{
+		m_resp.resize(0);
+		m_resp.reserve(1024);
+		m_resp.append("GET / HTTP/1.1\r\n");
+		m_resp.append("Host: 127.0.0.1:41205\r\n");
+		m_resp.append("Connection: Upgrade\r\n");
+		m_resp.append("Pragma: no-cache\r\n");
+		m_resp.append("Cache-Control: no-cache\r\n");
+		m_resp.append("Upgrade: websocket\r\n");
+		m_resp.append("Sec-WebSocket-Version: 13\r\n");
+		m_resp.append("User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 "
+			"Safari/537.36\r\n");
+		m_resp.append("Accept-Encoding: gzip, deflate, br\r\n");
+		m_resp.append("Accept-Language: zh-CN,zh;q=0.9,en;q=0.8\r\n");
+		m_resp.append("Sec-WebSocket-Key: 0A0r7tnSAYscOhMUO8tIcw==\r\n");
+		m_resp.append("Sec-WebSocket-Extensions: permessage-deflate; "
+			"client_max_window_bits\r\n\r\n");
+		return m_resp;
+	}
+
+	// parse websocket request shakehand response from server.
+	inline bool parse_rsp(IN const char* request, IN const char* key)
 	{
 		eco::String server_key;
-		if (!parse_key(server_key, request))
+		if (!parse_key(server_key, request, false))
+		{
+			return false;
+		}
+
+		// check server key parse by server..
+		if (strcmp(server_key.c_str(), key) != 0)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	// parse websocket request shakehand request from client.
+	inline bool parse_req(IN const char* request)
+	{
+		eco::String server_key;
+		if (!parse_key(server_key, request, true))
 		{
 			return false;
 		}
@@ -89,8 +129,12 @@ public:
 private:
 	// parse websocket request shakehand key.
 	inline bool parse_key(
-		OUT eco::String& server_key, IN const char* request)
+		OUT eco::String& server_key, 
+		IN  const char* request,
+		IN  const bool websocket_req)
 	{
+		const char* key_name = websocket_req
+			? "Sec-WebSocket-Key" : "Sec-WebSocket-Accept";
 		const char* data = request;
 		while (true)
 		{
@@ -112,18 +156,16 @@ private:
 			}
 
 			// match the "key".
-			const char* find = eco::find(
-				data, key_end - data, "Sec-WebSocket-Key");
+			const char* find = eco::find(data, key_end - data, key_name);
 			if (find != nullptr)
 			{
 				// format: "Sec-WebSocket-Key: t/b9b1gBUKvemepe7PhatQ=="
 				key_end += 2;	// skip ": ", note there is a space.
 				server_key.asign(key_end, static_cast<uint32_t>(val_end - key_end));
 				if (server_key[server_key.size() - 1] == '\r')
-				{
 					server_key.resize(server_key.size() - 1);
-				}
-				server_key.append(magic_key());
+				if (websocket_req)
+					server_key.append(magic_key());
 				return true;
 			}
 			data = val_end + 1;		// next "key:value".

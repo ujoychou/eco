@@ -42,9 +42,10 @@ public:
 	inline ProtobufCodec() : m_msg(nullptr)
 	{}
 
-	inline explicit ProtobufCodec(
-		IN google::protobuf::Message& msg) : m_msg(&msg)
-	{}
+	inline explicit ProtobufCodec(IN const google::protobuf::Message& msg)
+	{
+		m_msg = const_cast<google::protobuf::Message*>(&msg);
+	}
 
 	virtual void set_message(void* message)
 	{
