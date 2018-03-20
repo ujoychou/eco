@@ -24,7 +24,6 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/net/SessionData.h>
 #include <eco/net/protocol/Protocol.h>
 #include <eco/net/protocol/ProtobufCodec.h>
 #include <eco/net/TcpPeer.h>
@@ -69,15 +68,15 @@ public:
 		: m_peer(wptr), m_prot(&prot), m_id(id)
 	{}
 
-	inline TcpConnection(IN const TcpConnection& other) :
-		m_peer(other.m_peer),
-		m_prot(other.m_prot)
+	inline TcpConnection(IN const TcpConnection& other)
+		: m_peer(other.m_peer), m_prot(other.m_prot), m_id(other.m_id)
 	{}
 
 	inline void move(IN TcpConnection& other)
 	{
 		m_peer = std::move(other.m_peer);
 		m_prot = other.m_prot;
+		m_id = other.m_id;
 	}
 
 	// close session, release session data.
@@ -94,6 +93,7 @@ public:
 	{
 		m_peer.reset();
 		m_prot = nullptr;
+		m_id = 0;
 	}
 
 	// check whether this connection has been expired.
@@ -141,42 +141,19 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
+		IN const bool encrypted = true,
 		IN const bool last = true)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			return peer->async_response(codec, type, context, *m_prot);
+			return peer->async_response(
+				codec, type, context, *m_prot, encrypted, last);
 		}
 	}
 
-#ifndef ECO_NO_PROTOBUF
-	// async send protobuf.
-	inline void async_send(
-		IN google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const MessageCategory category = category_message)
-	{
-		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, none_session, type, category);
-		async_send(meta);
-	}
-
-	// async send response to client by context.
-	inline void async_response(
-		IN google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const Context& context,
-		IN const bool last = true)
-	{
-		ProtobufCodec codec(msg);
-		async_response(codec, type, context, last);
-	}
-#endif
-
-private:
 	// async send message.
-	inline void async_send(IN MessageMeta& meta)
+	inline void async_send(IN const MessageMeta& meta)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
@@ -185,6 +162,44 @@ private:
 		}
 	}
 
+#ifndef ECO_NO_PROTOBUF
+	// async send protobuf.
+	inline void async_send(
+		IN const google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const bool encrypted = true)
+	{
+		ProtobufCodec codec(msg);
+		MessageMeta meta(codec, none_session, type, encrypted);
+		async_send(meta);
+	}
+
+	// async send response to client by context.
+	inline void async_response(
+		IN const google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const Context& context,
+		IN const bool encrypted = true,
+		IN const bool last = true)
+	{
+		ProtobufCodec codec(msg);
+		async_response(codec, type, context, encrypted, last);
+	}
+
+	// async send protobuf.
+	inline void async_send_session(
+		IN const google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const SessionId sess_id,
+		IN const bool encrypted = true)
+	{
+		ProtobufCodec codec(msg);
+		MessageMeta meta(codec, sess_id, type, encrypted);
+		async_send(meta);
+	}
+#endif
+
+private:
 	TcpPeer::wptr	m_peer;
 	Protocol*		m_prot;
 	size_t			m_id;
@@ -197,9 +212,11 @@ class ConnectionData : public eco::HeapOperators
 {
 	ECO_OBJECT(ConnectionData);
 public:
+	// #.event: after server connection connect.
+	inline ConnectionData() {}
+
 	// #.event: after server connection close.
-	virtual ~ConnectionData() = 0
-	{}
+	virtual ~ConnectionData() = 0 {}
 
 	// whether this connection has authorized.
 	virtual bool authed() const
@@ -219,27 +236,23 @@ public:
 		return nullptr;
 	}
 
-public:
-	// #.event: after server connection connect.
-	inline ConnectionData() : m_prot(nullptr), m_id(0)
-	{}
-
 	// get connection object.
-	inline TcpConnection connection()
+	inline TcpConnection& connection()
 	{
-		return TcpConnection(m_wptr, *m_prot, m_id);
+		return m_conn;
+	}
+	inline const TcpConnection& get_connection() const
+	{
+		return m_conn;
 	}
 
 	inline const ConnectionId get_id() const
 	{
-		return m_id;
+		return m_conn.get_id();
 	}
 
 private:
-	TcpPeer::wptr m_wptr;
-	Protocol* m_prot;
-	size_t  m_id;
-	friend class TcpPeer;
+	TcpConnection m_conn;
 };
 
 
@@ -264,7 +277,6 @@ typedef ConnectionData* (*MakeConnectionDataFunc)();
 ////////////////////////////////////////////////////////////////////// TcpClient
 typedef void (*OnConnectFunc) ();		// tcp client on connect event.
 typedef void (*OnCloseFunc) ();			// tcp client on close event.
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -23,11 +23,11 @@ void TcpServer::Impl::start()
 		set_protocol_head(new WebSocketProtocolHeadEx());
 		set_protocol(new WebSocketProtocol());
 	}
-
-	if (m_prot_head.get() == nullptr)
-		EcoThrow(e_server_no_protocol_head) << "server protocol head is null.";
-	if (m_protocol_set.empty())
-		EcoThrow(e_server_no_protocol) << "server protocol is null.";
+	else if (!m_prot_head.get() || m_protocol_set.empty())
+	{
+		set_protocol_head(new TcpProtocolHead());
+		set_protocol(new TcpProtocol());
+	}
 
 	// set default value.
 	if (m_option.get_max_connection_size() == 0)
@@ -64,7 +64,7 @@ void TcpServer::Impl::start()
 		"-[mode] io delay(%c), websocket(%c)\n"
 		"-[tick] unit %ds, lost client %ds, heartbeat %ds\n"
 		"-[beat] io(%c), rhythm(%c), response(%c)\n"
-		"-[capacity] %d connections, %d sessions(%c)\n"
+		"-[capacity] %d connections, %d sessions\n"
 		"-[parallel] %d io thread, %d business thread\n",
 		m_option.get_name(), m_option.get_port(),
 		eco::yn(m_option.no_delay()), eco::yn(m_option.websocket()),
@@ -75,26 +75,28 @@ void TcpServer::Impl::start()
 		eco::yn(m_option.rhythm_heartbeat()),
 		eco::yn(m_option.response_heartbeat()),
 		m_option.get_max_connection_size(),
-		m_option.get_max_session_size(), eco::yn(session_mode()),
-		m_option.get_io_thread_size(), m_option.get_business_thread_size());
+		m_option.get_max_session_size(),
+		m_option.get_io_thread_size(), 
+		m_option.get_business_thread_size());
 	EcoLog(info, 1024) << log;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 SessionData::ptr TcpServer::Impl::add_session(
-	OUT SessionId& sess_id, IN TcpPeer& peer)
+	OUT SessionId& sess_id, 
+	IN  const TcpConnection& conn)
 {
 	if (m_make_session == nullptr)
 	{
-		EcoError << NetLog(peer.get_id(), ECO_FUNC)
+		EcoError << NetLog(conn.get_id(), ECO_FUNC)
 			<= "this is connection mode, don't supoort session.";
 		return SessionData::ptr();
 	}
 	// session overloaded.
 	if (m_session_map.size() >= m_option.get_max_session_size())
 	{
-		EcoError << NetLog(peer.get_id(), ECO_FUNC) 
+		EcoError << NetLog(conn.get_id(), ECO_FUNC)
 			<= "session has reached max size: "
 			< m_option.get_max_session_size();
 		return SessionData::ptr();
@@ -102,10 +104,10 @@ SessionData::ptr TcpServer::Impl::add_session(
 
 	// create session: session id and session data.
 	sess_id = next_session_id();
-	SessionData::ptr new_sess(m_make_session(sess_id));
+	SessionData::ptr new_sess(m_make_session(sess_id, conn));
 	m_session_map.set(sess_id, new_sess);
-	peer.impl().add_session(sess_id);
-	EcoInfo << NetLog(peer.get_id(), ECO_FUNC, sess_id);
+	add_conn_session(conn.get_id(), sess_id);
+	EcoInfo << NetLog(conn.get_id(), ECO_FUNC, sess_id);
 	return new_sess;
 }
 
@@ -143,7 +145,6 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 	{
 		m_peer_set.clean_inactive_peer();
 	}
-
 	// set next tick on.
 	set_tick_timer();
 }
@@ -158,20 +159,17 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& p, IN const eco::Error* e)
 		return;
 	}
 	p->set_connected();
+	p->state().set_server();
+	EcoInfo << NetLog(p->get_id(), ECO_FUNC);
 	
 	// hub verify the most tcp_connection num.
 	if (m_peer_set.add(p))
 	{
 		// tcp_connection start work and recv request.
 		if (m_option.websocket())
-		{
 			p->async_recv_shakehand();
-		}
 		else
-		{
-			p->state().set_ready();
-			p->async_recv();
-		}
+			p->async_recv_by_server();
 	}
 	else
 	{
@@ -234,9 +232,11 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpServer::Impl::on_close(IN uint64_t conn_id)
+void TcpServer::Impl::on_close(IN const ConnectionId conn_id)
 {
 	m_peer_set.erase(conn_id);
+	clear_conn_session(conn_id);
+	EcoInfo << NetLog(conn_id, ECO_FUNC);
 }
 
 
@@ -260,11 +260,6 @@ void TcpServer::set_connection_data(IN MakeConnectionDataFunc make)
 void TcpServer::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;
-}
-
-bool TcpServer::session_mode() const
-{
-	return impl().m_make_session != nullptr;
 }
 
 void TcpServer::start()

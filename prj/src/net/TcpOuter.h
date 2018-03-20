@@ -31,6 +31,19 @@
 
 namespace eco{;
 namespace net{;
+////////////////////////////////////////////////////////////////////////////////
+class SessionDataOuter
+{
+public:
+	inline SessionDataOuter(IN SessionData& data) : m_data(data)
+	{}
+	inline void set_id(IN const SessionId session_id)
+	{
+		m_data.m_id = session_id;
+	}
+public:
+	SessionData& m_data;
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,14 +108,6 @@ public:
 	inline TcpSessionOwnerOuter(IN TcpSessionOwner& owner)
 		: m_owner(owner) {}
 
-	inline bool session_mode() const
-	{
-		assert(m_owner.m_owner != nullptr);
-		return (m_owner.m_server)
-			? ((TcpServer::Impl*)(m_owner.m_owner))->session_mode()
-			: ((TcpClient::Impl*)(m_owner.m_owner))->session_mode();
-	}
-
 	inline bool response_heartbeat() const
 	{
 		assert(m_owner.m_owner != nullptr);
@@ -130,10 +135,10 @@ bool TcpSessionOuter::open(IN const SessionId session_id)
 	if (impl().m_owner.m_server)
 	{
 		auto* server = (TcpServer::Impl*)impl().m_owner.m_owner;
-		auto sess = server->find_session(session_id);
-		if (sess != nullptr)
+		impl().m_session_ptr = server->find_session(session_id);
+		if (impl().m_session_ptr != nullptr)
 		{
-			impl().m_session_wptr = sess;
+			impl().m_session_wptr = impl().m_session_ptr;
 			impl().m_session_id = session_id;
 			return true;
 		}
@@ -147,6 +152,7 @@ bool TcpSessionOuter::open(IN const SessionId session_id)
 			impl().m_user = pack->m_user_observer.lock();
 			if (impl().m_user != nullptr)
 			{
+				impl().m_session_ptr = pack->m_session;
 				impl().m_session_wptr = pack->m_session;
 				impl().m_session_id = session_id;
 				return true;

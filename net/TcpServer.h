@@ -25,7 +25,7 @@
 *******************************************************************************/
 #include <eco/ExportApi.h>
 #include <eco/net/DispatchRegistry.h>
-#include <eco/net/SessionData.h>
+#include <eco/net/TcpConnection.h>
 #include <eco/net/TcpServerOption.h>
 #include <eco/net/protocol/Protocol.h>
 
@@ -85,7 +85,6 @@ public:
 		set_session_data(&make_session_data<SessionDataT>);
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
-	bool session_mode() const;
 
 	// dispatcher
 	DispatchRegistry& dispatcher();

@@ -63,7 +63,7 @@ public:
 	// peer must be created in the heap(by new).
 	inline void prepare(IN TcpPeer::ptr& peer)
 	{
-		peer->impl().m_peer_observer = peer;
+		m_peer_observer = peer;
 
 		// init io service and set tcp server.
 		m_connector.register_handler(*this, m_peer_observer);
@@ -72,17 +72,9 @@ public:
 		m_state.set_self_live(false);
 	}
 
-	inline void make_connection_data(
-		IN MakeConnectionDataFunc make_func, IN Protocol* prot)
-	{
-		if (make_func != nullptr && m_data.get() == nullptr)
-		{
-			m_data.reset(make_func());
-			m_data->m_wptr = m_peer_observer;
-			m_data->m_prot = prot;
-			m_data->m_id = get_id();
-		}
-	}
+	void make_connection_data(
+		IN MakeConnectionDataFunc make_func,
+		IN Protocol* prot);
 
 	inline TcpPeerHandler& handler()
 	{
@@ -130,23 +122,37 @@ public:
 		m_state.set_peer_live(true);
 	}
 
+	// ready for receiving data.
+	inline void async_recv_by_client()
+	{
+		m_state.set_ready();
+		m_handler->on_connect();
+		async_recv();
+	}
+
 	// ready to receive data head.
 	inline void async_connect(IN const Address& addr)
 	{
 		m_connector.async_connect(addr);
 	}
-	inline void async_recv_next();
+	inline void async_recv();
+	inline void async_recv_by_server()
+	{
+		m_state.set_ready();
+		async_recv();
+	}
+
+	// send websocket shakehand.
+	inline void send_websocket_shakehand();
 
 	// handle websocket shakehand.
 	inline void async_recv_shakehand();
-	inline void handle_websocket_shakehand(
+	inline void handle_websocket_shakehand_req(
 		IN const char* data_head,
 		IN const uint32_t head_size);
-
-	// add session to peer. TODO.
-	inline void add_session(IN const SessionId id)
-	{
-	}
+	inline void handle_websocket_shakehand_rsp(
+		IN const char* data_head,
+		IN const uint32_t head_size);
 
 	// send response to client.
 	inline void async_send(
@@ -226,7 +232,7 @@ public:
 	}
 
 public:
-	// when peer has connected to server.
+	// when peer has connected to server.(tcp client)
 	virtual void on_connect(
 		IN bool is_connected,
 		IN const eco::Error* error) override;

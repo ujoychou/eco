@@ -24,13 +24,133 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/net/SessionData.h>
 #include <eco/net/TcpConnection.h>
 #include <memory>
 
 
 namespace eco{;
 namespace net{;
+////////////////////////////////////////////////////////////////////////////////
+// client access user handler, and user access client.
+typedef std::shared_ptr<int> ClientUser;
+typedef std::weak_ptr<int> ClientUserObserver;
+// tcp session owner: tcp client or tcp server.
+class TcpClientImpl;
+class TcpServerImpl;
+class TcpSessionOwner
+{
+public:
+	inline TcpSessionOwner() : m_server(false), m_owner(nullptr)
+	{}
+
+	inline TcpSessionOwner(IN TcpClientImpl& client)
+		: m_server(false), m_owner(&client)
+	{}
+
+	inline TcpSessionOwner(IN TcpServerImpl& server)
+		: m_server(true), m_owner(&server)
+	{}
+
+	inline void set(IN TcpClientImpl& client)
+	{
+		m_server = false;
+		m_owner = &client;
+	}
+
+	inline void set(IN TcpServerImpl& server)
+	{
+		m_server = true;
+		m_owner = &server;
+	}
+
+	inline void clear()
+	{
+		m_server = 0;
+		m_owner = 0;
+	}
+
+	uint32_t	m_server;
+	void*		m_owner;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// define session data holder. (using the boost::any<type> mechanism)
+class SessionData : public eco::HeapOperators
+{
+	ECO_OBJECT(SessionData);
+public:
+	// #.event: after server session connect.
+	inline SessionData(
+		IN const eco::net::SessionId id,
+		IN const eco::net::TcpConnection& conn)
+		: m_id(id), m_conn(conn)
+	{}
+
+	// #.event: after server session close.
+	virtual ~SessionData() = 0 {}
+
+	// get user id.
+	virtual const uint64_t get_user_id() const
+	{
+		return 0;
+	}
+
+	// get user name.
+	virtual const char* get_user_name() const
+	{
+		return nullptr;
+	}
+
+	// get connection object.
+	inline TcpConnection& connection()
+	{
+		return m_conn;
+	}
+	inline const TcpConnection& get_connection() const
+	{
+		return m_conn;
+	}
+
+	inline const SessionId get_id() const
+	{
+		return m_id;
+	}
+
+#ifndef ECO_NO_PROTOBUF
+	// async send protobuf.
+	inline void async_send(
+		IN const google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const bool encrypted = true)
+	{
+		m_conn.async_send_session(msg, type, m_id, encrypted);
+	}
+#endif
+
+private:
+	SessionId		m_id;
+	TcpConnection	m_conn;
+	friend class SessionDataOuter;
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// default session factory function.
+template<typename SessionDataT>
+inline static SessionData* make_session_data(
+	IN const SessionId session_id,
+	IN const TcpConnection& connection)
+{
+	return new SessionDataT(session_id, connection);
+}
+
+// set session factory to create session of tcp server peer.
+typedef SessionData* (*MakeSessionDataFunc)(
+	IN const SessionId session_id,
+	IN const TcpConnection& connection);
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,14 +161,14 @@ public:
 
 	// session data
 	SessionId			m_session_id;		// session id.
+	SessionData::ptr	m_session_ptr;		// session data.
 	SessionData::wptr	m_session_wptr;		// session data.
-	TcpPeer*			m_peer;				// sesseion peer.
 	
 	// session owner: client or server.
 	TcpSessionOwner		m_owner;
 	ClientUser			m_user;
 
-	inline TcpSessionImpl() : m_session_id(none_session), m_peer(nullptr)
+	inline TcpSessionImpl() : m_session_id(none_session)
 	{}
 };
 
@@ -75,48 +195,46 @@ public:
 	inline const SessionId get_id() const;
 
 	// get session data.
-	inline SessionData::ptr data();
+	inline SessionData::ptr data() const;
 
 	// get and cast session data.
 	template<typename SessionDataT>
 	inline std::shared_ptr<SessionDataT> cast();
 
-	// check that it is a session mode.
-	inline bool session_mode() const;
-
 public:
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void async_send(
-		IN google::protobuf::Message& msg,
+		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const MessageCategory category = category_message)
+		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, get_id(), type, category);
+		MessageMeta meta(codec, get_id(), type, encrypted);
 		async_send(meta);
 	}
 
 	// async send protobuf authority info.
 	inline void async_auth(
-		IN google::protobuf::Message& msg,
+		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const MessageCategory category = category_message)
+		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, none_session, type, category);
+		MessageMeta meta(codec, none_session, type, encrypted);
 		async_auth(meta);
 	}
 
 	// async send response to client by context.
 	inline void async_response(
-		IN google::protobuf::Message& msg,
+		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool last = false)
+		IN const bool encrypted = true,
+		IN const bool last = true)
 	{
 		ProtobufCodec codec(msg);
-		async_response(codec, type, context, last);
+		async_response(codec, type, context, encrypted, last);
 	}
 #endif
 
@@ -125,15 +243,17 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool last = false);
+		IN const bool encrypted = true,
+		IN const bool last = true);
 
-private:
+
 	// async send message.
-	inline void async_send(IN MessageMeta& meta);
+	inline void async_send(IN const MessageMeta& meta);
 
 	// async send authority info.
-	inline void async_auth(IN MessageMeta& meta);
+	inline void async_auth(IN const MessageMeta& meta);
 
+private:
 	// implement.
 	TcpSessionImpl m_impl;
 	friend class TcpSessionOuter;

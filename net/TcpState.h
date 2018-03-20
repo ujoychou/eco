@@ -52,63 +52,74 @@ public:
 		return (m_state == eco::atomic::State::_no);
 	}
 
-	// set connected state.
-	inline void set_connected()
+	// set server state.
+	inline void set_server()
 	{
 		m_state = eco::atomic::State::_a;
 	}
 	// whether it is connected state.
-	inline bool connected() const
+	inline bool server() const
 	{
 		return (m_state & eco::atomic::State::_a) > 0;
 	}
 
-	// set ready state: use in websocket.
-	inline void set_ready()
+	// set connected state.
+	inline void set_connected()
 	{
-		m_state.add(eco::atomic::State::_b);
+		m_state = eco::atomic::State::_b;
 	}
-	// whether it is ready state.
-	inline bool ready() const
+	// whether it is connected state.
+	inline bool connected() const
 	{
 		return (m_state & eco::atomic::State::_b) > 0;
 	}
 
 	// set ready state: use in websocket.
-	inline void set_websocket()
+	inline void set_ready()
 	{
 		m_state.add(eco::atomic::State::_c);
 	}
 	// whether it is ready state.
-	inline bool websocket() const
+	inline bool ready() const
 	{
 		return (m_state & eco::atomic::State::_c) > 0;
+	}
+
+	// set ready state: use in websocket.
+	inline void set_websocket()
+	{
+		m_state.add(eco::atomic::State::_d);
+	}
+	// whether it is ready state.
+	inline bool websocket() const
+	{
+		return (m_state & eco::atomic::State::_d) > 0;
 	}
 
 	// whether this connection is alive, this is help to avoid to send heartbeat
 	// to a live connection, that will improve performance.
 	inline void set_self_live(IN bool is)
 	{
-		m_state.set(is, eco::atomic::State::_d);
+		m_state.set(is, eco::atomic::State::_e);
 	}
 	inline bool self_live() const
 	{
-		return m_state.has(eco::atomic::State::_d);
+		return m_state.has(eco::atomic::State::_e);
 	}
 
 	// whether peer of this connection is alive, is help to clean dead peer.
 	inline void set_peer_live(IN bool is)
 	{
 		if (is) {
-			m_state.add(eco::atomic::State::_e);
+			m_state.add(eco::atomic::State::_f);
 		}
 		else {
-			m_state.del(eco::atomic::State::_e | eco::atomic::State::_f);
+			m_state.del(eco::atomic::State::_f | eco::atomic::State::_g);
 		}
 	}
 	inline bool peer_live() const
 	{
-		return m_state.has(eco::atomic::State::_e);
+		return m_state.has(eco::atomic::State::_f);
 	}
 
 	// whether peer of this connection is active, is help to clean unactive
@@ -116,14 +127,14 @@ public:
 	inline void set_peer_active(IN bool is)
 	{
 		if (is) {
-			m_state.add(eco::atomic::State::_f | eco::atomic::State::_e);
+			m_state.add(eco::atomic::State::_g | eco::atomic::State::_f);
 		} else {
-			m_state.del(eco::atomic::State::_f);
+			m_state.del(eco::atomic::State::_g);
 		}
 	}
 	inline bool peer_active() const
 	{
-		return m_state.has(eco::atomic::State::_f);
+		return m_state.has(eco::atomic::State::_g);
 	}
 
 private:

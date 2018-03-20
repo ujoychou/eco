@@ -32,7 +32,9 @@
 #include <eco/thread/Map.h>
 #include <eco/thread/Atomic.h>
 #include <map>
+#include <set>
 #include <vector>
+#include <memory>
 #include "TcpPeerSet.h"
 
 
@@ -71,6 +73,11 @@ public:
 	eco::Atomic<SessionId> m_next_session_id;
 	std::vector<SessionId> m_left_session_ids;
 	eco::HashMap<SessionId, SessionData::ptr> m_session_map;
+	// connection session data.
+	typedef std::set<SessionId> SessionSet;
+	typedef std::shared_ptr<SessionSet> SessionSetPtr;
+	eco::Mutex m_conn_session_mutex;
+	std::unordered_map<ConnectionId, SessionSetPtr> m_conn_session;
 
 public:
 	inline Impl() : m_make_connection(nullptr), m_make_session(nullptr)
@@ -123,12 +130,6 @@ public:
 		}
 		return nullptr;
 	}
-
-	// is it a session mode.
-	inline bool session_mode() const
-	{
-		return (m_make_session != nullptr);
-	}
 	
 //////////////////////////////////////////////////////////////////////// SESSION
 public:
@@ -147,9 +148,10 @@ public:
 		return ++m_next_session_id;
 	}
 
-
 	// add new session.
-	SessionData::ptr add_session(OUT SessionId& id, IN TcpPeer& peer);
+	SessionData::ptr add_session(
+		OUT SessionId& id, 
+		IN const TcpConnection& conn);
 
 	// find exist session.
 	inline SessionData::ptr find_session(IN const SessionId id) const
@@ -160,14 +162,70 @@ public:
 	}
 
 	// erase session.
-	inline void erase_session(IN const SessionId id)
+	inline void erase_session(
+		IN const SessionId sess_id, 
+		IN const ConnectionId conn_id)
 	{
-		SessionData::ptr v = m_session_map.pop(id);
-		if (v != nullptr)
-			eco::thread::release(v);
-		eco::Mutex::ScopeLock lock(m_session_map.mutex());
-		m_left_session_ids.push_back(id);
+		{
+			eco::Mutex::ScopeLock lock(m_session_map.mutex());
+			auto it = m_session_map.map().find(sess_id);
+			if (it != m_session_map.map().end())
+			{
+				auto v = it->second;
+				m_session_map.map().erase(it);
+				m_left_session_ids.push_back(sess_id);
+			}
+		}
+		erase_conn_session(conn_id, sess_id);
 	}
+
+	// add conn session
+	inline void add_conn_session(
+		IN const ConnectionId conn_id, 
+		IN const SessionId sess_id)
+	{
+		eco::Mutex::ScopeLock lock(m_conn_session_mutex);
+		SessionSetPtr& map = m_conn_session[conn_id];
+		if (map == nullptr)
+		{
+			map.reset(new SessionSet);
+		}
+		(*map).insert(sess_id);
+	}
+
+	// erase conn session
+	inline bool erase_conn_session(
+		IN const ConnectionId conn_id,
+		IN const SessionId sess_id)
+	{
+		eco::Mutex::ScopeLock lock(m_conn_session_mutex);
+		auto it = m_conn_session.find(conn_id);
+		if (it != m_conn_session.end())
+		{
+			it->second->erase(sess_id);
+			return true;
+		}
+		return false;
+	}
+
+	// erase conn session
+	inline void clear_conn_session(
+		IN const ConnectionId conn_id)
+	{
+		eco::Mutex::ScopeLock lock(m_conn_session_mutex);
+		auto itc = m_conn_session.find(conn_id);
+		if (itc != m_conn_session.end())
+		{
+			auto& sess_map = itc->second;
+			for (auto it = sess_map->begin(); it != sess_map->end(); ++it)
+			{
+				m_session_map.erase(*it);
+				m_left_session_ids.push_back(*it);
+			}
+			m_conn_session.erase(itc);
+		}
+	}
+
 
 ////////////////////////////////////////////////////////////////////// IO SERVER
 public:
@@ -227,8 +285,7 @@ public:
 		IN const uint32_t size) override;
 
 	// when peer has been closed.
-	virtual void on_close(
-		IN uint64_t peer_id) override;
+	virtual void on_close(IN const ConnectionId peer_id) override;
 
 	// get protocol head.
 	virtual ProtocolHead& protocol_head() const override

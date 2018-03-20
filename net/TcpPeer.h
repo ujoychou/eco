@@ -53,7 +53,7 @@ public:
 	{}
 
 	// when peer has been closed.
-	virtual void on_close(IN uint64_t peer_id)
+	virtual void on_close(IN const ConnectionId peer_id)
 	{}
 
 	// get protocol head.
@@ -61,6 +61,12 @@ public:
 
 	// whether is a websocket.
 	virtual bool websocket() const = 0;
+
+	// websocket server key.
+	virtual const char* websocket_key() const
+	{
+		return "";
+	}
 };
 
 
@@ -108,6 +114,7 @@ public:
 	// async recv message from peer.
 	void async_recv();
 	void async_recv_shakehand();
+	void async_recv_by_server();
 
 	// close peer.
 	void close();
@@ -119,7 +126,7 @@ public:
 	void async_send(IN eco::String& data, IN const uint32_t start);
 
 	// async send meta message.
-	void async_send(IN MessageMeta& meta, IN Protocol& prot);
+	void async_send(IN const MessageMeta& meta, IN Protocol& prot);
 
 	// async response message.
 	void async_response(
@@ -127,7 +134,8 @@ public:
 		IN const uint32_t type,
 		IN const Context& context,
 		IN Protocol& prot,
-		IN const bool last = true);
+		IN const bool encrypted,
+		IN const bool last);
 };
 
 

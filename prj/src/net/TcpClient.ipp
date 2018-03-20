@@ -162,12 +162,6 @@ public:
 		return *m_balancer.m_peer;
 	}
 
-	// is a session mode.
-	inline bool session_mode() const
-	{
-		return m_make_session != nullptr;
-	}
-
 	// open a session with no authority.
 	inline TcpSession open_session();
 
@@ -254,6 +248,8 @@ public:
 	inline void async_connect();
 	inline String logging();
 
+	// init client data thread unsafe.
+	void init();
 	// release tcp client and connection.
 	void close();
 
@@ -325,9 +321,14 @@ public:
 	}
 
 	// whether is a websocket.
-	virtual bool websocket() const
+	virtual bool websocket() const override
 	{
-		return false;
+		return m_option.websocket();
+	}
+
+	virtual const char* websocket_key() const override
+	{
+		return "bysCZJDozDYNAXgr7lCo32QsjgE=";
 	}
 };
 

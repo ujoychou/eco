@@ -7,6 +7,7 @@
 #include <eco/net/protocol/TcpProtocol.h>
 #include <eco/net/protocol/WebSocketShakeHand.h>
 #include <eco/net/protocol/WebSocketProtocol.h>
+#include "TcpOuter.h"
 
 
 
@@ -15,7 +16,22 @@ namespace net{;
 ECO_OBJECT_IMPL(TcpPeer);
 EcoThreadLocal char s_data_head[32] = {0};
 ////////////////////////////////////////////////////////////////////////////////
-void TcpPeer::Impl::async_recv_next()
+void TcpPeer::Impl::make_connection_data(
+	IN MakeConnectionDataFunc make_func, IN Protocol* prot)
+{
+	if (make_func != nullptr && m_data.get() == nullptr)
+	{
+		m_data.reset(make_func());
+		TcpConnectionOuter conn(m_data->connection());
+		conn.set_id(get_id());
+		conn.set_peer(m_peer_observer);
+		conn.set_protocol(*prot);
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline void TcpPeer::Impl::async_recv()
 {
 	m_connector.async_read_head(s_data_head, head_size());
 }
@@ -28,50 +44,28 @@ void TcpPeer::Impl::async_recv_shakehand()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpPeer::Impl::on_connect(
-	IN bool is_connected,
-	IN const eco::Error* e)
+inline void TcpPeer::Impl::send_websocket_shakehand()
 {
-	if (!is_connected)
-	{
-		EcoError << NetLog(get_id(), ECO_FUNC) <= *e;
-		return;
-	}
-
-	// "client" connect callback.
-	set_connected();					// set peer state.
-	if (handler().websocket())
-	{
-		assert(false);
-		m_state.set_websocket();
-	}
-	else
-	{
-		m_state.set_ready();
-		m_handler->on_connect();		// notify handler.
-		async_recv_next();
-	}
+	assert(m_state.websocket());
+	WebSocketShakeHand shake_hand;
+	async_send(shake_hand.format(), 0);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void TcpPeer::Impl::handle_websocket_shakehand(
+inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	IN const char* data_head, IN const uint32_t head_size)
 {
-	if (!m_state.websocket())
-	{
-		return;
-	}
-
-	// handle websockets shakehands head : "Get ..."
+	assert(m_state.websocket());
 	if (eco::find(data_head, head_size, "GET ") != data_head)
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC) 
+		EcoError << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid 'Get '.";
 		return;
 	}
+
 	WebSocketShakeHand shake_hand;
-	if (!shake_hand.parse(data_head))
+	if (!shake_hand.parse_req(data_head))
 	{
 		EcoError << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid.";
@@ -79,7 +73,56 @@ inline void TcpPeer::Impl::handle_websocket_shakehand(
 		return;
 	}
 	async_send(shake_hand.response(), 0);
-	m_state.set_ready();	// websocket connection has build.
+	async_recv_by_server();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
+	IN const char* data_head, IN const uint32_t head_size)
+{
+	assert(m_state.websocket());
+	if (eco::find(data_head, head_size, "HTTP") != data_head)
+	{
+		EcoError << NetLog(get_id(), ECO_FUNC)
+			<= "web socket shakehand invalid 'HTTP '.";
+		return;
+	}
+
+	if (!WebSocketShakeHand().parse_rsp(data_head, m_handler->websocket_key()))
+	{
+		EcoError << NetLog(get_id(), ECO_FUNC) 
+			<= "web socket shakehand invalid.";
+		close_and_notify(nullptr);
+		return;
+	}
+	async_recv_by_client();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpPeer::Impl::on_connect(
+	IN bool is_connected,
+	IN const eco::Error* e)
+{
+	// "client on_connect" called only by client peer.
+	if (!is_connected)
+	{
+		EcoError << NetLog(get_id(), ECO_FUNC) <= *e;
+		return;
+	}
+
+	set_connected();					// set peer state.
+	if (handler().websocket())
+	{
+		m_state.set_websocket();
+		send_websocket_shakehand();
+		async_recv_shakehand();
+	}
+	else
+	{
+		async_recv_by_client();
+	}
 }
 
 
@@ -116,7 +159,7 @@ void TcpPeer::Impl::on_read_head(
 	if (data_size == 0)		// empty message.
 	{
 		m_handler->on_read(this, data);
-		async_recv_next();		// recv next coming data.
+		async_recv();		// recv next coming data.
 		return;
 	}
 
@@ -139,11 +182,14 @@ void TcpPeer::Impl::on_read_data(
 
 	if (!m_state.ready())
 	{
+		// handle websocket rsp(client) or websocket req(server).
 		if (m_state.websocket())
 		{
-			handle_websocket_shakehand(data.c_str(), data.size());
+			if (m_state.server())
+				handle_websocket_shakehand_req(data.c_str(), data.size());
+			else
+				handle_websocket_shakehand_rsp(data.c_str(), data.size());
 		}
-		async_recv_next();
 		return;
 	}
 
@@ -151,7 +197,7 @@ void TcpPeer::Impl::on_read_data(
 	// post data message to tcp server.
 	m_state.set_peer_active(true);
 	m_handler->on_read(this, data);
-	async_recv_next();		// recv next coming data.
+	async_recv();		// recv next coming data.
 }
 
 
@@ -186,10 +232,6 @@ TcpPeer::ptr TcpPeer::make(
 	peer->impl().prepare(peer);
 	return peer;
 }
-/*void TcpPeer::set_handler(IN TcpPeerHandler* v)
-{
-	impl().m_handler = v;
-}*/
 TcpPeerHandler& TcpPeer::handler()
 {
 	return impl().handler();
@@ -228,17 +270,21 @@ void TcpPeer::async_connect(IN const Address& addr)
 }
 void TcpPeer::async_recv()
 {
-	impl().async_recv_next();
+	impl().async_recv();
 }
 void TcpPeer::async_recv_shakehand()
 {
 	impl().async_recv_shakehand();
 }
+void TcpPeer::async_recv_by_server()
+{
+	impl().async_recv_by_server();
+}
 void TcpPeer::async_send(IN eco::String& data, IN const uint32_t start)
 {
 	impl().async_send(data, start);
 }
-void TcpPeer::async_send(IN MessageMeta& meta, IN Protocol& prot)
+void TcpPeer::async_send(IN const MessageMeta& meta, IN Protocol& prot)
 {
 	impl().async_send(meta, prot);
 }
@@ -250,10 +296,16 @@ void TcpPeer::close_and_notify(IN const eco::Error* e)
 {
 	impl().close_and_notify(e);
 }
-void TcpPeer::async_response(IN Codec& codec, IN const uint32_t type,
-	IN const Context& c, IN Protocol& prot, IN const bool last)
+void TcpPeer::async_response(
+	IN Codec& codec,
+	IN const uint32_t type,
+	IN const Context& c,
+	IN Protocol& prot,
+	IN const bool encrypted,
+	IN const bool last)
 {
-	MessageMeta meta(codec, none_session, type, c.m_meta.m_category);
+	MessageMeta meta(codec, c.m_meta.m_session_id, type, true);
+	eco::add(meta.m_category, c.m_meta.m_category);
 	meta.set_request_data(c.m_meta.m_request_data, c.m_meta.m_option);
 	meta.set_last(last);
 	impl().async_send(meta, prot);

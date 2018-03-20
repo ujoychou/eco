@@ -153,7 +153,9 @@ public:
 		data.resize(start_pos + (uint32_t)bytes_transferred);
 		if (!data.find_reverse(delimiter.c_str(), start_pos))
 		{
-			async_read_some(data, data.size(), delimiter);
+			uint32_t start = data.size();
+			data.resize(data.capacity());
+			async_read_some(data, start, delimiter);
 		}
 		else
 		{

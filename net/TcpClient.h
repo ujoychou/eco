@@ -81,13 +81,15 @@ public:
 		set_session_data(&make_session_data<SessionDataT>);
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
-	bool session_mode() const;
 
 	// register connection event
 	void set_event(IN OnConnectFunc on_connect, IN OnCloseFunc on_close);
 
 	// dispatch.
 	DispatchRegistry& dispatcher();
+
+	// set default data.
+	void init();
 
 	// release client.
 	void close();
@@ -130,11 +132,11 @@ public:
 	inline eco::Result request(
 			IN const uint32_t req_type, IN req_t& req,
 			IN const uint32_t rsp_type, IN rsp_t& rsp,
-			IN const MessageCategory category = category_message)
+			IN const bool encrypted = true)
 	{
 		codec_t codec_req(req);
 		codec_t codec_rsp(rsp);
-		MessageMeta meta_req(codec_req, none_session, req_type, category);
+		MessageMeta meta_req(codec_req, none_session, req_type, encrypted);
 		return request(meta_req, codec_rsp);
 	}
 	template<typename codec_t, typename msg_t>
@@ -142,10 +144,10 @@ public:
 		IN const uint32_t req_type,
 		IN const uint32_t rsp_type,
 		IN msg_t& msg,
-		IN const MessageCategory category = category_message)
+		IN const bool encrypted = true)
 	{
 		codec_t codec_rsp(msg);
-		MessageMeta meta_req(codec_t(msg), none_session, req_type, category);
+		MessageMeta meta_req(codec_t(msg), none_session, req_type, encrypted);
 		return request(meta_req, codec_rsp);
 	}
 
@@ -155,10 +157,10 @@ public:
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const uint32_t request_data,
-		IN const MessageCategory category = category_message)
+		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, none_session, type, category);
+		MessageMeta meta(codec, none_session, type, encrypted);
 		meta.set_request_data(request_data);
 		async_send(meta);
 	}
@@ -169,10 +171,10 @@ public:
 		IN google::protobuf::Message& req_msg,
 		IN const uint32_t rsp_type,
 		IN google::protobuf::Message& rsp_msg,
-		IN const MessageCategory category = category_message)
+		IN const bool encrypted = true)
 	{
 		return request<ProtobufCodec>(
-			req_type, req_msg, rsp_type, rsp_msg, category);
+			req_type, req_msg, rsp_type, rsp_msg, encrypted);
 	}
 
 	// sync request protobuf.
@@ -180,9 +182,9 @@ public:
 		IN const uint32_t req_type,
 		IN const uint32_t rsp_type,
 		IN google::protobuf::Message& msg,
-		IN const MessageCategory category = category_message)
+		IN const bool encrypted = true)
 	{
-		return request<ProtobufCodec>(req_type, rsp_type, msg, category);
+		return request<ProtobufCodec>(req_type, rsp_type, msg, encrypted);
 	}
 #endif
 

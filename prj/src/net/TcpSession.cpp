@@ -12,18 +12,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
 namespace net{;
-
-
-////////////////////////////////////////////////////////////////////////////////
-bool TcpSessionInner::session_mode() const
-{
-	assert(impl().m_owner.m_owner != nullptr);
-	return (impl().m_owner.m_server)
-		? ((TcpServer::Impl*)(impl().m_owner.m_owner))->session_mode()
-		: ((TcpClient::Impl*)(impl().m_owner.m_owner))->session_mode();
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 bool TcpSessionInner::auth()
 {
@@ -32,7 +20,7 @@ bool TcpSessionInner::auth()
 	{
 		// create new session in server.
 		auto* srv = (TcpServer::Impl*)impl().m_owner.m_owner;
-		auto sess = srv->add_session(impl().m_session_id, *impl().m_peer);
+		auto sess = srv->add_session(impl().m_session_id, impl().m_conn);
 		if (sess != nullptr)
 		{
 			impl().m_session_wptr = sess;
@@ -51,7 +39,7 @@ void TcpSessionInner::close()
 		if (impl().m_owner.m_server)
 		{
 			auto* server = (TcpServer::Impl*)impl().m_owner.m_owner;
-			server->erase_session(impl().m_session_id);
+			server->erase_session(impl().m_session_id, impl().m_conn.get_id());
 		}
 		else
 		{
@@ -65,42 +53,15 @@ void TcpSessionInner::close()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSessionInner::async_send(IN MessageMeta& meta)
+void TcpSessionInner::async_auth(IN const MessageMeta& meta_v)
 {
-	SessionData::ptr lock = impl().m_session_wptr.lock();
-	if (lock == nullptr)
+	SessionData::ptr sess = impl().m_session_wptr.lock();
+	if (sess != nullptr && !impl().m_owner.m_server)
 	{
-		return;
-	}
-
-	if (impl().m_owner.m_server)
-	{
-		TcpConnectionOuter conn(impl().m_conn);
-		auto* server = (TcpServer::Impl*)impl().m_owner.m_owner;
-		meta.set_session_id(impl().m_session_id);
-		impl().m_peer->async_send(meta, conn.protocol());
-	}
-	else
-	{
+		MessageMeta& meta = const_cast<MessageMeta&>(meta_v);
 		auto* client = (TcpClient::Impl*)impl().m_owner.m_owner;
-		meta.set_session_id(impl().m_session_id);
-		client->async_send(meta);
+		client->async_auth(*m_impl, meta);
 	}
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void TcpSessionInner::async_auth(IN MessageMeta& meta)
-{
-	SessionData::ptr lock = impl().m_session_wptr.lock();
-	if (lock == nullptr || impl().m_owner.m_server)
-	{
-		return;
-	}
-
-	auto* client = (TcpClient::Impl*)impl().m_owner.m_owner;
-	meta.set_session_id(impl().m_session_id);
-	client->async_auth(*m_impl, meta);
 }
 
 
@@ -109,12 +70,21 @@ void TcpSessionInner::async_response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& c,
+	IN const bool encrypted,
 	IN const bool last)
 {
-	MessageMeta meta(codec, impl().m_session_id, type, c.m_meta.m_category);
-	meta.set_request_data(c.m_meta.m_request_data, c.m_meta.m_option);
-	meta.set_last(last);
-	async_send(meta);
+	if (impl().m_session_id != none_session)
+	{
+		SessionData::ptr sess = impl().m_session_wptr.lock();
+		if (sess != nullptr)
+		{
+			return impl().m_conn.async_response(codec, type, c, encrypted, last);
+		}
+	}
+	else
+	{
+		impl().m_conn.async_response(codec, type, c, encrypted, last);
+	}
 }
 
 

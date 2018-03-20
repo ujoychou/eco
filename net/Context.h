@@ -122,6 +122,15 @@ public:
 		return m_meta.m_message_type;
 	}
 
+	inline const uint32_t get_req4() const
+	{
+		return m_meta.get_req4();
+	}
+	inline const uint64_t get_req8() const
+	{
+		return m_meta.get_req8();
+	}
+
 	inline void release_data()
 	{
 		m_data.release();
@@ -140,12 +149,11 @@ public:
 	inline void async_response(
 		IN Codec& codec,
 		IN const uint32_t type,
+		IN const bool encrypted = true,
 		IN bool last = true)
 	{
-		if (m_session.session_mode())
-			m_session.async_response(codec, type, *this, last);
-		else
-			m_session.connection().async_response(codec, type, *this, last);
+		m_meta.m_session_id = m_session.get_id();
+		m_session.async_response(codec, type, *this, encrypted, last);
 	}
 };
 

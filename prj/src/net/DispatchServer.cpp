@@ -29,6 +29,7 @@ bool handle_server_context(OUT Context& c, IN TcpPeer& peer)
 		// open the exist session.
 		if (!sess.open(c.m_meta.m_session_id))
 		{
+			EcoWarn << "session has expired: sid=" << c.m_meta.m_session_id;
 			return false;
 		}
 	}
@@ -39,44 +40,62 @@ bool handle_server_context(OUT Context& c, IN TcpPeer& peer)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool handle_client_context(
-	OUT Context& c, IN  TcpPeer& peer)
+bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 {
 	TcpSessionOuter sess(c.m_session);
 	auto* client = (TcpClient::Impl*)sess.impl().m_owner.m_owner;
 	assert(client != nullptr);
 
 	// #.handle authority.
-	if (eco::has(c.m_meta.m_category, category_authority))
+	if (eco::has(c.m_meta.m_category, category_authority) &&
+		eco::has(c.m_meta.m_category, category_session))
 	{
-		// authority validate fail.
-		if (c.m_meta.m_session_id == none_session)
-		{
-			return false;
-		}
 		// find authority request.
-		auto* sess = reinterpret_cast<TcpSession*>(c.m_meta.m_request_data);
-		if (sess == nullptr)
+		auto* key = reinterpret_cast<TcpSession*>(c.m_meta.m_request_data);
+		if (key == nullptr)
 		{
+			EcoWarn << "authority request id invalid.";
 			return false;
 		}
-		SessionDataPack::ptr pack = client->find_authority(sess);
-		// user object destroyed.
-		if (pack == nullptr || pack->m_user_observer.expired())
+		SessionDataPack::ptr pack = client->find_authority(key);
+		if (pack == nullptr)
 		{
+			EcoWarn << "authority pack has expired: req_id="
+				<< c.m_meta.m_request_data;
 			return false;
+		}
+
+		// keep user live.
+		sess.impl().m_user = pack->m_user_observer.lock();
+		if (sess.impl().m_user == nullptr)
+		{
+			EcoWarn << "authority user has expired: sid="
+				<< c.m_meta.m_request_data;
+			return false;
+		}
+		// open session: set session data.
+		sess.impl().m_session_ptr = pack->m_session;
+		sess.impl().m_session_wptr = pack->m_session;
+		sess.impl().m_session_id = c.m_meta.m_session_id;
+		// set session.
+		if (c.m_meta.m_session_id != none_session)
+		{
+			SessionDataOuter outer(*pack->m_session);
+			outer.set_id(c.m_meta.m_session_id);
+			client->m_session_map.set(c.m_meta.m_session_id, pack);
 		}
 		c.m_meta.m_request_data = pack->m_request_data;
-		client->m_session_map.set(c.m_meta.m_session_id, pack);
 	}
-
-	// #.handle session.
-	if (c.m_meta.m_session_id != none_session)
+	else
 	{
-		// can't find the session id.
-		if (!sess.open(c.m_meta.m_session_id))
+		if (c.m_meta.m_session_id != none_session)
 		{
-			return false;
+			// can't find the session id.
+			if (!sess.open(c.m_meta.m_session_id))
+			{
+				EcoWarn << "session has expired: sid=" << c.m_meta.m_session_id;
+				return false;
+			}
 		}
 	}
 
@@ -94,7 +113,7 @@ bool handle_client_context(
 			}
 			async->m_monitor.finish_one();		// only one.
 		}
-		return false;
+		return false;		// "sync call" isn't need to handle by "dispatcher";
 	}
 
 	// #.handle request.
@@ -138,7 +157,6 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	// get message type id and dispatch to the handler.
 	TcpSessionOuter sess(c.m_session);
 	TcpConnectionOuter conn(sess.impl().m_conn);
-	sess.impl().m_peer = peer.get();
 	sess.impl().m_owner = dc.m_session_owner;
 	conn.set_peer(dc.m_peer_wptr);
 	conn.set_protocol(*dc.m_prot);
@@ -151,7 +169,6 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 		dispatch(c.m_meta.m_message_type, c);
 	}
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -51,13 +51,12 @@ private:
 
 	bool auth();
 	void close();
-	bool session_mode() const;
-	void async_send(IN MessageMeta& meta);
-	void async_auth(IN MessageMeta& meta);
+	void async_auth(IN const MessageMeta& meta);
 	void async_response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& c,
+		IN const bool encrypted,
 		IN const bool last);
 
 	friend class TcpSession;
@@ -94,7 +93,7 @@ const TcpConnection& TcpSession::get_connection() const
 	return m_impl.m_conn;
 }
 
-SessionData::ptr TcpSession::data()
+SessionData::ptr TcpSession::data() const
 {
 	return m_impl.m_session_wptr.lock();
 }
@@ -110,32 +109,42 @@ const SessionId TcpSession::get_id() const
 	return m_impl.m_session_id;
 }
 
-bool TcpSession::session_mode() const
-{
-	TcpSessionInner inner(m_impl);
-	return inner.session_mode();
-}
 
+////////////////////////////////////////////////////////////////////////////////
 void TcpSession::async_response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& context,
+	IN const bool encrypted,
 	IN const bool last)
 {
 	TcpSessionInner inner(m_impl);
-	return inner.async_response(codec, type, context, last);
+	return inner.async_response(codec, type, context, encrypted, last);
 }
-
-void TcpSession::async_send(IN MessageMeta& meta)
-{
-	TcpSessionInner inner(m_impl);
-	return inner.async_send(meta);
-}
-
-void TcpSession::async_auth(IN MessageMeta& meta)
+void TcpSession::async_auth(IN const MessageMeta& meta)
 {
 	TcpSessionInner inner(m_impl);
 	return inner.async_auth(meta);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpSession::async_send(IN const MessageMeta& meta)
+{
+	if (m_impl.m_session_id != none_session)
+	{
+		SessionData::ptr lock = m_impl.m_session_wptr.lock();
+		if (lock != nullptr)
+		{
+			MessageMeta& m = const_cast<MessageMeta&>(meta);
+			m.set_session_id(m_impl.m_session_id);
+			m_impl.m_conn.async_send(meta);
+		}
+	}
+	else
+	{
+		connection().async_send(meta);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////

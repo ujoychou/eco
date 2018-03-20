@@ -53,11 +53,10 @@ void LoadBalancer::update_address(IN eco::net::AddressSet& addr)
 bool LoadBalancer::connect()
 {
 	// this client has connect to server.
-	if (m_peer->get_state().connected())
+	if (m_peer->get_state().connected() || m_address_set.empty())
 	{
 		return false;
 	}
-	assert(!m_address_set.empty());
 
 	// load balance algorithm.
 	auto min_workload_server = m_address_set.begin();
@@ -83,6 +82,24 @@ bool LoadBalancer::connect()
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_SHARED_IMPL(TcpClient);
+///////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::init()
+{
+	// set protocol.
+	if (m_option.websocket())
+	{
+		set_protocol_head(new WebSocketProtocolHeadEx());
+		set_protocol(new WebSocketProtocol());
+	}
+	else if (m_protocol == nullptr)
+	{
+		set_protocol_head(new TcpProtocolHead());
+		set_protocol(new TcpProtocol());
+	}
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void TcpClient::Impl::async_connect()
 {
 	eco::Mutex::ScopeLock lock(m_mutex);
@@ -154,7 +171,7 @@ inline String TcpClient::Impl::logging()
 	log << "-[this] " << get_ip() << '\n';
 	log << "-[mode] io delay" << eco::group(eco::yn(m_option.no_delay()))
 		<< ", websocket" << eco::group(eco::yn(m_option.websocket()))
-		<< ", sessions" << eco::group(eco::yn(session_mode())) << '\n'
+		<< ", sessions\n"
 		<< "-[tick] " << m_option.get_tick_time() << 's'
 		<< ", lost server " << lost << 's'
 		<< ", heartbeat " << send << 's'
@@ -185,19 +202,19 @@ TcpSession TcpClient::Impl::open_session()
 {
 	// create new session.
 	TcpSession session;
-	SessionDataPack::ptr pack(new SessionDataPack);
-	pack->m_session.reset(m_make_session(none_session));
 	TcpSessionOuter sess(session);
+	// set connection data.
 	TcpConnectionOuter conn(sess.impl().m_conn);
-	sess.impl().m_owner.set(*(TcpClientImpl*)this);
-	sess.impl().m_session_wptr = pack->m_session;
-	sess.impl().m_peer = &peer();
-	sess.make_client_session();
 	conn.set_peer(peer().impl().m_peer_observer);
 	conn.set_protocol(*m_protocol);
+	// set pack data.
+	SessionDataPack::ptr pack(new SessionDataPack);
+	pack->m_session.reset(m_make_session(none_session, sess.impl().m_conn));
+	sess.impl().m_session_wptr = pack->m_session;
+	sess.impl().m_owner.set(*(TcpClientImpl*)this);
+	sess.make_client_session();
 	pack->m_user_observer = sess.impl().m_user;
-	
-	// add session.
+	// save pack.
 	void* session_key = sess.impl().m_user.get();
 	set_authority(session_key, pack);
 	return session;
@@ -218,7 +235,8 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 
 	// encode the send data.
 	eco::Error e;
-	meta.m_category |= category_authority;
+	meta.m_session_id = 0;
+	meta.m_category |= (category_authority | category_session);
 	// use "&session" when get response, because it represent user.
 	pack->m_request_data = meta.m_request_data;
 	meta.set_request_data(session_key);
@@ -359,14 +377,14 @@ void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 	impl().m_make_session = make;
 }
 
-bool TcpClient::session_mode() const
-{
-	return impl().session_mode();
-}
-
 ConnectionId TcpClient::get_id()
 {
 	return impl().peer().get_id();
+}
+
+void TcpClient::init()
+{
+	impl().init();
 }
 
 void TcpClient::close()
