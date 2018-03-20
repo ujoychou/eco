@@ -39,7 +39,8 @@ inline void handle_context(IN Context& c)
 
 	// 1.filter request
 	const char* e = nullptr;
-	if (c.m_session.session_mode())
+	// sessesion auth or session request after authed.
+	if (eco::has(c.m_meta.m_category, category_session))
 	{
 		if (HandlerT::authed() && !c.m_session.authed())
 			e = "session isn't authed when recv";
@@ -56,7 +57,7 @@ inline void handle_context(IN Context& c)
 	if (e != nullptr)
 	{
 		EcoError(eco::net::req) << Log(c.m_session,
-			c.m_meta.m_message_type, HandlerT::name()) << e;
+			c.m_meta.m_message_type, HandlerT::name()) <= e;
 		return;
 	}
 	

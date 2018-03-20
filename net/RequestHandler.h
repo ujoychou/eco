@@ -38,8 +38,6 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_LOG_REQ(sev) \
 EcoLog(sev, eco::log::text_size)(eco::net::req) << Log(*this)
-#define ECO_LOG_SUB(sev) \
-EcoLog(sev, eco::log::text_size)(eco::net::sub) << Log(*this)
 #define ECO_LOG_RSP(sev, rsp, handler) \
 if (rsp.has_error()){ \
 	EcoError(eco::net::rsp) << MessageHandler::Log(handler, response_type()) \
@@ -47,6 +45,12 @@ if (rsp.has_error()){ \
 }else \
 	EcoLog(sev, eco::log::text_size)(eco::net::rsp) \
 	<< MessageHandler::Log(handler, response_type())
+
+#define ECO_LOG_SUB(sev) \
+EcoLog(sev, eco::log::text_size)(eco::net::sub) << Log(*this)
+#define ECO_LOG_PUB(sev, sess_or_conn, msg_type, msg_name) \
+EcoLog(sev, eco::log::text_size)(eco::net::pub) \
+<< eco::net::Log(sess_or_conn, msg_type, msg_name)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,12 +151,31 @@ public:
 	{}
 
 public:
+	inline RequestHandler()
+	{
+		eco::make(m_request);
+	}
+
 	// request that recv from remote peer.
-	inline Request& request()
+	// request object type.
+	typedef decltype(*eco::object_t(eco::object_v<Request>())) ObjectT;
+	// same with: inline auto& request()
+	inline ObjectT& request()
+	{
+		return eco::object(m_request);
+	}
+	// same with: inline const auto& get_request() const
+	inline const ObjectT& get_request() const
+	{
+		return  eco::get_object(m_request);
+	}
+
+	// request value type.
+	inline Request& request_v()
 	{
 		return m_request;
 	}
-	inline const Request& get_request() const
+	inline const Request& get_request_v()
 	{
 		return m_request;
 	}
@@ -161,11 +184,11 @@ public:
 	inline void async_response(
 		IN Codec& codec, 
 		IN uint32_t type = 0,
+		IN const bool encrypted = true,
 		IN bool last = true)
 	{
-		if (type == 0)
-			type = get_response_type();
-		context().async_response(codec, type, last);
+		if (type == 0) type = get_response_type();
+		context().async_response(codec, type, encrypted, last);
 	}
 
 public:

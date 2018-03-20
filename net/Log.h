@@ -123,17 +123,39 @@ public:
 	}
 
 	inline Log(
+		IN const SessionData& sess,
+		IN const uint32_t type,
+		IN const char* func)
+		: NetLog(sess.get_connection().get_id(), func, sess.get_id())
+		, m_type(type)
+		, m_user_id(sess.get_user_id())
+		, m_user_name(sess.get_user_name())
+	{}
+
+	inline Log(
 		IN const TcpSession& sess,
 		IN const uint32_t type,
 		IN const char* func)
 		: NetLog(sess.get_connection().get_id(), func, sess.get_id())
 		, m_type(type), m_user_id(0), m_user_name(nullptr)
 	{
-		auto data = sess.get_connection().cast<ConnectionData>();
-		if (!data.null())
+		if (sess.get_id() == none_session)
 		{
-			m_user_id = data->get_user_id();
-			m_user_name = data->get_user_name();
+			auto data = sess.get_connection().cast<ConnectionData>();
+			if (!data.null())
+			{
+				m_user_id = data->get_user_id();
+				m_user_name = data->get_user_name();
+			}
+		}
+		else
+		{
+			auto sess_d = sess.data();
+			if (sess_d != nullptr)
+			{
+				m_user_id = sess_d->get_user_id();
+				m_user_name = sess_d->get_user_name();
+			}
 		}
 	}
 
@@ -144,11 +166,23 @@ public:
 		: NetLog(c.get_connection().get_id(), func, c.get_session().get_id())
 		, m_type(type), m_user_id(0), m_user_name(nullptr)
 	{
-		auto data = c.get_connection().cast<ConnectionData>();
-		if (!data.null())
+		if (c.get_session().get_id() == none_session)
 		{
-			m_user_id = data->get_user_id();
-			m_user_name = data->get_user_name();
+			auto data = c.get_connection().cast<ConnectionData>();
+			if (!data.null())
+			{
+				m_user_id = data->get_user_id();
+				m_user_name = data->get_user_name();
+			}
+		}
+		else
+		{
+			auto sess_d = c.get_session().data();
+			if (sess_d != nullptr)
+			{
+				m_user_id = sess_d->get_user_id();
+				m_user_name = sess_d->get_user_name();
+			}
 		}
 	}
 
