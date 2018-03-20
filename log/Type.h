@@ -58,7 +58,7 @@ typedef int SinkOption;
 
 enum 
 {
-	text_size = 256,
+	text_size = 160,
 	pack_size = 8192,
 	// min size
 	min_queue_size = 1 * 1024 * 1024,		// 3M

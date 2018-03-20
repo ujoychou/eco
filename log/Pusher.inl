@@ -39,7 +39,6 @@ PusherT<LogStream>::~PusherT()
 	{
 		m_stream << " @" << m_file_name << '.' << m_file_line;
 	}
-	m_stream << '$' << m_stream.size();
 	m_stream << eco::end();
 	
 	// turn line '\n' must input into the string.
