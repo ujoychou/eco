@@ -49,10 +49,10 @@ public:
 
 	// pop async message handler.(get and delete)
 	inline eco::net::MessageHandler::ptr pop_async(
-		IN const uint32_t req_id)
+		IN const uint32_t req_id, IN const bool last = true)
 	{
 		int eid = 0;
-		return m_async_map.pop(req_id, eid);
+		return last ? m_async_map.pop(req_id, eid) : m_async_map.get(req_id);
 	}
 
 private:
