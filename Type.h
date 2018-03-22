@@ -197,7 +197,11 @@ inline eco::Bytes func(IN const char* full_func_name)
 	if (start == -1) start = 0;
 	return eco::Bytes(full_func_name + start, end - start);
 }
-#define ECO_FUNC eco::func(__func__)
+#ifdef ECO_VC100
+#	define ECO_FUNC eco::func("")
+#else
+#	define ECO_FUNC eco::func(__func__)
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
