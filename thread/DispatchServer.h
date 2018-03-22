@@ -66,9 +66,13 @@ public:
 		{
 			it->second(msg);
 		}
-		else
+		else if (m_default_handler)
 		{
 			m_default_handler(msg);
+		}
+		else
+		{
+			EcoError << "dispatch unknown message type: " << type;
 		}
 	}
 	

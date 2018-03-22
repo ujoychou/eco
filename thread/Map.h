@@ -177,13 +177,13 @@ public:
 		auto it = m_data_map.find(id);
 		if (it == m_data_map.end())
 		{
-			eid = -1;
+			eid = eco::error;
 			return v;
 		}
 
 		v = it->second;
 		m_data_map.erase(it);
-		eid = 0;
+		eid = eco::ok;
 		return v;
 	}
 
