@@ -400,7 +400,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\Protocol.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\ProtocolHead.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\TcpProtocol.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\SessionData.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\StringHandler.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpAcceptor.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpClient.h" />

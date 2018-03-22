@@ -40,21 +40,21 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(SolutionDir)..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\..\..\..\contrib\eco\lib_vc100\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)..\..\..\lib_vc100\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(SolutionDir)..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\..\..\..\contrib\eco\lib_vc100\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)..\..\..\lib_vc100\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\inc;$(SolutionDir)..\..\common;$(SolutionDir)..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;ECO_NO_PROTOBUF;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -80,8 +80,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\inc;$(SolutionDir)..\..\common;$(SolutionDir)..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;ECO_NO_PROTOBUF;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
@@ -102,11 +102,11 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.cc">
+    <ClCompile Include="..\..\..\codec\base64.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.cc">
+    <ClCompile Include="..\..\..\codec\sha1.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -123,7 +123,6 @@
     <ClCompile Include="..\DllObjectWin.cpp" />
     <ClCompile Include="..\Eco.cpp" />
     <ClCompile Include="..\HeapOperators.cpp" />
-    <ClCompile Include="..\log\Pusher.cpp" />
     <ClCompile Include="..\log\Core.cpp" />
     <ClCompile Include="..\log\FileSink.cpp" />
     <ClCompile Include="..\net\Address.cpp" />
@@ -131,35 +130,38 @@
     <ClCompile Include="..\net\asio\TcpAcceptor.cpp" />
     <ClCompile Include="..\net\asio\TcpConnector.cpp" />
     <ClCompile Include="..\net\asio\Worker.cpp" />
+    <ClCompile Include="..\net\DispatchServer.cpp" />
     <ClCompile Include="..\net\Net.cpp" />
-    <ClCompile Include="..\net\ProtobufCodec.cpp" />
+    <ClCompile Include="..\net\TcpClient.cpp" />
     <ClCompile Include="..\net\TcpClientOption.cpp" />
-    <ClCompile Include="..\net\TcpClientPeer.cpp" />
-    <ClCompile Include="..\net\TcpClientSession.cpp" />
     <ClCompile Include="..\net\TcpPeer.cpp" />
     <ClCompile Include="..\net\TcpServer.cpp" />
     <ClCompile Include="..\net\TcpServerOption.cpp" />
-    <ClCompile Include="..\net\TcpServerPeer.cpp" />
-    <ClCompile Include="..\net\TcpServerSession.cpp" />
+    <ClCompile Include="..\net\TcpSession.cpp" />
+    <ClCompile Include="..\persist\CsvSource.cpp" />
+    <ClCompile Include="..\persist\Persist.cpp" />
+    <ClCompile Include="..\persist\PersistAddress.cpp" />
+    <ClCompile Include="..\persist\Recordset.cpp" />
+    <ClCompile Include="..\PrecHeader.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\process\ProcessWin.cpp" />
     <ClCompile Include="..\service\Cluster.cpp" />
     <ClCompile Include="..\service\Deployment.cpp" />
-    <ClCompile Include="..\service\dev\Consumer.cpp" />
-    <ClCompile Include="..\service\dev\DevCluster.cpp" />
+    <ClCompile Include="..\service\dev\ClusterDev.cpp" />
     <ClCompile Include="..\service\dev\Horizontal.cpp" />
-    <ClCompile Include="..\service\dev\Provider.cpp" />
     <ClCompile Include="..\service\DidProtocol.cpp" />
     <ClCompile Include="..\service\Machine.cpp" />
     <ClCompile Include="..\service\Service.cpp" />
+    <ClCompile Include="..\test\Timing.cpp" />
     <ClCompile Include="..\thread\ThreadLin.cpp" />
     <ClCompile Include="..\thread\ThreadWin.cpp" />
     <ClCompile Include="..\thread\Timer.cpp" />
     <ClCompile Include="..\Typex.cpp" />
+    <ClCompile Include="..\web\Html.cpp" />
+    <ClCompile Include="..\web\Json.cpp" />
     <ClCompile Include="..\xml\Reader.cpp" />
-    <ClCompile Include="PrecHeader.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\contrib\eco\App.h" />
@@ -177,9 +179,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\DllObject.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Memory.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\MemoryPool.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Proto.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CondVar.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\CondVarWin.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\MutexWin.h" />
@@ -190,7 +189,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TopicServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Error.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\ExportApi.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h" />
@@ -210,7 +208,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\process\Process.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Repository.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\RxApp.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\service\Centre.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -242,13 +239,21 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Worker.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\xml\Reader.h" />
+    <ClInclude Include="..\..\..\codec\base64.h" />
+    <ClInclude Include="..\..\..\codec\NullByteCoder.h" />
+    <ClInclude Include="..\..\..\codec\sha1.h" />
+    <ClInclude Include="..\..\..\codec\Zlib.h" />
+    <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
+    <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\Eco.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
     <ClInclude Include="..\log\FileSink.h" />
+    <ClInclude Include="..\net\TcpOuter.h" />
+    <ClInclude Include="..\net\TcpPeerSet.h" />
+    <ClInclude Include="..\PrecHeader.h" />
     <ClInclude Include="..\service\Impl.h" />
-    <ClInclude Include="PrecHeader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\contrib\eco\cfg.app.xml" />
@@ -261,19 +266,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Error.proto" />
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Service.proto" />
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\__proto.bat">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </None>
     <None Include="..\cmd\Engine.ipp" />
-    <None Include="..\net\TcpClientPeer.ipp" />
-    <None Include="..\net\TcpClientSession.ipp" />
+    <None Include="..\net\TcpClient.ipp" />
     <None Include="..\net\TcpPeer.ipp" />
     <None Include="..\net\TcpServer.ipp" />
-    <None Include="..\net\TcpServerPeer.ipp" />
-    <None Include="..\net\TcpServerSession.ipp" />
+    <None Include="..\web\HtmlClassFinder.ipp" />
+    <None Include="..\web\JsonClassFinder.ipp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco.lib">

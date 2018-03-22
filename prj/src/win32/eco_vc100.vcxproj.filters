@@ -28,17 +28,11 @@
     <Filter Include="src\log">
       <UniqueIdentifier>{06d2c01d-551a-4091-854a-8adf6fe018b4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\atomic">
-      <UniqueIdentifier>{1f89e5bb-1a73-4dce-9ae8-094043828572}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\process">
       <UniqueIdentifier>{b3094940-8cf0-4045-bd2a-727d7ecba965}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\net">
       <UniqueIdentifier>{07d61343-23c3-4161-9e74-35e1f9f01df6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\filesystem">
-      <UniqueIdentifier>{d0208d78-48b9-4522-913e-0b84f2474a77}</UniqueIdentifier>
     </Filter>
     <Filter Include="lib\app">
       <UniqueIdentifier>{65cdc7c7-1304-478a-ab98-565b6a109c21}</UniqueIdentifier>
@@ -100,14 +94,17 @@
     <Filter Include="src\service\dev">
       <UniqueIdentifier>{640aad2d-1906-4d3e-9f11-c7da0e1a1415}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\service\proto">
-      <UniqueIdentifier>{5c7e2e73-b219-4665-a2c5-856666a8f8be}</UniqueIdentifier>
+    <Filter Include="src\web">
+      <UniqueIdentifier>{9bfd6c8e-0859-45dd-a8fa-4fd1d76cd0c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\test">
+      <UniqueIdentifier>{45a317d2-1dd8-42e2-bb47-08c2338923cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\codec">
+      <UniqueIdentifier>{bf00e9e4-8ff9-4ae3-8a87-3ffb06898e50}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PrecHeader.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\App.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
@@ -129,14 +126,8 @@
     <ClCompile Include="..\thread\ThreadWin.cpp">
       <Filter>src\thread</Filter>
     </ClCompile>
-    <ClCompile Include="..\log\Pusher.cpp">
-      <Filter>src\log</Filter>
-    </ClCompile>
     <ClCompile Include="..\process\ProcessWin.cpp">
       <Filter>src\process</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\Net.cpp">
-      <Filter>src\net</Filter>
     </ClCompile>
     <ClCompile Include="..\log\FileSink.cpp">
       <Filter>src\log</Filter>
@@ -168,18 +159,6 @@
     <ClCompile Include="..\DllObjectWin.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
-    <ClCompile Include="..\net\TcpClientOption.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpPeer.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpServer.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpServerOption.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
     <ClCompile Include="..\net\asio\TcpAcceptor.cpp">
       <Filter>src\net\asio</Filter>
     </ClCompile>
@@ -189,35 +168,11 @@
     <ClCompile Include="..\net\asio\Worker.cpp">
       <Filter>src\net\asio</Filter>
     </ClCompile>
-    <ClCompile Include="..\service\dev\Consumer.cpp">
-      <Filter>src\service\dev</Filter>
-    </ClCompile>
-    <ClCompile Include="..\service\dev\Provider.cpp">
-      <Filter>src\service\dev</Filter>
-    </ClCompile>
     <ClCompile Include="..\service\dev\Horizontal.cpp">
       <Filter>src\service\dev</Filter>
     </ClCompile>
     <ClCompile Include="..\Being.cpp">
       <Filter>src\app</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\Address.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\ProtobufCodec.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpClientPeer.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpClientSession.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpServerPeer.cpp">
-      <Filter>src\net</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpServerSession.cpp">
-      <Filter>src\net</Filter>
     </ClCompile>
     <ClCompile Include="..\service\Cluster.cpp">
       <Filter>src\service</Filter>
@@ -234,15 +189,6 @@
     <ClCompile Include="..\service\Service.cpp">
       <Filter>src\service</Filter>
     </ClCompile>
-    <ClCompile Include="..\service\dev\DevCluster.cpp">
-      <Filter>src\service\dev</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.cc">
-      <Filter>src\service\proto</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.cc">
-      <Filter>src\service\proto</Filter>
-    </ClCompile>
     <ClCompile Include="..\Eco.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
@@ -252,11 +198,68 @@
     <ClCompile Include="..\thread\Timer.cpp">
       <Filter>src\thread</Filter>
     </ClCompile>
+    <ClCompile Include="..\PrecHeader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\Address.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\DispatchServer.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\Net.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\TcpClient.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\TcpClientOption.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\TcpPeer.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\TcpServer.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\TcpServerOption.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\TcpSession.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\CsvSource.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\Persist.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\PersistAddress.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\Recordset.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\Timing.cpp">
+      <Filter>src\test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\web\Html.cpp">
+      <Filter>src\web</Filter>
+    </ClCompile>
+    <ClCompile Include="..\web\Json.cpp">
+      <Filter>src\web</Filter>
+    </ClCompile>
+    <ClCompile Include="..\service\dev\ClusterDev.cpp">
+      <Filter>src\service\dev</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\codec\base64.cpp">
+      <Filter>lib\codec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\codec\sha1.cpp">
+      <Filter>lib\codec</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PrecHeader.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\log\Queue.h">
       <Filter>src\log</Filter>
     </ClInclude>
@@ -284,9 +287,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h">
       <Filter>lib\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Error.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h">
       <Filter>lib\app</Filter>
     </ClInclude>
@@ -300,9 +300,6 @@
       <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Repository.h">
       <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h">
@@ -458,17 +455,35 @@
     <ClInclude Include="..\service\Impl.h">
       <Filter>src\service</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Proto.h">
-      <Filter>src\service\dev</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Error.pb.h">
-      <Filter>src\service\proto</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\proto\Service.pb.h">
-      <Filter>src\service\proto</Filter>
-    </ClInclude>
     <ClInclude Include="..\Eco.h">
       <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PrecHeader.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\net\TcpOuter.h">
+      <Filter>src\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\net\TcpPeerSet.h">
+      <Filter>src\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\base64.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\NullByteCoder.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\sha1.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\Zlib.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\ZlibFlate.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h">
+      <Filter>lib\codec</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -481,38 +496,26 @@
     <None Include="..\..\..\..\..\contrib\eco\cfg.sys.xml">
       <Filter>lib\app</Filter>
     </None>
-    <None Include="..\net\TcpServer.ipp">
-      <Filter>src\net</Filter>
-    </None>
     <None Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco.dll">
       <Filter>bin\debug_win32</Filter>
     </None>
     <None Include="..\..\..\..\..\contrib\eco\lib_vc100\release\eco.dll">
       <Filter>bin\release_win32</Filter>
     </None>
-    <None Include="..\net\TcpClientPeer.ipp">
-      <Filter>src\net</Filter>
-    </None>
-    <None Include="..\net\TcpClientSession.ipp">
+    <None Include="..\net\TcpClient.ipp">
       <Filter>src\net</Filter>
     </None>
     <None Include="..\net\TcpPeer.ipp">
       <Filter>src\net</Filter>
     </None>
-    <None Include="..\net\TcpServerPeer.ipp">
+    <None Include="..\net\TcpServer.ipp">
       <Filter>src\net</Filter>
     </None>
-    <None Include="..\net\TcpServerSession.ipp">
-      <Filter>src\net</Filter>
+    <None Include="..\web\HtmlClassFinder.ipp">
+      <Filter>src\web</Filter>
     </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\__proto.bat">
-      <Filter>src\service\proto</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Error.proto">
-      <Filter>src\service\proto</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\service\proto\Service.proto">
-      <Filter>src\service\proto</Filter>
+    <None Include="..\web\JsonClassFinder.ipp">
+      <Filter>src\web</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

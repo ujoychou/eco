@@ -548,9 +548,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpPeer.h">
       <Filter>lib\net</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\SessionData.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Context.h">
       <Filter>lib\net</Filter>
     </ClInclude>
