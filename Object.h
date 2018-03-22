@@ -61,7 +61,6 @@ private:
 };
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 template<typename value_t>
 class Value
@@ -72,6 +71,30 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////
+// make object.
+template<typename T>
+inline static void make(T&) {}
+template<typename T>
+inline static void make(std::shared_ptr<T>& ptr) { ptr.reset(new T()); }
+
+// get object.
+template<typename T>
+inline T& object(T& obj) { return obj; }
+template<typename T>
+inline T& object(std::shared_ptr<T>& ptr) {	return *ptr; }
+template<typename T>
+inline const T& get_object(const T& obj) { return obj; }
+template<typename T>
+inline const T& get_object(const std::shared_ptr<T>& ptr) { return *ptr; }
+
+// get decltype type.
+template<typename T>
+inline T& object_v() {	static T* t = nullptr;	return *t; }
+template<typename T>
+inline T* object_t(T& obj) { return &obj; }
+template<typename T>
+inline T* object_t(std::shared_ptr<T>& ptr) { return ptr.get(); }
 
 
 ////////////////////////////////////////////////////////////////////////////////
