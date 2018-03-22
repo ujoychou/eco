@@ -40,20 +40,24 @@ inline void handle_context(IN Context& c)
 	// 1.filter request
 	const char* e = nullptr;
 	// sessesion auth or session request after authed.
-	if (eco::has(c.m_meta.m_category, category_session))
+	if (HandlerT::auth_flag() > 0)
 	{
-		if (HandlerT::authed() && !c.m_session.authed())
-			e = "session isn't authed when recv";
-		if (!HandlerT::authed() && c.m_session.authed())
-			e = "session is authed when recv";
+		if (eco::has(c.m_meta.m_category, category_session))
+		{
+			if (HandlerT::auth_flag() && !c.m_session.authed())
+				e = "session isn't authed when recv";
+			if (!HandlerT::auth_flag() && c.m_session.authed())
+				e = "session is authed when recv";
+		}
+		else
+		{
+			if (HandlerT::auth_flag() && !conn.authed())
+				e = "connection isn't authed when recv";
+			if (!HandlerT::auth_flag() && conn.authed())
+				e = "connection is authed when recv";
+		}
 	}
-	else
-	{
-		if (HandlerT::authed() && !conn.authed())
-			e = "connection isn't authed when recv";
-		if (!HandlerT::authed() && conn.authed())
-			e = "connection is authed when recv";
-	}
+	
 	if (e != nullptr)
 	{
 		EcoError(eco::net::req) << Log(c.m_session,
@@ -68,9 +72,12 @@ inline void handle_context(IN Context& c)
 		std::shared_ptr<HandlerT> hdl(new HandlerT);
 		if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
 		{
+			EcoError(eco::net::req) << Log(c.m_session, c.m_meta.m_message_type,
+				HandlerT::name()) <= "decode message fail";
 			return;
 		}
-		c.release_data();		// release io raw data to save memory.
+		// release io raw data to save memory.
+		c.release_data();
 		hdl->context() = std::move(c);
 
 		// 3.handle request.
