@@ -211,7 +211,11 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_HANDLER(req_type, rsp_type, type_name, is_authed)\
+/* message handler macro define.
+@auth_v: message recv when user must have been authed, set 1 else set 0. 
+if don't need to check authed, set -1.
+*/
+#define ECO_HANDLER(req_type, rsp_type, type_name, auth_v)\
 public:\
 	inline static const uint32_t request_type()\
 	{\
@@ -233,9 +237,9 @@ public:\
 	{\
 		return type_name; \
 	}\
-	inline static bool authed()\
+	inline static int auth_flag()\
 	{\
-		return is_authed; \
+		return auth_v; \
 	}
 	
 

@@ -34,6 +34,7 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// noncopyable conn data, only can be used in local.
 template<typename ConnectionDataT>
 class ConnectionDataPtr
 {
@@ -53,6 +54,7 @@ private:
 	TcpPeer::ptr m_peer;
 	ConnectionDataT* m_data;
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////
 class TcpConnection
@@ -136,6 +138,29 @@ public:
 	}
 
 public:
+	// async send message.
+	inline void async_send(IN const MessageMeta& meta)
+	{
+		TcpPeer::ptr peer = m_peer.lock();
+		if (peer != nullptr)
+		{
+			return peer->async_send(meta, *m_prot);
+		}
+	}
+
+	// async send.
+	inline void async_send(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const SessionId sess_id = none_session,
+		IN const bool encrypted = true,
+		IN const bool last = true)
+	{
+		MessageMeta meta(codec, sess_id, type, encrypted);
+		meta.set_last(last);
+		async_send(meta);
+	}
+
 	// async response message.
 	inline void async_response(
 		IN Codec& codec,
@@ -152,29 +177,19 @@ public:
 		}
 	}
 
-	// async send message.
-	inline void async_send(IN const MessageMeta& meta)
-	{
-		TcpPeer::ptr peer = m_peer.lock();
-		if (peer != nullptr)
-		{
-			return peer->async_send(meta, *m_prot);
-		}
-	}
-
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void async_send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const bool encrypted = true)
+		IN const SessionId sess_id = none_session,
+		IN const bool encrypted = true,
+		IN const bool last = true)
 	{
-		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, none_session, type, encrypted);
-		async_send(meta);
+		async_send(ProtobufCodec(msg), type, sess_id, encrypted, last);
 	}
 
-	// async send response to client by context.
+	// async send response by context.
 	inline void async_response(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
@@ -184,18 +199,6 @@ public:
 	{
 		ProtobufCodec codec(msg);
 		async_response(codec, type, context, encrypted, last);
-	}
-
-	// async send protobuf.
-	inline void async_send_session(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const SessionId sess_id,
-		IN const bool encrypted = true)
-	{
-		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, sess_id, type, encrypted);
-		async_send(meta);
 	}
 #endif
 

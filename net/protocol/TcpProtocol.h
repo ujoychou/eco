@@ -300,8 +300,8 @@ public:
 
 		// 1.init bytes size.
 		eco::net::TcpProtocolHead prot_head;
-		uint16_t head_size = prot_head.size();		// @head size.
-		uint32_t byte_size = get_meta_size(meta);		// #@meta size.
+		uint16_t head_size = prot_head.size();				// @head size.
+		uint32_t byte_size = get_meta_size(meta);			// #@meta size.
 		uint32_t code_size = meta.m_codec->get_byte_size();	// #@message size.	
 		byte_size += code_size;
 		if (eco::has(meta.m_category, category_encrypted) && m_crypt != nullptr)
@@ -311,7 +311,7 @@ public:
 		byte_size += head_size;
 		if (eco::has(meta.m_category, category_checksum) && m_check != nullptr)
 		{
-			byte_size += m_check->get_byte_size();		// [@]checksum size.
+			byte_size += m_check->get_byte_size();			// [@]checksum size.
 		}
 		bytes.clear();
 		bytes.reserve(byte_size);

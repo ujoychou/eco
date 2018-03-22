@@ -101,7 +101,13 @@ SessionData::ptr TcpSession::data() const
 template<typename SessionDataT>
 inline std::shared_ptr<SessionDataT> TcpSession::cast()
 {
-	return std::dynamic_pointer_cast<SessionDataT>(data());
+	auto sess = m_impl.m_session_wptr.lock();
+	if (sess == nullptr)
+	{
+		EcoThrow(e_session_expired)
+			<< "cast data fail, session data has expired.";
+	}
+	return std::dynamic_pointer_cast<SessionDataT>(sess);
 }
 
 const SessionId TcpSession::get_id() const

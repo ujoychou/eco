@@ -88,9 +88,6 @@ public:
 	// dispatch.
 	DispatchRegistry& dispatcher();
 
-	// set default data.
-	void init();
-
 	// release client.
 	void close();
 

@@ -438,7 +438,7 @@ private:
 	};
 
 public:
-	WebSocketProtocol()
+	WebSocketProtocol(IN const bool mask) : m_mask(mask)
 	{}
 
 	inline uint32_t get_meta_size(
@@ -562,17 +562,20 @@ public:
 		IN  const eco::net::MessageMeta& meta,
 		OUT eco::Error& e) override
 	{
+		MessageCategory category = meta.m_category;
+		eco::set(category, category_encrypted, m_mask > 0);
+
 		WebSocketProtocolHeadEx prot_head;
 		// 1.init bytes size.
 		uint32_t meta_size = get_meta_size(meta);
 		uint32_t code_size = meta.m_codec->get_byte_size();
-		uint32_t byte_size = prot_head.pre_size(meta.m_category);
+		uint32_t byte_size = prot_head.pre_size(category);
 		byte_size += meta_size + code_size;
 		bytes.clear();
 		bytes.reserve(byte_size);
 
 		// 2.init message version and category.
-		prot_head.pre_encode_append(bytes, version(), meta.m_category);
+		prot_head.pre_encode_append(bytes, version(), category);
 
 		// 3.init message type and optional data.
 		bytes.append(static_cast<char>(meta.m_model));
@@ -594,7 +597,7 @@ public:
 		meta.m_codec->encode_append(bytes, code_size);
 
 		// 5.reset bytes size.
-		start = prot_head.encode_mask(bytes, meta.m_category);
+		start = prot_head.encode_mask(bytes, category);
 		return true;
 	}
 
@@ -605,6 +608,8 @@ public:
 		IN  MessageCategory category = category_encrypted)
 	{
 		WebSocketProtocolHead prot_head;
+		eco::set(category, category_encrypted, m_mask > 0);
+
 		// 1.init bytes size.
 		uint32_t code_size = (uint32_t)strlen(message);
 		uint32_t byte_size = prot_head.pre_size(category);
@@ -624,8 +629,7 @@ public:
 	}
 
 private:
-	Crypt* m_crypt;
-	Check* m_check;
+	uint32_t m_mask;
 };
 
 

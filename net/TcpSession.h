@@ -117,14 +117,31 @@ public:
 		return m_id;
 	}
 
+	// async send message.
+	inline void async_send(IN const MessageMeta& meta)
+	{
+		m_conn.async_send(meta);
+	}
+
+	// async send message.
+	inline void async_send(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const bool encrypted = true,
+		IN const bool last = true)
+	{
+		m_conn.async_send(codec, type, m_id, encrypted, last);
+	}
+
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void async_send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const bool encrypted = true)
+		IN const bool encrypted = true,
+		IN const bool last = true)
 	{
-		m_conn.async_send_session(msg, type, m_id, encrypted);
+		m_conn.async_send(msg, type, m_id, encrypted, last);
 	}
 #endif
 
@@ -161,7 +178,6 @@ public:
 
 	// session data
 	SessionId			m_session_id;		// session id.
-	SessionData::ptr	m_session_ptr;		// session data.
 	SessionData::wptr	m_session_wptr;		// session data.
 	
 	// session owner: client or server.
