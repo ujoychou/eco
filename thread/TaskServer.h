@@ -25,13 +25,29 @@ namespace eco{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+class Task : public eco::Object<Task>
+{
+public:
+	typedef std::auto_ptr<Task> aptr;
+	virtual ~Task() {};
+	virtual void operator()(void) = 0;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 class TaskHandler
 {
 public:
-	template<typename Task>
-	inline void operator()(IN Task& task)
+	template<typename TaskT>
+	inline void operator()(IN TaskT& task)
 	{
 		task();
+	}
+
+	template<typename TaskT>
+	inline void operator()(IN std::auto_ptr<TaskT>& task)
+	{
+		(*task)();
 	}
 
 	inline void operator()(IN std::auto_ptr<Btask>& task)
@@ -49,8 +65,8 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Task>
-class TaskServer : public MessageServer<Task, TaskHandler>
+template<typename TaskT = Task::aptr>
+class TaskServer : public MessageServer<TaskT, TaskHandler>
 {
 public:
 };
