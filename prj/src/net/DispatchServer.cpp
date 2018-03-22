@@ -74,7 +74,6 @@ bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 			return false;
 		}
 		// open session: set session data.
-		sess.impl().m_session_ptr = pack->m_session;
 		sess.impl().m_session_wptr = pack->m_session;
 		sess.impl().m_session_id = c.m_meta.m_session_id;
 		// set session.

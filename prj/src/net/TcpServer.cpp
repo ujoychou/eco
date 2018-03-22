@@ -21,7 +21,7 @@ void TcpServer::Impl::start()
 	if (m_option.websocket())
 	{
 		set_protocol_head(new WebSocketProtocolHeadEx());
-		set_protocol(new WebSocketProtocol());
+		set_protocol(new WebSocketProtocol(false));	 // server must not mask.
 	}
 	else if (!m_prot_head.get() || m_protocol_set.empty())
 	{

@@ -99,7 +99,7 @@ public:
 		auto it = m_peer_map.find(conn_id);
 		if (it != m_peer_map.end())
 		{
-			EcoInfo << NetLog(conn_id, ECO_FUNC) <= it->second.use_count();
+			EcoDebug << NetLog(conn_id, ECO_FUNC) <= it->second.use_count();
 			m_peer_map.erase(it);
 		}
 	}
@@ -138,7 +138,7 @@ public:
 			else
 			{
 				// 1.close state;2.close socket.3.remove.
-				EcoInfo << NetLog(it->first, ECO_FUNC)
+				EcoDebug << NetLog(it->first, ECO_FUNC)
 					<= it->second.use_count();
 				it->second->close();
 				it = m_peer_map.erase(it);

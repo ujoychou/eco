@@ -89,7 +89,7 @@ void TcpClient::Impl::init()
 	if (m_option.websocket())
 	{
 		set_protocol_head(new WebSocketProtocolHeadEx());
-		set_protocol(new WebSocketProtocol());
+		set_protocol(new WebSocketProtocol(true));	// mask frame.
 	}
 	else if (m_protocol == nullptr)
 	{
@@ -382,11 +382,6 @@ ConnectionId TcpClient::get_id()
 	return impl().peer().get_id();
 }
 
-void TcpClient::init()
-{
-	impl().init();
-}
-
 void TcpClient::close()
 {
 	impl().close();
@@ -410,11 +405,13 @@ void TcpClient::set_address(IN eco::net::AddressSet& addr)
 
 void TcpClient::async_connect()
 {
+	impl().init();
 	impl().async_connect();
 }
 
 void TcpClient::async_connect(IN eco::net::AddressSet& addr)
 {
+	impl().init();
 	impl().async_connect(addr);
 }
 

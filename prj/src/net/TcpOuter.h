@@ -135,10 +135,10 @@ bool TcpSessionOuter::open(IN const SessionId session_id)
 	if (impl().m_owner.m_server)
 	{
 		auto* server = (TcpServer::Impl*)impl().m_owner.m_owner;
-		impl().m_session_ptr = server->find_session(session_id);
-		if (impl().m_session_ptr != nullptr)
+		auto sess = server->find_session(session_id);
+		if (sess != nullptr)
 		{
-			impl().m_session_wptr = impl().m_session_ptr;
+			impl().m_session_wptr = sess;
 			impl().m_session_id = session_id;
 			return true;
 		}
@@ -152,7 +152,6 @@ bool TcpSessionOuter::open(IN const SessionId session_id)
 			impl().m_user = pack->m_user_observer.lock();
 			if (impl().m_user != nullptr)
 			{
-				impl().m_session_ptr = pack->m_session;
 				impl().m_session_wptr = pack->m_session;
 				impl().m_session_id = session_id;
 				return true;

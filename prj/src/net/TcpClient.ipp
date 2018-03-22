@@ -236,19 +236,13 @@ public:
 	inline void async_connect(IN eco::net::AddressSet& addr)
 	{
 		update_address(addr);
-		// set protocol.
-		if (m_option.websocket())
-		{
-			set_protocol_head(new WebSocketProtocolHeadEx());
-			set_protocol(new WebSocketProtocol());
-		}
 		// reconnect to new address if cur address is removed.
 		async_connect();
 	}
 	inline void async_connect();
 	inline String logging();
 
-	// init client data thread unsafe.
+	// init client data and set default thread unsafe.
 	void init();
 	// release tcp client and connection.
 	void close();
