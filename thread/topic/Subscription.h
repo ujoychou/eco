@@ -282,6 +282,7 @@ inline bool Subscriber::unsubscribe(IN Topic* topic)
 	{
 		if (node->m_topic != topic)
 		{
+			node = node->m_subscriber_topic_next;
 			continue;
 		}
 		
@@ -347,7 +348,7 @@ inline AutoRefPtr<Subscription> Topic::reserve_subscribe(
 ////////////////////////////////////////////////////////////////////////////////
 inline bool Topic::unsubscribe(IN Subscriber* subscriber)
 {
-	subscriber->unsubscribe(this);
+	return subscriber->unsubscribe(this);
 }
 
 
