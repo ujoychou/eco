@@ -43,7 +43,7 @@ PusherT<LogStream>::~PusherT()
 	
 	// turn line '\n' must input into the string.
 	m_stream.buffer().force_append('\n');
-	get_core().append(m_stream.get_bytes());
+	get_core().append(m_stream.get_bytes(), m_severity);
 }
 
 

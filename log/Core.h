@@ -39,11 +39,9 @@ class ECO_API Core
 	ECO_SINGLETON_UNINIT(Core);
 public:
 	/*@ option: severity level. */
-	void set_severity_level(IN const char* v);
-	void set_severity_level(IN const SeverityLevel& v);
-	SeverityLevel& severity_level();
-	const SeverityLevel& get_severity_level() const;
-	Core& severity_level(IN const SeverityLevel&);
+	void set_severity_level(IN const char* v, IN const int flag = 0);
+	void set_severity_level(IN const SeverityLevel v, IN const int flag = 0);
+	const SeverityLevel get_severity_level() const;
 
 	/*@ option: synchronous.*/
 	void set_async(IN const bool);
@@ -107,7 +105,7 @@ public:
 	bool is_running() const;
 
 	/*@ append log info.*/
-	void append(IN const eco::Bytes& buf);
+	void append(IN const eco::Bytes& buf, IN const SeverityLevel level);
 };
 
 
