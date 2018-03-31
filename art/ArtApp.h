@@ -29,19 +29,21 @@ QT_BEGIN_NAMESPACE
 class QLocalServer;
 QT_END_NAMESPACE;
 
-ECO_NS_BEGIN(eco);
-ECO_NS_BEGIN(art);
+namespace eco{;
+namespace art{;
 ////////////////////////////////////////////////////////////////////////////////
 class App : public eco::App
 {
 	friend class AppWork;
 protected:
-	// 程序运行
+	// 初始化
 	virtual void on_init() override = 0;
 
-	// 程序退出
-	virtual void on_exit() override
-	{}
+	// 加载数据
+	virtual void on_load() {}
+
+	// 退出程序
+	virtual void on_exit() {}
 
 	// 激活程序
 	virtual void on_active() 
@@ -98,8 +100,7 @@ public:
 		return runner.main(argc, argv);
 	}
 };
-ECO_NS_END(art);
-ECO_NS_END(eco);
+}};
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,9 @@
 ﻿#include "PrecHeader.h"
 #include <eco/art/ArtApp.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <QtWidgets/qapplication.h>
+#include <QApplication>
+#include <QStringList>
+#include <QMessageBox>
 #include <QtNetwork/qlocalserver.h>
 #include <QtNetwork/qlocalsocket.h>
 #include <QtCore/qiodevice.h>
@@ -9,11 +11,11 @@
 
 
 
-ECO_NS_BEGIN(eco);
+namespace eco{;
 extern "C" void make_app(IN App& ap);
 extern "C" void init_app(IN App& ap);
 extern "C" void load_app(IN App& ap);
-ECO_NS_BEGIN(art);
+namespace art{;
 static bool s_run_once(true);
 static AppWork::createAppFunc s_create_app(nullptr);
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,8 +46,7 @@ int AppWork::main(int argc, char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		QString err("main error: ");
-		log(err += e.what());
+		QMessageBox::critical(nullptr, tr("程序错误(main)"), QString(e.what()));
 	}
 	return 0;
 }
@@ -76,13 +77,11 @@ int AppWork::run(QApplication& qt_app)
 	}
 	catch (eco::Error& e)
 	{
-		EcoCout << "[error] " << e.what();
-		getch_exit();
+		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
 	}
 	catch (std::exception& e)
 	{
-		EcoCout << "[error] " << e.what();
-		getch_exit();
+		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
 	}
 	return 0;
 }
@@ -158,5 +157,5 @@ void AppWork::log(QString& msg)
 }
 
 
-ECO_NS_END(eco);
-ECO_NS_END(art);
+////////////////////////////////////////////////////////////////////////////////
+}};

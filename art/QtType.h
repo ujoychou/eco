@@ -19,15 +19,18 @@
 * 版权所有(c) 2015 - 2017, mrs corp, 保留所有权利。
 
 *******************************************************************************/
+#include <eco/Export.h>
 #include <QtCore/qstring.h>
 #include <QtCore/qvariant.h>
 #include <QtCore/qdatetime.h>
+#include <QtCore/QCoreApplication>
 
 
 QT_BEGIN_NAMESPACE
 class QAxObject;
 QT_END_NAMESPACE
 
+namespace eco {;
 namespace art {;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,5 +52,12 @@ inline QString getString(IN const QVariant& qvar)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-};
+inline QString getAppDir()
+{
+	return QCoreApplication::applicationDirPath();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+}};
 #endif
