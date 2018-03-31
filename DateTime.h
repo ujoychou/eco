@@ -230,7 +230,7 @@ class ECO_API DateTime
 	ECO_VALUE_API(DateTime);
 public:
 	// constructor, parse date and time from string.
-	void set_date_time(IN const char* str);
+	DateTime& set(IN const char* str);
 
 	// get date.
 	const char* get_date() const;
