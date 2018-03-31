@@ -1,25 +1,28 @@
-ï»¿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="GB2312"?>
 <root>
-  <!--#.é…ç½®æ–‡ä»¶-->
+  <!--#.ÅäÖÃÎÄ¼þ-->
   <config>
     <file_path>cfg.app.xml</file_path>
   </config>
 
-  <!--#.æ—¥å¿—é€‰é¡¹-->
+  <!--#.ÈÕÖ¾Ñ¡Ïî-->
   <logging>
-    <level value="info"/>
     <async value="false"/>
+    <level value="info"/>
     <async_flush value="1000"/>
     <memcache value="5M"/>
     <file_sink value="true">
+      <level value="debug"/>
       <file_path>./log/</file_path>
       <roll_size>100M</roll_size>
       <full_path>20170104-160222.ujoychou-PC.00051124.log</full_path>
     </file_sink>
-    <console_sink value="true"/>
+    <console_sink value="true">
+      <level value="info"/>
+    </console_sink>
   </logging>
 
-  <!--#.ç”Ÿå‘½æœºåˆ¶-->
+  <!--#.ÉúÃü»úÖÆ-->
   <eco enable="true">
     <being enable="true">
       <unit_live_tick>5</unit_live_tick>
@@ -27,11 +30,11 @@
     <task_server_thread_size value="2"/>
   </eco>
 
-  <!--#.æ’ä»¶ç®¡ç†-->
+  <!--#.²å¼þ¹ÜÀí-->
   <erx enable="false">
   </erx>
 
-  <!--#.è·¯ç”±ä¸­å¿ƒ-->
+  <!--#.Â·ÓÉÖÐÐÄ-->
   <router enable="true">
     <front_router>
       <addr_shdx>127.0.0.1:40001</addr_shdx>
@@ -43,7 +46,7 @@
     </trade_router>
   </router>
 
-  <!--#.æœåŠ¡è€…-->
+  <!--#.·þÎñÕß-->
   <provider enable="true" router="front_router">
     <service>hornet</service>
     <port>50000</port>
@@ -61,9 +64,9 @@
     <business_thread_size value="4"/>
   </provider>
 
-  <!--#.æ¶ˆè´¹è€…-->
+  <!--#.Ïû·ÑÕß-->
   <consumer enable="true">
-    <!--å›¢é˜ŸæœåŠ¡-->
+    <!--ÍÅ¶Ó·þÎñ-->
     <team enable="true">
       <address>
         <dev_env>39.104.67.41:40001</dev_env>
@@ -78,7 +81,7 @@
     </team>
   </consumer>
 
-  <!--#.æ•°æ®åº“-->
+  <!--#.Êý¾Ý¿â-->
   <persist enable="true">
     <test_env type="mysql">
       <user value="root"/>
