@@ -609,11 +609,18 @@ void App::Impl::init()
 		eco::log::get_core().add_console_sink(v);
 	if (eco::log::get_core().has_file_sink())
 	{
+		if (m_sys_config.find(v, "logging/file_sink/level"))
+			eco::log::get_core().set_severity_level(v.c_str(), 1);
 		if (m_sys_config.find(v, "logging/file_sink/file_path"))
 			eco::log::get_core().set_file_path(v.c_str());
 		if (m_sys_config.find(v, "logging/file_sink/roll_size"))
 			eco::log::get_core().set_file_roll_size(
 				uint32_t(double(v) * 1024 * 1024));
+	}
+	else if (eco::log::get_core().has_console_sink())
+	{
+		if (m_sys_config.find(v, "logging/console_sink/level"))
+			eco::log::get_core().set_severity_level(v.c_str(), 2);
 	}
 	eco::log::get_core().run();
 
