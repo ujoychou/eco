@@ -1024,7 +1024,7 @@ inline bool is_negative(IN const double v)
 }
 inline bool is_nan(IN const double v)
 {
-	return _isnan(v) > 0;
+	return int(_isnan(v)) > 0;
 }
 inline bool is_infinity(IN const double v)
 {

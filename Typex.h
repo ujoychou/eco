@@ -131,8 +131,13 @@ public:
 	const Parameter& at(IN const int i) const;
 
 public:
+	// whether has a key.
 	bool has(IN const char* key) const;
+
+	// find the key value.
 	bool find(OUT StringAny& v, IN const char* key) const;
+
+	// get the key value.
 	StringAny at(IN const char* key) const;
 };
 
