@@ -86,6 +86,7 @@ public:
 	// append buffer to file.
 	void append(IN const char* buf, IN uint32_t size);
 
+
 private:
 	eco::filesystem::File m_file;
 	Context m_context;

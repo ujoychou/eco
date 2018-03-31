@@ -35,8 +35,10 @@ public:
 	Handler(IN Core::Impl& imp) : m_core(&imp)
 	{}
 
-	void operator()(IN const eco::Bytes& buf);
+	// sync logging.
+	void operator()(IN const eco::Bytes& buf, IN const SeverityLevel level);
 
+	// async logging.
 	void operator()(IN const Pack& buf);
 
 private:
@@ -54,13 +56,14 @@ public:
 	// core option.
 	uint32_t m_async;
 	SinkOption m_sink_option;
-	SeverityLevel m_severity_level;
 	uint32_t m_capacity;
 	uint32_t m_async_flush;
 
 	// console sink.
 	std::auto_ptr<FileSink> m_file_sink;
 	std::auto_ptr<ConsoleSink> m_console_sink;
+	SeverityLevel m_file_sev;
+	SeverityLevel m_console_sev;
 
 	// file sink option.
 	std::string m_file_path;
@@ -95,43 +98,27 @@ ECO_PROPERTY_VAV_IMPL(Core, SinkOption, sink_option);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, capacity);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, async_flush);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, file_roll_size);
-void Core::set_severity_level(IN const SeverityLevel& val)
-{
-	impl().m_severity_level = val;
-}
-Core& Core::severity_level(IN const SeverityLevel& val)
-{
-	impl().m_severity_level = val;
-	return *this;
-}
-SeverityLevel& Core::severity_level()
-{
-	return impl().m_severity_level;
-}
-const SeverityLevel& Core::get_severity_level() const
-{
-	return impl().m_severity_level;
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 Core::Impl::Impl()
 	: m_async(true)
-	, m_severity_level(eco::log::info)
 	, m_capacity(queue_size)
 	, m_file_roll_size(eco::log::file_roll_size)
 	, m_file_path("./log/")
 	, m_on_create(nullptr)
 	, m_sink_option(eco::log::file_sink)
 	, m_running(false)
+	, m_file_sev(eco::log::info)
+	, m_console_sev(eco::log::info)
 {}
-void Handler::operator()(IN const eco::Bytes& buf)
+void Handler::operator()(IN const eco::Bytes& buf, IN const SeverityLevel level)
 {
-	if (m_core->m_file_sink.get() != nullptr)
+	if (m_core->m_file_sink.get() != nullptr && level >= m_core->m_file_sev)
 	{
 		(*m_core->m_file_sink).append(buf.c_str(), buf.size());
 	}
-	if (m_core->m_console_sink.get() != nullptr)
+	if (m_core->m_console_sink.get() != nullptr && level >= m_core->m_console_sev)
 	{
 		(*m_core->m_console_sink) << buf.c_str();
 	}
@@ -213,9 +200,21 @@ bool Core::is_running() const
 {
 	return impl().m_running;
 }
-void Core::set_severity_level(IN const char* v)
+void Core::set_severity_level(IN const char* v, IN const int flag)
 {
-	impl().m_severity_level = eco::log::Severity::get_level(v);
+	set_severity_level(eco::log::Severity::get_level(v), flag);
+}
+void Core::set_severity_level(IN const SeverityLevel v, IN const int flag)
+{
+	if (flag == 0 || flag == 1)
+		impl().m_file_sev = v;
+	if (flag == 0 || flag == 2)
+		impl().m_console_sev = v;
+}
+const SeverityLevel Core::get_severity_level() const
+{
+	return (impl().m_file_sev < impl().m_console_sev)
+		? impl().m_file_sev : impl().m_console_sev;
 }
 void Core::add_file_sink(IN bool is_add)
 {
@@ -237,16 +236,16 @@ void Core::set_file_on_create(IN eco::log::OnChangedLogFile& func)
 {
 	impl().m_on_create = func;
 }
-void Core::append(IN const eco::Bytes& buf)
+void Core::append(IN const eco::Bytes& buf, IN const SeverityLevel level)
 {
-	if (impl().m_server != nullptr)
+	if (impl().m_server != nullptr)		// async
 	{
 		impl().m_server->post(buf);
 	}
 	else
 	{
-		Handler hdl(impl());
-		hdl(buf);
+		Handler hdl(impl());			// sync
+		hdl(buf, level);
 	}
 }
 
