@@ -51,11 +51,11 @@ public:
 	inline void async_response(
 		IN google::protobuf::Message& msg,
 		IN uint32_t type = 0,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
 		if (type == 0) type = get_response_type();
-		context().async_response(ProtobufCodec(msg), type, encrypted, last);
+		context().async_response(ProtobufCodec(msg), type, last, encrypted);
 	}
 };
 

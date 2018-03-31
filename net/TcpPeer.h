@@ -134,8 +134,8 @@ public:
 		IN const uint32_t type,
 		IN const Context& context,
 		IN Protocol& prot,
-		IN const bool encrypted,
-		IN const bool last);
+		IN const bool last,
+		IN const bool encrypted);
 };
 
 

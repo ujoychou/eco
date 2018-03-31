@@ -56,8 +56,8 @@ private:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& c,
-		IN const bool encrypted,
-		IN const bool last);
+		IN const bool last,
+		IN const bool encrypted);
 
 	friend class TcpSession;
 	TcpSessionImpl* m_impl;
@@ -121,11 +121,11 @@ void TcpSession::async_response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& context,
-	IN const bool encrypted,
-	IN const bool last)
+	IN const bool last,
+	IN const bool encrypted)
 {
 	TcpSessionInner inner(m_impl);
-	return inner.async_response(codec, type, context, encrypted, last);
+	return inner.async_response(codec, type, context, last, encrypted);
 }
 void TcpSession::async_auth(IN const MessageMeta& meta)
 {

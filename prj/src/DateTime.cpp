@@ -201,9 +201,10 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_VALUE_IMPL(DateTime);
-void DateTime::set_date_time(IN const char* str)
+DateTime& DateTime::set(IN const char* str)
 {
 	m_impl->set_date_time(str);
+	return *this;
 }
 const char* DateTime::get_date() const
 {

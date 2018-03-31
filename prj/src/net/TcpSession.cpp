@@ -70,20 +70,20 @@ void TcpSessionInner::async_response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& c,
-	IN const bool encrypted,
-	IN const bool last)
+	IN const bool last,
+	IN const bool encrypted)
 {
 	if (impl().m_session_id != none_session)
 	{
 		SessionData::ptr sess = impl().m_session_wptr.lock();
 		if (sess != nullptr)
 		{
-			return impl().m_conn.async_response(codec, type, c, encrypted, last);
+			return impl().m_conn.async_response(codec, type, c, last, encrypted);
 		}
 	}
 	else
 	{
-		impl().m_conn.async_response(codec, type, c, encrypted, last);
+		impl().m_conn.async_response(codec, type, c, last, encrypted);
 	}
 }
 

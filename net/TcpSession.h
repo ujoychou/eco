@@ -127,10 +127,10 @@ public:
 	inline void async_send(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
-		m_conn.async_send(codec, type, m_id, encrypted, last);
+		m_conn.async_send(codec, type, m_id, last, encrypted);
 	}
 
 #ifndef ECO_NO_PROTOBUF
@@ -138,8 +138,8 @@ public:
 	inline void async_send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
 		m_conn.async_send(msg, type, m_id, encrypted, last);
 	}
@@ -246,11 +246,11 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
-		async_response(codec, type, context, encrypted, last);
+		async_response(codec, type, context, last, encrypted);
 	}
 #endif
 
@@ -259,8 +259,8 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool encrypted = true,
-		IN const bool last = true);
+		IN const bool last = true,
+		IN const bool encrypted = true);
 
 
 	// async send message.

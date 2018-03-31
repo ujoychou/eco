@@ -145,6 +145,10 @@ public:
 	{
 		eco::set(m_option, option_last, is);
 	}
+	inline const bool last() const
+	{
+		return eco::has(m_option, option_last);
+	}
 
 	inline void set_message_type(IN const uint32_t type)
 	{

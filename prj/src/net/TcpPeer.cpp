@@ -301,8 +301,8 @@ void TcpPeer::async_response(
 	IN const uint32_t type,
 	IN const Context& c,
 	IN Protocol& prot,
-	IN const bool encrypted,
-	IN const bool last)
+	IN const bool last,
+	IN const bool encrypted)
 {
 	MessageMeta meta(codec, c.m_meta.m_session_id, type, true);
 	eco::add(meta.m_category, c.m_meta.m_category);

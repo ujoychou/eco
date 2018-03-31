@@ -153,8 +153,8 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const SessionId sess_id = none_session,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
 		MessageMeta meta(codec, sess_id, type, encrypted);
 		meta.set_last(last);
@@ -166,14 +166,14 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
 			return peer->async_response(
-				codec, type, context, *m_prot, encrypted, last);
+				codec, type, context, *m_prot, last, encrypted);
 		}
 	}
 
@@ -183,10 +183,10 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const SessionId sess_id = none_session,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
-		async_send(ProtobufCodec(msg), type, sess_id, encrypted, last);
+		async_send(ProtobufCodec(msg), type, sess_id, last, encrypted);
 	}
 
 	// async send response by context.
@@ -194,11 +194,11 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
-		IN const bool encrypted = true,
-		IN const bool last = true)
+		IN const bool last = true,
+		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
-		async_response(codec, type, context, encrypted, last);
+		async_response(codec, type, context, last, encrypted);
 	}
 #endif
 
