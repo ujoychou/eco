@@ -62,7 +62,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\contrib\boost\lib_vc100;$(SolutionDir)..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\contrib\boost\lib_vc100;$(ProjectDir)..\..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -90,7 +90,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\contrib\boost\lib_vc100;$(SolutionDir)..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\contrib\boost\lib_vc100;$(ProjectDir)..\..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -125,6 +125,7 @@
     <ClCompile Include="..\HeapOperators.cpp" />
     <ClCompile Include="..\log\Core.cpp" />
     <ClCompile Include="..\log\FileSink.cpp" />
+    <ClCompile Include="..\media\MediaWin.cpp" />
     <ClCompile Include="..\net\Address.cpp" />
     <ClCompile Include="..\net\asio\IoTimer.cpp" />
     <ClCompile Include="..\net\asio\TcpAcceptor.cpp" />
@@ -165,9 +166,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\contrib\eco\App.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\atomic\Atomic.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\atomic\AtomicImpl.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\atomic\State.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Being.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Cast.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Class.h" />
@@ -179,14 +177,9 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\DllObject.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Memory.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\MemoryPool.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CondVar.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\CondVarWin.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\MutexWin.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\OneTaskMonitor.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskMonitor.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TopicServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h" />
@@ -209,26 +202,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\process\Process.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\RxApp.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\Centre.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\DevCentre.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\Impl.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\ops\OpsCentre.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\ServiceApp.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CallOnce.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageQueue.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageServer.h" />
@@ -236,15 +209,101 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\State.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Thread.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ThreadPool.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Worker.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\xml\Reader.h" />
+    <ClInclude Include="..\..\..\Bobject.h" />
+    <ClInclude Include="..\..\..\Btask.h" />
     <ClInclude Include="..\..\..\codec\base64.h" />
     <ClInclude Include="..\..\..\codec\NullByteCoder.h" />
     <ClInclude Include="..\..\..\codec\sha1.h" />
     <ClInclude Include="..\..\..\codec\Zlib.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
+    <ClInclude Include="..\..\..\filesystem\Operations.h" />
+    <ClInclude Include="..\..\..\media\Media.h" />
+    <ClInclude Include="..\..\..\meta\Meta.h" />
+    <ClInclude Include="..\..\..\net\Address.h" />
+    <ClInclude Include="..\..\..\net\asio\IoTimer.h" />
+    <ClInclude Include="..\..\..\net\asio\Worker.h" />
+    <ClInclude Include="..\..\..\net\asio\WorkerPool.h" />
+    <ClInclude Include="..\..\..\net\AsyncHandlerMap.h" />
+    <ClInclude Include="..\..\..\net\Context.h" />
+    <ClInclude Include="..\..\..\net\DispatchRegistry.h" />
+    <ClInclude Include="..\..\..\net\DispatchServer.h" />
+    <ClInclude Include="..\..\..\net\Ecode.h" />
+    <ClInclude Include="..\..\..\net\IoTimer.h" />
+    <ClInclude Include="..\..\..\net\Log.h" />
+    <ClInclude Include="..\..\..\net\ProtobufHandler.h" />
+    <ClInclude Include="..\..\..\net\protocol\Check.h" />
+    <ClInclude Include="..\..\..\net\protocol\Codec.h" />
+    <ClInclude Include="..\..\..\net\protocol\Crypt.h" />
+    <ClInclude Include="..\..\..\net\protocol\ProtobufCodec.h" />
+    <ClInclude Include="..\..\..\net\protocol\Protocol.h" />
+    <ClInclude Include="..\..\..\net\protocol\ProtocolHead.h" />
+    <ClInclude Include="..\..\..\net\protocol\StringCodec.h" />
+    <ClInclude Include="..\..\..\net\protocol\TcpProtocol.h" />
+    <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h" />
+    <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
+    <ClInclude Include="..\..\..\net\RequestHandler.h" />
+    <ClInclude Include="..\..\..\net\StringHandler.h" />
+    <ClInclude Include="..\..\..\net\TcpAcceptor.h" />
+    <ClInclude Include="..\..\..\net\TcpClient.h" />
+    <ClInclude Include="..\..\..\net\TcpClientOption.h" />
+    <ClInclude Include="..\..\..\net\TcpConnection.h" />
+    <ClInclude Include="..\..\..\net\TcpConnector.h" />
+    <ClInclude Include="..\..\..\net\TcpPeer.h" />
+    <ClInclude Include="..\..\..\net\TcpServer.h" />
+    <ClInclude Include="..\..\..\net\TcpServerOption.h" />
+    <ClInclude Include="..\..\..\net\TcpSession.h" />
+    <ClInclude Include="..\..\..\net\TcpState.h" />
+    <ClInclude Include="..\..\..\net\Worker.h" />
+    <ClInclude Include="..\..\..\persist\Address.h" />
+    <ClInclude Include="..\..\..\persist\Database.h" />
+    <ClInclude Include="..\..\..\persist\DatabaseConfig.h" />
+    <ClInclude Include="..\..\..\persist\JoinMapping.h" />
+    <ClInclude Include="..\..\..\persist\MySql.h" />
+    <ClInclude Include="..\..\..\persist\Persist.h" />
+    <ClInclude Include="..\..\..\persist\Recordset.h" />
+    <ClInclude Include="..\..\..\persist\Sqlite.h" />
+    <ClInclude Include="..\..\..\proxy\Proxy.h" />
+    <ClInclude Include="..\..\..\proxy\Win.h" />
+    <ClInclude Include="..\..\..\proxy\WinAutoHandler.h" />
+    <ClInclude Include="..\..\..\service\Cluster.h" />
+    <ClInclude Include="..\..\..\service\Deployment.h" />
+    <ClInclude Include="..\..\..\service\dev\Cluster.h" />
+    <ClInclude Include="..\..\..\service\dev\Ecode.h" />
+    <ClInclude Include="..\..\..\service\dev\Horizontal.h" />
+    <ClInclude Include="..\..\..\service\DidProtocol.h" />
+    <ClInclude Include="..\..\..\service\Machine.h" />
+    <ClInclude Include="..\..\..\service\Service.h" />
+    <ClInclude Include="..\..\..\service\ServiceRuntime.h" />
+    <ClInclude Include="..\..\..\test\Case.h" />
+    <ClInclude Include="..\..\..\test\Check.h" />
+    <ClInclude Include="..\..\..\test\Context.h" />
+    <ClInclude Include="..\..\..\test\Object.h" />
+    <ClInclude Include="..\..\..\test\Result.h" />
+    <ClInclude Include="..\..\..\test\Runner.h" />
+    <ClInclude Include="..\..\..\test\Scene.h" />
+    <ClInclude Include="..\..\..\test\Suite.h" />
+    <ClInclude Include="..\..\..\test\Testing.h" />
+    <ClInclude Include="..\..\..\test\Timing.h" />
+    <ClInclude Include="..\..\..\test\Trace.h" />
+    <ClInclude Include="..\..\..\thread\Atomic.h" />
+    <ClInclude Include="..\..\..\thread\AtomicImpl.h" />
+    <ClInclude Include="..\..\..\thread\AutoRef.h" />
+    <ClInclude Include="..\..\..\thread\ConditionVariable.h" />
+    <ClInclude Include="..\..\..\thread\detail\ConditionVariableWin.h" />
+    <ClInclude Include="..\..\..\thread\Index.h" />
+    <ClInclude Include="..\..\..\thread\Map.h" />
+    <ClInclude Include="..\..\..\thread\Monitor.h" />
+    <ClInclude Include="..\..\..\thread\ThreadState.h" />
+    <ClInclude Include="..\..\..\thread\Timer.h" />
+    <ClInclude Include="..\..\..\thread\topic\Role.h" />
+    <ClInclude Include="..\..\..\thread\topic\Subscription.h" />
+    <ClInclude Include="..\..\..\thread\topic\Topic.h" />
+    <ClInclude Include="..\..\..\thread\topic\TopicServer.h" />
+    <ClInclude Include="..\..\..\web\Html.h" />
+    <ClInclude Include="..\..\..\web\Json.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\Eco.h" />
     <ClInclude Include="..\log\Queue.h" />
@@ -266,6 +325,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </None>
+    <None Include="..\..\..\log\Pusher.inl" />
+    <None Include="..\..\..\net\TcpSession.inl" />
+    <None Include="..\..\..\Typex.ipp" />
+    <None Include="..\..\..\web\html.ut.html" />
+    <None Include="..\..\..\web\json.ut.json" />
     <None Include="..\cmd\Engine.ipp" />
     <None Include="..\net\TcpClient.ipp" />
     <None Include="..\net\TcpPeer.ipp" />

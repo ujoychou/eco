@@ -30,9 +30,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PrecHeader.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\..\contrib\sqlite\sqlite3.c">
       <Filter>contrib\sqlite</Filter>
     </ClCompile>
@@ -42,11 +39,14 @@
     <ClCompile Include="..\persist\Sqlite.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
+    <ClCompile Include="..\PrecHeader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\PersistAddress.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PrecHeader.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\sqlite\sqlite3.h">
       <Filter>contrib\sqlite</Filter>
     </ClInclude>
@@ -67,6 +67,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Sqlite.h">
       <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PrecHeader.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

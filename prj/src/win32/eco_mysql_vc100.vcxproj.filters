@@ -24,20 +24,20 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PrecHeader.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\persist\Mysql.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
     <ClCompile Include="..\persist\Recordset.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
+    <ClCompile Include="..\PrecHeader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\persist\PersistAddress.cpp">
+      <Filter>src\persist</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PrecHeader.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h">
       <Filter>lib\persist</Filter>
     </ClInclude>
@@ -52,6 +52,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Recordset.h">
       <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PrecHeader.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
