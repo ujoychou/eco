@@ -14,15 +14,30 @@ ECO_NS_BEGIN(eco);
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// define customer topic.
 #define ECO_TOPIC(topic_t) \
 ECO_OBJECT(topic_t) \
 ECO_TYPE(topic_t) \
 public:\
+	inline topic_t() {} \
 	inline static eco::Topic* make(IN const TopicId& id)\
 	{\
-		eco::TopicT<TopicId>* topic = new topic_t();\
+		eco::PopTopic<TopicId>* topic = new topic_t();\
 		topic->set_id(id);\
 		return topic;\
+	}
+
+// define basic topic supported by topic framework.
+#define ECO_TOPIC_TOPIC(topic_t) \
+ECO_TOPIC(topic_t) \
+public:\
+	inline static const char* topic_type()\
+	{\
+		return #topic_t;\
+	}\
+	virtual const char* get_topic_type() const\
+	{\
+		return topic_type();\
 	}
 
 //##############################################################################
@@ -270,17 +285,18 @@ public:
 	inline Topic() {}
 	virtual ~Topic() {}
 
+	// load topic data to init topic.
+	virtual void load() {}
+
 	// topic type.
 	virtual const char* get_type() const = 0;
-
-	// topic receive real content that to be published to subscriber.
-	virtual void append(IN eco::Content::ptr& content) = 0;
+	virtual const char* get_topic_type() const = 0;
 
 	// topic server: publish snap after subsriber reserve topic.
 	virtual void publish_snap(IN Subscription& subscription) = 0;
 
 	// topic server: publish new content after append_new()(recv) new content.
-	virtual void publish_new() = 0;
+	virtual void publish_new(IN Content::ptr& new_c) = 0;
 
 	// publish erase topic event.
 	virtual void publish_erase_topic() = 0;
@@ -291,23 +307,24 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename TopicId>
-class TopicT : public Topic
+// note that PopTopic is base topic of "One/Seq/Set" topic.
+template<typename TopicId = eco::TopicId>
+class PopTopic : public Topic
 {
-public:
-	typedef TopicId TopicId;
-
+	ECO_TOPIC_TOPIC(PopTopic);
+protected:
 	// publish snap to subscriber.
-	virtual void do_snap(IN Subscriber& suber) = 0;
+	virtual void do_snap(IN Subscriber& suber) {}
 
 	// move new content to snap content.
-	virtual bool do_move(OUT std::vector<eco::Content::ptr>& new_set) = 0;
+	virtual void do_move(OUT Content::ptr& new_c) {}
 
 	// clear all content
-	virtual void do_clear() = 0;
+	virtual void do_clear() {}
 
 public:
 	// topic identity.
+	typedef TopicId TopicId;
 	inline void set_id(IN const TopicId& id)
 	{
 		m_id = id;
@@ -317,11 +334,36 @@ public:
 		return m_id;
 	}
 
+	// add "object set/object/shared_object" to topic by "load".
+	template<typename object_set_t>
+	inline void append_set(IN const object_set_t& set)
+	{
+		for (auto it = set.begin(); it != set.end(); ++it)
+		{
+			append(*it);
+		}
+	}
+	template<typename object_t>
+	inline void append(IN const object_t& obj)
+	{
+		Content::ptr newc(new ContentT<
+			object_t, object_t>(obj, eco::meta::v_insert));
+		do_move(newc);
+	}
+	template<typename object_t>
+	inline void append(IN const std::shared_ptr<object_t>& obj)
+	{
+		typedef std::shared_ptr<object_t> value_t;
+		Content::ptr newc(new ContentT<
+			object_t, value_t>(obj, eco::meta::v_insert));
+		do_move(newc);
+	}
+
+public:
 	// topic server: publish snap after subsriber reserve topic.
 	virtual void publish_snap(IN Subscription& subscription) override
 	{
-		eco::Mutex::ScopeLock lock(subscribe_mutex());
-		// 1.unsubscribe; 2.removed topic clear all subscribers.
+		eco::Mutex::ScopeLock lock(mutex());
 		if (subscription.m_subscriber != nullptr)
 		{
 			subscription.confirm_subscribe();
@@ -330,36 +372,29 @@ public:
 	}
 
 	// topic server: publish new content after append_new()(recv) new content.
-	virtual void publish_new() override
+	virtual void publish_new(IN Content::ptr& new_c) override
 	{
-		std::vector<eco::Content::ptr> new_set;
-		if (!do_move(new_set))
-		{
-			return;
-		}
 		// publish new content to all subscriber.
-		eco::Mutex::ScopeLock lock(subscribe_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
+		do_move(new_c);
 		Subscription* node = subscriber_head();
-		while (node != nullptr)
+		while (!subscriber_end(node))
 		{
 			if (node->m_working)
 			{
-				Subscriber* suber = (Subscriber*)(node->m_subscriber);
-				for (auto it = new_set.begin(); it != new_set.end(); ++it)
-				{
-					suber->on_publish(m_id, *it);
-				}
+				((Subscriber*)node->m_subscriber)->on_publish(m_id, new_c);
 			}
 			node = node->m_topic_subscriber_next;
-		}// end if.
+		}
+		eco::meta::clear(new_c->timestamp());
 	}
 
 	// publish remove topic event.
 	virtual void publish_erase_topic() override
 	{
-		eco::Mutex::ScopeLock lock(subscribe_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		Subscription* node = subscriber_head();
-		while (node != nullptr)
+		while (!subscriber_end(node))
 		{
 			if (node->m_working)
 			{
@@ -367,19 +402,19 @@ public:
 				suber->on_erase_topic(m_id);
 			}
 			node = node->m_topic_subscriber_next;
-		}// end if.
+		}
 
 		detail::Topic::clear();
 	}
 
-	// publish remove topic event.
+	// publish clear all content in topic.
 	virtual void publish_clear_content() override
 	{
 		do_clear();
 		
-		eco::Mutex::ScopeLock lock(subscribe_mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		Subscription* node = subscriber_head();
-		while (node != nullptr)
+		while (!subscriber_end(node))
 		{
 			if (node->m_working)
 			{
@@ -387,11 +422,10 @@ public:
 				suber->on_clear_content(m_id);
 			}
 			node = node->m_topic_subscriber_next;
-		}// end if.
+		}// end while.
 	}
 
 protected:
-	// topic id.
 	TopicId m_id;
 };
 
@@ -414,6 +448,16 @@ public:
 	inline Publisher() : m_publish_mode(-1)
 	{}
 
+	// publish new content.
+	inline Publisher(
+		IN Topic::ptr& topic,
+		IN Content::ptr& new_content)
+		: m_topic(std::move(topic))
+		, m_new_content(std::move(new_content))
+		, m_publish_mode(mode_publish_new)
+	{}
+
+	// publish some mode: erase_topic & clear content.
 	inline Publisher(
 		IN Topic::ptr& topic, 
 		IN const Mode publish_mode)
@@ -421,6 +465,7 @@ public:
 		, m_publish_mode(publish_mode)
 	{}
 
+	// subscriber subscribe topic.
 	inline Publisher(
 		IN Topic::ptr& topic,
 		IN AutoRefPtr<Subscription>& subscription)
@@ -431,6 +476,7 @@ public:
 
 	inline Publisher(Publisher&& pub)
 		: m_topic(std::move(pub.m_topic))
+		, m_new_content(std::move(pub.m_new_content))
 		, m_subscription(std::move(pub.m_subscription))
 		, m_publish_mode(pub.m_publish_mode)
 	{}
@@ -438,6 +484,7 @@ public:
 	inline Publisher& operator=(Publisher&& pub)
 	{
 		m_topic = std::move(pub.m_topic);
+		m_new_content = std::move(pub.m_new_content);
 		m_subscription = std::move(pub.m_subscription);
 		m_publish_mode = pub.m_publish_mode;
 		return *this;
@@ -448,7 +495,7 @@ public:
 		switch (m_publish_mode)
 		{
 		case mode_publish_new:
-			m_topic->publish_new();
+			m_topic->publish_new(m_new_content);
 			break;
 		case mode_publish_snap:
 			m_topic->publish_snap(*m_subscription);
@@ -464,6 +511,7 @@ public:
 
 private:
 	Topic::ptr m_topic;
+	Content::ptr m_new_content;
 	AutoRefPtr<Subscription> m_subscription;
 	uint32_t m_publish_mode;
 };
@@ -472,7 +520,3 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 }// ns::front
 #endif
-
-
-
-

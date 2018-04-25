@@ -52,6 +52,7 @@ template<typename ObjectT>
 class AutoRefPtr
 {
 public:
+	// add ref operation.
 	inline explicit AutoRefPtr(ObjectT* obj_ptr = nullptr) : m_obj_ptr(obj_ptr)
 	{
 		add_ref();
@@ -64,10 +65,11 @@ public:
 
 	inline AutoRefPtr& operator=(IN const AutoRefPtr& other)
 	{
-		reset(other.m_obj_ptr);
+		assign(other.m_obj_ptr);
 		return *this;
 	}
 
+public:
 	inline AutoRefPtr(AutoRefPtr&& other) : m_obj_ptr(other.release())
 	{}
 
@@ -79,7 +81,7 @@ public:
 
 	inline ~AutoRefPtr()
 	{
-		reset();
+		reset(nullptr);
 	}
 
 	inline ObjectT* operator->()
@@ -106,14 +108,14 @@ public:
 
 	inline void reset(ObjectT* obj_ptr = nullptr)
 	{
-		// del old object.
-		if (m_obj_ptr != nullptr)
-		{
+		if (m_obj_ptr != nullptr)		// del old object.
 			m_obj_ptr->del_ref();
-		}
-		
-		// set new object.
-		m_obj_ptr = obj_ptr;
+		m_obj_ptr = obj_ptr;			// set new object.
+	}
+
+	inline void assign(ObjectT* obj_ptr)
+	{
+		reset(obj_ptr);
 		add_ref();
 	}
 
