@@ -77,6 +77,9 @@ public:
 	void set_sys_config_file(IN const char*);
 	const char* get_sys_config_file() const;
 
+	/*@ config file path, default: "cfg.app.xml"; */
+	const char* get_config_file() const;
+
 	/*@ get system config.*/
 	const Config& get_sys_config() const;
 	eco::Persist& persist();

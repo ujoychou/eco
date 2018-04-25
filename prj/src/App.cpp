@@ -511,7 +511,10 @@ const char* App::get_sys_config_file() const
 {
 	return impl().m_sys_config_file.c_str();
 }
-
+const char* App::get_config_file() const
+{
+	return impl().m_app_config_file.c_str();
+}
 App& App::instance()
 {
 	return *Impl::s_app;
