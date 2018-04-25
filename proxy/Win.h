@@ -21,6 +21,7 @@ as
 *******************************************************************************/
 #include <string>
 #include <eco/Memory.h>
+#include <eco/Type.h>
 #include "windows.h"
 
 
@@ -61,46 +62,34 @@ inline std::wstring cast(IN  const char* sour)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void remove_end(OUT std::string& tmp)
+inline void utf8_to_gbk(OUT std::string& gbk, IN const char* utf8)
 {
-	size_t x = 0;
-	size_t i = tmp.length() - 1;
-	for (; i > 0; --i)
-	{
-		if (tmp[i] != 0)
-			break;
-		++x;
-	}
-	if (i == 0 && tmp[i] == 0) ++x;
-	tmp.resize(tmp.length() - x);
-}
-
-inline void utf_to_gbk(OUT std::string& gbk, IN const char* utf8)
-{
+	// utf8 to unicode
 	std::wstring wstr;
 	int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
 	wstr.resize(len);
 	MultiByteToWideChar(CP_UTF8, 0, utf8, -1, &wstr[0], len);
-
+	// unicode to gbk.
 	len = WideCharToMultiByte(CP_ACP, 0, &wstr[0], -1, NULL, 0, NULL, NULL);
 	gbk.resize(len);
 	WideCharToMultiByte(CP_ACP, 0, &wstr[0], -1, &gbk[0], len, NULL, NULL);
-	remove_end(gbk);
+	eco::fit(gbk);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void gbk_to_utf(OUT std::string& utf, IN const char* gbk)
+inline void gbk_to_utf8(OUT std::string& utf, IN const char* gbk)
 {
+	// gbk to unicode
 	std::wstring wstr;
 	int len = MultiByteToWideChar(CP_ACP, 0, gbk, -1, NULL, 0);
 	wstr.resize(len);
 	MultiByteToWideChar(CP_ACP, 0, gbk, -1, &wstr[0], len);
-
+	// unicode to utf8.
 	len = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], -1, NULL, 0, NULL, NULL);
 	utf.resize(len);
 	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], -1, &utf[0], len, NULL, NULL);
-	remove_end(utf);
+	eco::fit(utf);
 }
 
 

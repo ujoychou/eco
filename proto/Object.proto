@@ -21,6 +21,8 @@ message GetRequest
 message SubRequest
 {
 	uint64 user_id = 10;
+	uint32 prop = 11;
+	uint64 value = 12;
 }
 
 // É¾³ı¶ÔÏóÇëÇó

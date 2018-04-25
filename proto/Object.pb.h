@@ -382,17 +382,31 @@ class SubRequest : public ::google::protobuf::Message /* @@protoc_insertion_poin
 
   // accessors -------------------------------------------------------
 
+  // uint32 prop = 11;
+  void clear_prop();
+  static const int kPropFieldNumber = 11;
+  ::google::protobuf::uint32 prop() const;
+  void set_prop(::google::protobuf::uint32 value);
+
   // uint64 user_id = 10;
   void clear_user_id();
   static const int kUserIdFieldNumber = 10;
   ::google::protobuf::uint64 user_id() const;
   void set_user_id(::google::protobuf::uint64 value);
 
+  // uint64 value = 12;
+  void clear_value();
+  static const int kValueFieldNumber = 12;
+  ::google::protobuf::uint64 value() const;
+  void set_value(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:proto.SubRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint32 prop_;
   ::google::protobuf::uint64 user_id_;
+  ::google::protobuf::uint64 value_;
   mutable int _cached_size_;
   friend struct ::protobuf_Object_2eproto::TableStruct;
   friend void ::protobuf_Object_2eproto::InitDefaultsSubRequestImpl();
@@ -867,6 +881,34 @@ inline void SubRequest::set_user_id(::google::protobuf::uint64 value) {
   
   user_id_ = value;
   // @@protoc_insertion_point(field_set:proto.SubRequest.user_id)
+}
+
+// uint32 prop = 11;
+inline void SubRequest::clear_prop() {
+  prop_ = 0u;
+}
+inline ::google::protobuf::uint32 SubRequest::prop() const {
+  // @@protoc_insertion_point(field_get:proto.SubRequest.prop)
+  return prop_;
+}
+inline void SubRequest::set_prop(::google::protobuf::uint32 value) {
+  
+  prop_ = value;
+  // @@protoc_insertion_point(field_set:proto.SubRequest.prop)
+}
+
+// uint64 value = 12;
+inline void SubRequest::clear_value() {
+  value_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 SubRequest::value() const {
+  // @@protoc_insertion_point(field_get:proto.SubRequest.value)
+  return value_;
+}
+inline void SubRequest::set_value(::google::protobuf::uint64 value) {
+  
+  value_ = value;
+  // @@protoc_insertion_point(field_set:proto.SubRequest.value)
 }
 
 // -------------------------------------------------------------------
