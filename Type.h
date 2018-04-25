@@ -73,6 +73,20 @@ inline void clear(OUT char* v)
 	v[0] = 0;
 }
 
+// remove string end empty.
+inline void fit(OUT std::string& tmp)
+{
+	size_t x = 0;
+	size_t i = tmp.length() - 1;
+	for (; i > 0; --i)
+	{
+		if (tmp[i] != 0)
+			break;
+		++x;
+	}
+	if (i == 0 && tmp[i] == 0) ++x;
+	tmp.resize(tmp.length() - x);
+}
 
 // thread local data.
 #ifdef ECO_WIN
