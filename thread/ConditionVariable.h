@@ -48,7 +48,7 @@ class ConditionVariable::ScopeLock :
 {
 public:
 	inline explicit ScopeLock(IN ConditionVariable& monitor)
-		: m_monitor(m_monitor)
+		: m_monitor(monitor)
 	{
 		m_monitor.mutex().lock();
 	}
