@@ -226,7 +226,7 @@ public:\
 template<typename Object>
 class AutoDelete
 {
-	ECO_PTR_MEMBER(AutoDelete, m_ptr);
+	ECO_PTR_MEMBER(Object, m_ptr);
 public:
 	inline AutoDelete(
 		IN Object* ptr = nullptr,
