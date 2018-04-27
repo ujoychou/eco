@@ -574,7 +574,7 @@ public:
 	inline uint32_t append(IN const char* buf)
 	{
 		uint32_t init_size = m_cur_size;
-		for (; *buf != '\0'; ++buf)
+		for (; *buf != '\0' && avail() > 0; ++buf)
 			m_data[m_cur_size++] = *buf;
 		m_data[m_cur_size] = '\0';
 		return m_cur_size - init_size;
