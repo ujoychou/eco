@@ -169,7 +169,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 
   // accessors -------------------------------------------------------
 
-  // bytes message = 2;
+  // string message = 2;
   void clear_message();
   static const int kMessageFieldNumber = 2;
   const ::std::string& message() const;
@@ -178,7 +178,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   void set_message(::std::string&& value);
   #endif
   void set_message(const char* value);
-  void set_message(const void* value, size_t size);
+  void set_message(const char* value, size_t size);
   ::std::string* mutable_message();
   ::std::string* release_message();
   void set_allocated_message(::std::string* message);
@@ -731,7 +731,7 @@ class Property : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_name();
   void set_allocated_name(::std::string* name);
 
-  // bytes value = 13;
+  // string value = 13;
   void clear_value();
   static const int kValueFieldNumber = 13;
   const ::std::string& value() const;
@@ -740,7 +740,7 @@ class Property : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void set_value(::std::string&& value);
   #endif
   void set_value(const char* value);
-  void set_value(const void* value, size_t size);
+  void set_value(const char* value, size_t size);
   ::std::string* mutable_value();
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
@@ -794,7 +794,7 @@ inline void Error::set_id(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:proto.Error.id)
 }
 
-// bytes message = 2;
+// string message = 2;
 inline void Error::clear_message() {
   message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -821,7 +821,7 @@ inline void Error::set_message(const char* value) {
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:proto.Error.message)
 }
-inline void Error::set_message(const void* value, size_t size) {
+inline void Error::set_message(const char* value, size_t size) {
   
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -1110,7 +1110,7 @@ inline void Property::set_allocated_name(::std::string* name) {
   // @@protoc_insertion_point(field_set_allocated:proto.Property.name)
 }
 
-// bytes value = 13;
+// string value = 13;
 inline void Property::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1137,7 +1137,7 @@ inline void Property::set_value(const char* value) {
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:proto.Property.value)
 }
-inline void Property::set_value(const void* value, size_t size) {
+inline void Property::set_value(const char* value, size_t size) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));

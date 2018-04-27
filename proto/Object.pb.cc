@@ -269,14 +269,14 @@ void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\014Object.proto\022\005proto\"$\n\005Error\022\n\n\002id\030\001 \001"
-      "(\005\022\017\n\007message\030\002 \001(\014\"\035\n\nGetRequest\022\017\n\007use"
+      "(\005\022\017\n\007message\030\002 \001(\t\"\035\n\nGetRequest\022\017\n\007use"
       "r_id\030\n \001(\004\":\n\nSubRequest\022\017\n\007user_id\030\n \001("
       "\004\022\014\n\004prop\030\013 \001(\r\022\r\n\005value\030\014 \001(\004\"3\n\rRemove"
       "Request\022\021\n\tobject_id\030\n \001(\004\022\017\n\007user_id\030\013 "
       "\001(\004\"K\n\010Response\022\033\n\005error\030\001 \001(\0132\014.proto.E"
       "rror\022\021\n\tobject_id\030\n \001(\004\022\017\n\007user_id\030\013 \001(\004"
       "\"K\n\010Property\022\017\n\007user_id\030\n \001(\004\022\021\n\tobject_"
-      "id\030\013 \001(\004\022\014\n\004name\030\014 \001(\t\022\r\n\005value\030\r \001(\014b\006p"
+      "id\030\013 \001(\004\022\014\n\004name\030\014 \001(\t\022\r\n\005value\030\r \001(\tb\006p"
       "roto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
@@ -401,12 +401,16 @@ bool Error::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes message = 2;
+      // string message = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_message()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->message().data(), static_cast<int>(this->message().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "proto.Error.message"));
         } else {
           goto handle_unusual;
         }
@@ -444,9 +448,13 @@ void Error::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->id(), output);
   }
 
-  // bytes message = 2;
+  // string message = 2;
   if (this->message().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->message().data(), static_cast<int>(this->message().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "proto.Error.message");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->message(), output);
   }
 
@@ -469,10 +477,14 @@ void Error::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->id(), target);
   }
 
-  // bytes message = 2;
+  // string message = 2;
   if (this->message().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->message().data(), static_cast<int>(this->message().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "proto.Error.message");
     target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->message(), target);
   }
 
@@ -493,10 +505,10 @@ size_t Error::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // bytes message = 2;
+  // string message = 2;
   if (this->message().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->message());
   }
 
@@ -1892,12 +1904,16 @@ bool Property::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes value = 13;
+      // string value = 13;
       case 13: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(106u /* 106 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_value()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->value().data(), static_cast<int>(this->value().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "proto.Property.value"));
         } else {
           goto handle_unusual;
         }
@@ -1950,9 +1966,13 @@ void Property::SerializeWithCachedSizes(
       12, this->name(), output);
   }
 
-  // bytes value = 13;
+  // string value = 13;
   if (this->value().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->value().data(), static_cast<int>(this->value().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "proto.Property.value");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       13, this->value(), output);
   }
 
@@ -1991,10 +2011,14 @@ void Property::SerializeWithCachedSizes(
         12, this->name(), target);
   }
 
-  // bytes value = 13;
+  // string value = 13;
   if (this->value().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->value().data(), static_cast<int>(this->value().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "proto.Property.value");
     target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         13, this->value(), target);
   }
 
@@ -2022,10 +2046,10 @@ size_t Property::ByteSizeLong() const {
         this->name());
   }
 
-  // bytes value = 13;
+  // string value = 13;
   if (this->value().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->value());
   }
 
