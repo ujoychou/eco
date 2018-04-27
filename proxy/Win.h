@@ -75,6 +75,10 @@ inline void utf8_to_gbk(OUT std::string& gbk, IN const char* utf8)
 	WideCharToMultiByte(CP_ACP, 0, &wstr[0], -1, &gbk[0], len, NULL, NULL);
 	eco::fit(gbk);
 }
+inline void utf8_to_gbk(OUT std::string& val)
+{
+	utf8_to_gbk(val, val.c_str());
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,6 +94,10 @@ inline void gbk_to_utf8(OUT std::string& utf, IN const char* gbk)
 	utf.resize(len);
 	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], -1, &utf[0], len, NULL, NULL);
 	eco::fit(utf);
+}
+inline void gbk_to_utf8(OUT std::string& val)
+{
+	gbk_to_utf8(val, val.c_str());
 }
 
 
