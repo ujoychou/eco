@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/thread/State.h>
 
 
@@ -57,7 +56,7 @@ public:
 	{
 		m_state = eco::atomic::State::_a;
 	}
-	// whether it is connected state.
+	// whether it is a server.
 	inline bool server() const
 	{
 		return (m_state & eco::atomic::State::_a) > 0;

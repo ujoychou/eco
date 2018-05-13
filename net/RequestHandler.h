@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/net/Context.h>
 #include <eco/net/TcpSession.h>
 #include <eco/net/TcpConnection.h>
@@ -181,14 +180,14 @@ public:
 	}
 
 	// response message to the request.
-	inline void async_response(
+	inline void response(
 		IN Codec& codec, 
 		IN uint32_t type = 0,
 		IN const bool last = true,
 		IN const bool encrypted = true)
 	{
 		if (type == 0) type = get_response_type();
-		context().async_response(codec, type, last, encrypted);
+		context().response(codec, type, last, encrypted);
 	}
 
 public:
@@ -213,7 +212,7 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////
 /* message handler macro define.
 @auth_v: message recv when user must have been authed, set 1 else set 0. 
-if don't need to check authed, set -1.
+if don't need to check authorized, set -1.
 */
 #define ECO_HANDLER(req_type, rsp_type, type_name, auth_v)\
 public:\

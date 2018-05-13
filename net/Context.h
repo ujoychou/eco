@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/net/protocol/Protocol.h>
 #include <eco/net/TcpSession.h>
 #include <eco/net/TcpConnection.h>
@@ -127,13 +126,9 @@ public:
 		return m_meta.last();
 	}
 
-	inline const uint32_t get_req4() const
+	inline const ContentType content_type() const
 	{
-		return m_meta.get_req4();
-	}
-	inline const uint64_t get_req8() const
-	{
-		return m_meta.get_req8();
+		return m_meta.get_req1();
 	}
 
 	inline void release_data()
@@ -151,14 +146,14 @@ public:
 		return *this;
 	}
 
-	inline void async_response(
+	inline void response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const bool last = true,
 		IN const bool encrypted = true)
 	{
 		m_meta.m_session_id = m_session.get_id();
-		m_session.async_response(codec, type, *this, last, encrypted);
+		m_session.response(codec, type, *this, last, encrypted);
 	}
 };
 

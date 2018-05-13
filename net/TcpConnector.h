@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/net/Address.h>
 #include <eco/net/Net.h>
 
@@ -80,7 +79,7 @@ public:
 	ConnectionId get_id() const;
 
 	// get remote ip address.
-	const eco::String get_ip() const;
+	eco::String get_ip() const;
 
 	// get tcp connection socket.
 	TcpSocket* socket();

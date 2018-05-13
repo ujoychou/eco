@@ -148,7 +148,7 @@ private:
 		uint16_t	m_type;
 
 		// optional field: the request data from client.
-		uint32_t	m_request_data;
+		uint64_t	m_request_data;
 	};
 
 	// "message data" value
@@ -160,8 +160,6 @@ private:
 		// #.parameter option data.
 		size_session_id		= 4,
 		size_type			= 2,
-		size_req4			= 4,
-		size_req8			= 8,
 	};
 
 	inline uint32_t get_model_pos(IN  const uint32_t head_size) const
@@ -181,21 +179,17 @@ private:
 	{
 		uint32_t pos = size_model + size_option;
 		if (eco::has(meta.m_option, option_sess))
-		{
 			pos += size_session_id;
-		}
 		if (eco::has(meta.m_option, option_type))
-		{
 			pos += size_type;
-		}
-		if (eco::has(meta.m_option, option_req4))
-		{
-			pos += size_req4;
-		}
+		if (eco::has(meta.m_option, option_req1))
+			pos += sizeof(uint8_t);
+		else if (eco::has(meta.m_option, option_req2))
+			pos += sizeof(uint16_t);
+		else if (eco::has(meta.m_option, option_req4))
+			pos += sizeof(uint32_t);
 		else if (eco::has(meta.m_option, option_req8))
-		{
-			pos += size_req8;
-		}
+			pos += sizeof(uint64_t);
 		return pos;
 	}
 
@@ -273,7 +267,19 @@ public:
 			ntoh(msg_type, pos, &bytes[pos]);
 			meta.m_message_type = msg_type;
 		}
-		if (eco::has(meta.m_option, option_req4))
+
+		// option data: request data.
+		if (eco::has(meta.m_option, option_req1))
+		{
+			meta.m_request_data = bytes[pos++];
+		}
+		else if (eco::has(meta.m_option, option_req2))
+		{
+			uint16_t req2 = 0;
+			ntoh(req2, pos, &bytes[pos]);
+			meta.m_request_data = req2;
+		}
+		else if (eco::has(meta.m_option, option_req4))
 		{
 			uint32_t req4 = 0;
 			ntoh(req4, pos, &bytes[pos]);
@@ -313,6 +319,14 @@ public:
 		{
 			byte_size += m_check->get_byte_size();			// [@]checksum size.
 		}
+		// message size save in uint16_t, check whether message is over size.
+		const uint16_t max_size = -1;
+		if (byte_size > max_size)
+		{
+			e.id(e_message_overszie) 
+				<< "message is too large to send, max size=" << max_size;
+			return false;
+		}
 		bytes.clear();
 		bytes.reserve(byte_size);
 
@@ -326,21 +340,18 @@ public:
 		bytes.append(static_cast<char>(meta.m_model));
 		bytes.append(static_cast<char>(meta.m_option));
 		if (eco::has(meta.m_option, option_sess))
-		{
 			append_hton(bytes, meta.m_session_id);
-		}
 		if (eco::has(meta.m_option, option_type))
-		{
 			append_hton(bytes, static_cast<uint16_t>(meta.m_message_type));
-		}
-		if (eco::has(meta.m_option, option_req4))
-		{
+		// 3.1.optional data: request data.
+		if (eco::has(meta.m_option, option_req1))
+			bytes.append(static_cast<uint8_t>(meta.m_request_data));
+		else if (eco::has(meta.m_option, option_req2))
+			append_hton(bytes, static_cast<uint16_t>(meta.m_request_data));
+		else if (eco::has(meta.m_option, option_req4))
 			append_hton(bytes, static_cast<uint32_t>(meta.m_request_data));
-		}
 		else if (eco::has(meta.m_option, option_req8))
-		{
 			append_hton(bytes, meta.m_request_data);
-		}
 
 		// 5.encode message object.
 		meta.m_codec->encode_append(bytes, code_size);

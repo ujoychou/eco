@@ -48,14 +48,14 @@ public:
 	}
 
 	// response message to the request.
-	inline void async_response(
+	inline void response(
 		IN google::protobuf::Message& msg,
 		IN uint32_t type = 0,
 		IN const bool last = true,
 		IN const bool encrypted = true)
 	{
 		if (type == 0) type = get_response_type();
-		context().async_response(ProtobufCodec(msg), type, last, encrypted);
+		context().response(ProtobufCodec(msg), type, last, encrypted);
 	}
 };
 

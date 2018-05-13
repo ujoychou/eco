@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/Type.h>
 #include <eco/net/RequestHandler.h>
 
@@ -44,16 +43,16 @@ inline void handle_context(IN Context& c)
 	{
 		if (eco::has(c.m_meta.m_category, category_session))
 		{
-			if (HandlerT::auth_flag() && !c.m_session.authed())
+			if (HandlerT::auth_flag() && !c.m_session.authorized())
 				e = "session isn't authed when recv";
-			if (!HandlerT::auth_flag() && c.m_session.authed())
+			if (!HandlerT::auth_flag() && c.m_session.authorized())
 				e = "session is authed when recv";
 		}
 		else
 		{
-			if (HandlerT::auth_flag() && !conn.authed())
+			if (HandlerT::auth_flag() && !conn.authorized())
 				e = "connection isn't authed when recv";
-			if (!HandlerT::auth_flag() && conn.authed())
+			if (!HandlerT::auth_flag() && conn.authorized())
 				e = "connection is authed when recv";
 		}
 	}
@@ -146,13 +145,19 @@ inline void handle_context_default(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_REGISTER_HANDLER(disp, msg_type, msg, codec, func, obj_ptr) \
+#define ECO_REGISTER_HANDLER(disp, msg_type, codec, func, obj, msg) \
 disp.register_handler<msg, codec>(msg_type,\
-std::bind(&func, obj_ptr, std::placeholders::_1, std::placeholders::_2));
+std::bind(&func, obj, std::placeholders::_1, std::placeholders::_2));
 
-#define ECO_REGISTER_FUNCTOR(disp, msg_type, msg, codec, func) \
+#define ECO_REGISTER_FUNCTOR(disp, msg_type, codec, func, msg) \
 disp.register_handler<msg, codec>(msg_type,\
 std::bind(&func, std::placeholders::_1, std::placeholders::_2));
+
+#define ECO_REGISTER_HANDLER_PB(disp, msg_type, func, obj, msg) \
+ECO_REGISTER_HANDLER(disp, msg_type, eco::net::ProtobufCodec, func, obj, msg)
+
+#define ECO_REGISTER_FUNCTOR_PB(disp, msg_type, func, msg) \
+ECO_REGISTER_FUNCTOR(disp, msg_type, eco::net::ProtobufCodec, func, msg)
 
 
 ////////////////////////////////////////////////////////////////////////////////

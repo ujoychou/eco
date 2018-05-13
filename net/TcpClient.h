@@ -23,7 +23,6 @@
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/net/Address.h>
 #include <eco/net/TcpSession.h>
 #include <eco/net/DispatchRegistry.h>
@@ -83,7 +82,9 @@ public:
 	void set_session_data(IN MakeSessionDataFunc make);
 
 	// register connection event
-	void set_event(IN OnConnectFunc on_connect, IN OnCloseFunc on_close);
+	void set_event(
+		IN OnConnectFunc on_connect, 
+		IN OnCloseFunc on_close = nullptr);
 
 	// dispatch.
 	DispatchRegistry& dispatcher();
@@ -116,13 +117,13 @@ public:
 	void async_connect();
 
 	// async send request to server.
-	void async_auth(IN TcpSession& session, IN MessageMeta& meta);
+	void authorize(IN TcpSession& session, IN MessageMeta& meta);
 
 	// async send message.
-	void async_send(IN eco::String& data, IN const uint32_t start);
+	void send(IN eco::String& data, IN const uint32_t start);
 
 	// async send message.
-	void async_send(IN MessageMeta& meta);
+	void send(IN MessageMeta& meta);
 
 	// req/rsp mode: send message and get a response.
 	template<typename codec_t, typename req_t, typename rsp_t>
@@ -150,16 +151,18 @@ public:
 
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
-	inline void async_send(
+	inline void send(
 		IN google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const uint32_t request_data,
+		IN const uint32_t request_data = 0,
 		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, none_session, type, encrypted);
-		meta.set_request_data(request_data);
-		async_send(meta);
+		// when request data is not send, it's value=0.
+		if (request_data != 0)
+			meta.set_request_data(request_data);
+		send(meta);
 	}
 
 	// sync request protobuf.

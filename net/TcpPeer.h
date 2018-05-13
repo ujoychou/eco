@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/net/Address.h>
 #include <eco/net/TcpState.h>
 #include <eco/net/protocol/Protocol.h>
@@ -94,7 +93,7 @@ public:
 	ConnectionId get_id() const;
 
 	// tcp remote client peer ip.
-	const eco::String get_ip() const;
+	eco::String get_ip() const;
 
 	// tcp peer connection state.
 	TcpState& state();

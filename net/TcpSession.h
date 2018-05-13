@@ -118,30 +118,50 @@ public:
 	}
 
 	// async send message.
-	inline void async_send(IN const MessageMeta& meta)
+	inline void send(IN const MessageMeta& meta)
 	{
-		m_conn.async_send(meta);
+		m_conn.send(meta);
 	}
 
 	// async send message.
-	inline void async_send(
+	inline void send(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const bool last = true,
 		IN const bool encrypted = true)
 	{
-		m_conn.async_send(codec, type, m_id, last, encrypted);
+		m_conn.send(codec, type, last, encrypted, m_id);
+	}
+
+	// async publish message.
+	inline void publish(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const ContentType content_type,
+		IN const bool encrypted = true)
+	{
+		m_conn.publish(codec, type, content_type, encrypted, m_id);
 	}
 
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
-	inline void async_send(
+	inline void send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const bool last = true,
 		IN const bool encrypted = true)
 	{
-		m_conn.async_send(msg, type, m_id, encrypted, last);
+		m_conn.send(msg, type, last, encrypted, m_id);
+	}
+
+	// async publish protobuf.
+	inline void publish(
+		IN const google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const ContentType content_type,
+		IN const bool encrypted = true)
+	{
+		m_conn.publish(msg, type, content_type, encrypted, m_id);
 	}
 #endif
 
@@ -195,13 +215,13 @@ class TcpSession
 {
 public:
 	// open session.
-	inline bool auth();
+	inline bool authorize();
 
 	// close session, release session data.
 	inline void close();
 
 	// check whether session has been opened.
-	inline bool authed() const;
+	inline bool authorized() const;
 
 	// get connection.
 	inline TcpConnection& connection();
@@ -220,29 +240,29 @@ public:
 public:
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
-	inline void async_send(
+	inline void send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, get_id(), type, encrypted);
-		async_send(meta);
+		send(meta);
 	}
 
 	// async send protobuf authority info.
-	inline void async_auth(
+	inline void authorize(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, none_session, type, encrypted);
-		async_auth(meta);
+		authorize(meta);
 	}
 
 	// async send response to client by context.
-	inline void async_response(
+	inline void response(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
@@ -250,12 +270,12 @@ public:
 		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
-		async_response(codec, type, context, last, encrypted);
+		response(codec, type, context, last, encrypted);
 	}
 #endif
 
 	// async response message.
-	inline void async_response(
+	inline void response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
@@ -264,10 +284,10 @@ public:
 
 
 	// async send message.
-	inline void async_send(IN const MessageMeta& meta);
+	inline void send(IN const MessageMeta& meta);
 
 	// async send authority info.
-	inline void async_auth(IN const MessageMeta& meta);
+	inline void authorize(IN const MessageMeta& meta);
 
 private:
 	// implement.

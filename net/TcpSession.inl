@@ -49,10 +49,10 @@ private:
 		return *m_impl;
 	}
 
-	bool auth();
+	bool authorize();
 	void close();
-	void async_auth(IN const MessageMeta& meta);
-	void async_response(
+	void authorize(IN const MessageMeta& meta);
+	void response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& c,
@@ -72,13 +72,13 @@ void TcpSession::close()
 	return inner.close();
 }
 
-bool TcpSession::auth()
+bool TcpSession::authorize()
 {
 	TcpSessionInner inner(m_impl);
-	return inner.auth();
+	return inner.authorize();
 }
 
-bool TcpSession::authed() const
+bool TcpSession::authorized() const
 {
 	return !m_impl.m_session_wptr.expired();
 }
@@ -117,7 +117,7 @@ const SessionId TcpSession::get_id() const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSession::async_response(
+void TcpSession::response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& context,
@@ -125,17 +125,17 @@ void TcpSession::async_response(
 	IN const bool encrypted)
 {
 	TcpSessionInner inner(m_impl);
-	return inner.async_response(codec, type, context, last, encrypted);
+	return inner.response(codec, type, context, last, encrypted);
 }
-void TcpSession::async_auth(IN const MessageMeta& meta)
+void TcpSession::authorize(IN const MessageMeta& meta)
 {
 	TcpSessionInner inner(m_impl);
-	return inner.async_auth(meta);
+	return inner.authorize(meta);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSession::async_send(IN const MessageMeta& meta)
+void TcpSession::send(IN const MessageMeta& meta)
 {
 	if (m_impl.m_session_id != none_session)
 	{
@@ -144,12 +144,12 @@ void TcpSession::async_send(IN const MessageMeta& meta)
 		{
 			MessageMeta& m = const_cast<MessageMeta&>(meta);
 			m.set_session_id(m_impl.m_session_id);
-			m_impl.m_conn.async_send(meta);
+			m_impl.m_conn.send(meta);
 		}
 	}
 	else
 	{
-		connection().async_send(meta);
+		connection().send(meta);
 	}
 }
 

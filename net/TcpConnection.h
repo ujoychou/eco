@@ -105,7 +105,7 @@ public:
 	}
 
 	// check whether this connection has been authed.
-	inline bool authed() const;
+	inline bool authorized() const;
 
 	// get tcp connection id.
 	inline ConnectionId get_id() const
@@ -114,7 +114,7 @@ public:
 	}
 
 	// get tcp connection remote client ip.
-	inline const eco::String get_ip() const
+	inline eco::String get_ip() const
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer == nullptr)
@@ -122,7 +122,7 @@ public:
 			EcoThrow(e_peer_expired)
 				<< "get_ip fail peer has expired, it has been closed.";
 		}
-		return (eco::String&&)peer->get_ip();
+		return std::move(peer->get_ip());
 	}
 
 	template<typename ConnectionDataT>
@@ -139,7 +139,7 @@ public:
 
 public:
 	// async send message.
-	inline void async_send(IN const MessageMeta& meta)
+	inline void send(IN const MessageMeta& meta)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
@@ -149,20 +149,20 @@ public:
 	}
 
 	// async send.
-	inline void async_send(
+	inline void send(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const SessionId sess_id = none_session,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = true,
+		IN const SessionId sess_id = none_session)
 	{
 		MessageMeta meta(codec, sess_id, type, encrypted);
 		meta.set_last(last);
-		async_send(meta);
+		send(meta);
 	}
 
 	// async response message.
-	inline void async_response(
+	inline void response(
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const Context& context,
@@ -177,20 +177,34 @@ public:
 		}
 	}
 
+	// async publish.
+	inline void publish(
+		IN Codec& codec,
+		IN const uint32_t type,
+		IN const ContentType content_type,
+		IN const bool encrypted = true,
+		IN const SessionId sess_id = none_session)
+	{
+		MessageMeta meta(codec, sess_id, type, encrypted);
+		meta.set_request_data(uint8_t(content_type));
+		send(meta);
+	}
+
+
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
-	inline void async_send(
+	inline void send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const SessionId sess_id = none_session,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = true,
+		IN const SessionId sess_id = none_session)
 	{
-		async_send(ProtobufCodec(msg), type, sess_id, last, encrypted);
+		send(ProtobufCodec(msg), type, last, encrypted, sess_id);
 	}
 
 	// async send response by context.
-	inline void async_response(
+	inline void response(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const Context& context,
@@ -198,7 +212,21 @@ public:
 		IN const bool encrypted = true)
 	{
 		ProtobufCodec codec(msg);
-		async_response(codec, type, context, last, encrypted);
+		response(codec, type, context, last, encrypted);
+	}
+
+	// async publish protobuf.
+	inline void publish(
+		IN const google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const ContentType content_type,
+		IN const bool encrypted = true,
+		IN const SessionId sess_id = none_session)
+	{
+		ProtobufCodec codec(msg);
+		MessageMeta meta(codec, sess_id, type, encrypted);
+		meta.set_request_data(uint8_t(content_type));
+		send(meta);
 	}
 #endif
 
@@ -222,7 +250,7 @@ public:
 	virtual ~ConnectionData() = 0 {}
 
 	// whether this connection has authorized.
-	virtual bool authed() const
+	virtual bool authorized() const
 	{
 		return false;
 	}
@@ -260,11 +288,11 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool TcpConnection::authed() const
+inline bool TcpConnection::authorized() const
 {
 	TcpPeer::ptr peer = m_peer.lock();
 	return peer != nullptr && peer->data() != nullptr
-		&& peer->data()->authed();
+		&& peer->data()->authorized();
 }
 
 // default connection factory function.

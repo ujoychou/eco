@@ -62,7 +62,7 @@ typedef uint16_t MessageCategory;
 class MessageHead
 {
 public:
-	uint32_t m_version;
+	uint16_t m_version;
 	MessageCategory m_category;
 
 	inline MessageHead() : m_version(0), m_category(0)
