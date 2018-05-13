@@ -1,7 +1,6 @@
 ﻿#ifndef ECO_DETAIL_SUBSCRIPTION_H
 #define ECO_DETAIL_SUBSCRIPTION_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/thread/Mutex.h>
 #include <eco/thread/AutoRef.h>
 #include <forward_list>

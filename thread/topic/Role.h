@@ -1,18 +1,12 @@
 ﻿#ifndef ECO_TOPIC_ROLE_H
 #define ECO_TOPIC_ROLE_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
-#include <eco/thread/topic/Subscription.h>
-#include <eco/meta/Timestamp.h>
 #include <eco/Cast.h>
+#include <eco/meta/Stamp.h>
+#include <eco/thread/topic/Subscription.h>
 
 
 ECO_NS_BEGIN(eco);
-////////////////////////////////////////////////////////////////////////////////
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // define customer topic.
 #define ECO_TOPIC(topic_t) \
@@ -126,7 +120,7 @@ class Content
 {
 	ECO_OBJECT(Content);
 public:
-	inline Content(IN const eco::meta::Timestamp v)	: m_timestamp(v)
+	inline Content(IN const eco::meta::Stamp v)	: m_stamp(v)
 	{}
 
 	// destructor.
@@ -155,18 +149,18 @@ public:
 			? static_cast<value_t*>(get_value()) : nullptr;
 	}
 
-	// content timestamp.
-	inline eco::meta::Timestamp& timestamp()
+	// content stamp.
+	inline eco::meta::Stamp& stamp()
 	{
-		return m_timestamp;
+		return m_stamp;
 	}
-	inline const eco::meta::Timestamp get_timestamp() const
+	inline const eco::meta::Stamp get_stamp() const
 	{
-		return m_timestamp;
+		return m_stamp;
 	}
 
 private:
-	eco::meta::Timestamp m_timestamp;
+	eco::meta::Stamp m_stamp;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -174,7 +168,7 @@ template<typename Object, typename Value>
 class ContentT : public eco::Content
 {
 public:
-	inline ContentT(IN const Value& v, IN eco::meta::Timestamp ts)
+	inline ContentT(IN const Value& v, IN eco::meta::Stamp ts)
 		: m_value((Value&)v), eco::Content(ts)
 	{}
 
@@ -234,45 +228,51 @@ public:
 	virtual ~Subscriber() {};
 
 public:
+	// publish content: new/remove content.
 	virtual void on_publish(
 		IN const eco::TopicId& topic_id,
-		IN eco::Content::ptr& content)
+		IN eco::Content::ptr& content,
+		IN const eco::ContentType type)
 	{}
 
-	virtual void on_clear_content(
+	// clear topic content
+	virtual void on_clear(
 		IN const eco::TopicId& topic_id)
 	{}
 
-	virtual void on_erase_topic(
+	// erase topic and clear content.
+	virtual void on_erase(
 		IN const eco::TopicId& topic_id)
 	{}
 
 public:
 	virtual void on_publish(
 		IN const std::string& topic_id,
-		IN eco::Content::ptr& content)
+		IN eco::Content::ptr& content,
+		IN const eco::ContentType type)
 	{}
 
-	virtual void on_clear_content(
-		IN const std::string& topic_id)
+	// clear topic content
+	virtual void on_clear(IN const std::string& topic_id)
 	{}
 
-	virtual void on_erase_topic(
-		IN const std::string& topic_id)
+	// erase topic and clear content.
+	virtual void on_erase(IN const std::string& topic_id)
 	{}
 
 public:
 	virtual void on_publish(
 		IN const uint64_t topic_id,
-		IN eco::Content::ptr& content)
+		IN eco::Content::ptr& content,
+		IN const eco::ContentType type)
 	{}
 
-	virtual void on_clear_content(
-		IN const uint64_t topic_id)
+	// clear topic content
+	virtual void on_clear(IN const uint64_t topic_id)
 	{}
 
-	virtual void on_erase_topic(
-		IN const uint64_t topic_id)
+	// erase topic and clear content.
+	virtual void on_erase(IN const uint64_t topic_id)
 	{}
 };
 
@@ -347,7 +347,7 @@ public:
 	inline void append(IN const object_t& obj)
 	{
 		Content::ptr newc(new ContentT<
-			object_t, object_t>(obj, eco::meta::v_insert));
+			object_t, object_t>(obj, eco::meta::stamp_insert));
 		do_move(newc);
 	}
 	template<typename object_t>
@@ -355,7 +355,7 @@ public:
 	{
 		typedef std::shared_ptr<object_t> value_t;
 		Content::ptr newc(new ContentT<
-			object_t, value_t>(obj, eco::meta::v_insert));
+			object_t, value_t>(obj, eco::meta::stamp_insert));
 		do_move(newc);
 	}
 
@@ -382,11 +382,12 @@ public:
 		{
 			if (node->m_working)
 			{
-				((Subscriber*)node->m_subscriber)->on_publish(m_id, new_c);
+				auto* suber = (Subscriber*)node->m_subscriber;
+				suber->on_publish(m_id, new_c, content_new);
 			}
 			node = node->m_topic_subscriber_next;
 		}
-		eco::meta::clear(new_c->timestamp());
+		eco::meta::clean(new_c->stamp());
 	}
 
 	// publish remove topic event.
@@ -399,7 +400,7 @@ public:
 			if (node->m_working)
 			{
 				Subscriber* suber = (Subscriber*)(node->m_subscriber);
-				suber->on_erase_topic(m_id);
+				suber->on_erase(m_id);
 			}
 			node = node->m_topic_subscriber_next;
 		}
@@ -419,7 +420,7 @@ public:
 			if (node->m_working)
 			{
 				Subscriber* suber = (Subscriber*)(node->m_subscriber);
-				suber->on_clear_content(m_id);
+				suber->on_clear(m_id);
 			}
 			node = node->m_topic_subscriber_next;
 		}// end while.

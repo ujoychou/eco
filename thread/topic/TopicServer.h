@@ -1,7 +1,6 @@
 ﻿#ifndef ECO_TOPIC_SERVER_H
 #define ECO_TOPIC_SERVER_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/MemoryPool.h>
 #include <eco/thread/topic/Topic.h>
 #include <eco/thread/TaskServer.h>
@@ -46,12 +45,12 @@ public:
 		IN const topic_id_t& topic_id,
 		IN const object_t& obj,
 		IN Topic* (*make)(IN const topic_id_t&) = nullptr,
-		IN bool remove_obj = false)
+		IN eco::meta::Stamp stamp = eco::meta::stamp_none)
 	{
 		Topic::ptr topic = get_topic(topic_id, make);
 		if (topic != nullptr)
 		{
-			publish_new(topic, obj, remove_obj);
+			publish_to(topic, obj, stamp);
 		}
 	}
 
@@ -60,12 +59,12 @@ public:
 	inline void publish(
 		IN const topic_id_t& topic_id,
 		IN const object_t& obj,
-		IN bool remove_obj = false)
+		IN eco::meta::Stamp stamp = eco::meta::stamp_none)
 	{
 		Topic::ptr topic = get_topic(topic_id, topic_t::make);
 		if (topic != nullptr)
 		{
-			publish_new(topic, obj, remove_obj);
+			publish_to(topic, obj, stamp);
 		}
 	}
 
@@ -74,11 +73,11 @@ public:
 	inline void publish_set(
 		IN const topic_id_t& topic_id,
 		IN const object_set_t& obj_set,
-		IN bool remove_obj = false)
+		IN eco::meta::Stamp stamp = eco::meta::stamp_none)
 	{
 		for (auto it = obj_set.begin(); it != obj_set.end(); ++it)
 		{
-			publish<topic_t>(topic_id, *it, remove_obj);
+			publish<topic_t>(topic_id, *it, stamp);
 		}
 	}
 
@@ -95,34 +94,33 @@ public:
 			Content::ptr newc = set_topic->find(obj_id);
 			if (newc)
 			{
-				newc->timestamp() = eco::meta::v_remove;
+				newc->stamp() = eco::meta::stamp_remove;
 				m_publish_server.post(Publisher(topic, newc));
 			}
 		}
 	}
 
+public:
 	// publish object to topic.
 	template<typename object_t>
-	inline void publish_new(
+	inline void publish_to(
 		IN Topic::ptr& topic,
 		IN const object_t& obj,
-		IN bool remove_obj = false)
+		IN eco::meta::Stamp stamp = eco::meta::stamp_none)
 	{
-		auto ts = remove_obj ? eco::meta::v_remove : eco::meta::v_insert;
-		Content::ptr newc(new ContentT<object_t, object_t>(obj, ts));
+		Content::ptr newc(new ContentT<object_t, object_t>(obj, stamp));
 		m_publish_server.post(Publisher(topic, newc));
 	}
 
 	// publish shared object to topic.
 	template<typename object_t>
-	inline void publish_new(
+	inline void publish_to(
 		IN Topic::ptr& topic,
 		IN const std::shared_ptr<object_t>& obj,
-		IN bool remove_obj = false)
+		IN eco::meta::Stamp stamp = eco::meta::stamp_none)
 	{
 		typedef std::shared_ptr<object_t> value_t;
-		auto ts = remove_obj ? eco::meta::v_remove : eco::meta::v_insert;
-		Content::ptr newc(new ContentT<object_t, value_t>(obj, ts));
+		Content::ptr newc(new ContentT<object_t, value_t>(obj, stamp));
 		m_publish_server.post(Publisher(topic, newc));
 	}
 
@@ -159,7 +157,8 @@ public:
 	template<typename topic_id_t>
 	inline bool unsubscribe(
 		IN const topic_id_t& topic_id,
-		IN Subscriber* subscriber)
+		IN Subscriber* subscriber,
+		IN bool remove_empty_topic = false)
 	{
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		auto it = __get_topic_map(topic_id).find(topic_id);
@@ -167,8 +166,7 @@ public:
 			it->second->unsubscribe(subscriber))
 		{
 			auto one_topic_type = OneTopic<topic_id_t>::topic_type();
-			if (it->second->get_topic_type() == one_topic_type &&
-				!it->second->has_subscriber())
+			if (remove_empty_topic && !it->second->has_subscriber())
 			{
 				__get_topic_map(topic_id).erase(it);
 			}
@@ -276,6 +274,25 @@ public:
 
 
 public:
+	// get seq topic last content.
+	template<typename seq_topic_t, typename object_t, typename topic_id_t>
+	inline bool get_last_content(
+		OUT object_t& obj,
+		IN  const topic_id_t& tid) const
+	{
+		Topic::ptr topic = find_topic(tid);
+		if (topic != nullptr)
+		{
+			auto c = static_cast<seq_topic_t*>(topic.get())->last();
+			if (c != nullptr)
+			{
+				obj = *(object_t*)c->get_value();
+				return true;
+			}
+		}
+		return false;
+	}
+
 	// find content in repository topic.
 	template<typename set_topic_t, typename topic_id_t,
 		typename object_t, typename object_id_t>
@@ -321,25 +338,6 @@ public:
 		{
 			m_publish_server.post(Publisher(t, Publisher::mode_clear_content));
 		}
-	}
-
-	// get seq topic last content.
-	template<typename seq_topic_t, typename object_t, typename topic_id_t>
-	inline bool get_last_content(
-		OUT object_t& obj,
-		IN  const topic_id_t& tid) const
-	{
-		Topic::ptr topic = find_topic(tid);
-		if (topic != nullptr)
-		{
-			auto c = static_cast<seq_topic_t*>(topic.get())->last();
-			if (c != nullptr)
-			{
-				obj = *(object_t*)c->get_value();
-				return true;
-			}
-		}
-		return false;
 	}
 
 private:

@@ -1,7 +1,6 @@
 ﻿#ifndef ECO_TOPIC_H
 #define ECO_TOPIC_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/thread/topic/Role.h>
 #include <unordered_map>
 #include <deque>
@@ -19,7 +18,9 @@ protected:
 	virtual void do_snap(IN Subscriber& suber) override
 	{
 		if (m_snap.get() != nullptr)
-			suber.on_publish(m_id, m_snap);
+		{
+			suber.on_publish(m_id, m_snap, content_snap_end);
+		}
 	}
 
 	virtual void do_move(OUT Content::ptr& newc) override
@@ -58,16 +59,21 @@ public:
 protected:
 	virtual void do_snap(IN Subscriber& suber) override
 	{
-		for (auto it = m_snap_set.begin(); it != m_snap_set.end(); ++it)
+		if (!m_snap_set.empty())
 		{
-			suber.on_publish(m_id, *it);
+			auto it_end = m_snap_set.end(); --it_end;
+			for (auto it = m_snap_set.begin(); it != m_snap_set.end(); ++it)
+			{
+				auto snap = (it != it_end) ? content_snap : content_snap_end;
+				suber.on_publish(m_id, *it, snap);
+			}
 		}
 	}
 
 	virtual void do_move(OUT Content::ptr& newc) override
 	{
 		// update last content.
-		if (eco::meta::removed(newc->get_timestamp()))
+		if (eco::meta::is_update(newc->get_stamp()))
 			m_snap_set.back() = newc;
 		else
 			m_snap_set.push_back(newc);
@@ -140,9 +146,14 @@ public:
 protected:
 	virtual void do_snap(IN Subscriber& suber) override
 	{
-		for (auto it = m_snap_set.begin(); it != m_snap_set.end(); ++it)
+		if (!m_snap_set.empty())
 		{
-			suber.on_publish(m_id, it->second);
+			auto it_end = m_snap_set.end(); --it_end;
+			for (auto it = m_snap_set.begin(); it != m_snap_set.end(); ++it)
+			{
+				auto snap = (it != it_end) ? content_snap : content_snap_end;
+				suber.on_publish(m_id, it->second, snap);
+			}
 		}
 	}
 
@@ -152,19 +163,15 @@ protected:
 		ObjectId obj_id;
 		ObjectIdAdapter adapt;
 		adapt.get_id(obj_id, *(Object*)newc->get_set_topic_object(), m_id);
-		if (eco::meta::removed(newc->get_timestamp()))	// 1.remove
+		if (eco::meta::is_remove(newc->get_stamp()))
 		{
-			newc->timestamp() = eco::meta::v_remove;
+			newc->stamp() = eco::meta::stamp_remove;
 			m_snap_set.erase(obj_id);
 		}
 		else
 		{
-			Content::ptr& oldc = m_snap_set[obj_id];
-			if (oldc.get() != nullptr)						// 2.update
-				newc->timestamp() = eco::meta::v_update;
-			else
-				newc->timestamp() = eco::meta::v_insert;	// 3.insert
-			oldc = newc;
+			newc->stamp() = eco::meta::stamp_clean;
+			m_snap_set[obj_id] = newc;
 		}
 	}
 
