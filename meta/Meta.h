@@ -2,7 +2,7 @@
 #define ECO_META_H
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Export.h>
-#include <eco/meta/Timestamp.h>
+#include <eco/meta/Stamp.h>
 #include <string>
 
 
@@ -25,10 +25,10 @@ public:
 		IN const char* prop,
 		IN const char* view = nullptr);
 
-	// get timestamp.
-	inline eco::meta::Timestamp& timestamp()
+	// get stamp.
+	inline eco::meta::Stamp& stamp()
 	{
-		return eco::meta::timestamp();
+		return eco::meta::stamp();
 	}
 
 	// create new object: value\raw_ptr\shared_ptr.
