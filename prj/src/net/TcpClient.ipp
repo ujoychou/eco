@@ -3,7 +3,6 @@
 #include "PrecHeader.h"
 #include <eco/net/TcpClient.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/thread/State.h>
 #include <eco/thread/Map.h>
 #include <eco/thread/Monitor.h>

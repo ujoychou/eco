@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/net/Net.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/host_name.hpp>

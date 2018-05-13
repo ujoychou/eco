@@ -81,9 +81,11 @@ inline const char* find(IN const char* dest, IN const char* v)
 inline const char* find(
 	IN const char* dest,
 	IN const size_t size,
-	IN const char* v)
+	IN const char* v,
+	IN size_t v_size = 0)
 {
-	const char* end = &dest[size - strlen(v)];
+	if (v_size == 0) v_size = strlen(v);
+	const char* end = &dest[size - v_size];
 	for (; dest <= end; ++dest)
 	{
 		if (find_cmp(dest, v))

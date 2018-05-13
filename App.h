@@ -73,11 +73,11 @@ public:
 	const char* get_name() const;
 	App& name(IN const char*);
 
-	/*@ system config file path, default: "cfg.sys.xml"; */
+	/*@ system config file path, default: "eco.sys.xml"; */
 	void set_sys_config_file(IN const char*);
 	const char* get_sys_config_file() const;
 
-	/*@ config file path, default: "cfg.app.xml"; */
+	/*@ config file path, default: "eco.app.xml"; */
 	const char* get_config_file() const;
 
 	/*@ get system config.*/
@@ -95,6 +95,7 @@ public:
 
 	// get consumer.
 	net::TcpClient get_consumer(IN const char* name);
+	net::TcpClient find_consumer(IN const char* name);
 
 	// service provider.
 	net::TcpServer& provider();

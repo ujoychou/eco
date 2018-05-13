@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/cmd/Context.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <vector>
 #include <boost/algorithm/string.hpp>
 

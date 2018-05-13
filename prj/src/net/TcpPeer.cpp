@@ -65,7 +65,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	}
 
 	WebSocketShakeHand shake_hand;
-	if (!shake_hand.parse_req(data_head))
+	if (!shake_hand.parse_req(data_head, head_size))
 	{
 		EcoError << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid.";
@@ -244,9 +244,9 @@ size_t TcpPeer::get_id() const
 {
 	return impl().get_id();
 }
-const eco::String TcpPeer::get_ip() const
+eco::String TcpPeer::get_ip() const
 {
-	return (eco::String&&)impl().get_ip();
+	return std::move(impl().m_connector.get_ip());
 }
 TcpState& TcpPeer::state()
 {

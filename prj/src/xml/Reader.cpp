@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/xml/Reader.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <eco/Typex.h>

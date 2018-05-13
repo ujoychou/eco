@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include "FileSink.h"
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/process/Process.h>
 #include <eco/net/Net.h>
 #include <time.h>

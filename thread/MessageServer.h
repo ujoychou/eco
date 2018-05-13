@@ -37,12 +37,12 @@ namespace detail{;
 template<
 	typename Message,
 	typename Handler = std::function<void (Message&)>,
-	typename Queue = MessageQueue<Message> >
+	typename Queue = MessageQueue<Message>>
 class MessageServer
 {
 	ECO_OBJECT(MessageServer);
 public:
-	typedef MessageServer<Message, Handler, Queue> MessageServerT;
+	typedef MessageServer<Message, Handler, Queue> T;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,17 +80,14 @@ public:
 	server will run in a synchronous mode, else it will start number of threads 
 	(decicated by "thread_size")and message server run in a asynchronous mode.
 	*/
-	void run(
-		IN uint32_t thread_size = 1,
-		IN const char* name = nullptr)
+	void run(IN uint32_t thread_size = 1, IN const char* name = nullptr)
 	{
 		if (thread_size == 0)
 		{
 			thread_size = 1;
 		}
 		m_message_queue.open();
-		m_thread_pool.run(std::bind(&MessageServerT::work, this),
-			thread_size, name);
+		m_thread_pool.run(std::bind(&T::work, this), thread_size, name);
 	}
 
 	/*@ wait server stop.*/
@@ -102,7 +99,7 @@ public:
 	/*@ stop message server: stop message queue and thread pool. and this
 	function is not thread safe.
 	*/
-	void stop()
+	inline void stop()
 	{
 		// stop receive message.
 		m_message_queue.close();
@@ -111,10 +108,15 @@ public:
 		join();
 	}
 
+	inline void close()
+	{
+		m_message_queue.close();
+	}
+
 	/*@ release message server: release message queue and thread pool. and this
 	function is not thread safe.
 	*/
-	void release()
+	inline void release()
 	{
 		m_message_queue.release();
 
@@ -157,8 +159,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 protected:
 	/*@ work thread method.	*/
-	virtual void work() = 0
-	{}
+	virtual void work() = 0;
 
 	Queue m_message_queue;
 	Handler m_message_handler;
@@ -188,13 +189,95 @@ protected:
 			// handler message.
 			try {
 				m_message_handler(msg);
-			} catch (eco::Error& e) {
+			}
+			catch (eco::Error& e) {
 				EcoError << "message server: " << e;
-			} catch (std::exception& e) {
+			}
+			catch (std::exception& e) {
 				EcoLogStr(error, 512) << "message server: " << e.what();
 			}
 		}// end while
 	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename Message, typename Handler = std::function<void(Message&)> >
+class MessageServerPool
+{
+	ECO_OBJECT(MessageServerPool);
+public:
+	typedef MessageServer<Message, Handler> MessageServer;
+
+	class Item
+	{
+	public:
+		inline void init()
+		{
+			work = 0;
+			server.reset(new MessageServer());
+		}
+
+		inline void attach(IN const uint32_t v = 1)
+		{
+			work += v;
+		}
+
+		inline void detach(IN const uint32_t v = 1)
+		{
+			work -= v;
+		}
+
+	private:
+		Atomic<uint32_t> work;
+		typename MessageServer::ptr server;
+	};
+
+public:
+	inline MessageServerPool()
+	{}
+
+	inline void run(IN uint32_t thread_size, IN const char* name = nullptr)
+	{
+		m_pool.resize(thread_size);
+		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			it.init();
+			it->server->run(1, name);
+		}
+	}
+
+	inline void stop()
+	{
+		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			it->server->close();
+		}
+		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			it->server->join();
+		}
+		m_pool.clear();
+	}
+
+	inline Item* attach(IN const uint32_t work = 1)
+	{
+		uint32_t min_work = 0;
+		auto it_min = m_pool.begin();
+		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			if (it->work < min_work)
+			{
+				work = it->work;
+				it_min = it;
+			}
+		}
+		it_min->attach(work);
+		return &(*it_min);
+	}
+
+private:
+	std::vector<Item> m_pool;
 };
 
 

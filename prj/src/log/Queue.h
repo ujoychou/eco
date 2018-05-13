@@ -21,7 +21,6 @@ log queue.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/log/Type.h>
 #include <eco/thread/State.h>
 #include <eco/thread/ConditionVariable.h>

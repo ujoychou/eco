@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <eco/Project.h>
 #include <eco/log/Log.h>
 #include <eco/thread/Mutex.h>
 #include <eco/net/protocol/ProtocolHead.h>
@@ -42,7 +41,7 @@ public:
 		return reinterpret_cast<size_t>(this);
 	}
 
-	inline const eco::String get_ip() const
+	inline eco::String get_ip() const
 	{
 		std::string ip = m_socket.remote_endpoint().address().to_string();
 		return eco::String(ip.c_str());
@@ -404,9 +403,9 @@ size_t TcpConnector::get_id() const
 	return impl().get_id();
 }
 
-const eco::String TcpConnector::get_ip() const
+eco::String TcpConnector::get_ip() const
 {
-	return (eco::String&&)(impl().get_ip());
+	return std::move(impl().get_ip());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

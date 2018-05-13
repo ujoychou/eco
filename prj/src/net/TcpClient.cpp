@@ -415,12 +415,12 @@ void TcpClient::async_connect(IN eco::net::AddressSet& addr)
 	impl().async_connect(addr);
 }
 
-void TcpClient::async_send(IN eco::String& data, IN const uint32_t start)
+void TcpClient::send(IN eco::String& data, IN const uint32_t start)
 {
 	impl().async_send(data, start);
 }
 
-void TcpClient::async_send(IN MessageMeta& meta)
+void TcpClient::send(IN MessageMeta& meta)
 {
 	impl().async_send(meta);
 }
@@ -430,7 +430,7 @@ TcpSession TcpClient::open_session()
 	return impl().open_session();
 }
 
-void TcpClient::async_auth(IN TcpSession& session, IN MessageMeta& meta)
+void TcpClient::authorize(IN TcpSession& session, IN MessageMeta& meta)
 {
 	TcpSessionOuter outer(session);
 	impl().async_auth(outer.impl(), meta);

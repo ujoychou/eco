@@ -2,7 +2,6 @@
 #ifdef ECO_WIN32
 #include <eco/thread/Thread.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/Cast.h>
 #include <eco/thread/Atomic.h>
 #include <eco/log/Log.h>

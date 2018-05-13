@@ -2,7 +2,6 @@
 #ifdef ECO_WIN32
 #include <eco/media/Media.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include "windows.h"
 #pragma comment(lib, "winmm.lib")
 

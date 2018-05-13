@@ -300,6 +300,9 @@
     <ClCompile Include="..\..\..\proto\Object.pb.cc">
       <Filter>lib\proto</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\codec\md5.cpp">
+      <Filter>lib\codec</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\log\Queue.h">
@@ -397,9 +400,6 @@
     </ClInclude>
     <ClInclude Include="..\cmd\Inner.h">
       <Filter>src\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\meta\Timestamp.h">
-      <Filter>lib\meta</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Implement.h">
       <Filter>lib\app</Filter>
@@ -722,17 +722,23 @@
     <ClInclude Include="..\..\..\net\Log.h">
       <Filter>lib\net</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\thread\Map.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Index.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\proto\Object.pb.h">
       <Filter>lib\proto</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\proto\Proto.h">
       <Filter>lib\proto</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\thread\Map.h">
-      <Filter>lib\thread</Filter>
+    <ClInclude Include="..\..\..\codec\md5.h">
+      <Filter>lib\codec</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\thread\Index.h">
-      <Filter>lib\thread</Filter>
+    <ClInclude Include="..\..\..\meta\Stamp.h">
+      <Filter>lib\meta</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -781,21 +787,21 @@
     <None Include="..\..\..\log\Pusher.inl">
       <Filter>lib\log</Filter>
     </None>
-    <None Include="..\..\..\proto\__proto.bat">
+    <None Include="..\..\..\proto\Service.proto">
       <Filter>lib\proto</Filter>
     </None>
     <None Include="..\..\..\proto\Object.proto">
       <Filter>lib\proto</Filter>
     </None>
-    <None Include="..\..\..\proto\Service.proto">
+    <None Include="..\..\..\proto\proto.bat">
       <Filter>lib\proto</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\..\..\..\..\contrib\eco\cfg.app.xml">
+    <Xml Include="..\..\..\eco.sys.xml">
       <Filter>lib\app</Filter>
     </Xml>
-    <Xml Include="..\..\..\..\..\contrib\eco\cfg.sys.xml">
+    <Xml Include="..\..\..\eco.app.xml">
       <Filter>lib\app</Filter>
     </Xml>
   </ItemGroup>

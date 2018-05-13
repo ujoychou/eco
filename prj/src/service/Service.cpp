@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/service/Service.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include "Impl.h"
 
 

@@ -24,7 +24,8 @@
 			  括号中的内容为压缩处理的内容。
 
 *******************************************************************************/
-#include <eco/Project.h>
+#include <eco/Export.h>
+#include <string>
 
 
 namespace eco{;

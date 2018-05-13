@@ -314,7 +314,7 @@ public:
 		{
 			meta.set_value(it->get_property(), record[i], view);
 		}
-		eco::meta::clear(meta.timestamp());
+		eco::meta::clean(meta.stamp());
 	}
 
 	// decode object set from data sheet.
@@ -342,7 +342,7 @@ public:
 			{
 				meta.set_value(it->get_property(), record_set[oi][i], view);
 			}
-			eco::meta::clear(meta.timestamp());
+			eco::meta::clean(meta.stamp());
 			obj_set.push_back(obj);
 		}
 	}

@@ -17,7 +17,6 @@ thread safe call once.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/thread/State.h>
 #include <eco/thread/Mutex.h>
 

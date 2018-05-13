@@ -38,7 +38,7 @@ public:
 		IN const char* value,
 		IN const char* view = nullptr) = 0;
 
-	virtual eco::meta::Timestamp& timestamp() = 0;
+	virtual eco::meta::Stamp& stamp() = 0;
 
 	virtual void attach(void* object) = 0;
 
@@ -68,9 +68,9 @@ public:
 		m_meta.set_value(prop, value, view);
 	}
 
-	virtual eco::meta::Timestamp& timestamp() override
+	virtual eco::meta::Stamp& stamp() override
 	{
-		return m_meta.timestamp();
+		return m_meta.stamp();
 	}
 
 	virtual void attach(IN void* obj) override
@@ -213,7 +213,7 @@ public:
 						it->get_property(), record_set[r][field++], view);
 				}
 			}
-			eco::meta::clear(m_main_meta->timestamp());
+			eco::meta::clean(m_main_meta->stamp());
 			obj_set.push_back(obj);
 		}
 	}

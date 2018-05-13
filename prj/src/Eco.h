@@ -17,7 +17,6 @@
 * copyright(c) 2017 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/log/Log.h>
 #include <eco/thread/State.h>
 #include <eco/thread/TaskServer.h>

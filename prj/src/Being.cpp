@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/Being.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/log/Log.h>
 #include <eco/thread/State.h>
 #include <eco/Implement.h>
@@ -57,23 +56,36 @@ void Being::set_live_ticks(IN const uint32_t ticks)
 ////////////////////////////////////////////////////////////////////////////////
 void Being::born()
 {
+	// 生命降生（非线程安全性）
 	if (!impl().m_born.is_ok())
 	{
+		if (get_eco() == nullptr)
+		{
+			EcoThrow << "there is no eco life when live " << impl().m_name;
+			return;
+		}
+
 		if (on_born())	// 生命初始化
 		{
 			get_eco()->add_being(this);
 			impl().m_born.ok();
 		}
-	}	
+	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void Being::live()
 {
-	// 开启生命活动
+	// 开启生命活动（非线程安全性）
 	if (!impl().m_born.is_ok())
 	{
+		if (get_eco() == nullptr)
+		{
+			EcoThrow << "there is no eco life when live " << impl().m_name;
+			return;
+		}
+
 		if (on_born())
 		{
 			try
@@ -84,7 +96,6 @@ void Being::live()
 			{
 				EcoError << impl().m_name << " live: " << e.what();
 			}
-			// 避免多个线程同时访问"on_live()";
 			get_eco()->add_being(this);
 			impl().m_born.ok();
 		}

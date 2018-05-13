@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/App.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/cmd/Engine.h>
 #include <eco/RxApp.h>
 #include <eco/net/TcpServer.h>
@@ -13,8 +12,8 @@
 
 namespace eco{;
 
-const char* sys_cfg_file = "cfg.sys.xml";
-const char* app_cfg_file = "cfg.app.xml";
+const char* sys_cfg_file = "eco.sys.xml";
+const char* app_cfg_file = "eco.app.xml";
 extern void create_eco();
 ////////////////////////////////////////////////////////////////////////////////
 class App::Impl
@@ -559,7 +558,7 @@ eco::net::TcpServer& App::provider()
 {
 	return impl().m_provider;
 }
-net::TcpClient App::get_consumer(IN const char* name)
+net::TcpClient App::find_consumer(IN const char* name)
 {
 	auto it = impl().m_consumer_set.begin();
 	for (; it != impl().m_consumer_set.end(); ++it)
@@ -568,6 +567,15 @@ net::TcpClient App::get_consumer(IN const char* name)
 			return *it;
 	}
 	return eco::null;
+}
+net::TcpClient App::get_consumer(IN const char* name)
+{
+	auto item = find_consumer(name);
+	if (item.null())
+	{
+		EcoThrow << name << " consumer isn't exist.";
+	}
+	return item;
 }
 
 

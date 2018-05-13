@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/Typex.ipp>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/Cast.h>
 #include <boost/algorithm/string.hpp>
 

@@ -20,7 +20,6 @@ thread and common thread function.
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/Project.h>
 
 
 namespace eco{;
@@ -65,9 +64,7 @@ public:
 
 	// start thread.
 	typedef std::function<void (void)> thread_func;
-	void run(
-		IN thread_func func,
-		IN const char* name = nullptr);
+	void run(IN thread_func func, IN const char* name = nullptr);
 
 	// waiting thread over.
 	void join();

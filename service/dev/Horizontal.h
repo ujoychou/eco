@@ -44,7 +44,7 @@ public:
 
 	// generate distributed object id.(did)
 
-	// get timestamp.
+	// get stamp.
 
 	// get server ip.
 

@@ -282,6 +282,9 @@
     <ClCompile Include="..\media\MediaWin.cpp">
       <Filter>src\media</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\codec\md5.cpp">
+      <Filter>lib\codec</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\log\Queue.h">
@@ -385,9 +388,6 @@
     </ClInclude>
     <ClInclude Include="..\cmd\Inner.h">
       <Filter>src\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\meta\Timestamp.h">
-      <Filter>lib\meta</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Implement.h">
       <Filter>lib\app</Filter>
@@ -727,6 +727,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\test\Trace.h">
       <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\md5.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\meta\Stamp.h">
+      <Filter>lib\meta</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/net/TcpSession.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/net/Context.h>
 #include "TcpClient.ipp"
 #include "TcpServer.ipp"
@@ -13,7 +12,7 @@
 namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
-bool TcpSessionInner::auth()
+bool TcpSessionInner::authorize()
 {
 	// note: client open a none session is invalid.
 	if (impl().m_session_id == none_session && impl().m_owner.m_server)
@@ -53,7 +52,7 @@ void TcpSessionInner::close()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSessionInner::async_auth(IN const MessageMeta& meta_v)
+void TcpSessionInner::authorize(IN const MessageMeta& meta_v)
 {
 	SessionData::ptr sess = impl().m_session_wptr.lock();
 	if (sess != nullptr && !impl().m_owner.m_server)
@@ -66,7 +65,7 @@ void TcpSessionInner::async_auth(IN const MessageMeta& meta_v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSessionInner::async_response(
+void TcpSessionInner::response(
 	IN Codec& codec,
 	IN const uint32_t type,
 	IN const Context& c,
@@ -78,12 +77,12 @@ void TcpSessionInner::async_response(
 		SessionData::ptr sess = impl().m_session_wptr.lock();
 		if (sess != nullptr)
 		{
-			return impl().m_conn.async_response(codec, type, c, last, encrypted);
+			return impl().m_conn.response(codec, type, c, last, encrypted);
 		}
 	}
 	else
 	{
-		impl().m_conn.async_response(codec, type, c, last, encrypted);
+		impl().m_conn.response(codec, type, c, last, encrypted);
 	}
 }
 

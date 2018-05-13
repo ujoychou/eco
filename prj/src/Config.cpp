@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/Config.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/thread/Map.h>
 #include <eco/xml/Reader.h>
 

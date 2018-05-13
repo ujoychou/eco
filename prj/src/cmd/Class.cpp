@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/cmd/Class.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <vector>
 
 

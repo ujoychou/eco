@@ -41,10 +41,10 @@ public:
 	uint32_t	m_value;
 	std::string m_module;
 	std::string m_update_time;
-	eco::meta::Timestamp m_timestamp;
+	eco::meta::Stamp m_stamp;
 
 public:
-	inline Version() : m_timestamp(eco::meta::v_insert), m_value(0)
+	inline Version() : m_stamp(eco::meta::stamp_insert), m_value(0)
 	{}
 
 	inline Version(IN const char* name) : m_value(0), m_module(name)
@@ -59,7 +59,7 @@ public:
 	{
 		m_value = v;
 		m_update_time = eco::date_time::Timestamp(eco::date_time::fmt_std);
-		m_timestamp = new_record ? eco::meta::v_insert : eco::meta::v_update;
+		m_stamp = new_record ? eco::meta::stamp_insert : eco::meta::stamp_update;
 		return *this;
 	}
 };
@@ -74,9 +74,9 @@ public:
 		return Version();
 	}
 
-	inline eco::meta::Timestamp& timestamp()
+	inline eco::meta::Stamp& stamp()
 	{
-		return object().m_timestamp;
+		return object().m_stamp;
 	}
 
 	inline void set_value(

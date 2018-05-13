@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/cmd/Group.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/log/Log.h>
 #include <eco/Implement.h>
 #include <eco/cmd/Engine.h>

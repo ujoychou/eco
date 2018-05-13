@@ -2,7 +2,7 @@
 #ifdef ECO_WIN32
 #include <eco/DllObject.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
+#include <eco/Export.h>
 #include "windows.h"
 
 

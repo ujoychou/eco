@@ -51,6 +51,22 @@ typedef int Result;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// topic content snap type.
+typedef uint8_t ContentType;
+enum 
+{
+	content_snap		= 1,
+	content_snap_end	= 2,
+	content_new			= 3,
+};
+// judge whether it is a snap.
+inline bool is_snap(IN const ContentType v)
+{
+	return v <= content_snap_end;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 // when app exit with exception, use _getch to show a console windows.
 // and show the exception error.
 inline char getch_exit()
@@ -73,19 +89,26 @@ inline void clear(OUT char* v)
 	v[0] = 0;
 }
 
-// remove string end empty.
-inline void fit(OUT std::string& tmp)
+// get string end size.
+inline size_t fit_size(IN const char* str, IN const size_t size)
 {
 	size_t x = 0;
-	size_t i = tmp.length() - 1;
+	size_t i = size - 1;
 	for (; i > 0; --i)
 	{
-		if (tmp[i] != 0)
+		if (str[i] != 0)
 			break;
 		++x;
 	}
-	if (i == 0 && tmp[i] == 0) ++x;
-	tmp.resize(tmp.length() - x);
+	if (i == 0 && str[i] == 0) ++x;
+	return x;
+}
+
+// remove string end empty.
+inline void fit(OUT std::string& str)
+{
+	size_t x = eco::fit_size(str.c_str(), str.size());
+	str.resize(str.length() - x);
 }
 
 // thread local data.
@@ -445,6 +468,12 @@ public:
 			m_size = old_size;
 			m_capacity = new_size;
 		}
+	}
+
+	inline void fit()
+	{
+		uint32_t x = uint32_t(eco::fit_size(m_data, m_size) - 1);
+		if (x > 0) resize(m_size - x);
 	}
 
 	inline void clear()

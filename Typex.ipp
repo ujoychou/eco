@@ -16,8 +16,9 @@
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/Typex.h>
+#include <vector>
+#include <string>
 
 
 namespace eco{;

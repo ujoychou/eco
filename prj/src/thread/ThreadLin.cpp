@@ -2,7 +2,6 @@
 #ifdef ECO_LINUX
 #include <eco/thread/Thread.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/ExportImpl.h>
 // linux header.
 #include <pthread.h>

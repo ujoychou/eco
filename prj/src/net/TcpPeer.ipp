@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/net/TcpPeer.h>
 #include <eco/net/TcpConnector.h>
 #include <eco/net/Context.h>
@@ -101,9 +100,9 @@ public:
 		return m_connector.get_id();
 	}
 
-	inline const eco::String get_ip() const
+	inline eco::String get_ip() const
 	{
-		return (eco::String&&)m_connector.get_ip();
+		return std::move(m_connector.get_ip());
 	}
 
 	// tcp peer connection state.

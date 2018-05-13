@@ -16,7 +16,6 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/test/Runner.h>
 #include <eco/test/Case.h>
 #include <list>

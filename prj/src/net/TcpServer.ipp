@@ -23,7 +23,6 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Project.h>
 #include <eco/net/TcpServer.h>
 #include <eco/net/IoTimer.h>
 #include <eco/net/TcpAcceptor.h>

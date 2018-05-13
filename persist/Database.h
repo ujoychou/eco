@@ -202,13 +202,13 @@ public:
 	inline void save_all(
 		IN const object_set_t& obj_set,
 		IN const ObjectMapping& mapping,
-		IN const eco::meta::Timestamp ts)
+		IN const eco::meta::Stamp s)
 	{
 		Transaction trans(*this);
 		object_set_t::const_iterator it = obj_set.begin();
 		for (; it != obj_set.end(); ++it)
 		{
-			save<meta_t>(*it, mapping, ts);
+			save<meta_t>(*it, mapping, s);
 		}
 		trans.commit();
 	}
@@ -221,9 +221,9 @@ public:
 	{
 		meta_t meta;
 		meta.attach(obj);
-		uint64_t rows = save<meta_t>(obj, mapping, meta.timestamp());
-		// update and insert object will reset timestamp to original.
-		eco::meta::clear(meta.timestamp());
+		uint64_t rows = save<meta_t>(obj, mapping, meta.stamp());
+		// update and insert object will reset stamp to original.
+		eco::meta::clean(meta.stamp());
 		return rows;
 	}
 
@@ -232,28 +232,28 @@ public:
 	inline uint64_t save(
 		IN const object_t& obj,
 		IN const ObjectMapping& mapping,
-		IN const eco::meta::Timestamp ts)
+		IN const eco::meta::Stamp stamp)
 	{
 		std::string sql;
-		if (eco::meta::cleared(ts))		// origin object.
+		if (eco::meta::is_clean(stamp))		// origin object.
 		{
 			return 0;	// no need to save.
 		}
-		else if (eco::meta::inserted(ts))	// insert object.
+		else if (eco::meta::is_insert(stamp))	// insert object.
 		{
 			mapping.get_insert_sql<meta_t>(sql, obj);
 		}
-		else if (eco::meta::updated(ts))	// update object.
+		else if (eco::meta::is_update(stamp))	// update object.
 		{
 			mapping.get_update_sql<meta_t>(sql, obj);
 		}
-		else if (eco::meta::removed(ts))	// delete object.
+		else if (eco::meta::is_remove(stamp))	// delete object.
 		{
 			mapping.get_delete_sql<meta_t>(sql, obj);
 		}
 		else
 		{
-			EcoThrow << "save object failed, timestamp is invalid.";
+			EcoThrow << "save object failed, stamp is invalid.";
 		}
 
 		// execute sql to save data.

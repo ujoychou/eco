@@ -20,7 +20,7 @@
 
 *******************************************************************************/
 #include <eco/Object.h>
-#include <eco/meta/Timestamp.h>
+#include <eco/meta/Stamp.h>
 #include <eco/net/Address.h>
 #include <eco/net/TcpClient.h>
 #include <eco/service/Service.h>
@@ -42,7 +42,7 @@ public:
 	virtual void on_pub_service_address(
 		IN const char* service_name,
 		IN const eco::net::Address& addr,
-		IN const eco::meta::Timestamp& ts)
+		IN const eco::meta::Stamp& stamp)
 	{}
 
 	// publish service horizontal address.
@@ -50,7 +50,7 @@ public:
 		IN const char* service_name,
 		IN const uint32_t horizontal_id,
 		IN const eco::net::Address& addr,
-		IN const eco::meta::Timestamp& ts)
+		IN const eco::meta::Stamp& stamp)
 	{}
 
 public:
