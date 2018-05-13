@@ -1,14 +1,19 @@
 ﻿#include "PrecHeader.h"
 #include <eco/art/ArtApp.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <QApplication>
-#include <QStringList>
-#include <QMessageBox>
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#	include <QtWidgets/QApplication>
+#	include <QtWidgets/QMessageBox>
+#else
+#	include <QtGui/QApplication>
+#	include <QtGui/QMessageBox>
+#endif
 #include <QtNetwork/qlocalserver.h>
 #include <QtNetwork/qlocalsocket.h>
+#include <QtCore/QStringList>
 #include <QtCore/qiodevice.h>
 #include <QtCore/qfile.h>
-
 
 
 namespace eco{;
