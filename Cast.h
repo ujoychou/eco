@@ -270,13 +270,16 @@ inline void cast(OUT double& v, IN const char* sv)
 {
 	char* end = NULL;
 	v = strtod(sv, &end);
-
-	// handle '%'.
-	if (end != NULL && *end == '%'){
+	if (end != NULL && *end == '%')		// handle '%'.
 		v /= 100;
-	}
 }
-
+inline void cast(OUT float& v, IN const char* sv)
+{
+	char* end = NULL;
+	v = strtof(sv, &end);
+	if (end != NULL && *end == '%')		// handle '%'.
+		v /= 100;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // set a char musk to string pos.
