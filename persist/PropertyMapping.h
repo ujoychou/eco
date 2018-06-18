@@ -52,7 +52,8 @@ typedef uint16_t DataConstraint;
 class PropertyMapping
 {
 public:
-	PropertyMapping() : m_constraint(eco::value_none), m_field_index(0)
+	explicit inline PropertyMapping(IN uint32_t index = 0)
+		: m_constraint(eco::value_none), m_field_index(index)
 	{}
 
 	inline bool operator==(IN const char* field_name) const

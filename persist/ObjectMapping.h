@@ -439,7 +439,8 @@ public:
 	// Add a field adapter.
 	inline PropertyMapping& add()
 	{
-		m_prop_map.push_back(PropertyMapping());
+		uint32_t size = static_cast<uint32_t>(m_prop_map.size());
+		m_prop_map.push_back(PropertyMapping(size));
 		return m_prop_map.back();
 	}
 
