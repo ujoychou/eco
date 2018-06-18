@@ -1,5 +1,5 @@
 #include "PrecHeader.h"
-#include <eco/net/DispatchServer.h>
+#include "DispatchServer.h"
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/net/TcpPeer.h>
 #include <eco/net/TcpConnection.h>

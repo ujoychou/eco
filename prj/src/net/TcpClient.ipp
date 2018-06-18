@@ -8,9 +8,9 @@
 #include <eco/thread/Monitor.h>
 #include <eco/net/Worker.h>
 #include <eco/net/IoTimer.h>
-#include <eco/net/DispatchServer.h>
 #include <eco/net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
+#include "DispatchServer.h"
 
 
 ECO_NS_BEGIN(eco);
@@ -118,7 +118,7 @@ public:
 	// io server, timer and business dispatcher server.
 	eco::net::Worker		m_worker;		// io thread.
 	eco::net::IoTimer		m_timer;		// run in io thread.
-	DispatchServer			m_dispatcher;	// dispatcher thread.
+	DispatchServer			m_dispatch;		// dispatcher thread.
 	eco::atomic::State		m_init;			// server init state.
 
 	// connection data factory.

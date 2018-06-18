@@ -105,8 +105,7 @@ public:
 class TcpSessionOwnerOuter
 {
 public:
-	inline TcpSessionOwnerOuter(IN TcpSessionOwner& owner)
-		: m_owner(owner) {}
+	inline TcpSessionOwnerOuter(IN TcpSessionOwner& owner) : m_owner(owner) {}
 
 	inline bool response_heartbeat() const
 	{

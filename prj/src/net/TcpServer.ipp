@@ -23,18 +23,15 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/net/TcpServer.h>
-#include <eco/net/IoTimer.h>
-#include <eco/net/TcpAcceptor.h>
-#include <eco/net/DispatchServer.h>
-#include <eco/net/protocol/ProtocolHead.h>
+#include <set>
 #include <eco/thread/Map.h>
 #include <eco/thread/Atomic.h>
-#include <map>
-#include <set>
-#include <vector>
-#include <memory>
+#include <eco/net/IoTimer.h>
+#include <eco/net/TcpServer.h>
+#include <eco/net/TcpAcceptor.h>
+#include <eco/net/protocol/ProtocolHead.h>
 #include "TcpPeerSet.h"
+#include "DispatchServer.h"
 
 
 namespace eco{;

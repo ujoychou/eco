@@ -25,7 +25,7 @@
 *******************************************************************************/
 #include <eco/net/Address.h>
 #include <eco/net/TcpSession.h>
-#include <eco/net/DispatchRegistry.h>
+#include <eco/net/TcpDispatch.h>
 #include <eco/net/TcpClientOption.h>
 #include <eco/net/protocol/TcpProtocol.h>
 
@@ -36,7 +36,7 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpClient
+class ECO_API TcpClient : public TcpDispatch
 {
 	ECO_SHARED_API(TcpClient);
 public:
@@ -86,11 +86,9 @@ public:
 		IN OnConnectFunc on_connect, 
 		IN OnCloseFunc on_close = nullptr);
 
-	// dispatch.
-	DispatchRegistry& dispatcher();
-
-	// release client.
-	void close();
+	// register dispatch handler.
+	virtual void register_default_handler(IN HandlerFunc hf) override;
+	virtual void register_handler(IN uint64_t id, IN HandlerFunc hf) override;
 
 //////////////////////////////////////////////////////////////////// ROUTER MODE
 public:
@@ -103,6 +101,9 @@ public:
 	void async_connect(
 		IN const char* router_name,
 		IN const char* service_name);
+
+	// release client.
+	void close();
 
 /////////////////////////////////////////////////////////////////// SERVICE MODE
 public:

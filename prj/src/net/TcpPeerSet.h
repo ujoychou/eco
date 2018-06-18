@@ -167,17 +167,6 @@ public:
 			}
 		}// end for
 	}
-
-	/*@ send heartbeat to all inactive connections.*/
-	inline void send_test()
-	{
-		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
-		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); ++it)
-		{
-			it->second->impl().async_send(
-				eco::String("hello ujoychou, this is a test message."), 0);
-		}
-	}
 };
 
 

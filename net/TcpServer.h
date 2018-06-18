@@ -24,7 +24,7 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/net/DispatchRegistry.h>
+#include <eco/net/TcpDispatch.h>
 #include <eco/net/TcpConnection.h>
 #include <eco/net/TcpServerOption.h>
 #include <eco/net/protocol/Protocol.h>
@@ -33,7 +33,7 @@
 namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpServer
+class ECO_API TcpServer : public TcpDispatch
 {
 	ECO_SHARED_API(TcpServer);
 public:
@@ -63,11 +63,11 @@ public:
 
 	/*@ register protocol.*/
 	template<typename ProtocolT>
-	inline void register_protocol()
+	inline void set_protocol()
 	{
-		register_protocol(new ProtocolT());
+		set_protocol(new ProtocolT());
 	}
-	void register_protocol(IN Protocol*);
+	void set_protocol(IN Protocol*);
 	Protocol* protocol(IN const uint32_t version) const;
 
 	// set connection data type.
@@ -86,8 +86,9 @@ public:
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
 
-	// dispatcher
-	DispatchRegistry& dispatcher();
+	// register dispatch handler.
+	virtual void register_default_handler(IN HandlerFunc hf) override;
+	virtual void register_handler(IN uint64_t id, IN HandlerFunc hf) override;
 };
 
 

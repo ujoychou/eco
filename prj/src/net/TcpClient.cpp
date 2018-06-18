@@ -129,7 +129,7 @@ void TcpClient::Impl::async_connect()
 	{
 		// start io server, timer and dispatch server.
 		m_worker.run();
-		m_dispatcher.run();	
+		m_dispatch.run();
 		// create peer.
 		m_balancer.m_peer = TcpPeer::make(m_worker.get_io_service(), this);
 		// start timer.
@@ -190,7 +190,7 @@ void TcpClient::Impl::close()
 		m_timer.cancel();
 		m_balancer.release();
 		m_worker.stop();
-		m_dispatcher.stop();
+		m_dispatch.stop();
 		m_init.none();
 		EcoInfo << NetLog(id, ECO_FUNC);
 	}
@@ -326,7 +326,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	TcpSessionOwner owner(*(TcpClientImpl*)this);
 	DataContext dc(&owner);
 	peer_impl->get_data_context(dc, head.m_category, data, m_protocol.get());
-	m_dispatcher.post(dc);
+	m_dispatch.post(dc);
 }
 
 
@@ -361,9 +361,14 @@ void TcpClient::Impl::on_timer(IN const eco::Error* e)
 //##############################################################################
 ECO_PROPERTY_VAL_IMPL(TcpClient, TcpClientOption, option);
 ////////////////////////////////////////////////////////////////////////////////
-DispatchRegistry& TcpClient::dispatcher()
+void TcpClient::register_handler(IN uint64_t id, IN HandlerFunc hf)
 {
-	return impl().m_dispatcher;
+	impl().m_dispatch.register_handler(id, hf);
+}
+
+void TcpClient::register_default_handler(IN HandlerFunc hf)
+{
+	impl().m_dispatch.register_default_handler(hf);
 }
 
 void TcpClient::set_event(IN OnConnectFunc on_connect, IN OnCloseFunc on_close)

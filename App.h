@@ -99,10 +99,6 @@ public:
 
 	// service provider.
 	net::TcpServer& provider();
-	inline net::DispatchRegistry& dispatcher()
-	{
-		return provider().dispatcher();
-	}
 
 	// eco timer.
 	Timer& timer();

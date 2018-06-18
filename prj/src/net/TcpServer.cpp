@@ -287,7 +287,7 @@ ProtocolHead& TcpServer::protocol_head() const
 	return *impl().m_prot_head;
 }
 
-void TcpServer::register_protocol(IN Protocol* p)
+void TcpServer::set_protocol(IN Protocol* p)
 {
 	impl().register_protocol(p);
 }
@@ -297,9 +297,14 @@ Protocol* TcpServer::protocol(IN const uint32_t version) const
 	return impl().protocol(version);
 }
 
-DispatchRegistry& TcpServer::dispatcher()
+void TcpServer::register_handler(IN uint64_t id, IN HandlerFunc hf)
 {
-	return impl().m_dispatch;
+	impl().m_dispatch.register_handler(id, hf);
+}
+
+void TcpServer::register_default_handler(IN HandlerFunc hf)
+{
+	impl().m_dispatch.register_default_handler(hf);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

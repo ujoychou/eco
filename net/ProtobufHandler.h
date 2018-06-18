@@ -1,5 +1,6 @@
 #ifndef ECO_NET_PROTOBUF_HANDLER_H
 #define ECO_NET_PROTOBUF_HANDLER_H
+#ifndef ECO_NO_PROTOBUF
 /*******************************************************************************
 @ name
 
@@ -62,4 +63,5 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 }}
+#endif
 #endif
