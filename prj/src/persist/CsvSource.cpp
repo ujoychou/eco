@@ -7,34 +7,37 @@
 namespace eco {;
 
 ////////////////////////////////////////////////////////////////////////////////
-class CsvSource::Impl
+class CsvSourceFile::Impl
 {
 public:
 	std::shared_ptr<eco::filesystem::File> m_csv;
 
-	void init(CsvSource&){}
+	void init(CsvSourceFile&){}
 };
-ECO_SHARED_IMPL(CsvSource);
+ECO_SHARED_IMPL(CsvSourceFile);
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void CsvSource::open(IN const char* csv_file, IN const char* mode)
+void CsvSourceFile::open(IN const char* csv_file, IN const char* mode)
 {
 	impl().m_csv.reset(new eco::filesystem::File(csv_file, mode));
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void CsvSource::write(IN const char* data, IN const int size)
+void CsvSourceFile::write(IN const char* data, IN const int size)
 {
 	impl().m_csv->write(data, size);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void CsvSource::read(OUT Record& head, IN Recordset& data)
+void CsvSourceFile::read(OUT std::string& data)
 {
+	size_t size = (size_t)impl().m_csv->file_size();
+	data.resize(size);
+	impl().m_csv->read(&data[0], size);
 }
 
 

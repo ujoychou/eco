@@ -150,11 +150,11 @@ public:
 	void set_field(IN const char* prop, IN const char* field);
 
 	// register persist handler.
-	void register_handler(IN PersistHandler&);
+	void set_handler(IN PersistHandler&);
 
 	// register persist upgrade, it will throw exception when has error.
 	typedef std::function<void(void)> UpgradeFunc;
-	void register_upgrade(IN const uint32_t ver, IN UpgradeFunc func);
+	void set_upgrade(IN const uint32_t ver, IN UpgradeFunc func);
 
 	// get master data source.
 	eco::Database& master();

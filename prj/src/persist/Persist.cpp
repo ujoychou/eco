@@ -194,13 +194,13 @@ void Persist::set_field(IN const char* prop, IN const char* field)
 	}
 }
 
-void Persist::register_handler(IN PersistHandler& h)
+void Persist::set_handler(IN PersistHandler& h)
 {
 	impl().m_handler = &h;
 	impl().m_handler->m_persist = this;
 }
 
-void Persist::register_upgrade(IN const uint32_t ver, IN UpgradeFunc func)
+void Persist::set_upgrade(IN const uint32_t ver, IN UpgradeFunc func)
 {
 	impl().m_upgrade_seq.push_back(Upgrade(ver, func));
 }
