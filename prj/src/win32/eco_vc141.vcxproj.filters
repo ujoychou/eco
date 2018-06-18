@@ -665,12 +665,6 @@
     <ClInclude Include="..\PrecHeader.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchRegistry.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchServer.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpSession.h">
       <Filter>lib\net</Filter>
     </ClInclude>
@@ -739,6 +733,18 @@
     </ClInclude>
     <ClInclude Include="..\..\..\meta\Stamp.h">
       <Filter>lib\meta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpDispatch.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\net\DispatchServer.h">
+      <Filter>src\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Date.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\TimerWheel.h">
+      <Filter>lib\thread</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

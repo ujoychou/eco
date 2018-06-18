@@ -515,12 +515,6 @@
     <ClInclude Include="..\..\..\net\Context.h">
       <Filter>lib\net</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\net\DispatchRegistry.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\net\DispatchServer.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\net\Ecode.h">
       <Filter>lib\net</Filter>
     </ClInclude>
@@ -734,16 +728,16 @@
     <ClInclude Include="..\..\..\meta\Stamp.h">
       <Filter>lib\meta</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpDispatch.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\net\DispatchServer.h">
+      <Filter>src\net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cmd\Engine.ipp">
       <Filter>src\cmd</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\cfg.app.xml">
-      <Filter>lib\app</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\cfg.sys.xml">
-      <Filter>lib\app</Filter>
     </None>
     <None Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco.dll">
       <Filter>bin\debug_win32</Filter>
@@ -780,6 +774,12 @@
     </None>
     <None Include="..\..\..\web\json.ut.json">
       <Filter>lib\web</Filter>
+    </None>
+    <None Include="..\..\..\eco.app.xml">
+      <Filter>lib\app</Filter>
+    </None>
+    <None Include="..\..\..\eco.sys.xml">
+      <Filter>lib\app</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

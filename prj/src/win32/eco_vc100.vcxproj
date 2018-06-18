@@ -233,8 +233,6 @@
     <ClInclude Include="..\..\..\net\asio\WorkerPool.h" />
     <ClInclude Include="..\..\..\net\AsyncHandlerMap.h" />
     <ClInclude Include="..\..\..\net\Context.h" />
-    <ClInclude Include="..\..\..\net\DispatchRegistry.h" />
-    <ClInclude Include="..\..\..\net\DispatchServer.h" />
     <ClInclude Include="..\..\..\net\Ecode.h" />
     <ClInclude Include="..\..\..\net\IoTimer.h" />
     <ClInclude Include="..\..\..\net\Log.h" />
@@ -256,6 +254,7 @@
     <ClInclude Include="..\..\..\net\TcpClientOption.h" />
     <ClInclude Include="..\..\..\net\TcpConnection.h" />
     <ClInclude Include="..\..\..\net\TcpConnector.h" />
+    <ClInclude Include="..\..\..\net\TcpDispatch.h" />
     <ClInclude Include="..\..\..\net\TcpPeer.h" />
     <ClInclude Include="..\..\..\net\TcpServer.h" />
     <ClInclude Include="..\..\..\net\TcpServerOption.h" />
@@ -314,14 +313,13 @@
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
     <ClInclude Include="..\log\FileSink.h" />
+    <ClInclude Include="..\net\DispatchServer.h" />
     <ClInclude Include="..\net\TcpOuter.h" />
     <ClInclude Include="..\net\TcpPeerSet.h" />
     <ClInclude Include="..\PrecHeader.h" />
     <ClInclude Include="..\service\Impl.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\..\contrib\eco\cfg.app.xml" />
-    <None Include="..\..\..\..\..\contrib\eco\cfg.sys.xml" />
     <None Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco.dll">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -330,6 +328,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </None>
+    <None Include="..\..\..\eco.app.xml" />
+    <None Include="..\..\..\eco.sys.xml" />
     <None Include="..\..\..\log\Pusher.inl" />
     <None Include="..\..\..\net\TcpSession.inl" />
     <None Include="..\..\..\Typex.ipp" />

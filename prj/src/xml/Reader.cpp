@@ -97,8 +97,14 @@ bool get_node(
 			// <key value="xxx"/>
 			if (itc->first == "value")
 			{
-				node.set_name(node_name.c_str());
+				if (eco::empty(node.get_name()))
+					node.set_name(node_name.c_str());
 				node.set_value(itc->second.data().c_str());
+			}
+			// <key node="xxx"/>
+			else if (itc->first == "node")
+			{
+				node.set_name(itc->second.data().c_str());
 			}
 			// <key enable="true"/>
 			else if (itc->first == "enable")

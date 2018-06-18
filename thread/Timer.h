@@ -40,7 +40,7 @@ public:
 };
 
 
-typedef std::function<void(IN const bool is_cancel)> OnTimerFunc;
+typedef std::function<void(IN bool is_cancel)> OnTimerFunc;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Timer
 {

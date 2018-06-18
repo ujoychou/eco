@@ -27,7 +27,7 @@ namespace eco{;
 
 ////////////////////////////////////////////////////////////////////////////////
 // auto ref count to manage object life cycle.
-#define ECO_OBJECT_AUTOREF(int_type)\
+#define ECO_OBJECT_AUTOREF()\
 public:\
 	inline void add_ref()\
 	{\
@@ -38,12 +38,12 @@ public:\
 		if (--m_ref == 0)\
 			delete this;\
 	}\
-	inline int_type ref_size() const\
+	inline uint32_t ref_size() const\
 	{\
 		return m_ref;\
 	}\
 private:\
-	eco::Atomic<int_type> m_ref;
+	eco::Atomic<uint32_t> m_ref;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +52,11 @@ template<typename ObjectT>
 class AutoRefPtr
 {
 public:
+	inline ~AutoRefPtr()
+	{
+		reset(nullptr);
+	}
+
 	// add ref operation.
 	inline explicit AutoRefPtr(ObjectT* obj_ptr = nullptr) : m_obj_ptr(obj_ptr)
 	{
@@ -65,25 +70,29 @@ public:
 
 	inline AutoRefPtr& operator=(IN const AutoRefPtr& other)
 	{
-		assign(other.m_obj_ptr);
+		reset(other.m_obj_ptr);
 		return *this;
+	}
+
+	inline AutoRefPtr(AutoRefPtr&& other) : m_obj_ptr(other.m_obj_ptr)
+	{
+		other.m_obj_ptr = nullptr;
+	}
+	inline AutoRefPtr& operator=(IN AutoRefPtr&& other)
+	{
+		move(other);
+		return *this;
+	}
+
+	inline void reset(ObjectT* obj_ptr)
+	{
+		if (m_obj_ptr != nullptr)		// del old object.
+			m_obj_ptr->del_ref();
+		m_obj_ptr = obj_ptr;			// set new object.
+		add_ref();
 	}
 
 public:
-	inline AutoRefPtr(AutoRefPtr&& other) : m_obj_ptr(other.release())
-	{}
-
-	inline AutoRefPtr& operator=(IN AutoRefPtr&& other)
-	{
-		reset(other.release());
-		return *this;
-	}
-
-	inline ~AutoRefPtr()
-	{
-		reset(nullptr);
-	}
-
 	inline ObjectT* operator->()
 	{
 		return m_obj_ptr;
@@ -106,29 +115,17 @@ public:
 		std::swap(m_obj_ptr, other.m_obj_ptr);
 	}
 
-	inline void reset(ObjectT* obj_ptr = nullptr)
+	inline void move(IN AutoRefPtr& other)
 	{
-		if (m_obj_ptr != nullptr)		// del old object.
+		if (m_obj_ptr != nullptr)
 			m_obj_ptr->del_ref();
-		m_obj_ptr = obj_ptr;			// set new object.
-	}
-
-	inline void assign(ObjectT* obj_ptr)
-	{
-		reset(obj_ptr);
-		add_ref();
+		m_obj_ptr = other.m_obj_ptr;
+		other.m_obj_ptr = nullptr;
 	}
 
 	inline bool null() const
 	{
 		return m_obj_ptr == nullptr;
-	}
-
-	inline ObjectT* release()
-	{
-		ObjectT* temp = m_obj_ptr;
-		m_obj_ptr = nullptr;
-		return temp;
 	}
 
 private:

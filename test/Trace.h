@@ -19,6 +19,7 @@ exception.
 
 *******************************************************************************/
 #include <eco/Export.h>
+#include <eco/Type.h>
 
 
 namespace eco{;

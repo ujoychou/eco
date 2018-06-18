@@ -21,6 +21,7 @@ thread safe object state.
 #ifdef ECO_WIN
 #include <eco/thread/detail/MutexWin.h>
 #endif
+#include <list>
 
 namespace eco{;
 
@@ -139,7 +140,6 @@ private:
 class Mutex::OrdersLock : public eco::Object<Mutex::OrdersLock>
 {
 public:
-	
 	inline OrdersLock()
 	{}
 

@@ -398,8 +398,8 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\asio\Worker.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\asio\WorkerPool.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Context.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchRegistry.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchServer.h" />
+    <ClInclude Include="..\..\..\Date.h" />
+    <ClInclude Include="..\..\..\net\TcpDispatch.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Ecode.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestHandler.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\ProtobufHandler.h" />
@@ -513,10 +513,12 @@
     <ClInclude Include="..\..\..\proto\Proto.h" />
     <ClInclude Include="..\..\..\thread\Index.h" />
     <ClInclude Include="..\..\..\thread\Map.h" />
+    <ClInclude Include="..\..\..\thread\TimerWheel.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
     <ClInclude Include="..\log\FileSink.h" />
+    <ClInclude Include="..\net\DispatchServer.h" />
     <ClInclude Include="..\net\TcpPeerSet.h" />
     <ClInclude Include="..\PrecHeader.h" />
     <ClInclude Include="..\service\Impl.h">
