@@ -15,11 +15,12 @@ class OneTopic : public PopTopic<TopicId>
 {
 	ECO_TOPIC_TOPIC(OneTopic);
 protected:
-	virtual void do_snap(IN Subscriber& suber) override
+	virtual void do_snap(IN Subscription& node) override
 	{
 		if (m_snap.get() != nullptr)
 		{
-			suber.on_publish(m_id, m_snap, content_snap_end);
+			auto* suber = (Subscriber*)node.m_subscriber;
+			suber->on_publish(m_id, m_snap, content_snap_end);
 		}
 	}
 
@@ -57,16 +58,17 @@ public:
 	}
 
 protected:
-	virtual void do_snap(IN Subscriber& suber) override
+	virtual void do_snap(IN Subscription& node) override
 	{
-		if (!m_snap_set.empty())
+		if (m_snap_set.empty()) return;
+		auto it = m_snap_set.begin();
+		auto it_end = m_snap_set.end();
+		// node subscriber may be destruct in "on_publish";
+		for (--it_end; it != m_snap_set.end() && node.m_working; ++it)
 		{
-			auto it_end = m_snap_set.end(); --it_end;
-			for (auto it = m_snap_set.begin(); it != m_snap_set.end(); ++it)
-			{
-				auto snap = (it != it_end) ? content_snap : content_snap_end;
-				suber.on_publish(m_id, *it, snap);
-			}
+			auto snap = (it != it_end) ? content_snap : content_snap_end;
+			auto* suber = (Subscriber*)node.m_subscriber;
+			suber->on_publish(m_id, *it, snap);
 		}
 	}
 
@@ -144,16 +146,17 @@ public:
 	}
 
 protected:
-	virtual void do_snap(IN Subscriber& suber) override
+	virtual void do_snap(IN Subscription& node) override
 	{
-		if (!m_snap_set.empty())
+		if (m_snap_set.empty()) return;
+		auto it = m_snap_set.begin();
+		auto it_end = m_snap_set.end();
+		// node subscriber may be destruct in "on_publish";
+		for (--it_end; it != m_snap_set.end() && node.m_working; ++it)
 		{
-			auto it_end = m_snap_set.end(); --it_end;
-			for (auto it = m_snap_set.begin(); it != m_snap_set.end(); ++it)
-			{
-				auto snap = (it != it_end) ? content_snap : content_snap_end;
-				suber.on_publish(m_id, it->second, snap);
-			}
+			auto snap = (it != it_end) ? content_snap : content_snap_end;
+			auto* suber = (Subscriber*)node.m_subscriber;
+			suber->on_publish(m_id, it->second, snap);
 		}
 	}
 

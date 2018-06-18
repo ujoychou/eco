@@ -38,41 +38,53 @@ public:\
 //##############################################################################
 class TopicId
 {
-public:
-	uint32_t m_type; 
-	uint32_t m_prop;
+private:
+	uint32_t m_type;
 	uint64_t m_value;
 
-	inline TopicId() : m_type(0), m_prop(0), m_value(0)
-	{}
-
+public:
 	inline TopicId(
-		IN const uint32_t type,
-		IN const uint32_t prop	= 0,
+		IN const uint16_t type  = 0,
+		IN const uint16_t prop	= 0,
 		IN const uint64_t value = 0)
-		: m_type(type), m_prop(prop), m_value(value)
+		: m_type((type << 16) + prop)
+		, m_value(value)
 	{}
 
-	inline TopicId& set(
-		IN const uint32_t type,
-		IN const uint32_t prop  = 0,
+	inline void set(
+		IN const uint16_t type  = 0,
+		IN const uint16_t prop  = 0,
 		IN const uint64_t value = 0)
 	{
-		m_type = type;
-		m_prop = prop;
+		m_type = (type << 16) + prop;
 		m_value = value;
+	}
+
+public:
+	inline uint16_t get_type() const
+	{
+		return uint16_t(m_type >> 16);
+	}
+
+	inline uint16_t get_prop() const
+	{
+		return uint16_t(m_type & 0xFFFF);
+	}
+
+	inline uint64_t get_value() const
+	{
+		return m_value;
+	}
+
+	inline TopicId& type(IN const uint16_t v)
+	{
+		m_type = (v << 16) + (m_type & 0xFFFF);
 		return *this;
 	}
 
-	inline TopicId& type(IN const uint32_t v)
+	inline TopicId& prop(IN const uint16_t v)
 	{
-		m_type = v;
-		return *this;
-	}
-
-	inline TopicId& prop(IN const uint32_t v)
-	{
-		m_prop = v;
+		m_type = (m_type & 0xFFFF0000) + v;
 		return *this;
 	}
 
@@ -82,18 +94,17 @@ public:
 		return *this;
 	}
 
-	inline uint64_t hash_value() const
+public:
+	inline std::size_t hash_value() const
 	{
-		uint64_t result = m_type;
-		result += m_prop * 100;
-		result += m_value * 10000;
-		return result;
+		uint64_t seed = m_type;
+		eco::hash_combine<uint64_t>(seed, m_value << 16);
+		return static_cast<std::size_t>(seed);
 	}
 
 	inline bool operator==(IN const TopicId& tid) const
 	{
-		return m_value == tid.m_value && m_type == tid.m_type 
-			&& m_prop == tid.m_prop;
+		return m_value == tid.m_value && m_type == tid.m_type;
 	}
 
 	inline bool equal(
@@ -101,7 +112,7 @@ public:
 		IN const uint32_t prop,
 		IN const uint64_t value = 0) const
 	{
-		return m_value == value	&& m_type == type && m_prop == prop;
+		return *this == TopicId(type, prop, value);
 	}
 };
 ////////////////////////////////////////////////////////////////////////////////
@@ -110,7 +121,7 @@ class TopicIdHash
 public:
 	inline std::size_t operator()(IN const TopicId& v) const
 	{
-		return static_cast<std::size_t>(eco::hash_combine(v.hash_value()));
+		return v.hash_value();
 	}
 };
 
@@ -285,9 +296,13 @@ public:
 	inline Topic() {}
 	virtual ~Topic() {}
 
-	// load topic data to init topic.
-	virtual void load() {}
+	// init topic event.
+	virtual void on_init(IN void* context, IN void* data) {};
 
+	// erase topic event.
+	virtual void on_erase(IN void* context, IN void* data) {};
+
+public:
 	// topic type.
 	virtual const char* get_type() const = 0;
 	virtual const char* get_topic_type() const = 0;
@@ -314,7 +329,7 @@ class PopTopic : public Topic
 	ECO_TOPIC_TOPIC(PopTopic);
 protected:
 	// publish snap to subscriber.
-	virtual void do_snap(IN Subscriber& suber) {}
+	virtual void do_snap(IN Subscription& subscription) {}
 
 	// move new content to snap content.
 	virtual void do_move(OUT Content::ptr& new_c) {}
@@ -361,13 +376,13 @@ public:
 
 public:
 	// topic server: publish snap after subsriber reserve topic.
-	virtual void publish_snap(IN Subscription& subscription) override
+	virtual void publish_snap(IN Subscription& node) override
 	{
 		eco::Mutex::ScopeLock lock(mutex());
-		if (subscription.m_subscriber != nullptr)
+		if (node.m_subscriber != nullptr)
 		{
-			subscription.confirm_subscribe();
-			do_snap(*(Subscriber*)(subscription.m_subscriber));
+			node.subscribe_submit();
+			do_snap(node);
 		}
 	}
 
@@ -375,17 +390,18 @@ public:
 	virtual void publish_new(IN Content::ptr& new_c) override
 	{
 		// publish new content to all subscriber.
-		eco::Mutex::ScopeLock lock(mutex());
 		do_move(new_c);
+		eco::Mutex::ScopeLock lock(mutex());
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
+			Subscription* next = node->m_topic_subscriber_next;
 			if (node->m_working)
 			{
 				auto* suber = (Subscriber*)node->m_subscriber;
 				suber->on_publish(m_id, new_c, content_new);
 			}
-			node = node->m_topic_subscriber_next;
+			node = next;
 		}
 		eco::meta::clean(new_c->stamp());
 	}
@@ -397,12 +413,13 @@ public:
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
+			Subscription* next = node->m_topic_subscriber_next;
 			if (node->m_working)
 			{
 				Subscriber* suber = (Subscriber*)(node->m_subscriber);
 				suber->on_erase(m_id);
 			}
-			node = node->m_topic_subscriber_next;
+			node = next;
 		}
 
 		detail::Topic::clear();
@@ -412,17 +429,18 @@ public:
 	virtual void publish_clear_content() override
 	{
 		do_clear();
-		
 		eco::Mutex::ScopeLock lock(mutex());
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
+			// avoid getting next suber fail when node erased by "on_clear";
+			Subscription* next = node->m_topic_subscriber_next;
 			if (node->m_working)
 			{
 				Subscriber* suber = (Subscriber*)(node->m_subscriber);
 				suber->on_clear(m_id);
 			}
-			node = node->m_topic_subscriber_next;
+			node = next;
 		}// end while.
 	}
 

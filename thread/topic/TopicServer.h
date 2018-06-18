@@ -12,8 +12,13 @@ class TopicServer
 {
 	ECO_OBJECT(TopicServer);
 public:
-	inline TopicServer()
+	inline TopicServer() : m_context(nullptr)
 	{}
+
+	inline void set_context(IN void* context = nullptr)
+	{
+		m_context = context;
+	}
 
 	inline ~TopicServer()
 	{
@@ -44,10 +49,9 @@ public:
 	inline void publish(
 		IN const topic_id_t& topic_id,
 		IN const object_t& obj,
-		IN Topic* (*make)(IN const topic_id_t&) = nullptr,
 		IN eco::meta::Stamp stamp = eco::meta::stamp_none)
 	{
-		Topic::ptr topic = get_topic(topic_id, make);
+		Topic::ptr topic = get_topic(topic_id);
 		if (topic != nullptr)
 		{
 			publish_to(topic, obj, stamp);
@@ -130,9 +134,10 @@ public:
 	inline bool subscribe(
 		IN const topic_id_t& topic_id,
 		IN Subscriber* subscriber,
-		IN Topic* (*f)(IN const topic_id_t&) = nullptr)
+		IN Topic* (*f)(IN const topic_id_t&) = nullptr,
+		IN void* init_data = nullptr)
 	{
-		Topic::ptr topic = get_topic(topic_id, f);
+		Topic::ptr topic = get_topic(topic_id, f, init_data);
 		if (topic != nullptr)
 		{
 			auto supscription = topic->reserve_subscribe(subscriber);
@@ -148,9 +153,10 @@ public:
 	template<typename topic_t, typename topic_id_t>
 	inline bool subscribe(
 		IN const topic_id_t& topic_id,
-		IN Subscriber* subscriber)
+		IN Subscriber* subscriber,
+		IN void* data = nullptr)
 	{
-		return subscribe(topic_id, subscriber, topic_t::make);
+		return subscribe(topic_id, subscriber, topic_t::make, data);
 	}
 
 	// unsubscribe topic, and remove topic when there is no subscriber.
@@ -158,17 +164,21 @@ public:
 	inline bool unsubscribe(
 		IN const topic_id_t& topic_id,
 		IN Subscriber* subscriber,
-		IN bool remove_empty_topic = false)
+		IN bool remove_empty_topic = false,
+		IN void* data = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
-		auto it = __get_topic_map(topic_id).find(topic_id);
-		if (it != __get_topic_map(topic_id).end() &&
-			it->second->unsubscribe(subscriber))
+		auto& topic_map = __get_topic_map(topic_id);
+		auto it = topic_map.find(topic_id);
+		if (it != topic_map.end() && it->second->unsubscribe(subscriber))
 		{
-			auto one_topic_type = OneTopic<topic_id_t>::topic_type();
-			if (remove_empty_topic && !it->second->has_subscriber())
+			if (!it->second->has_subscriber())
 			{
-				__get_topic_map(topic_id).erase(it);
+				if (remove_empty_topic)
+				{
+					it->second->on_erase(m_context, data);
+					topic_map.erase(it);
+				}
 			}
 			return true;
 		}
@@ -215,9 +225,10 @@ public:
 	template<typename topic_id_t>
 	inline Topic::ptr get_topic(
 		IN const topic_id_t& topic_id,
-		IN Topic* (*f)(IN const topic_id_t&) = nullptr)
+		IN Topic* (*f)(IN const topic_id_t&) = nullptr,
+		IN void* data = nullptr)
 	{
-		return __get_topic(topic_id, __get_topic_map(topic_id), f);
+		return __get_topic(topic_id, __get_topic_map(topic_id), f, data);
 	}
 
 	// find topic.
@@ -377,7 +388,8 @@ private:
 	inline Topic::ptr __get_topic(
 		IN const topic_id_t& topic_id,
 		IN topic_map_t& topic_map,
-		IN Topic* (*f)(IN const topic_id_t&))
+		IN Topic* (*f)(IN const topic_id_t&),
+		IN void* data)
 	{
 		{
 			eco::Mutex::ScopeLock lock(m_topics_mutex);
@@ -391,7 +403,7 @@ private:
 		if (f != nullptr)
 		{
 			Topic::ptr topic(f(topic_id));
-			topic->load();	// load topic data to init.
+			topic->on_init(m_context, data);
 			eco::Mutex::ScopeLock lock(m_topics_mutex);
 			return topic_map[topic_id] = topic;
 		}
@@ -410,6 +422,9 @@ private:
 		}
 		topic_map.clear();
 	}
+
+private:
+	void* m_context;
 
 	// topic management.
 	mutable eco::Mutex m_topics_mutex;

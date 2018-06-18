@@ -44,7 +44,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 class Subscription
 {
-	ECO_OBJECT_AUTOREF(uint32_t);
+	ECO_OBJECT_AUTOREF();
 public:
 	// subscription working state.
 	uint32_t m_working;
@@ -77,7 +77,7 @@ public:
 
 	// reserve subscriber in topic, and subscriber will really work until
 	// subscribe() setting working state to "true".
-	inline void reserve_subscribe(
+	inline void subscribe_reserve(
 		IN SubscriptionList& topic_subscriber_head,
 		IN Subscription*& subscriber_topic_head)
 	{
@@ -87,7 +87,7 @@ public:
 	}
 
 	// set subscription working state.
-	inline void confirm_subscribe()
+	inline void subscribe_submit()
 	{
 		m_working = true;
 	}
@@ -99,6 +99,7 @@ public:
 		// 从而避免出现多个线程同时删除一个节点导致的野指针。
 		if (m_topic != nullptr)
 		{
+			m_working = false;
 			erase_topic_subscriber(tail);
 			erase_subscriber_topic();
 			del_ref();
@@ -118,19 +119,6 @@ private:
 		m_topic_subscriber_next = (Subscription*)&head.m_tail;
 	}
 
-	// add topic in subscriber.
-	inline void add_subscriber_topic(IN Subscription*& head)
-	{
-		// add this node in front of subscriber's topic list.
-		if (head != nullptr)
-		{
-			head->m_subscriber_topic_prev = &m_subscriber_topic_next;
-		}
-		m_subscriber_topic_next = head;
-		m_subscriber_topic_prev = &head;
-		head = this;
-	}
-
 	// erase topic's subscriber item.
 	inline void erase_topic_subscriber(IN Subscription*** const tail)
 	{
@@ -147,6 +135,19 @@ private:
 			*tail_ptr = m_topic_subscriber_prev;
 		}
 		m_subscriber = nullptr;
+	}
+
+	// add topic in subscriber.
+	inline void add_subscriber_topic(IN Subscription*& head)
+	{
+		// add this node in front of subscriber's topic list.
+		if (head != nullptr)
+		{
+			head->m_subscriber_topic_prev = &m_subscriber_topic_next;
+		}
+		m_subscriber_topic_next = head;
+		m_subscriber_topic_prev = &head;
+		head = this;
 	}
 
 	// erase subscriber's topic item.
@@ -336,9 +337,9 @@ inline AutoRefPtr<Subscription> Topic::reserve_subscribe(
 
 	Subscription* node(new Subscription(this, subscriber));
 	eco::Mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
-	node->reserve_subscribe(m_topic_subscriber_head,
+	node->subscribe_reserve(m_topic_subscriber_head,
 		subscriber->m_subscriber_topic_head);
-	aref.assign(node);
+	aref.reset(node);
 	return aref;
 }
 
