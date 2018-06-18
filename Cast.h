@@ -37,14 +37,16 @@ template<typename int_t>
 class Integer
 {
 public:
-	explicit Integer(
+	inline Integer() {}
+
+	inline explicit Integer(
 		int_t v, Scale s = eco::dec,
 		uint8_t width = 0, char hold = '0')
 	{
 		set_value(v, s, width, hold);
 	}
 
-	void set_value(
+	inline void set_value(
 		int_t v, Scale s = eco::dec,
 		uint8_t width = 0, char hold = '0')
 	{
@@ -61,7 +63,7 @@ public:
 		}
 	}
 
-	static uint32_t convert_dec(
+	inline static uint32_t convert_dec(
 		char buf[],	int_t v,
 		uint8_t width = 0, char hold = '0')
 	{
@@ -96,7 +98,7 @@ public:
 		return static_cast<uint32_t>(p - buf);
 	}
 
-	static uint32_t convert_hex(
+	inline static uint32_t convert_hex(
 		char buf[],
 		int_t v,
 		uint8_t width = 0,
@@ -144,7 +146,7 @@ public:
 	}
 
 private:
-	char m_buf[64];
+	char m_buf[32];
 	uint32_t m_size;
 
 private:
@@ -276,89 +278,93 @@ inline void cast(OUT double& v, IN const char* sv)
 inline void cast(OUT float& v, IN const char* sv)
 {
 	char* end = NULL;
-	v = strtof(sv, &end);
+	v = static_cast<float>(strtod(sv, &end));
 	if (end != NULL && *end == '%')		// handle '%'.
 		v /= 100;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
-// set a char musk to string pos.
-class MaskChar
-{
-public:
-	inline MaskChar(IN const char* sv, IN const uint32_t pos)
-	{
-		m_str = &sv[pos];
-		m_val = *m_str;
-		(char&)(*m_str) = '\0';
-	}
-	inline ~MaskChar()
-	{
-		(char&)(*m_str) = m_val;
-	}
-
-	char m_val;
-	const char* m_str;
-};
-
-
 /*using scene:
 1.sv=20150894; cast(sv, 4) = 2015;
 */
+template<uint32_t size> struct get_char
+{
+	inline get_char(IN const char* sv, IN uint32_t len)
+	{
+		str[0] = 0;
+		if (++len > size) len = size;
+		eco::auto_strncpy(str, sv, len);
+	}
+
+	inline operator const char*() const
+	{
+		return str;
+	}
+	inline const char* c_str() const
+	{
+		return str;
+	}
+
+	char str[size];
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 inline void cast(OUT double& v, IN const char* sv, IN const uint32_t len)
 {
-	MaskChar mask(sv, len);
 	char* end = NULL;
-	v = strtod(sv, &end);
+	v = strtod(get_char<32>(sv, len), &end);
 	// handle '%'.
 	if (end != NULL && *end == '%'){
 		v /= 100;
 	}
 }
+inline void cast(OUT float& v, IN const char* sv, IN const uint32_t len)
+{
+	char* end = NULL;
+	v = static_cast<float>(strtod(get_char<32>(sv, len), &end));
+	// handle '%'.
+	if (end != NULL && *end == '%') {
+		v /= 100;
+	}
+}
+
 inline void cast(OUT uint64_t& v, IN const char* sv, IN const uint32_t len)
 {
-	MaskChar mask(sv, len);
 #ifdef ECO_WIN
 	char* end = nullptr;
-	v = _strtoui64(sv, &end, 10);
+	v = _strtoui64(get_char<32>(sv, len), &end, 10);
 #else
 	char* end = nullptr;
-	v = strtoull(sv, &end, 10);
+	v = strtoull(get_char<32>(sv, len).str, &end, 10);
 #endif
 }
 inline void cast(OUT int64_t& v, IN const char* sv, IN const uint32_t len)
 {
-	MaskChar mask(sv, len);
 #ifdef ECO_WIN
-	v = _atoi64(sv);
+	v = _atoi64(get_char<32>(sv, len));
 #else
 	char* end = nullptr;
-	v = strtoll(sv, &end, 10);
+	v = strtoll(get_char<32>(sv, len).str, &end, 10);
 #endif
 }
 inline void cast(OUT int16_t& v, IN const char* sv, IN const uint32_t len)
 {
-	MaskChar mask(sv, len);
-	v = static_cast<int16_t>(atoi(sv));
+	v = static_cast<int16_t>(atoi(get_char<8>(sv, len)));
 }
 inline void cast(OUT uint16_t& v, IN const char* sv, IN const uint32_t len)
 {
-	MaskChar mask(sv, len);
-	v = static_cast<uint16_t>(atoi(sv));
+	v = static_cast<uint16_t>(atoi(get_char<8>(sv, len)));
 }
 inline void cast(OUT int32_t& v, IN const char* sv, IN const uint32_t len)
 {
-	MaskChar mask(sv, len);
-	v = atoi(sv);
+	v = atoi(get_char<16>(sv, len));
 }
 inline void cast(OUT uint32_t& v, IN const char* sv, IN const uint32_t len)
 {
-	MaskChar mask(sv, len);
-	v = atoi(sv);
+	v = atoi(get_char<16>(sv, len));
 }
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
