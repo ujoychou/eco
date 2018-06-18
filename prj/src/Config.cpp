@@ -21,67 +21,6 @@ public:
 	eco::HashMap<std::string, StringAny> m_data;
 
 public:
-	inline void get_property_set_raw(
-		OUT eco::Context& result,
-		IN  const char* parent_key,
-		IN  const ContextNodeSet& node_set) const
-	{
-		int node_end = eco::find_first(parent_key, '/');
-		for (auto it = node_set.begin(); it != node_set.end(); ++it)
-		{
-			// find the key node.
-			if (node_end == -1 && strcmp(it->get_name(), parent_key) == 0)
-			{
-				result = it->get_property_set();
-				return;
-			}
-
-			// find the next level node.
-			if (node_end != -1 &&
-				strncmp(it->get_name(), parent_key, node_end) == 0)
-			{
-				if (it->has_children())
-				{
-					get_property_set_raw(result,
-						&parent_key[node_end + 1], it->get_children());
-				}
-				return;
-			}
-		}
-	}
-
-	inline void get_children_raw(
-		OUT eco::ContextNodeSet& result,
-		IN  const char* parent_key,
-		IN  const ContextNodeSet& node_set) const
-	{
-		int node_end = eco::find_first(parent_key, '/');
-		for (auto it = node_set.begin(); it != node_set.end(); ++it)
-		{
-			// find the key node.
-			if (node_end == -1 && strcmp(it->get_name(), parent_key) == 0)
-			{
-				if (it->has_children())
-				{
-					result = it->get_children();
-				}
-				return;
-			}
-
-			// find the next level node.
-			if (node_end != -1 && 
-				strncmp(it->get_name(), parent_key, node_end) == 0)
-			{
-				if (it->has_children())
-				{
-					get_children_raw(result, 
-						&parent_key[node_end + 1], it->get_children());
-				}
-				return;
-			}
-		}
-	}// end
-
 	void init(IN const std::string& file)
 	{
 		try
@@ -106,19 +45,25 @@ public:
 		eco::Mutex::ScopeLock lock(m_data.mutex());
 		if (m_root.has_children())
 		{
-			get_property_set_raw(result, node_key, m_root.get_children());
+			if (node_key == nullptr)
+				result = m_root.get_property_set();
+			else
+				m_root.get_children().get_property_set(result, node_key);
 		}
 	}
 
-	inline void get_children(
-		OUT eco::ContextNodeSet& result,
+	inline eco::ContextNodeSet get_children(
 		IN  const char* parent_key) const
 	{
 		eco::Mutex::ScopeLock lock(m_data.mutex());
 		if (m_root.has_children())
 		{
-			get_children_raw(result, parent_key, m_root.get_children());
+			if (parent_key == nullptr)
+				return m_root.get_children();
+			else
+				return m_root.get_children().get_children(parent_key);
 		}
+		return eco::null;
 	}
 
 	inline void setup_index(
@@ -179,11 +124,10 @@ void Config::add(IN const char* key, IN const char* value)
 	StringAny v;
 	impl().m_data.set(key, (v = value));
 }
-void Config::get_children(
-	OUT eco::ContextNodeSet& node_set,
+eco::ContextNodeSet Config::get_children(
 	IN const char* parent_key) const
 {
-	impl().get_children(node_set, parent_key);
+	return impl().get_children(parent_key);
 }
 void Config::get_property_set(
 	OUT eco::Context& context_set,

@@ -269,20 +269,22 @@ inline void App::Impl::on_rx_exit()
 inline void App::Impl::init_router()
 {
 	// #.init router.
-	eco::ContextNodeSet nodes;
-	m_sys_config.get_children(nodes, "router");
-	for (auto r = nodes.begin(); r != nodes.end(); ++r)
+	eco::ContextNodeSet nodes = m_sys_config.get_children("router");
+	if (!nodes.null())
 	{
-		// router/front_router/
-		eco::net::AddressSet addr_set;
-		addr_set.set_name(r->get_name());
-		// router/front_router/sh_dx.
-		auto& prop_set = r->get_property_set();
-		for (auto it = prop_set.begin(); it != prop_set.end(); ++it)
+		for (auto r = nodes.begin(); r != nodes.end(); ++r)
 		{
-			addr_set.add().name(it->get_key()).set(it->get_value());
+			// router/front_router/
+			eco::net::AddressSet addr_set;
+			addr_set.set_name(r->get_name());
+			// router/front_router/sh_dx.
+			auto& prop_set = r->get_property_set();
+			for (auto it = prop_set.begin(); it != prop_set.end(); ++it)
+			{
+				addr_set.add().name(it->get_key()).set(it->get_value());
+			}
+			m_router_set.push_back(addr_set);
 		}
-		m_router_set.push_back(addr_set);
 	}
 }
 
@@ -304,9 +306,8 @@ inline eco::net::AddressSet App::Impl::find_router(IN const char* name)
 ////////////////////////////////////////////////////////////////////////////
 inline void App::Impl::init_consumer()
 {
-	eco::ContextNodeSet nodes;
-	m_sys_config.get_children(nodes, "consumer");
-	if (nodes.size() == 0)
+	eco::ContextNodeSet nodes = m_sys_config.get_children("consumer");
+	if (nodes.null() || nodes.size() == 0)
 	{
 		return;
 	}
@@ -449,9 +450,8 @@ inline void App::Impl::start_provider()
 ////////////////////////////////////////////////////////////////////////////
 inline void App::Impl::init_persist()
 {
-	eco::ContextNodeSet nodes;
-	m_sys_config.get_children(nodes, "persist");
-	if (nodes.size() == 0)
+	eco::ContextNodeSet nodes = m_sys_config.get_children("persist");
+	if (nodes.null() || nodes.size() == 0)
 	{
 		return;
 	}

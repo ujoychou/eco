@@ -51,14 +51,13 @@ public:
 		IN const char* value);
 
 	/*@ get children node set.*/
-	void get_children(
-		OUT eco::ContextNodeSet& node_set,
-		IN const char* parent_key) const;
+	eco::ContextNodeSet get_children(
+		IN const char* parent_key = nullptr) const;
 
 	/*@ get node property.*/
 	void get_property_set(
 		OUT eco::Context& context_set,
-		IN  const char* node_key) const;
+		IN  const char* node_key = nullptr) const;
 
 	/*@ has key return true, else false.*/
 	inline bool has(IN const char* key) const

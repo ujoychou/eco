@@ -197,9 +197,89 @@ ECO_PROPERTY_OBJ_IMPL(ContextNode, ContextNodeSet, children);
 
 
 ////////////////////////////////////////////////////////////////////////////////
+const StringAny ContextNode::at(IN const char* key) const
+{
+	int node_end = eco::find_first(key, '/');
+	if (node_end == -1)
+	{
+		// find the key value.
+		auto it = impl().m_property_set.begin();
+		for (; it != impl().m_property_set.end(); ++it)
+		{
+			if (strcmp(key, it->get_key()) == 0)
+				return it->get_value();
+		}
+	}
+	else
+	{
+		// recursive find the key value.
+		auto it = impl().m_children.begin();
+		for (; it != impl().m_children.end(); ++it)
+		{
+			if (strncmp(it->get_name(), key, node_end) == 0)
+				return it->at(&key[node_end + 1]);
+		}
+	}
+	EcoThrow << "get context node key value error: " << key;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 ECO_SHARED_IMPL(ContextNodeSet);
 ECO_PROPERTY_SET_IMPL(ContextNodeSet, ContextNode);
+////////////////////////////////////////////////////////////////////////////////
+eco::ContextNodeSet ContextNodeSet::get_children(
+	IN const char* parent_key) const
+{
+	int node_end = eco::find_first(parent_key, '/');
+	for (auto it = impl().m_items.begin(); it != impl().m_items.end(); ++it)
+	{
+		// find the key node.
+		if (node_end == -1 && strcmp(it->get_name(), parent_key) == 0)
+		{
+			return it->has_children() ? it->get_children() : eco::null;
+		}
 
+		// find the next level node.
+		if (node_end != -1 &&
+			strncmp(it->get_name(), parent_key, node_end) == 0)
+		{
+			return !it->has_children() ? eco::null
+				: it->get_children().get_children(&parent_key[node_end + 1]);
+		}
+	}
+	return eco::null;
+}
+
+
+ ////////////////////////////////////////////////////////////////////////////////
+void ContextNodeSet::get_property_set(
+	OUT eco::Context& result,
+	IN const char* node_key) const
+{
+	int node_end = eco::find_first(node_key, '/');
+	for (auto it = impl().m_items.begin(); it != impl().m_items.end(); ++it)
+	{
+		// find the key node.
+		if (node_end == -1 && strcmp(it->get_name(), node_key) == 0)
+		{
+			result = it->get_property_set();
+			return;
+		}
+
+		// find the next level node.
+		if (node_end != -1 &&
+			strncmp(it->get_name(), node_key, node_end) == 0)
+		{
+			if (it->has_children())
+			{
+				it->get_children().get_property_set(
+					result, &node_key[node_end + 1]);
+			}
+			return;
+		}
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

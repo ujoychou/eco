@@ -165,6 +165,9 @@ public:
 	void set_children(IN eco::ContextNodeSet&);
 	eco::ContextNodeSet& children();
 	const eco::ContextNodeSet& get_children() const;
+
+	// get key value.
+	const StringAny at(IN const char* key) const;
 };
 
 
@@ -206,6 +209,15 @@ public:
 	/*@ access parameter by item index.*/
 	ContextNode& at(IN const int i);
 	const ContextNode& at(IN const int i) const;
+
+	// get property set.
+	void get_property_set(
+		OUT eco::Context& result,
+		IN const char* parent_key) const;
+
+	// get context node.
+	ContextNodeSet get_children(
+		IN const char* parent_key) const;
 };
 
 

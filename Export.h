@@ -44,6 +44,7 @@ namespace eco{}
 
 #ifdef ECO_VC100
 #define ECO_NO_VARIADIC_TEMPLATE
+#define ECO_NO_FUNCTION_TEMPLATE_DEFAULT
 #endif
 
 /*@ include protobuf.*/

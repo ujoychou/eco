@@ -41,18 +41,13 @@ but strncpy not, and it will make crash sometimes.
 */
 inline size_t auto_strncpy(OUT char* dest, IN const char* src, IN size_t len)
 {
-	assert(dest != nullptr && src != nullptr);
+	assert(dest != nullptr && src != nullptr && len != 0);
 	// copy string like strncpy.
 	size_t cpy_len = 0;
 	char* temp = dest;
-	while (cpy_len++ < len && (*temp++ = *src++) != '\0')
-	{}
-
+	while (cpy_len++ < len && (*temp++ = *src++) != '\0') {}
 	// auto add '\0' to dest.
-	if (--cpy_len == len)
-	{
-		dest[--cpy_len] = '\0';
-	}
+	if (--cpy_len == len) dest[--cpy_len] = '\0';
 	return cpy_len;
 }
 
