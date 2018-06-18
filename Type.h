@@ -94,12 +94,7 @@ inline size_t fit_size(IN const char* str, IN const size_t size)
 {
 	size_t x = 0;
 	size_t i = size - 1;
-	for (; i > 0; --i)
-	{
-		if (str[i] != 0)
-			break;
-		++x;
-	}
+	for (; i != -1 && str[i] == 0; --i) ++x;
 	if (i == 0 && str[i] == 0) ++x;
 	return x;
 }
@@ -199,9 +194,9 @@ public:
 
 	inline explicit Bytes(
 		IN const char* data,
-		IN const uint32_t size = 0)
+		IN const uint32_t size = -1)
 		: m_data(data)
-		, m_size(size != 0 ? size : static_cast<uint32_t>(strlen(data)))
+		, m_size(size != -1 ? size : static_cast<uint32_t>(strlen(data)))
 	{}
 
 	inline const char* c_str() const
