@@ -82,7 +82,6 @@ public:
 
 	/*@ get system config.*/
 	const Config& get_sys_config() const;
-	eco::Persist& persist();
 
 	/*@ get app config.*/
 	const Config& get_config() const;
@@ -94,8 +93,13 @@ public:
 	cmd::Group home();
 
 	// get consumer.
+	uint32_t consumer_size();
 	net::TcpClient get_consumer(IN const char* name);
 	net::TcpClient find_consumer(IN const char* name);
+	net::TcpClient get_consumer(IN uint32_t pos);
+
+	// get persist.
+	eco::Persist persist(IN const char* name = nullptr);
 
 	// service provider.
 	net::TcpServer& provider();
@@ -110,14 +114,19 @@ private:
 
 	// will first called by c++ raw main.
 	static int main(IN int argc, IN char* argv[]);
+
+	// app life cycle managed by other app.
+	static void init(IN int argc, IN char* argv[]);
+	static void exit();
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////
 class Startup
 {
 public:
 	typedef int (*CMainFunc)(int argc, char* argv[]);
-	Startup(IN App::CreateAppFunc func, IN CMainFunc main_func)
+	inline Startup(IN App::CreateAppFunc func, IN CMainFunc main_func)
 	{
 		main_func = nullptr;
 		App::set_create_app_func(func);
@@ -125,6 +134,25 @@ public:
 	inline static int main(IN int argc, IN char* argv[])
 	{
 		return App::main(argc, argv);
+	}
+
+public:
+	inline Startup()
+	{}
+
+	inline void set_app(void* func)
+	{
+		App::set_create_app_func((App::CreateAppFunc)func);
+	}
+
+	inline void init(eco::App& app, IN int argc, IN char* argv[])
+	{
+		app.init(argc, argv);
+	}
+
+	inline void exit(eco::App& app)
+	{
+		app.exit();
 	}
 };
 ECO_NS_END(eco);

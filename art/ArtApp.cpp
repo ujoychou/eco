@@ -17,12 +17,19 @@
 
 
 namespace eco{;
-extern "C" void make_app(IN App& ap);
-extern "C" void init_app(IN App& ap);
+extern "C" void init_app(IN App* heap);
 extern "C" void load_app(IN App& ap);
+extern "C" void exit_app();
+extern "C" void exit_log();
 namespace art{;
-static bool s_run_once(true);
+////////////////////////////////////////////////////////////////////////////////
+uint32_t AppWork::s_run_once = true;
 static AppWork::createAppFunc s_create_app(nullptr);
+static inline App& app()
+{
+	return static_cast<App&>(eco::App::instance());
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 void AppWork::setApp(createAppFunc func, bool run_once)
 {
@@ -62,30 +69,28 @@ int AppWork::run(QApplication& qt_app)
 {
 	try
 	{
-		// 创建APP对象
-		m_app.reset(s_create_app());
-		eco::make_app(*m_app);
-
-		// 初始化
-		eco::init_app(*m_app);
-		m_app->on_init();
-
+		// 创建与初始化APP对象
+		eco::init_app(s_create_app());		// init 0 log
+		app().on_init();					// init 1 app
 		// 加载数据
-		eco::load_app(*m_app);
-		m_app->on_load();
+		eco::load_app(app());				// init 2 eco
+		app().on_load();
 
 		qt_app.exec();
 
 		// 释放APP对象
-		m_app->on_exit();
-		m_app.reset();
+		eco::exit_app();					// exit 2 eco
+		app().on_exit();					// exit 1 app
+		exit_log();							// exit 0 log
 	}
 	catch (eco::Error& e)
 	{
+		eco::exit_app();
 		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
 	}
 	catch (std::exception& e)
 	{
+		eco::exit_app();
 		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
 	}
 	return 0;
@@ -142,7 +147,7 @@ void AppWork::newLocalSocketConnection()
 		QTextStream stream(socket.get());
 
 		// 激活窗口
-		m_app->on_active();
+		app().on_active();
 	}
 }
 

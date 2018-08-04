@@ -45,6 +45,7 @@ namespace eco{}
 #ifdef ECO_VC100
 #define ECO_NO_VARIADIC_TEMPLATE
 #define ECO_NO_FUNCTION_TEMPLATE_DEFAULT
+#define __func__ __FUNCTION__
 #endif
 
 /*@ include protobuf.*/
@@ -126,12 +127,13 @@ public:
 template<typename type_t>
 uint32_t TypeId<type_t>::value = TypeCount<>::s_type_count++;
 
+/*
 template<typename type_t>
 inline const char* get_type()
 {
 	static const char* s_v = typeid(type_t).name();
 	return s_v;
-}
+}*/
 ECO_NS_END(eco);
 
 

@@ -53,6 +53,8 @@ public:
 	/*@ get children node set.*/
 	eco::ContextNodeSet get_children(
 		IN const char* parent_key = nullptr) const;
+	eco::ContextNodeSet find_children(
+		IN const char* parent_key = nullptr) const;
 
 	/*@ get node property.*/
 	void get_property_set(

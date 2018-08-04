@@ -124,10 +124,21 @@ void Config::add(IN const char* key, IN const char* value)
 	StringAny v;
 	impl().m_data.set(key, (v = value));
 }
-eco::ContextNodeSet Config::get_children(
+eco::ContextNodeSet Config::find_children(
 	IN const char* parent_key) const
 {
 	return impl().get_children(parent_key);
+}
+eco::ContextNodeSet Config::get_children(
+	IN const char* parent_key) const
+{
+	eco::ContextNodeSet result = impl().get_children(parent_key);
+	if (result.null())
+	{
+		if (parent_key == nullptr) parent_key = "root";
+		EcoThrow << "get config node children fail " << parent_key;
+	}
+	return result;
 }
 void Config::get_property_set(
 	OUT eco::Context& context_set,

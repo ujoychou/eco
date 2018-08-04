@@ -12,7 +12,6 @@ namespace meta{ ;
 // stamp state.
 enum
 {
-	stamp_none		= -1,		// none.
 	stamp_insert	= 0,		// insert object.(new object)
 	stamp_update	= 1,		// update object.
 	stamp_remove	= 2,		// remove object.

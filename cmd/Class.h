@@ -50,15 +50,15 @@ public:
 
 	// add a concrete command with a execute func.
 	Class& bind(
-		IN const char* name,
 		IN const char* alias,
+		IN const char* name,
 		IN const char* help_info,
 		IN ExecuteFunc func);
 
 	// add a concrete command with a execute func.
 	Class& bind(
-		IN const char* name,
 		IN const char* alias,
+		IN const char* name,
 		IN const char* help_info,
 		IN CommandExecute func);
 

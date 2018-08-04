@@ -76,7 +76,7 @@ private slots:
 	void newLocalSocketConnection();
 
 private:
-	std::shared_ptr<App> m_app;
+	static uint32_t s_run_once;
 	std::shared_ptr<QLocalServer> m_local_server;
 };
 
