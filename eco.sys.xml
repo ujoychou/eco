@@ -8,16 +8,15 @@
   <!--#.日志选项-->
   <logging>
     <async value="false"/>
-    <level value="info"/>
     <async_flush value="1000"/>
     <memcache value="5M"/>
-    <file_sink value="true">
+    <file_sink enable="true">
       <level value="debug"/>
       <file_path>./log/</file_path>
       <roll_size>100M</roll_size>
       <full_path>20170104-160222.ujoychou-PC.00051124.log</full_path>
     </file_sink>
-    <console_sink value="true">
+    <console_sink enable="true">
       <level value="info"/>
     </console_sink>
   </logging>

@@ -55,7 +55,7 @@ void Eco::on_live_timer()
 	while (Being* be = get_next_being())
 	{
 		// 生命对象的OnLive方法中，不能调用其析构函数，否则会造成递归死锁。
-		if (is_time_to_live(be->get_live_ticks()))
+		if (is_time_to_live(be->get_live_ticks()) && be->to_live())
 		{
 			try
 			{

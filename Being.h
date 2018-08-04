@@ -45,6 +45,9 @@ public:
 	// 开始生命
 	void born();
 
+	// 结束生命
+	void kill();
+
 	// 开始生命活动
 	void live();
 
@@ -67,9 +70,15 @@ protected:
 		return true;
 	}
 
-	// 维系生命
+	// 维系生命：活动修复
 	virtual void on_live()
 	{}
+
+	// 是否运行活动方法
+	virtual bool to_live()
+	{
+		return true;
+	}
 
 	friend class Eco;
 };
