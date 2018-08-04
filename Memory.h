@@ -187,6 +187,36 @@ inline void cpy_pos(OUT char* dest, OUT uint32_t& pos,
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// memory copy string to int
+template<typename int_type>
+inline int_type intcpy(IN const char* v)
+{
+	int_type int_v = 0;
+	eco::auto_strncpy((char*)&int_v, v, sizeof(int_type));
+	return int_v;
+}
+template<typename int_type>
+inline int_type intcpy(IN const std::string& v)
+{
+	int_type int_v = 0;
+	eco::auto_strncpy((char*)&int_v, v.c_str(), sizeof(int_type));
+	return int_v;
+}
+template<typename int_type>
+inline void intcpy(OUT char* v, IN int_type int_v)
+{
+	eco::auto_strncpy(&v[0], (const char*)&int_v, sizeof(int_type));
+}
+template<typename int_type>
+inline std::string intcpy(IN int_type int_v)
+{
+	char buf[20] = { 0 };
+	eco::auto_strncpy(buf, (const char*)&int_v, sizeof(int_type));
+	return buf;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 #define ECO_PTR_MEMBER(data_t, m_data) \
 public:\
 	inline data_t* operator->()\

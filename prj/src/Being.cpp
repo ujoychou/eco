@@ -30,11 +30,7 @@ Being::Being(IN const uint32_t live_ticks)
 }
 Being::~Being()
 {
-	if (impl().m_born.is_ok())
-	{
-		get_eco()->remove_being(this);
-		impl().m_born.none();
-	}
+	kill();
 }
 
 
@@ -99,6 +95,17 @@ void Being::live()
 			get_eco()->add_being(this);
 			impl().m_born.ok();
 		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Being::kill()
+{
+	if (impl().m_born.is_ok())
+	{
+		get_eco()->remove_being(this);
+		impl().m_born.none();
 	}
 }
 

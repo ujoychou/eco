@@ -73,6 +73,10 @@ StringAny::operator const uint64_t() const
 {
 	return eco::cast<uint64_t>(impl().m_value);
 }
+StringAny::operator const float() const
+{
+	return eco::cast<float>(impl().m_value);
+}
 StringAny::operator const double() const
 {
 	return eco::cast<double>(impl().m_value);
@@ -139,6 +143,10 @@ Parameter::operator const int64_t() const
 Parameter::operator const uint64_t() const
 {
 	return (uint64_t)(impl().m_value);
+}
+Parameter::operator const float() const
+{
+	return (float)(impl().m_value);
 }
 Parameter::operator const double() const
 {
@@ -221,6 +229,34 @@ const StringAny ContextNode::at(IN const char* key) const
 		}
 	}
 	EcoThrow << "get context node key value error: " << key;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco::ContextNode ContextNode::get_children(const char* key) const
+{
+	int node_end = eco::find_first(key, '/');
+	if (node_end == -1)
+	{
+		// find the children.
+		auto it = impl().m_children.begin();
+		for (; it != impl().m_children.end(); ++it)
+		{
+			if (strcmp(key, it->get_name()) == 0)
+				return *it;
+		}
+	}
+	else
+	{
+		// recursive find the key value.
+		auto it = impl().m_children.begin();
+		for (; it != impl().m_children.end(); ++it)
+		{
+			if (strncmp(it->get_name(), key, node_end) == 0)
+				return it->get_children(&key[node_end + 1]);
+		}
+	}
+	EcoThrow << "get context node child error: " << key;
 }
 
 

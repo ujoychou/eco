@@ -51,6 +51,7 @@ public:
 	operator const unsigned long() const;
 	operator const int64_t() const;
 	operator const uint64_t() const;
+	operator const float() const;
 	operator const double() const;
 	operator const bool() const;
 };
@@ -86,6 +87,7 @@ public:
 	operator const unsigned long() const;
 	operator const int64_t() const;
 	operator const uint64_t() const;
+	operator const float() const;
 	operator const double() const;
 	operator const bool() const;
 };
@@ -165,6 +167,9 @@ public:
 	void set_children(IN eco::ContextNodeSet&);
 	eco::ContextNodeSet& children();
 	const eco::ContextNodeSet& get_children() const;
+
+	// get children
+	eco::ContextNode get_children(const char* key) const;
 
 	// get key value.
 	const StringAny at(IN const char* key) const;

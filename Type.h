@@ -52,17 +52,20 @@ typedef int Result;
 
 ////////////////////////////////////////////////////////////////////////////////
 // topic content snap type.
-typedef uint8_t ContentType;
 enum 
 {
-	content_snap		= 1,
-	content_snap_end	= 2,
-	content_new			= 3,
+	content_head		= 1,
+	content_last		= 2,
+	content_snap		= 4,
+	content_new			= 8,
 };
+typedef uint8_t ContentType;
+
+
 // judge whether it is a snap.
 inline bool is_snap(IN const ContentType v)
 {
-	return v <= content_snap_end;
+	return eco::has(v, content_snap);
 }
 
 
@@ -195,9 +198,11 @@ public:
 	inline explicit Bytes(
 		IN const char* data,
 		IN const uint32_t size = -1)
-		: m_data(data)
-		, m_size(size != -1 ? size : static_cast<uint32_t>(strlen(data)))
-	{}
+		: m_data(data), m_size(size)
+	{
+		if (m_size == -1 && data != nullptr)
+			m_size = static_cast<uint32_t>(strlen(data));
+	}
 
 	inline const char* c_str() const
 	{
@@ -792,13 +797,13 @@ public:
 	template<typename T>
 	inline StreamT& operator<<(IN const eco::SquareT<T>& v)
 	{
-		(*this) << '(' << v.value << ')';
+		(*this) << '[' << v.value << ']';
 		return *this;
 	}
 	template<typename T>
 	inline StreamT& operator<<(IN const eco::BraceT<T>& v)
 	{
-		(*this) << '(' << v.value << ')';
+		(*this) << '{' << v.value << '}';
 		return *this;
 	}
 
@@ -1068,13 +1073,14 @@ inline bool is_infinity(IN const double v)
 {
 	return v == std::numeric_limits<double>::infinity();
 }
-inline void set_double(OUT double& d, IN const double v, IN int def = -1)
+template<typename Number>
+inline void set_double(OUT Number& d, IN const double v, IN Number def = -1)
 {
 	d = (eco::is_nan(v) || eco::is_infinity(v)) ? def : v;
 }
-inline void set_double(OUT int& d, IN const double v, IN int def = -1)
+inline double get_double(IN const double v, IN double def = -1)
 {
-	d = (eco::is_nan(v) || eco::is_infinity(v)) ? def : (int)v;
+	return (eco::is_nan(v) || eco::is_infinity(v)) ? def : v;
 }
 inline char yn(IN const bool v)
 {
@@ -1159,6 +1165,67 @@ private:
 	eco::StreamT<eco::FixBuffer<size> > m_stream;
 };
 typedef Format<fix_size> FixFormat;
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename T>
+class AutoArray
+{
+	ECO_NONCOPYABLE(AutoArray);
+public:
+	typedef std::shared_ptr<AutoArray> ptr;
+
+	inline AutoArray()
+	{}
+
+	inline ~AutoArray()
+	{
+		for (size_t i = 0; i < m_data.size(); i++)
+		{
+			delete ((T*)m_data[i]);
+		}
+	}
+
+	inline T* release(IN size_t i)
+	{
+		T* data = (T*)m_data[i];
+		m_data[i] = nullptr;
+		return data;
+	}
+
+	inline void release()
+	{
+		m_data.clear();
+	}
+
+	inline size_t size() const
+	{
+		return m_data.size();
+	}
+
+	inline T* operator [](const size_t i)
+	{
+		return (T*)m_data[i];
+	}
+
+	inline const T* operator [](const size_t i) const
+	{
+		return (T*)m_data[i];
+	}
+
+	inline std::vector<void*>& get()
+	{
+		return m_data;
+	}
+
+	inline const std::vector<void*>& get() const
+	{
+		return m_data;
+	}
+
+private:
+	std::vector<void*> m_data;
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
