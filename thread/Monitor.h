@@ -21,8 +21,6 @@ thread safe object state.
 
 
 namespace eco{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class Monitor : public eco::Object<Monitor>
 {
@@ -43,6 +41,7 @@ public:
 	/*@ reset monitor to wait.*/
 	inline void reset(IN int32_t task_count = 1)
 	{
+		eco::Mutex::ScopeLock lock(mutex());
 		m_task_count = task_count;
 	}
 
@@ -51,7 +50,7 @@ public:
 	*/
 	inline bool wait()
 	{
-		eco::Mutex::ScopeLock lock(m_cond_var.mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		if (m_task_count > 0)
 		{
 			m_cond_var.wait();
@@ -63,9 +62,9 @@ public:
 	* @ return: if tasks finised: ok; if tasks fail: return fail; else return
 	timeout.
 	*/
-	inline int timed_wait(IN int32_t millsec)
+	inline eco::Result timed_wait(IN int32_t millsec)
 	{
-		eco::Mutex::ScopeLock lock(m_cond_var.mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		if (m_task_count > 0)
 		{
 			if (!m_cond_var.timed_wait(millsec))
@@ -79,7 +78,7 @@ public:
 	// finish one task.
 	inline void finish()
 	{
-		eco::Mutex::ScopeLock lock(m_cond_var.mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		m_task_count = 0;
 		m_cond_var.notify_all();
 	}
@@ -87,7 +86,7 @@ public:
 	// finish one task.
 	inline void finish_one()
 	{
-		eco::Mutex::ScopeLock lock(m_cond_var.mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		--m_task_count;
 		if (m_task_count == 0)
 		{
@@ -98,7 +97,7 @@ public:
 	// one task failed.
 	inline void fail()
 	{
-		eco::Mutex::ScopeLock lock(m_cond_var.mutex());
+		eco::Mutex::ScopeLock lock(mutex());
 		m_task_count = -1;
 		m_cond_var.notify_all();
 	}

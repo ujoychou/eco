@@ -188,6 +188,11 @@ template<typename Aspect, uint32_t mutex_size>
 class MutexPool
 {
 public:
+	inline static Mutex& mutex(const uint64_t id)
+	{
+		return s_mutex_pool[(uint32_t)(id) % mutex_size];
+	}
+
 	inline static Mutex& mutex(const void* obj)
 	{
 		return s_mutex_pool[reinterpret_cast<uint32_t>(obj) % mutex_size];

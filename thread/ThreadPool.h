@@ -33,7 +33,7 @@ class ThreadPool
 public:
 	// start thread.
 	typedef eco::Thread::thread_func thread_func;
-	void run(
+	inline void run(
 		thread_func func,
 		IN uint32_t thread_size,
 		IN const char* name = nullptr)
@@ -47,7 +47,7 @@ public:
 	}
 
 	// waiting thread over.
-	void join()
+	inline void join()
 	{
 		for (auto it = m_threads.begin(); it != m_threads.end(); ++it)
 		{
@@ -57,7 +57,7 @@ public:
 	}
 
 	// release
-	void release()
+	inline void release()
 	{
 		std::list<eco::Thread*>::iterator it;
 		for (it = m_threads.begin(); it != m_threads.end(); ++it)
@@ -67,7 +67,7 @@ public:
 		m_threads.clear();
 	}
 
-	~ThreadPool()
+	inline ~ThreadPool()
 	{
 		release();
 	}

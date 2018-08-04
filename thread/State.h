@@ -32,7 +32,7 @@ class State
 	ECO_NONCOPYABLE(State);
 public:
 	// state flag.
-	enum 
+	enum Flag
 	{
 		_a  = 0x0001,
 		_b  = 0x0002,
@@ -85,6 +85,9 @@ public:
 
 	inline bool is_ok() const;
 
+	// set ok state.
+	inline void set_ok(IN bool is);
+
 public:
 	// add state.
 	inline void add(IN const uint32_t v);
@@ -129,6 +132,10 @@ State::State() : m_value(_no)
 {}
 State::State(IN const uint32_t v) : m_value(v)
 {}
+void State::set_ok(IN bool is)
+{
+	m_value = is ? _ok : _no;
+}
 void State::none()
 {
 	m_value = _no;

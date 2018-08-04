@@ -28,11 +28,8 @@ message server.
 #include <eco/log/Log.h>
 
 
-
 namespace eco{;
 namespace detail{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename Message,
@@ -41,24 +38,25 @@ template<
 class MessageServer
 {
 	ECO_OBJECT(MessageServer);
+protected:
+	/*@ work thread method.	*/
+	virtual void work() = 0;
+
 public:
 	typedef MessageServer<Message, Handler, Queue> T;
 
-
-////////////////////////////////////////////////////////////////////////////////
-public:
-	MessageServer()
+	inline MessageServer()
 	{}
 
 	/*@ stop message server: stop message queue and thread pool. */
-	~MessageServer()
+	inline ~MessageServer()
 	{
 		stop();
 	}
 
 	/*@ set message handler. */
 	template<typename T>
-	void set_message_handler(IN T h)
+	inline void set_message_handler(IN T h)
 	{
 		m_message_handler = h;
 	}
@@ -80,7 +78,7 @@ public:
 	server will run in a synchronous mode, else it will start number of threads 
 	(decicated by "thread_size")and message server run in a asynchronous mode.
 	*/
-	void run(IN uint32_t thread_size = 1, IN const char* name = nullptr)
+	inline void run(IN uint32_t thread_size = 1, IN const char* name = nullptr)
 	{
 		if (thread_size == 0)
 		{
@@ -156,11 +154,7 @@ public:
 		m_message_queue.post_unique(msg, unique_check);
 	}
 
-////////////////////////////////////////////////////////////////////////////////
 protected:
-	/*@ work thread method.	*/
-	virtual void work() = 0;
-
 	Queue m_message_queue;
 	Handler m_message_handler;
 	eco::ThreadPool m_thread_pool;
@@ -173,10 +167,17 @@ protected:
 template<typename Message, typename Handler = std::function<void(Message&)> >
 class MessageServer : public detail::MessageServer<Message, Handler>
 {
+	ECO_OBJECT(MessageServer);
+public:
+	inline MessageServer()
+	{}
+
 protected:
 	/*@ work thread method.	*/
 	virtual void work() override
 	{
+		eco::this_thread::init();
+
 		while (true)
 		{
 			// don't declare message before while.
@@ -194,7 +195,7 @@ protected:
 				EcoError << "message server: " << e;
 			}
 			catch (std::exception& e) {
-				EcoLogStr(error, 512) << "message server: " << e.what();
+				EcoLog(error) << "message server: " << e.what();
 			}
 		}// end while
 	}
@@ -207,14 +208,34 @@ class MessageServerPool
 {
 	ECO_OBJECT(MessageServerPool);
 public:
-	typedef MessageServer<Message, Handler> MessageServer;
-
-	class Item
+	class HandlerPtr
 	{
 	public:
+		inline void operator()(IN Message& msg)
+		{
+			(*m_handler_ptr)(msg);
+		}
+
+		inline explicit HandlerPtr(IN Handler* v = nullptr) : m_handler_ptr(v)
+		{}
+
+		inline Handler& handler()
+		{
+			return *m_handler_ptr;
+		}
+
+		Handler* m_handler_ptr;
+	};
+	typedef eco::MessageServer<Message, HandlerPtr> MessageServer;
+
+	class MessageWorker
+	{
+	public:
+		inline MessageWorker() : work(0)
+		{}
+
 		inline void init()
 		{
-			work = 0;
 			server.reset(new MessageServer());
 		}
 
@@ -228,7 +249,11 @@ public:
 			work -= v;
 		}
 
-	private:
+		inline void post(IN Message& msg)
+		{
+			server->post(msg);
+		}
+
 		Atomic<uint32_t> work;
 		typename MessageServer::ptr server;
 	};
@@ -237,38 +262,62 @@ public:
 	inline MessageServerPool()
 	{}
 
+	/*@ message handler. */
+	template<typename T>
+	inline void set_message_handler(IN T h)
+	{
+		m_message_handler = h;
+	}
+	inline Handler& message_handler()
+	{
+		return m_message_handler;
+	}
+
 	inline void run(IN uint32_t thread_size, IN const char* name = nullptr)
 	{
 		m_pool.resize(thread_size);
 		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
 		{
-			it.init();
+			it->init();
+			it->server->set_message_handler(HandlerPtr(&m_message_handler));
 			it->server->run(1, name);
 		}
 	}
 
-	inline void stop()
+	// use "close" to wait all message handled.
+	inline void close()
 	{
 		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
 		{
 			it->server->close();
 		}
+	}
+
+	inline void release()
+	{
+		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			it->server->release();
+		}
+	}
+
+	inline void join()
+	{
 		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
 		{
 			it->server->join();
 		}
-		m_pool.clear();
 	}
 
-	inline Item* attach(IN const uint32_t work = 1)
+	inline MessageWorker* attach(IN const uint32_t work = 1)
 	{
-		uint32_t min_work = 0;
 		auto it_min = m_pool.begin();
-		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		uint32_t min_work = it_min->work;
+		for (auto it = it_min; it != m_pool.end(); ++it)
 		{
-			if (it->work < min_work)
+			if (min_work > it->work)
 			{
-				work = it->work;
+				min_work = it->work;
 				it_min = it;
 			}
 		}
@@ -277,7 +326,8 @@ public:
 	}
 
 private:
-	std::vector<Item> m_pool;
+	Handler m_message_handler;
+	std::vector<MessageWorker> m_pool;
 };
 
 
