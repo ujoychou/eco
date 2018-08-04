@@ -2,9 +2,9 @@
 #define ECO_TOPIC_H
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/thread/topic/Role.h>
-#include <unordered_map>
-#include <deque>
 #include <map>
+#include <deque>
+#include <unordered_map>
 
 
 ECO_NS_BEGIN(eco);
@@ -15,18 +15,23 @@ class OneTopic : public PopTopic<TopicId>
 {
 	ECO_TOPIC_TOPIC(OneTopic);
 protected:
-	virtual void do_snap(IN Subscription& node) override
+	virtual void do_snap(
+		IN eco::Subscription& node,
+		IN eco::TopicEvent* event) override
 	{
 		if (m_snap.get() != nullptr)
 		{
 			auto* suber = (Subscriber*)node.m_subscriber;
-			suber->on_publish(m_id, m_snap, content_snap_end);
+			ContentType type = content_snap | content_head | content_last;
+			m_snap->stamp() = eco::meta::stamp_insert;
+			suber->on_publish(*this, ContentWrap(m_snap, type, event));
 		}
 	}
 
-	virtual void do_move(OUT Content::ptr& newc) override
+	virtual bool do_move(OUT eco::Content::ptr& newc) override
 	{
 		m_snap = newc;		// update snap with new data.
+		return true;
 	}
 
 	virtual void do_clear() override
@@ -56,29 +61,107 @@ public:
 		eco::Mutex::ScopeLock lock(mutex());
 		return !m_snap_set.empty() ? m_snap_set.back() : nullptr;
 	}
+	inline Content::ptr head() const
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		return !m_snap_set.empty() ? m_snap_set.front() : nullptr;
+	}
+
+	inline const uint32_t size() const
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		return m_snap_set.size();
+	}
+	inline const std::deque<eco::Content::ptr>& snap_set_raw() const
+	{
+		return m_snap_set;
+	}
+
+	// add "object set/object/shared_object" to topic by "load".
+	template<typename object_set_t>
+	inline void push_front_set(IN const object_set_t& set)
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		for (auto it = set.rbegin(); it != set.rend(); ++it)
+		{
+			push_front_raw(*it);
+		}
+	}
+	template<typename object_t>
+	inline void push_front(IN const object_t& obj)
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		push_front_raw(obj);
+	}
+	template<typename object_t>
+	inline void push_front(IN const std::shared_ptr<object_t>& obj)
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		push_front_raw(obj);
+	}
+
+	inline void pop_front()
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		m_snap_set.pop_front();
+	}
+
+	template<typename object_t>
+	inline void push_front_raw(IN const object_t& obj)
+	{
+		Content::ptr newc(new ContentT<
+			object_t, object_t>(obj, eco::meta::stamp_insert));
+		m_snap_set.push_front(newc);
+	}
+	template<typename object_t>
+	inline void push_front_raw(IN const std::shared_ptr<object_t>& obj)
+	{
+		typedef std::shared_ptr<object_t> value_t;
+		Content::ptr newc(new ContentT<
+			object_t, value_t>(obj, eco::meta::stamp_insert));
+		m_snap_set.push_front(newc);
+	}
 
 protected:
-	virtual void do_snap(IN Subscription& node) override
+	virtual void do_snap(
+		IN eco::Subscription& node,
+		IN eco::TopicEvent* event) override
 	{
-		if (m_snap_set.empty()) return;
-		auto it = m_snap_set.begin();
-		auto it_end = m_snap_set.end();
-		// node subscriber may be destruct in "on_publish";
-		for (--it_end; it != m_snap_set.end() && node.m_working; ++it)
+		// get start seq.
+		size_t seq = event ? event->get_snap_seq(*this) : 0;
+		if (seq > m_snap_set.size())
 		{
-			auto snap = (it != it_end) ? content_snap : content_snap_end;
-			auto* suber = (Subscriber*)node.m_subscriber;
-			suber->on_publish(m_id, *it, snap);
+			seq = 0;
+			EcoError << "seq topic hasn't enough content to publish snap "
+				<< "seq > size()" << seq <= m_snap_set.size();
+		}
+		size_t seq_init = seq + 1;
+		eco::ContentType type = eco::content_snap | eco::content_head;
+
+		// *node subscriber may be destruct in "on_publish";
+		// publish the snap, and set a content type.
+		auto* suber = (eco::Subscriber*)node.m_subscriber;
+		for (; seq < m_snap_set.size() && node.m_working; ++seq)
+		{
+			if (seq == seq_init)
+				eco::del(type, eco::content_head);
+			if (seq == m_snap_set.size() - 1)
+				eco::add(type, eco::content_last);
+
+			auto& content = m_snap_set[seq];
+			content->stamp() = eco::meta::stamp_insert;
+			suber->on_publish(*this, ContentWrap(content, type, event));
 		}
 	}
 
-	virtual void do_move(OUT Content::ptr& newc) override
+	virtual bool do_move(OUT eco::Content::ptr& newc) override
 	{
 		// update last content.
-		if (eco::meta::is_update(newc->get_stamp()))
+		if (eco::meta::is_update(newc->get_stamp()) && m_snap_set.size() > 0)
 			m_snap_set.back() = newc;
 		else
 			m_snap_set.push_back(newc);
+		return true;
 	}
 
 	virtual void do_clear() override
@@ -146,21 +229,40 @@ public:
 	}
 
 protected:
-	virtual void do_snap(IN Subscription& node) override
+	// replace old content with new content.
+	// note that: old_c may be nullptr, when insert first content.
+	virtual bool do_update(
+		IN eco::Content::ptr& new_c,
+		IN eco::Content::ptr& old_c)
+	{
+		old_c = new_c;
+		return true;
+	}
+
+	virtual void do_snap(
+		IN eco::Subscription& node,
+		IN eco::TopicEvent* event) override
 	{
 		if (m_snap_set.empty()) return;
+
+		// *node subscriber may be destruct in "on_publish";
+		// publish the snap, and set a content type.
+		uint32_t index = 0;
+		auto* suber = (Subscriber*)node.m_subscriber;
+		ContentType snap = content_snap | content_head;
 		auto it = m_snap_set.begin();
-		auto it_end = m_snap_set.end();
-		// node subscriber may be destruct in "on_publish";
-		for (--it_end; it != m_snap_set.end() && node.m_working; ++it)
+		for (; it != m_snap_set.end() && node.m_working; ++it, ++index)
 		{
-			auto snap = (it != it_end) ? content_snap : content_snap_end;
-			auto* suber = (Subscriber*)node.m_subscriber;
-			suber->on_publish(m_id, it->second, snap);
+			if (index == 1)
+				eco::del(snap, content_head);
+			if (index == m_snap_set.size() - 1)
+				eco::add(snap, content_last);
+			it->second->stamp() = eco::meta::stamp_insert;
+			suber->on_publish(*this, ContentWrap(it->second, snap, event));
 		}
 	}
 
-	virtual void do_move(OUT Content::ptr& newc) override
+	virtual bool do_move(OUT eco::Content::ptr& newc) override
 	{
 		// get object id.
 		ObjectId obj_id;
@@ -173,9 +275,13 @@ protected:
 		}
 		else
 		{
-			newc->stamp() = eco::meta::stamp_clean;
-			m_snap_set[obj_id] = newc;
+			auto& oldc = m_snap_set[obj_id];
+			newc->stamp() = (oldc != nullptr)
+				? eco::meta::stamp_update
+				: eco::meta::stamp_insert;
+			return do_update(newc, oldc);
 		}
+		return true;
 	}
 
 	virtual void do_clear() override
@@ -183,7 +289,6 @@ protected:
 		m_snap_set.clear();
 	}
 
-protected:
 	ObjectMap m_snap_set;
 };
 

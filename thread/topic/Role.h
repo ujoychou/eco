@@ -1,12 +1,16 @@
 ﻿#ifndef ECO_TOPIC_ROLE_H
 #define ECO_TOPIC_ROLE_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Cast.h>
+#include <eco/Any.h>
+#include <eco/Object.h>
+#include <eco/log/Log.h>
 #include <eco/meta/Stamp.h>
 #include <eco/thread/topic/Subscription.h>
 
 
 ECO_NS_BEGIN(eco);
+class Topic;
+class TopicServer;
 ////////////////////////////////////////////////////////////////////////////////
 // define customer topic.
 #define ECO_TOPIC(topic_t) \
@@ -14,7 +18,7 @@ ECO_OBJECT(topic_t) \
 ECO_TYPE(topic_t) \
 public:\
 	inline topic_t() {} \
-	inline static eco::Topic* make(IN const TopicId& id)\
+	inline static eco::Topic* make(const TopicId& id)\
 	{\
 		eco::PopTopic<TopicId>* topic = new topic_t();\
 		topic->set_id(id);\
@@ -25,6 +29,7 @@ public:\
 #define ECO_TOPIC_TOPIC(topic_t) \
 ECO_TOPIC(topic_t) \
 public:\
+	typedef topic_t super;\
 	inline static const char* topic_type()\
 	{\
 		return #topic_t;\
@@ -43,7 +48,7 @@ private:
 	uint64_t m_value;
 
 public:
-	inline TopicId(
+	inline explicit TopicId(
 		IN const uint16_t type  = 0,
 		IN const uint16_t prop	= 0,
 		IN const uint64_t value = 0)
@@ -101,7 +106,6 @@ public:
 		eco::hash_combine<uint64_t>(seed, m_value << 16);
 		return static_cast<std::size_t>(seed);
 	}
-
 	inline bool operator==(IN const TopicId& tid) const
 	{
 		return m_value == tid.m_value && m_type == tid.m_type;
@@ -114,14 +118,22 @@ public:
 	{
 		return *this == TopicId(type, prop, value);
 	}
-};
-////////////////////////////////////////////////////////////////////////////////
-class TopicIdHash
-{
+
 public:
-	inline std::size_t operator()(IN const TopicId& v) const
+	// for std::unorder_map.
+	struct Hash
 	{
-		return v.hash_value();
+		inline std::size_t operator()(IN const TopicId& v) const
+		{
+			return v.hash_value();
+		}
+	};
+
+	// for std::map.
+	inline bool operator<(IN const TopicId& tid) const
+	{
+		return (m_type != tid.m_type) 
+			? m_type < tid.m_type : m_value < tid.m_value;
 	}
 };
 
@@ -231,6 +243,87 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+class TopicEvent
+{
+public:
+	typedef std::shared_ptr<TopicEvent> ptr;
+
+	// get snap seq size to publish snap.
+	virtual uint32_t get_snap_seq(IN eco::Topic& topic)
+	{
+		return 0;	// publish all snap.
+	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class ContentWrap
+{
+public:
+	inline ContentWrap(
+		IN eco::Content::ptr& content,
+		IN eco::ContentType type,
+		IN eco::TopicEvent* event = nullptr)
+		: m_event(event), m_type(type), m_content(&content)
+	{}
+
+	// content type.
+	inline const uint32_t get_type_id() const
+	{
+		return (**m_content).get_type_id();
+	}
+
+	// data context.
+	inline bool has_event() const
+	{
+		return m_event != nullptr;
+	}
+	inline eco::TopicEvent* event()
+	{
+		return m_event;
+	}
+
+	// cast content object.
+	template<typename value_t>
+	inline value_t& cast()
+	{
+		return *static_cast<value_t*>((**m_content).get_value());
+	}
+	template<typename value_t>
+	inline value_t* cast_ptr()
+	{
+		return type_id() == eco::TypeId<value_t>::value
+			? static_cast<value_t*>((**m_content).get_value()) : nullptr;
+	}
+
+	// content data.
+	inline eco::Content::ptr& data()
+	{
+		return *m_content;
+	}
+	inline const eco::ContentType snap() const
+	{
+		return m_type;
+	}
+
+	// content stamp.
+	inline eco::meta::Stamp& stamp()
+	{
+		return (**m_content).stamp();
+	}
+	inline const eco::meta::Stamp get_stamp() const
+	{
+		return (**m_content).get_stamp();
+	}
+
+private:
+	eco::TopicEvent* m_event;
+	eco::ContentType m_type;
+	eco::Content::ptr* m_content;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 class Subscriber : public eco::detail::Subscriber
 {
 	ECO_OBJECT(Subscriber);
@@ -238,52 +331,16 @@ public:
 	inline Subscriber() {};
 	virtual ~Subscriber() {};
 
-public:
 	// publish content: new/remove content.
-	virtual void on_publish(
-		IN const eco::TopicId& topic_id,
-		IN eco::Content::ptr& content,
-		IN const eco::ContentType type)
+	virtual void on_publish(IN eco::Topic& topic, IN eco::ContentWrap& wrap)
 	{}
 
 	// clear topic content
-	virtual void on_clear(
-		IN const eco::TopicId& topic_id)
+	virtual void on_clear(IN eco::Topic& opic)
 	{}
 
 	// erase topic and clear content.
-	virtual void on_erase(
-		IN const eco::TopicId& topic_id)
-	{}
-
-public:
-	virtual void on_publish(
-		IN const std::string& topic_id,
-		IN eco::Content::ptr& content,
-		IN const eco::ContentType type)
-	{}
-
-	// clear topic content
-	virtual void on_clear(IN const std::string& topic_id)
-	{}
-
-	// erase topic and clear content.
-	virtual void on_erase(IN const std::string& topic_id)
-	{}
-
-public:
-	virtual void on_publish(
-		IN const uint64_t topic_id,
-		IN eco::Content::ptr& content,
-		IN const eco::ContentType type)
-	{}
-
-	// clear topic content
-	virtual void on_clear(IN const uint64_t topic_id)
-	{}
-
-	// erase topic and clear content.
-	virtual void on_erase(IN const uint64_t topic_id)
+	virtual void on_erase(IN eco::Topic& topic)
 	{}
 };
 
@@ -293,80 +350,59 @@ class Topic : public detail::Topic
 {
 	ECO_OBJECT(Topic);
 public:
-	inline Topic() {}
-	virtual ~Topic() {}
-
-	// init topic event.
-	virtual void on_init(IN void* context, IN void* data) {};
-
-	// erase topic event.
-	virtual void on_erase(IN void* context, IN void* data) {};
-
-public:
 	// topic type.
-	virtual const char* get_type() const = 0;
 	virtual const char* get_topic_type() const = 0;
 
-	// topic server: publish snap after subsriber reserve topic.
-	virtual void publish_snap(IN Subscription& subscription) = 0;
+	// topic type name.
+	virtual const char* get_type() const = 0;
 
-	// topic server: publish new content after append_new()(recv) new content.
-	virtual void publish_new(IN Content::ptr& new_c) = 0;
+	// object type id.
+	virtual const uint32_t get_type_id() const = 0;
 
-	// publish erase topic event.
-	virtual void publish_erase_topic() = 0;
+	// init topic event.
+	virtual void on_init(IN eco::TopicEvent* event) {}
 
-	// publish clear topic content.
-	virtual void publish_clear_content() = 0;
-};
+	// erase topic event.
+	virtual void on_erase(IN eco::TopicEvent* event) {}
 
-
-////////////////////////////////////////////////////////////////////////////////
-// note that PopTopic is base topic of "One/Seq/Set" topic.
-template<typename TopicId = eco::TopicId>
-class PopTopic : public Topic
-{
-	ECO_TOPIC_TOPIC(PopTopic);
 protected:
 	// publish snap to subscriber.
-	virtual void do_snap(IN Subscription& subscription) {}
+	virtual void do_snap(
+		IN eco::Subscription& node,
+		IN eco::TopicEvent* evt) {}
 
 	// move new content to snap content.
-	virtual void do_move(OUT Content::ptr& new_c) {}
+	virtual bool do_move(
+		OUT eco::Content::ptr& new_c) 
+	{
+		return true;
+	}
 
 	// clear all content
 	virtual void do_clear() {}
 
 public:
-	// topic identity.
-	typedef TopicId TopicId;
-	inline void set_id(IN const TopicId& id)
-	{
-		m_id = id;
-	}
-	inline const TopicId& get_id() const
-	{
-		return m_id;
-	}
+	inline Topic() {}
+	virtual ~Topic() {}
 
 	// add "object set/object/shared_object" to topic by "load".
 	template<typename object_set_t>
-	inline void append_set(IN const object_set_t& set)
+	inline void push_back_set(IN const object_set_t& set)
 	{
 		for (auto it = set.begin(); it != set.end(); ++it)
 		{
-			append(*it);
+			push_back(*it);
 		}
 	}
 	template<typename object_t>
-	inline void append(IN const object_t& obj)
+	inline void push_back(IN const object_t& obj)
 	{
 		Content::ptr newc(new ContentT<
 			object_t, object_t>(obj, eco::meta::stamp_insert));
 		do_move(newc);
 	}
 	template<typename object_t>
-	inline void append(IN const std::shared_ptr<object_t>& obj)
+	inline void push_back(IN const std::shared_ptr<object_t>& obj)
 	{
 		typedef std::shared_ptr<object_t> value_t;
 		Content::ptr newc(new ContentT<
@@ -374,23 +410,23 @@ public:
 		do_move(newc);
 	}
 
-public:
 	// topic server: publish snap after subsriber reserve topic.
-	virtual void publish_snap(IN Subscription& node) override
+	virtual void publish_snap(IN Subscription& node, IN eco::TopicEvent* evt)
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		if (node.m_subscriber != nullptr)
 		{
 			node.subscribe_submit();
-			do_snap(node);
+			do_snap(node, evt);
 		}
 	}
 
 	// topic server: publish new content after append_new()(recv) new content.
-	virtual void publish_new(IN Content::ptr& new_c) override
+	virtual void publish_new(IN eco::Content::ptr& new_c)
 	{
+		if (!do_move(new_c)) return;
+
 		// publish new content to all subscriber.
-		do_move(new_c);
 		eco::Mutex::ScopeLock lock(mutex());
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
@@ -399,7 +435,7 @@ public:
 			if (node->m_working)
 			{
 				auto* suber = (Subscriber*)node->m_subscriber;
-				suber->on_publish(m_id, new_c, content_new);
+				suber->on_publish(*this, ContentWrap(new_c, content_new));
 			}
 			node = next;
 		}
@@ -407,7 +443,7 @@ public:
 	}
 
 	// publish remove topic event.
-	virtual void publish_erase_topic() override
+	virtual void publish_erase_topic()
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		Subscription* node = subscriber_head();
@@ -417,7 +453,7 @@ public:
 			if (node->m_working)
 			{
 				Subscriber* suber = (Subscriber*)(node->m_subscriber);
-				suber->on_erase(m_id);
+				suber->on_erase(*this);
 			}
 			node = next;
 		}
@@ -426,7 +462,7 @@ public:
 	}
 
 	// publish clear all content in topic.
-	virtual void publish_clear_content() override
+	virtual void publish_clear_content()
 	{
 		do_clear();
 		eco::Mutex::ScopeLock lock(mutex());
@@ -438,12 +474,32 @@ public:
 			if (node->m_working)
 			{
 				Subscriber* suber = (Subscriber*)(node->m_subscriber);
-				suber->on_clear(m_id);
+				suber->on_clear(*this);
 			}
 			node = next;
 		}// end while.
 	}
+};
 
+
+////////////////////////////////////////////////////////////////////////////////
+// note that PopTopic is base topic of "One/Seq/Set" topic.
+template<typename TopicId = eco::TopicId>
+class PopTopic : public Topic
+{
+	ECO_TOPIC_TOPIC(PopTopic);
+public:
+	// topic identity.
+	typedef TopicId TopicId;
+	inline void set_id(IN const TopicId& id)
+	{
+		m_id = id;
+	}
+	inline const TopicId& get_id() const
+	{
+		return m_id;
+	}
+	
 protected:
 	TopicId m_id;
 };
@@ -457,14 +513,14 @@ public:
 	// publish mode.
 	enum
 	{
-		mode_publish_snap,				// when subscribe a topic.
-		mode_publish_new,				// when publish a content.
-		mode_erase_topic,				// when erase a topic.
-		mode_clear_content,				// when clear all content of topic.
+		mode_publish_snap		= 1,	// when subscribe a topic.
+		mode_publish_new		= 2,	// when publish a content.
+		mode_erase_topic		= 3,	// when erase a topic.
+		mode_clear_content		= 4,	// when clear all content of topic.
 	};
 	typedef uint32_t Mode;
 
-	inline Publisher() : m_publish_mode(-1)
+	inline Publisher() : m_mode(eco::value_none)
 	{}
 
 	// publish new content.
@@ -473,7 +529,7 @@ public:
 		IN Content::ptr& new_content)
 		: m_topic(std::move(topic))
 		, m_new_content(std::move(new_content))
-		, m_publish_mode(mode_publish_new)
+		, m_mode(mode_publish_new)
 	{}
 
 	// publish some mode: erase_topic & clear content.
@@ -481,43 +537,47 @@ public:
 		IN Topic::ptr& topic, 
 		IN const Mode publish_mode)
 		: m_topic(std::move(topic))
-		, m_publish_mode(publish_mode)
+		, m_mode(publish_mode)
 	{}
 
 	// subscriber subscribe topic.
 	inline Publisher(
 		IN Topic::ptr& topic,
-		IN AutoRefPtr<Subscription>& subscription)
+		IN AutoRefPtr<Subscription>& node,
+		IN eco::TopicEvent::ptr& event)
 		: m_topic(std::move(topic))
-		, m_subscription(std::move(subscription))
-		, m_publish_mode(mode_publish_snap)
+		, m_node(std::move(node))
+		, m_mode(mode_publish_snap)
+		, m_event(event)
 	{}
 
 	inline Publisher(Publisher&& pub)
 		: m_topic(std::move(pub.m_topic))
 		, m_new_content(std::move(pub.m_new_content))
-		, m_subscription(std::move(pub.m_subscription))
-		, m_publish_mode(pub.m_publish_mode)
+		, m_node(std::move(pub.m_node))
+		, m_event(pub.m_event)
+		, m_mode(pub.m_mode)
 	{}
 
 	inline Publisher& operator=(Publisher&& pub)
 	{
+		m_event = pub.m_event;
+		m_mode = pub.m_mode;
 		m_topic = std::move(pub.m_topic);
 		m_new_content = std::move(pub.m_new_content);
-		m_subscription = std::move(pub.m_subscription);
-		m_publish_mode = pub.m_publish_mode;
+		m_node = std::move(pub.m_node);
 		return *this;
 	}
 
 	inline void operator()(void)
 	{
-		switch (m_publish_mode)
+		switch (m_mode)
 		{
 		case mode_publish_new:
 			m_topic->publish_new(m_new_content);
 			break;
 		case mode_publish_snap:
-			m_topic->publish_snap(*m_subscription);
+			m_topic->publish_snap(*m_node, m_event.get());
 			break;
 		case mode_erase_topic:
 			m_topic->publish_erase_topic();
@@ -529,13 +589,14 @@ public:
 	}
 
 private:
+	uint32_t m_mode;
 	Topic::ptr m_topic;
+	TopicEvent::ptr m_event;
 	Content::ptr m_new_content;
-	AutoRefPtr<Subscription> m_subscription;
-	uint32_t m_publish_mode;
+	AutoRefPtr<Subscription> m_node;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::front
+ECO_NS_END(eco);
 #endif

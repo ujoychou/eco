@@ -1,45 +1,21 @@
-﻿#ifndef ECO_TOPIC_SERVER_H
-#define ECO_TOPIC_SERVER_H
+﻿#ifndef ECO_TOPIC_QUEUE_H
+#define ECO_TOPIC_QUEUE_H
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Any.h>
-#include <eco/MemoryPool.h>
+#include <eco/Object.h>
 #include <eco/thread/topic/Topic.h>
-#include <eco/thread/TaskServer.h>
 
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class TopicServer
+class TopicQueue
 {
-	ECO_OBJECT(TopicServer);
+	ECO_OBJECT(TopicQueue);
 public:
-	inline TopicServer()
-	{}
+	inline TopicQueue() {}
+	inline void start() {}
+	inline void stop() {}
 
-	inline ~TopicServer()
-	{
-		stop();
-	}
-
-	// start topic server.
-	inline void start()
-	{
-		m_publish_server.run();
-	}
-
-	// stop topic server.
-	inline void stop()
-	{
-		m_publish_server.stop();
-	}
-
-	// join topic server.
-	inline void join()
-	{
-		m_publish_server.join();
-	}
-
-public:
 	// publish object to topic, create object if "make != nullptr". 
 	template<typename object_t, typename topic_id_t>
 	inline void publish(
@@ -95,7 +71,7 @@ public:
 			if (newc)
 			{
 				newc->stamp() = eco::meta::stamp_remove;
-				m_publish_server.post(Publisher(topic, newc));
+				topic->publish_new(newc);
 			}
 		}
 	}
@@ -109,7 +85,7 @@ public:
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
 		Content::ptr newc(new ContentT<object_t, object_t>(obj, stamp));
-		m_publish_server.post(Publisher(topic, newc));
+		topic->publish_new(newc);
 	}
 
 	// publish shared object to topic.
@@ -121,7 +97,7 @@ public:
 	{
 		typedef std::shared_ptr<object_t> value_t;
 		Content::ptr newc(new ContentT<object_t, value_t>(obj, stamp));
-		m_publish_server.post(Publisher(topic, newc));
+		topic->publish_new(newc);
 	}
 
 public:
@@ -139,7 +115,7 @@ public:
 			auto supscription = topic->reserve_subscribe(subscriber);
 			if (!supscription.null())
 			{
-				m_publish_server.post(Publisher(topic, supscription, event));
+				topic->publish_snap(*supscription, event.get());
 				return true;
 			}
 		}
@@ -250,10 +226,10 @@ public:
 	template<typename topic_id_t>
 	inline void erase_topic(IN const topic_id_t& topic_id)
 	{
-		Topic::ptr t = pop_topic(topic_id);
-		if (t != nullptr)
+		Topic::ptr topic = pop_topic(topic_id);
+		if (topic != nullptr)
 		{
-			m_publish_server.post(Publisher(t, Publisher::mode_erase_topic));
+			topic->publish_erase_topic();
 		}
 	}
 
@@ -333,7 +309,7 @@ public:
 		Topic::ptr t = find_topic(topic_id);
 		if (t != nullptr)
 		{
-			m_publish_server.post(Publisher(t, Publisher::mode_clear_content));
+			topic->publish_clear_content();
 		}
 	}
 
@@ -403,8 +379,7 @@ private:
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		for (auto it = topic_map.begin(); it != topic_map.end(); ++it)
 		{
-			m_publish_server.post(
-				Publisher(it->second, Publisher::mode_erase_topic));
+			it->second->publish_erase_topic();
 		}
 		topic_map.clear();
 	}
@@ -415,9 +390,6 @@ private:
 	std::unordered_map<uint64_t, Topic::ptr> m_int_topics;
 	std::unordered_map<std::string, Topic::ptr> m_str_topics;
 	std::unordered_map<TopicId, Topic::ptr, TopicId::Hash> m_tid_topics;
-	
-	// publish topic message thread.
-	eco::TaskServer<Publisher> m_publish_server;
 };
 
 
