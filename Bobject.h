@@ -61,6 +61,12 @@ public:
 	inline Bobject()
 	{}
 
+	template<typename T>
+	inline T& cast()
+	{
+		return *static_cast<T*>(this);
+	}
+
 	// occupy this business object.
 	inline const TaskState occupy(
 		IN const char* task_type,
@@ -75,7 +81,7 @@ public:
 		}
 
 		// if task is just not ready.
-		if (!m_state.has(task_sour_state))
+		if (task_sour_state != 0 && !m_state.has(task_sour_state))
 		{
 			return task_no_ready;
 		}

@@ -28,7 +28,7 @@ business object.
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_TASK(task_t) \
+#define ECO_BTASK(task_t) \
 public:\
 	ECO_TYPE(task_t)\
 	virtual std::auto_ptr<Btask> copy() const override\
@@ -113,12 +113,12 @@ public:
 		catch (eco::Error& e)
 		{
 			result = false;
-			EcoError << get_type() << ": " << e;
+			EcoLog(error) << get_type() << ": " << e;
 		}
 		catch (std::exception& e)
 		{
 			result = false;
-			EcoError << get_type() << ": " << e.what();
+			EcoLog(error) << get_type() << ": " << e.what();
 		}
 
 		// if finished this task, set state and notify wait task to restart.

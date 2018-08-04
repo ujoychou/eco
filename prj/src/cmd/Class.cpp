@@ -99,8 +99,8 @@ Command* Class::create_command()
 	return nullptr;
 }
 Class& Class::bind(
-	IN const char* name,
 	IN const char* alias,
+	IN const char* name,
 	IN const char* help_info,
 	IN CreateCommandFunc func)
 {
@@ -116,8 +116,8 @@ Class& Class::bind(
 	return *this;
 }
 Class& Class::bind(
-	IN const char* name,
 	IN const char* alias,
+	IN const char* name,
 	IN const char* help_info,
 	IN ExecuteFunc func)
 {
@@ -133,8 +133,8 @@ Class& Class::bind(
 	return *this;
 }
 Class& Class::bind(
-	IN const char* name,
 	IN const char* alias,
+	IN const char* name,
 	IN const char* help_info,
 	IN CommandExecute func)
 {
