@@ -227,11 +227,11 @@ inline void cast(OUT bool& v, IN const char* sv)
 }
 inline void cast(OUT char& v, IN const char* sv)
 {
-	v = (sv != nullptr && sv[0] != '\0') ? sv[0] : 0;
+	v = static_cast<int8_t>(atoi(sv));
 }
 inline void cast(OUT unsigned char& v, IN const char* sv)
 {
-	v = (sv != nullptr && sv[0] != '\0') ? sv[0] : 0;
+	v = static_cast<uint8_t>(atoi(sv));
 }
 inline void cast(OUT int16_t& v, IN const char* sv)
 {
@@ -474,8 +474,10 @@ inline void to_lower(IN std::string& v)
 		*ch = to_lower(*ch);
 	}
 }
-
-
+inline char first(IN const char* sv)
+{
+	return (sv != nullptr && sv[0] != '\0') ? sv[0] : 0;
+}
 ////////////////////////////////////////////////////////////////////////////////
 }
 #endif
