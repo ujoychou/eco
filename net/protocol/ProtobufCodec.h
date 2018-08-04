@@ -47,19 +47,24 @@ public:
 		m_msg = const_cast<google::protobuf::Message*>(&msg);
 	}
 
-	virtual void set_message(void* message)
+	virtual void set_message(void* message) override
 	{
 		m_msg = static_cast<google::protobuf::Message*>(message);
 	}
 
-	virtual uint32_t get_byte_size() const
+	virtual void* get_message() override
+	{
+		return m_msg;
+	}
+
+	virtual uint32_t get_byte_size() const override
 	{
 		return m_msg->ByteSize();
 	}
 
 	virtual void encode(
 		OUT char* bytes,
-		IN  const uint32_t size) const
+		IN  const uint32_t size) const override
 	{
 		m_msg->SerializeToArray(bytes, (int)size);
 	}
@@ -71,7 +76,7 @@ public:
 		return m_msg->ParseFromArray(bytes, (int)size);
 	}
 
-private:
+protected:
 	google::protobuf::Message* m_msg;
 };
 

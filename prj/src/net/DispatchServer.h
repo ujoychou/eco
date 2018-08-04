@@ -25,7 +25,6 @@
 *******************************************************************************/
 #include <eco/net/Ecode.h>
 #include <eco/net/Context.h>
-#include <eco/net/TcpDispatch.h>
 #include <eco/thread/DispatchServer.h>
 
 
@@ -46,21 +45,41 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class DispatchServer :
-	public eco::net::TcpDispatch,
-	public eco::MessageServer<DataContext, DispatchHandler>
+// tcp client dispatch server.
+class DispatchServer : public eco::MessageServer<DataContext, DispatchHandler>
 {
 public:
-	virtual void register_handler(IN uint64_t id,IN HandlerFunc hf) override
+	typedef std::function<void(IN Context&)> HandlerFunc;
+	inline void register_handler(IN uint64_t id, IN HandlerFunc hf)
 	{
 		message_handler().set_dispatch(id, hf);
 	}
 
-	virtual void register_default_handler(IN HandlerFunc hf) override
+	inline void register_default_handler(IN HandlerFunc hf)
 	{
 		message_handler().set_default(hf);
 	}
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+// tcp server dispatch server.
+class DispatchServerPool :
+	public eco::MessageServerPool<DataContext, DispatchHandler>
+{
+public:
+	typedef std::function<void(IN Context&)> HandlerFunc;
+	inline void register_handler(IN uint64_t id, IN HandlerFunc hf)
+	{
+		message_handler().set_dispatch(id, hf);
+	}
+
+	inline void register_default_handler(IN HandlerFunc hf)
+	{
+		message_handler().set_default(hf);
+	}
+};
+typedef DispatchServerPool::MessageWorker MessageWorker;
 
 
 ////////////////////////////////////////////////////////////////////////////////

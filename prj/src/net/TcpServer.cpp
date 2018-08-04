@@ -41,7 +41,8 @@ void TcpServer::Impl::start()
 		m_option.set_business_thread_size(4);
 
 	// start to receive request.
-	m_dispatch.run(m_option.get_business_thread_size());
+	const char* name = "eco_dispatch_s";
+	m_dispatch_pool.run(m_option.get_business_thread_size(), name);
 
 	// acceptor: start accept client tcp_connection.
 	m_peer_set.set_max_connection_size(m_option.get_max_connection_size());
@@ -78,7 +79,7 @@ void TcpServer::Impl::start()
 		m_option.get_max_session_size(),
 		m_option.get_io_thread_size(), 
 		m_option.get_business_thread_size());
-	EcoLog(info, 1024) << log;
+	EcoLog(info) << log;
 }
 
 
@@ -225,9 +226,7 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 
 	// #.dispatch data context.
 	TcpSessionOwner owner(*(TcpServerImpl*)this);
-	eco::net::DataContext dc(&owner);
-	peer->get_data_context(dc, head.m_category, data, prot);
-	m_dispatch.post(dc);
+	peer->post(owner, head.m_category, data, prot);
 }
 
 
@@ -299,12 +298,12 @@ Protocol* TcpServer::protocol(IN const uint32_t version) const
 
 void TcpServer::register_handler(IN uint64_t id, IN HandlerFunc hf)
 {
-	impl().m_dispatch.register_handler(id, hf);
+	impl().m_dispatch_pool.register_handler(id, hf);
 }
 
 void TcpServer::register_default_handler(IN HandlerFunc hf)
 {
-	impl().m_dispatch.register_default_handler(hf);
+	impl().m_dispatch_pool.register_default_handler(hf);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -98,8 +98,14 @@ public:
 class AsyncRequest : public eco::Object<AsyncRequest>
 {
 public:
-	inline AsyncRequest(IN Codec& rsp_codec) : m_rsp_codec(&rsp_codec) {}
+	inline AsyncRequest(
+		IN Codec& rsp_codec,
+		IN std::vector<void*>* rsp_set = nullptr)
+		: m_rsp_codec(&rsp_codec), m_rsp_set(rsp_set)
+	{}
+
 	Codec* m_rsp_codec;
+	std::vector<void*>* m_rsp_set;
 	eco::Monitor m_monitor;
 };
 
@@ -122,10 +128,12 @@ public:
 	eco::atomic::State		m_init;			// server init state.
 
 	// connection data factory.
-	OnCloseFunc m_on_close;
-	OnConnectFunc m_on_connect;
+	OpenFunc m_on_open;
+	CloseFunc m_on_close;
+
 	// session data management.
 	MakeSessionDataFunc m_make_session;
+	MakeConnectionDataFunc m_make_connection;
 	// all session that client have, diff by "&session".
 	std::unordered_map<void*, SessionDataPack::ptr> m_authority_map;
 	// connected session that has id build by server.
@@ -140,7 +148,8 @@ public:
 public:
 	inline Impl() 
 		: m_make_session(nullptr)
-		, m_on_connect(nullptr)
+		, m_make_connection(nullptr)
+		, m_on_open(nullptr)
 		, m_on_close(nullptr)
 		, m_timeout_millsec(5000)
 	{}
@@ -200,12 +209,13 @@ public:
 	// async management post item.
 	inline AsyncRequest::ptr post_async(
 		IN const uint32_t req_id,
-		IN Codec& rsp_codec)
+		IN Codec& rsp_codec,
+		IN std::vector<void*>* rsp_set = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
 		auto& ptr = m_async_manager[req_id];
 		if (ptr == nullptr)
-			ptr.reset(new AsyncRequest(rsp_codec));
+			ptr.reset(new AsyncRequest(rsp_codec, rsp_set));
 		return ptr;
 	}
 
@@ -216,11 +226,14 @@ public:
 		auto it = m_async_manager.find(req_id);
 		if (it != m_async_manager.end())
 		{
-			auto req = it->second;
-			m_async_manager.erase(it);
-			return req;
+			return it->second;
 		}
 		return AsyncRequest::ptr();
+	}
+	inline void erase_async(IN const uint32_t req_id)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		m_async_manager.erase(req_id);
 	}
 
 public:
@@ -294,8 +307,14 @@ public:
 		}
 	}
 
-	inline void async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta);
-	inline eco::Result request(IN MessageMeta& req, IN Codec& rsp);
+	inline void async_auth(
+		IN TcpSessionImpl& sess,
+		IN MessageMeta& meta);
+
+	inline eco::Result request(
+		IN MessageMeta& req,
+		IN Codec& rsp,
+		IN std::vector<void*>* rsp_set);
 
 public:
 	// when peer has connected to server.

@@ -36,20 +36,21 @@ namespace net{;
 
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_LOG_REQ(sev) \
-EcoLog(sev, eco::log::text_size)(eco::net::req) << Log(*this)
-#define ECO_LOG_RSP(sev, rsp, handler) \
-if (rsp.has_error()){ \
-	EcoError(eco::net::rsp) << MessageHandler::Log(handler, response_type()) \
-	<= rsp.error(); \
-}else \
-	EcoLog(sev, eco::log::text_size)(eco::net::rsp) \
-	<< MessageHandler::Log(handler, response_type())
-
+EcoLogx(sev)(eco::net::req) << Log(*this)
 #define ECO_LOG_SUB(sev) \
-EcoLog(sev, eco::log::text_size)(eco::net::sub) << Log(*this)
+EcoLogx(sev)(eco::net::sub) << Log(*this)
+
 #define ECO_LOG_PUB(sev, sess_or_conn, msg_type, msg_name) \
-EcoLog(sev, eco::log::text_size)(eco::net::pub) \
+EcoLogx(sev)(eco::net::pub) \
 << eco::net::Log(sess_or_conn, msg_type, msg_name)
+
+#define ECO_LOG_RSP(sev, resp, handler) \
+if (resp.has_error()){ \
+	EcoError(eco::net::rsp) << MessageHandler::Log(handler, response_type()) \
+	<= resp.error(); \
+} else \
+	EcoLogx(sev)(eco::net::rsp) << MessageHandler::Log(handler, response_type())
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -128,6 +129,12 @@ public:
 		return session().connection();
 	}
 
+	template<typename Handler>
+	inline static std::shared_ptr<Handler> cast(IN MessageHandler::ptr& v)
+	{
+		return std::dynamic_pointer_cast<Handler>(v);
+	}
+
 protected:
 	Context m_context;
 };
@@ -190,10 +197,8 @@ public:
 		context().response(codec, type, last, encrypted);
 	}
 
-public:
 	template<typename Handler>
-	inline static std::shared_ptr<Handler> cast(
-		IN eco::net::MessageHandler::ptr& v)
+	inline static std::shared_ptr<Handler> cast(IN MessageHandler::ptr& v)
 	{
 		return std::dynamic_pointer_cast<Handler>(v);
 	}
@@ -211,7 +216,7 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 /* message handler macro define.
-@auth_v: message recv when user must have been authed, set 1 else set 0. 
+@auth_v: message recv when user must have been authed, set 1 else set 0.
 if don't need to check authorized, set -1.
 */
 #define ECO_HANDLER(req_type, rsp_type, type_name, auth_v)\

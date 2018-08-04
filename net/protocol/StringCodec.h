@@ -59,19 +59,24 @@ public:
 
 public:
 	// implement the Codec interface.
-	virtual void set_message(void* message)
+	virtual void set_message(void* message) override
 	{
 		m_msg.asign(static_cast<const char*>(message));
 	}
 
-	virtual uint32_t get_byte_size() const
+	virtual void* get_message() override
+	{
+		return &m_msg;
+	}
+
+	virtual uint32_t get_byte_size() const override
 	{
 		return m_msg.size();
 	}
 
 	virtual void encode(
 		OUT char* bytes,
-		IN  const uint32_t size) const
+		IN  const uint32_t size) const override
 	{
 		uint32_t siz = size > m_msg.size() ? m_msg.size() : size;
 		memcpy(bytes, m_msg.c_str(), siz);

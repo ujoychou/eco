@@ -38,7 +38,8 @@ public:
 	inline void async_accept()
 	{
 		TcpPeer::ptr pr(TcpPeer::make(
-			(IoService*)m_worker_pool.get_io_service(), m_server));
+			(IoService*)m_worker_pool.get_io_service(),
+			m_server->m_dispatch_pool.attach(), m_server));
 		m_acceptor->async_accept(
 			*(boost::asio::ip::tcp::socket*)(pr->impl().socket()),
 			boost::bind(&Impl::on_accept, this,

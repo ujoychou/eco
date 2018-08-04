@@ -47,10 +47,13 @@ public:
 	TcpClient& option(IN const TcpClientOption&);
 
 	// service name.
-	inline const char* get_service_name() const
+	inline const char* get_name() const
 	{
-		return get_option().get_service_name();
+		return get_option().get_name();
 	}
+
+	// set timeout
+	void set_timeout(IN const uint32_t millsec);
 
 	// protocol head.
 	template<typename ProtocolHeadT>
@@ -73,6 +76,21 @@ public:
 	// get connection id.
 	ConnectionId get_id();
 
+	// set connection data type.
+	template<typename ConnectionDataT>
+	inline void set_connection_data()
+	{
+		set_connection_data(&make_connection_data<ConnectionDataT>);
+	}
+	void set_connection_data(IN MakeConnectionDataFunc make);
+
+	template<typename ConnectionDataT>
+	inline ConnectionDataT& cast()
+	{
+		return *static_cast<ConnectionDataT*>(data());
+	}
+	ConnectionData* data();
+
 	// set session data class and tcp session mode.
 	template<typename SessionDataT>
 	inline void set_session_data()
@@ -82,9 +100,7 @@ public:
 	void set_session_data(IN MakeSessionDataFunc make);
 
 	// register connection event
-	void set_event(
-		IN OnConnectFunc on_connect, 
-		IN OnCloseFunc on_close = nullptr);
+	void set_event(IN OpenFunc on_open, IN CloseFunc on_close = nullptr);
 
 	// register dispatch handler.
 	virtual void register_default_handler(IN HandlerFunc hf) override;
@@ -114,8 +130,12 @@ public:
 	void set_address(IN eco::net::AddressSet&);
 
 	// service mode: async connect to service.
-	void async_connect(IN eco::net::AddressSet&);
-	void async_connect();
+	void connect(IN eco::net::AddressSet&);
+	void connect();
+
+	// service mode. sync connect to service.
+	void connect_wait(IN eco::net::AddressSet&, IN uint32_t millsec);
+	void connect_wait(IN uint32_t millsec);
 
 	// async send request to server.
 	void authorize(IN TcpSession& session, IN MessageMeta& meta);
@@ -129,9 +149,10 @@ public:
 	// req/rsp mode: send message and get a response.
 	template<typename codec_t, typename req_t, typename rsp_t>
 	inline eco::Result request(
-			IN const uint32_t req_type, IN req_t& req,
-			IN const uint32_t rsp_type, IN rsp_t& rsp,
-			IN const bool encrypted = true)
+			IN uint32_t req_type,
+			IN req_t& req,
+			IN rsp_t& rsp,
+			IN bool encrypted = true)
 	{
 		codec_t codec_req(req);
 		codec_t codec_rsp(rsp);
@@ -140,14 +161,51 @@ public:
 	}
 	template<typename codec_t, typename msg_t>
 	inline eco::Result request(
-		IN const uint32_t req_type,
-		IN const uint32_t rsp_type,
+		IN uint32_t req_type,
 		IN msg_t& msg,
-		IN const bool encrypted = true)
+		IN bool encrypted = true)
 	{
 		codec_t codec_rsp(msg);
 		MessageMeta meta_req(codec_t(msg), none_session, req_type, encrypted);
 		return request(meta_req, codec_rsp);
+	}
+
+public:
+	// sync request data set.
+	template<typename codec_t, typename req_t, typename rsp_t>
+	inline eco::Result request_set(
+		IN uint32_t req_type,
+		IN req_t& req,
+		IN AutoArray<rsp_t>& rsp_set,
+		IN bool encrypted = true)
+	{
+		codec_t rsp_codec;
+		codec_t req_codec(req);
+		TypeCodec codec(rsp_codec, TypeCodec::make<rsp_t>);
+		MessageMeta req_meta(req_codec, none_session, req_type, encrypted);
+		return request(req_meta, codec, &rsp_set.get());
+	}
+
+	// sync request data set.
+	template<typename codec_t, typename req_t, typename rsp_t>
+	inline eco::Result request_set(
+		IN uint32_t req_type,
+		IN req_t& req,
+		IN std::vector<std::shared_ptr<rsp_t> >& rsp_set,
+		IN bool encrypted = true)
+	{
+		AutoArray<rsp_t> set;
+		auto result = request_set<codec_t>(req_type, req, set, encrypted);
+		if (result == eco::ok)
+		{
+			rsp_set.reserve(set.size());
+			for (size_t i = 0; i < set.size(); i++)
+			{
+				typedef std::shared_ptr<rsp_t> rsp_ptr;
+				rsp_set.push_back(rsp_ptr(set.release(i)));
+			}
+		}
+		return result;
 	}
 
 #ifndef ECO_NO_PROTOBUF
@@ -170,27 +228,29 @@ public:
 	inline eco::Result request(
 		IN const uint32_t req_type,
 		IN google::protobuf::Message& req_msg,
-		IN const uint32_t rsp_type,
 		IN google::protobuf::Message& rsp_msg,
 		IN const bool encrypted = true)
 	{
-		return request<ProtobufCodec>(
-			req_type, req_msg, rsp_type, rsp_msg, encrypted);
+		return request<ProtobufCodec>(req_type, req_msg, rsp_msg, encrypted);
 	}
 
 	// sync request protobuf.
 	inline eco::Result request(
 		IN const uint32_t req_type,
-		IN const uint32_t rsp_type,
 		IN google::protobuf::Message& msg,
 		IN const bool encrypted = true)
 	{
-		return request<ProtobufCodec>(req_type, rsp_type, msg, encrypted);
+		return request<ProtobufCodec>(req_type, msg, encrypted);
 	}
+	
 #endif
 
 private:
-	eco::Result request(IN MessageMeta& req, IN Codec& rsp);
+	// sync request data or data set.
+	eco::Result request(
+		IN MessageMeta& req,
+		IN Codec& rsp_codec,
+		IN std::vector<void*>* rsp_set = nullptr);
 };
 
 

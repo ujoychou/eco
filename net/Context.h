@@ -121,14 +121,14 @@ public:
 		return m_meta.m_message_type;
 	}
 
-	inline const uint32_t last() const
-	{
-		return m_meta.last();
-	}
-
-	inline const ContentType content_type() const
+	inline const ContentType get_content_type() const
 	{
 		return m_meta.get_req1();
+	}
+
+	inline const bool last() const
+	{
+		return m_meta.last();
 	}
 
 	inline void release_data()

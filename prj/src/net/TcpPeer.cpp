@@ -25,7 +25,7 @@ void TcpPeer::Impl::make_connection_data(
 		TcpConnectionOuter conn(m_data->connection());
 		conn.set_id(get_id());
 		conn.set_peer(m_peer_observer);
-		conn.set_protocol(*prot);
+		if (prot != nullptr) conn.set_protocol(*prot);
 	}
 }
 
@@ -218,17 +218,19 @@ void TcpPeer::Impl::on_write(IN const uint32_t size, IN const eco::Error* e)
 //##############################################################################
 //##############################################################################
 TcpPeer::TcpPeer(
-	IN IoService* io,
+	IN IoService* io_server,
+	IN void* msg_server,
 	IN TcpPeerHandler* hdl)
 {
-	m_impl = new Impl(io, hdl);
+	m_impl = new Impl(io_server, (MessageWorker*)msg_server, hdl);
 	m_impl->init(*this);
 }
 TcpPeer::ptr TcpPeer::make(
-	IN IoService* io,
+	IN IoService* io_server,
+	IN void* msg_server,
 	IN TcpPeerHandler* hdl)
 {
-	TcpPeer::ptr peer(new TcpPeer(io, hdl));
+	TcpPeer::ptr peer(new TcpPeer(io_server, (MessageWorker*)msg_server, hdl));
 	peer->impl().prepare(peer);
 	return peer;
 }

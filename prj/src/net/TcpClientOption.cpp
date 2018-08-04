@@ -9,7 +9,7 @@ namespace net{;
 class TcpClientOption::Impl
 {
 public:
-	std::string m_service_name;
+	std::string m_name;
 	// option.
 	uint16_t m_no_delay;
 	uint16_t m_websocket;
@@ -42,7 +42,7 @@ public:
 
 
 ECO_VALUE_IMPL(TcpClientOption);
-ECO_PROPERTY_STR_IMPL(TcpClientOption, service_name);
+ECO_PROPERTY_STR_IMPL(TcpClientOption, name);
 ECO_PROPERTY_BOL_IMPL(TcpClientOption, no_delay);
 ECO_PROPERTY_BOL_IMPL(TcpClientOption, websocket);
 ECO_PROPERTY_VAV_IMPL(TcpClientOption, uint32_t, tick_time);

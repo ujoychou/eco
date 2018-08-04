@@ -120,7 +120,7 @@ void TcpClient::Impl::async_connect()
 	}
 	if (e)
 	{
-		EcoLogStr(info, 512) << logging() << e;
+		EcoLog(info) << logging() << e;
 		return;
 	}
 
@@ -129,9 +129,12 @@ void TcpClient::Impl::async_connect()
 	{
 		// start io server, timer and dispatch server.
 		m_worker.run();
-		m_dispatch.run();
+		m_dispatch.run(1, m_option.get_name());
 		// create peer.
-		m_balancer.m_peer = TcpPeer::make(m_worker.get_io_service(), this);
+		m_balancer.m_peer = TcpPeer::make(
+			m_worker.get_io_service(), nullptr, this);
+		m_balancer.m_peer->impl().make_connection_data(
+			m_make_connection, nullptr);
 		// start timer.
 		m_timer.set_io_service(*(IoService*)m_worker.get_io_service());
 		m_timer.register_on_timer(
@@ -142,7 +145,7 @@ void TcpClient::Impl::async_connect()
 	
 	if (m_balancer.connect())
 	{
-		EcoLogStr(info, 512) << logging();
+		EcoLog(info) << logging();
 	}
 }
 
@@ -152,7 +155,7 @@ inline String TcpClient::Impl::logging()
 {
 	Stream log;
 	log.buffer().reserve(512);
-	log << "\n+[tcp client " << m_option.get_service_name() << "]\n";
+	log << "\n+[tcp client " << m_option.get_name() << "]\n";
 
 	// log address set and cur address.
 	auto addr_set = m_balancer.m_address_set;
@@ -250,21 +253,22 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco::Result TcpClient::Impl::request(IN MessageMeta& req, IN Codec& rsp)
+eco::Result TcpClient::Impl::request(
+	IN MessageMeta& req,
+	IN Codec& rsp,
+	IN std::vector<void*>* rsp_set)
 {
 	// async manager.
 	uint32_t req_id = ++m_request_id;
 	req.set_request_data(req_id);
 	eco::add(req.m_category, category_sync);
-	auto async = post_async(req_id, rsp);
+	auto async = post_async(req_id, rsp, rsp_set);
 
 	// send message.
 	async_send(req);
 	auto result = async->m_monitor.timed_wait(m_timeout_millsec);
-	if (result != eco::ok)
-	{
-		pop_async(req_id);
-	}
+	erase_async(req_id);
+	eco::thread::release(async, 10);
 	return result;
 }
 
@@ -287,9 +291,9 @@ void TcpClient::Impl::on_connect()
 	EcoInfo << NetLog(peer().get_id(), ECO_FUNC);
 
 	// notify on connect.
-	if (m_on_connect)
+	if (m_on_open)
 	{
-		m_on_connect();
+		m_on_open();
 	}
 }
 
@@ -371,16 +375,32 @@ void TcpClient::register_default_handler(IN HandlerFunc hf)
 	impl().m_dispatch.register_default_handler(hf);
 }
 
-void TcpClient::set_event(IN OnConnectFunc on_connect, IN OnCloseFunc on_close)
+void TcpClient::set_event(IN OpenFunc on_open, IN CloseFunc on_close)
 {
+	impl().m_on_open = on_open;
 	impl().m_on_close = on_close;
-	impl().m_on_connect = on_connect;
+}
+
+void TcpClient::set_timeout(IN const uint32_t millsec)
+{
+	impl().m_timeout_millsec = millsec;
+}
+
+void TcpClient::set_connection_data(IN MakeConnectionDataFunc make)
+{
+	impl().m_make_connection = make;
+}
+
+ConnectionData* TcpClient::data()
+{
+	return impl().m_balancer.m_peer->data();
 }
 
 void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;
 }
+
 
 ConnectionId TcpClient::get_id()
 {
@@ -405,19 +425,35 @@ void TcpClient::set_protocol(IN Protocol* heap)
 void TcpClient::set_address(IN eco::net::AddressSet& addr)
 {
 	impl().update_address(addr);
-	impl().m_option.set_service_name(addr.get_name());
+	impl().m_option.set_name(addr.get_name());
 }
 
-void TcpClient::async_connect()
+void TcpClient::connect()
 {
 	impl().init();
 	impl().async_connect();
 }
 
-void TcpClient::async_connect(IN eco::net::AddressSet& addr)
+void TcpClient::connect(IN eco::net::AddressSet& addr)
 {
 	impl().init();
 	impl().async_connect(addr);
+}
+
+void TcpClient::connect_wait(IN uint32_t millsec)
+{
+	impl().init();
+	impl().async_connect();
+	eco::thread::time_wait(std::bind(&TcpState::connected,
+		&impl().peer().get_state()), millsec);
+}
+
+void TcpClient::connect_wait(IN eco::net::AddressSet& addr, IN uint32_t millsec)
+{
+	impl().init();
+	impl().async_connect(addr);
+	eco::thread::time_wait(std::bind(&TcpState::connected,
+		&impl().peer().get_state()), millsec);
 }
 
 void TcpClient::send(IN eco::String& data, IN const uint32_t start)
@@ -441,9 +477,12 @@ void TcpClient::authorize(IN TcpSession& session, IN MessageMeta& meta)
 	impl().async_auth(outer.impl(), meta);
 }
 
-eco::Result TcpClient::request(IN MessageMeta& req, IN Codec& rsp)
+eco::Result TcpClient::request(
+	IN MessageMeta& req, 
+	IN Codec& rsp,
+	IN std::vector<void*>* rsp_set)
 {
-	return impl().request(req, rsp);
+	return impl().request(req, rsp, rsp_set);
 }
 
 

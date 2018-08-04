@@ -37,9 +37,9 @@ class ECO_API TcpClientOption
 ////////////////////////////////////////////////////////////////////////////////
 public:
 	// service name.
-	void set_service_name(IN const char*);
-	const char* get_service_name() const;
-	TcpClientOption& service_name(IN const char*);
+	void set_name(IN const char*);
+	const char* get_name() const;
+	TcpClientOption& name(IN const char*);
 
 	// tick counter.
 	void step_tick(IN const uint32_t step = 1);

@@ -86,13 +86,25 @@ inline void handle_context(IN Context& c)
 		EcoError << e;
 	}
 	catch (std::exception& e) {
-		EcoLogStr(error, 0) << e.what();
+		EcoLog(error) << e.what();
 	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // message handled by "functor", suguest using in client.
+template<typename Message>
+inline void* handle_context_make(std::shared_ptr<Message>& obj)
+{
+	obj.reset(new Message());
+	return obj.get();
+}
+template<typename Message>
+inline void* handle_context_make(Message& obj)
+{
+	return &obj;
+}
+
 template<typename Message, typename Codec>
 inline void handle_context(
 	IN std::function<void(IN Message&, IN Context&)>& func,
@@ -100,9 +112,15 @@ inline void handle_context(
 {
 	Codec codec;
 	Message object;
-	codec.set_message(&object);
+	codec.set_message(handle_context_make(object));
 	codec.decode(c.m_message.m_data, c.m_message.m_size);
 	func(object, c);
+}
+inline void handle_context_default(
+	IN std::function<void(IN eco::Bytes&, IN Context&)>& func,
+	IN Context& c)
+{
+	func(c.m_message, c);
 }
 
 
@@ -111,8 +129,6 @@ inline void handle_context(
 #define ECO_HANDLE_CONTEXT_ARRAY_FUNC(Message) \
 std::function<void(std::vector<std::shared_ptr<Message>>&, Context&)>
 
-
-////////////////////////////////////////////////////////////////////////////////
 template<typename Message, typename Codec>
 inline void handle_context_array(
 	IN ECO_HANDLE_CONTEXT_ARRAY_FUNC(Message)& func,
@@ -138,13 +154,6 @@ inline void handle_context_array(
 		}
 		s_message_set.clear();
 	}
-}
-
-inline void handle_context_default(
-	IN std::function<void(IN eco::Bytes&, IN Context&)>& func,
-	IN Context& c)
-{
-	func(c.m_message, c);
 }
 
 

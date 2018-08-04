@@ -62,7 +62,7 @@ public:
 	MakeConnectionDataFunc m_make_connection;
 
 	// dispatch server.
-	DispatchServer m_dispatch;
+	DispatchServerPool m_dispatch_pool;
 
 	// session data management.
 	MakeSessionDataFunc m_make_session;
@@ -238,13 +238,13 @@ public:
 		// close acceptor and stop io server.
 		m_acceptor.stop();
 		// stop business server.
-		m_dispatch.stop();
+		m_dispatch_pool.close();
 	}
 
 	// wait server thread end.
 	inline void join()
 	{
-		m_dispatch.join();
+		m_dispatch_pool.join();
 		m_acceptor.join();
 	}
 

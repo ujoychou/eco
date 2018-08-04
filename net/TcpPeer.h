@@ -79,12 +79,14 @@ public:
 	* @ para.service: io service of peer.
 	*/
 	static TcpPeer::ptr make(
-		IN IoService* io,
+		IN IoService* io_server,
+		IN void* msg_server,
 		IN TcpPeerHandler* handler);
 
 	// constructor
 	TcpPeer(
-		IN IoService* io,
+		IN IoService* io_server,
+		IN void* msg_server,
 		IN TcpPeerHandler* hdl);
 
 	TcpPeerHandler& handler();

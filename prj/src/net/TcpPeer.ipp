@@ -27,6 +27,7 @@
 #include <eco/net/TcpConnector.h>
 #include <eco/net/Context.h>
 #include <eco/net/Log.h>
+#include "DispatchServer.h"
 
 
 namespace eco{;
@@ -44,20 +45,33 @@ public:
 	TcpPeerHandler* m_handler;
 	TcpConnector m_connector;
 	std::auto_ptr<ConnectionData> m_data;
+	MessageWorker* m_server;
 	// the session of tcp peer.
 	//std::vector<uint32_t> m_session_id;
 	//eco::Mutex m_session_id_mutex;
 
 public:
 	// never be called, this is just for complie success.
-	inline Impl() : m_handler(nullptr), m_connector(nullptr)
+	inline Impl()
+		: m_handler(nullptr), m_connector(nullptr), m_server(nullptr)
 	{
 		assert(false);
 	}
 
-	inline Impl(IN IoService* io, IN TcpPeerHandler* hdl)
-		: m_handler(hdl), m_connector(io)
+	inline Impl(
+		IN IoService* io_server,
+		IN MessageWorker* msg_server,
+		IN TcpPeerHandler* hdl)
+		: m_handler(hdl), m_connector(io_server), m_server(msg_server)
 	{}
+
+	inline ~Impl()
+	{
+		if (m_server)
+		{
+			m_server->detach();
+		}
+	}
 
 	// peer must be created in the heap(by new).
 	inline void prepare(IN TcpPeer::ptr& peer)
@@ -228,6 +242,16 @@ public:
 		dc.m_data = std::move(data);
 		dc.m_peer_wptr = m_peer_observer;
 		dc.m_prot = prot;
+	}
+	inline void post(
+		OUT TcpSessionOwner& owner,
+		IN  MessageCategory category,
+		IN  eco::String& data,
+		IN  Protocol* prot)
+	{
+		eco::net::DataContext dc(&owner);
+		get_data_context(dc, category, data, prot);
+		m_server->post(dc);
 	}
 
 public:

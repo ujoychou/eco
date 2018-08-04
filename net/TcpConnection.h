@@ -306,8 +306,9 @@ typedef ConnectionData* (*MakeConnectionDataFunc)();
 
 
 ////////////////////////////////////////////////////////////////////// TcpClient
-typedef void (*OnConnectFunc) ();		// tcp client on connect event.
-typedef void (*OnCloseFunc) ();			// tcp client on close event.
+// tcp client on connect/close event.
+typedef std::function<void(void)> OpenFunc;
+typedef std::function<void(void)> CloseFunc;
 
 
 ////////////////////////////////////////////////////////////////////////////////

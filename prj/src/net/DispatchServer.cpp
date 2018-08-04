@@ -110,7 +110,17 @@ bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 				EcoError(eco::net::rsp) << Log(c.m_session,
 					c.m_meta.m_message_type, nullptr) <= "decode fail.";
 			}
-			async->m_monitor.finish_one();		// only one.
+
+			// push the object to set.
+			if (async->m_rsp_set != nullptr)
+			{
+				async->m_rsp_set->push_back(async->m_rsp_codec->get_message());
+			}
+
+			if (c.last())
+			{
+				async->m_monitor.finish_one();		// only one.
+			}
 		}
 		return false;		// "sync call" isn't need to handle by "dispatcher";
 	}
