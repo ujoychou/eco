@@ -114,13 +114,25 @@ public:
 		m_days = get_day(year, month, day);
 	}
 
+	inline explicit Date(const Ymd& v)
+	{
+		m_days = get_day(v.year, v.month, v.day);
+	}
+
 	inline explicit Date(int day) : m_days(day)
 	{}
 
 	inline explicit Date(const struct tm& t)
 	{
-		m_days = get_day(
-			t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
+		m_days = get_day(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
+	}
+
+	inline explicit Date(const char* t)
+	{
+		int y = eco::cast<int16_t>(&t[0], 4);
+		int m = eco::cast<int16_t>(&t[4], 2);
+		int d = eco::cast<int16_t>(&t[6], 2);
+		m_days = get_day(y, m, d);
 	}
 
 	inline explicit Date(const std::string& t)
@@ -195,6 +207,12 @@ public:
 		return m_days; 
 	}
 
+	// get monday.
+	inline uint32_t get_monday()
+	{
+		return m_days - (week_day7() - 1);
+	}
+
 private:
 	int m_days;
 };
@@ -208,6 +226,17 @@ inline bool operator<(Date x, Date y)
 inline bool operator==(Date x, Date y)
 {
 	return x.days() == y.days();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline int get_season(int month)
+{
+	return (month - 1) / 3 + 1;
+}
+inline int get_season_start_month(int month)
+{
+	return (get_season(month) - 1) * 3 + 1;
 }
 
 
