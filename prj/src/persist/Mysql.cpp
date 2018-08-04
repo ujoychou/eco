@@ -54,7 +54,7 @@ public:
 	std::string m_db_name;
 	std::string m_user_id;
 	std::string m_password;
-	std::string m_char_set;
+	std::string m_charset;
 	// mysql instance.
 	MYSQL* m_mysql;
 	eco::Mutex m_mysql_mutex;
@@ -71,27 +71,27 @@ public:
 		close();
 	}
 
-	void set_charset(IN const persist::CharSet v)
+	void set_charset(IN const persist::Charset v)
 	{
 		switch (v)
 		{
-		case persist::char_set_gbk :
-			m_char_set = "gbk";
+		case persist::charset_gbk :
+			m_charset = "gbk";
 			return ;
-		case persist::char_set_gb2312 :
-			m_char_set = "gb2312";
+		case persist::charset_gb2312 :
+			m_charset = "gb2312";
 			return ;
-		case persist::char_set_utf8 :
-			m_char_set = "utf8";
+		case persist::charset_utf8 :
+			m_charset = "utf8";
 			return ;
-		case persist::char_set_utf16 :
-			m_char_set = "utf16";
+		case persist::charset_utf16 :
+			m_charset = "utf16";
 			return ;
-		case persist::char_set_utf32 :
-			m_char_set = "utf32";
+		case persist::charset_utf32 :
+			m_charset = "utf32";
 			return ;
 		}
-		m_char_set = "gbk";	// default is gbk.
+		m_charset = "gbk";	// default is gbk.
 	}
 
 	void open()
@@ -117,14 +117,14 @@ public:
 		}
 
 		// set autocommit=0 transaction.
-		if (mysql_autocommit(m_mysql, false) != 0)
+		/*if (mysql_autocommit(m_mysql, false) != 0)
 		{
 			close_throw_open_error("auto commit");
-		}
+		}*/
 
 		// set mysql client options.
 		// set mysql client character set.
-		if (mysql_set_character_set(m_mysql, m_char_set.c_str()) != 0)
+		if (mysql_set_character_set(m_mysql, m_charset.c_str()) != 0)
 		{
 			close_throw_open_error("charset");
 		}
@@ -166,11 +166,13 @@ public:
 	// throw open error.
 	inline void close_throw_open_error(IN const char* t)
 	{
-		close();
+		int eid = mysql_errno(m_mysql);
+		std::string emsg(mysql_error(m_mysql));
 		std::string title("mysql open ");
 		title += t;
-		throw_error(title.c_str(), nullptr,
-			mysql_error(m_mysql), mysql_errno(m_mysql));
+
+		close();
+		throw_error(title.c_str(), nullptr, emsg.c_str(), eid);
 	}
 
 	// throw result error.
@@ -199,7 +201,7 @@ public:
 	{
 		std::string msg(title);
 		msg.reserve(256);
-		msg += " fail:";
+		msg += " fail: ";
 		if (err != nullptr)
 		{
 			msg += err;
@@ -211,7 +213,7 @@ public:
 		}
 		if (sql != nullptr)
 		{
-			msg += " sql:";
+			msg += " sql: ";
 			msg += sql;
 		}
 		throw std::logic_error(msg.c_str());
@@ -272,7 +274,7 @@ ECO_SHARED_IMPL(MySql);
 void MySql::open(IN const persist::Address& addr) 
 {
 	open(addr.get_host(), addr.get_port(), addr.get_database(),
-		addr.get_user(), addr.get_password(), addr.get_char_set());
+		addr.get_user(), addr.get_password(), addr.get_charset());
 }
 
 
@@ -283,7 +285,7 @@ void MySql::open(
 	IN const char* db_name,
 	IN const char* user_id,
 	IN const char* password,
-	IN const persist::CharSet char_set)
+	IN const persist::Charset charset)
 {
 	eco::Mutex::ScopeLock lock(impl().m_mysql_mutex);
 	impl().m_port = port;
@@ -291,7 +293,7 @@ void MySql::open(
 	impl().m_user_id = user_id;
 	impl().m_password = password;
 	impl().m_server_ip = server_ip;
-	impl().set_charset(char_set);
+	impl().set_charset(charset);
 	impl().open();
 }
 
