@@ -44,8 +44,9 @@ enum
 {
 	constraint_pk		= 0x0001,		// primary key.
 	constraint_fk		= 0x0002,		// foreign key.
+	constraint_index	= 0x0004,		// index.
 };
-typedef uint16_t DataConstraint;
+typedef uint16_t Constraint;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -182,6 +183,10 @@ public:
 	{
 		return m_prop_name;
 	}
+	inline operator const char* () const
+	{
+		return m_prop_name;
+	}
 
 	inline bool is_property(IN const char* prop) const
 	{
@@ -273,7 +278,7 @@ private:
 	uint32_t		m_field_index;	// db field index.
 	uint32_t		m_field_type;	// field type.
 	uint32_t		m_field_size;	// field size.
-	uint16_t		m_constraint;	// field constraint.
+	Constraint		m_constraint;	// field constraint.
 };
 
 

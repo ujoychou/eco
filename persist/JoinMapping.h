@@ -34,7 +34,7 @@ public:
 	virtual void* create() = 0;
 
 	virtual void set_value(
-		IN const char* prop,
+		IN const PropertyMapping& prop,
 		IN const char* value,
 		IN const char* view = nullptr) = 0;
 
@@ -61,7 +61,7 @@ public:
 	}
 
 	virtual void set_value(
-		IN const char* prop,
+		IN const PropertyMapping& prop,
 		IN const char* value,
 		IN const char* view = nullptr) override
 	{
@@ -105,14 +105,14 @@ public:
 
 	// add join object and meta.
 	template<typename meta_t>
-	inline void add_join(IN const ObjectMapping& map)
+	inline void join(IN const ObjectMapping& map)
 	{
 		m_join_meta.push_back(new JoinMetaImpl<meta_t>(map));
 	}
 
 	// add main object and meta.
 	template<typename meta_t>
-	inline void add_main(IN const ObjectMapping& map)
+	inline void main(IN const ObjectMapping& map)
 	{
 		m_main_meta.reset(new JoinMetaImpl<meta_t>(map));
 	}
@@ -192,8 +192,7 @@ public:
 			auto m = get_main_table()->get_map().begin();
 			for (; m != get_main_table()->get_map().end(); ++m)
 			{
-				m_main_meta->set_value(m->get_property(),
-					record_set[r][field++], view);
+				m_main_meta->set_value(*m, record_set[r][field++], view);
 			}
 
 			// set join table object property value.
@@ -209,8 +208,7 @@ public:
 					{
 						continue;
 					}
-					join_meta->set_value(
-						it->get_property(), record_set[r][field++], view);
+					join_meta->set_value(*it, record_set[r][field++], view);
 				}
 			}
 			eco::meta::clean(m_main_meta->stamp());

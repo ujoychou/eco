@@ -50,55 +50,57 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Persist::Impl
+class Persist::Impl : public eco::Being
 {
 public:
-	PersistHandler*			m_handler;			// it can be nullptr.
+	enum
+	{
+		state_init	= eco::atomic::State::_a,
+		state_load	= eco::atomic::State::_b,
+	};
+
+	PersistHandler*			m_handler;
 	eco::Database::ptr		m_master;
 	std::vector<Upgrade>	m_upgrade_seq;
 	eco::ObjectMapping		m_orm_version;
 	eco::atomic::State		m_state;
-	persist::AddressSet		m_address_set;
+	persist::Address		m_address;
 
 	inline Impl() : m_handler(nullptr) 
 	{}
 
 	inline void init(IN Persist& parent)
 	{
-		parent.set_live_ticks(1);	// 30 second.
-		m_orm_version.id("version").table("version");
+		set_live_ticks(1);	// 30 second.
+		m_orm_version.id("version").table("_version");
 		m_orm_version.add().property("value").field("version").pk(true).int_type();
 		m_orm_version.add().property("module").field("module").pk(true).vchar_small();
-		m_orm_version.add().property("update_time").field("update_time").date_time();
+		m_orm_version.add().property("timestamp").field("timestamp").date_time();
 	}
 
-	inline void on_live();
+	virtual bool on_born() override;
+	virtual void on_live() override;
 };
-
-
-ECO_OBJECT_IMPL(Persist);
 ////////////////////////////////////////////////////////////////////////////////
-bool Persist::on_born()
+bool Persist::Impl::on_born()
 {
-	if (impl().m_address_set.empty())
-	{
-		return false;
-	}
-
-	if (impl().m_handler != nullptr)
+	if (m_handler != nullptr)
 	{
 		// 1.init object mapping.(orm object using with meta.)
-		impl().m_handler->on_mapping();
+		m_handler->on_mapping();
 
 		// 2.register upgrade function.
-		impl().m_handler->on_upgrade();
-		std::sort(impl().m_upgrade_seq.begin(), impl().m_upgrade_seq.end());
+		m_handler->on_upgrade();
+
+		// 3.init related object.
+		m_handler->on_init();
+		std::sort(m_upgrade_seq.begin(), m_upgrade_seq.end());
 	}
 
 	// 3.create database config in "sys.xml".
-	eco::persist::Address& addr = impl().m_address_set.at(0);
-	impl().m_master.reset(create_database(addr.get_type()));
-	return (impl().m_master != nullptr);
+	eco::persist::Address& addr = m_address;
+	m_master.reset(create_database(addr.get_type()));
+	return (m_master != nullptr);
 }
 
 
@@ -110,7 +112,7 @@ void Persist::Impl::on_live()
 		// 4.connect to database server.
 		if (!m_master->is_open())
 		{
-			eco::persist::Address& addr = m_address_set.at(0);
+			eco::persist::Address& addr = m_address;
 			m_master->open(addr);
 
 			// logging persist detail info.
@@ -123,13 +125,14 @@ void Persist::Impl::on_live()
 		}
 
 		// 5.upgrade database according to it's current version.
-		if (!m_state.has(eco::atomic::State::_a))
+		if (!m_state.has(state_init))
 		{
 			// get database version.
 			char cond_sql[64] = { 0 };
 			const char* app_name = eco::App::instance().get_name();
-			sprintf(cond_sql, "where module='%s' order by %s desc",
-				app_name, m_orm_version.find_property("value")->get_field());
+			sprintf(cond_sql, "where %s='%s' order by %s desc",
+				m_orm_version.find_property("module")->get_field(), app_name,
+				m_orm_version.find_property("value")->get_field());
 			eco::persist::Version version(app_name);
 			m_master->create_table(m_orm_version);
 			m_master->read<eco::persist::VersionMeta>(
@@ -145,27 +148,27 @@ void Persist::Impl::on_live()
 					eco::Database::Transaction trans(*m_master);
 					it->m_func();
 					m_master->save<persist::VersionMeta>(
-						version.value(it->m_version), m_orm_version);
+						version.value(it->m_version),
+						m_orm_version, eco::meta::stamp_insert);
 					trans.commit();
 				}
 			}
-			m_state.add(eco::atomic::State::_a);
+			m_state.add(state_init);
 		}
 
 		// 6.init business data from persist.
-		if (!m_state.has(eco::atomic::State::_b))
+		if (!m_state.has(state_load))
 		{
 			if (m_handler != nullptr)
 			{
-				m_handler->on_init();
+				m_handler->on_load();
 			}
-			m_state.add(eco::atomic::State::_b);
+			m_state.add(state_load);
 		}
 	}
 	catch (std::exception& e)
 	{
-		const char* emsg = e.what();
-		EcoLogStr(error, static_cast<uint32_t>(strlen(emsg))) << emsg;
+		EcoLog(error) << e.what();
 	}
 	catch (eco::Error& e)
 	{
@@ -174,17 +177,21 @@ void Persist::Impl::on_live()
 }
 
 
+ECO_SHARED_IMPL(Persist);
 ////////////////////////////////////////////////////////////////////////////////
-void Persist::on_live()
+void Persist::set_address(IN const persist::Address& v)
 {
-	impl().on_live();
+	impl().m_address = v;
+	impl().set_name(v.get_name());
 }
-
-void Persist::set_address(eco::persist::AddressSet& v)
+const persist::Address& Persist::get_address() const
 {
-	impl().m_address_set = v;
+	return impl().m_address;
 }
-
+void Persist::start()
+{
+	impl().live();
+}
 void Persist::set_field(IN const char* prop, IN const char* field)
 {
 	auto* map = impl().m_orm_version.find_property(prop);
@@ -193,23 +200,24 @@ void Persist::set_field(IN const char* prop, IN const char* field)
 		map->field(field);
 	}
 }
-
 void Persist::set_handler(IN PersistHandler& h)
 {
 	impl().m_handler = &h;
-	impl().m_handler->m_persist = this;
+	impl().m_handler->m_persist = *this;
 }
-
 void Persist::set_upgrade(IN const uint32_t ver, IN UpgradeFunc func)
 {
 	impl().m_upgrade_seq.push_back(Upgrade(ver, func));
 }
-
+void Persist::check_state()
+{
+	if (!impl().m_state.has(Impl::state_load))
+		EcoThrow(eco::error) << "persist is unready, it must has loaded data.";
+}
 eco::Database& Persist::master()
 {
 	return *impl().m_master;
 }
-
 void Persist::close()
 {
 	if (impl().m_master != nullptr)
@@ -217,13 +225,13 @@ void Persist::close()
 		impl().m_master->close();
 		impl().m_master.reset();
 	}
-
 	if (impl().m_handler != nullptr)
 	{
 		impl().m_handler->on_exit();
 		impl().m_handler = nullptr;
 	}
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }

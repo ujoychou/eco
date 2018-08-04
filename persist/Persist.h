@@ -25,7 +25,7 @@ using persist in two way:
 #include <eco/meta/Meta.h>
 #include <eco/persist/Address.h>
 #include <eco/persist/Database.h>
-#include <eco/DateTime.h>
+#include <eco/date_time/DateTime.h>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,11 +40,10 @@ class Version : public eco::Value<Version>
 public:
 	uint32_t	m_value;
 	std::string m_module;
-	std::string m_update_time;
-	eco::meta::Stamp m_stamp;
+	std::string m_timestamp;
 
 public:
-	inline Version() : m_stamp(eco::meta::stamp_insert), m_value(0)
+	inline Version() : m_value(0)
 	{}
 
 	inline Version(IN const char* name) : m_value(0), m_module(name)
@@ -55,11 +54,10 @@ public:
 		return m_value;
 	}
 
-	inline Version& value(IN const uint32_t v, IN bool new_record = true)
+	inline Version& value(IN const uint32_t v)
 	{
 		m_value = v;
-		m_update_time = eco::date_time::Timestamp(eco::date_time::fmt_std);
-		m_stamp = new_record ? eco::meta::stamp_insert : eco::meta::stamp_update;
+		m_timestamp = eco::date_time::Timestamp(eco::date_time::fmt_std);
 		return *this;
 	}
 };
@@ -74,11 +72,6 @@ public:
 		return Version();
 	}
 
-	inline eco::meta::Stamp& stamp()
-	{
-		return object().m_stamp;
-	}
-
 	inline void set_value(
 		IN const char* p,
 		IN const char* v,
@@ -88,8 +81,8 @@ public:
 			object().m_value = eco::cast<uint32_t>(v);
 		else if (strcmp(p, "module") == 0)
 			object().m_module = v;
-		else if (strcmp(p, "update_time") == 0)
-			object().m_update_time = v;
+		else if (strcmp(p, "timestamp") == 0)
+			object().m_timestamp = v;
 	}
 
 	inline std::string get_value(
@@ -100,78 +93,93 @@ public:
 			return eco::Integer<uint32_t>(object().m_value).c_str();
 		else if (strcmp(p, "module") == 0)
 			return object().m_module;
-		else if (strcmp(p, "update_time") == 0) {
-			return object().m_update_time;
-		}
+		else if (strcmp(p, "timestamp") == 0)
+			return object().m_timestamp;
 		return eco::empty_str;
 	}
 };
 ECO_NS_END(persist);
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
-class Persist;
+class PersistHandler;
+class ECO_API Persist 
+{
+	ECO_SHARED_API(Persist);
+public:
+	// set address set.
+	void set_address(IN const persist::Address&);
+	const persist::Address& get_address() const;
+
+	// get persist name.
+	inline const char* get_name() const
+	{
+		return get_address().get_name();
+	}
+
+	// register persist handler.
+	void set_handler(IN PersistHandler&);
+
+	// start persist.
+	void start();
+
+	// close and release persist resource. just like database.
+	void close();
+
+	// get persist master.
+	eco::Database& master();
+
+	// validate persist state.
+	void check_state();
+
+	// register persist upgrade, it will throw exception when has error.
+	typedef std::function<void(void)> UpgradeFunc;
+	void set_upgrade(IN const uint32_t ver, IN UpgradeFunc func);
+
+	// set version property related field in database table.
+	void set_field(IN const char* prop, IN const char* field);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 class PersistHandler
 {
 public:
+	PersistHandler() : m_persist(eco::null) {}
+
 	// event: init object relation mapping.
 	virtual void on_mapping() {}
 
 	// event: register upgrade function.
 	virtual void on_upgrade() {}
 
+	// event: register upgrade function.
+	virtual void on_init() {}
+
 	// event: init business data after config database.
 	// it will throw exception when has error.
-	virtual void on_init() {}
+	virtual void on_load() {}
 
 	// event: release business data when persist exit.
 	virtual void on_exit() {}
 
 	// get persist.
 	inline Persist& persist();
+
 	// get persist master.
 	inline eco::Database& master();
 
 private:
 	friend class Persist;
-	Persist* m_persist;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class ECO_API Persist : public eco::Being
-{
-	ECO_OBJECT_API(Persist);
-public:
-	// set address set.
-	void set_address(persist::AddressSet&);
-	
-	// set version property related field in database table.
-	void set_field(IN const char* prop, IN const char* field);
-
-	// register persist handler.
-	void set_handler(IN PersistHandler&);
-
-	// register persist upgrade, it will throw exception when has error.
-	typedef std::function<void(void)> UpgradeFunc;
-	void set_upgrade(IN const uint32_t ver, IN UpgradeFunc func);
-
-	// get master data source.
-	eco::Database& master();
-
-	// close and release persist resource. just like database.
-	void close();
-
-protected:
-	virtual bool on_born() override;
-	virtual void on_live() override;
+	Persist m_persist;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 inline Persist& PersistHandler::persist()
 {
-	return *m_persist;
+	return m_persist;
 }
 inline eco::Database& PersistHandler::master()
 {

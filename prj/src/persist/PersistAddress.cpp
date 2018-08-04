@@ -13,11 +13,11 @@ public:
 	{
 		m_port = 0;
 		m_type = 0;
-		m_char_set = char_set_gbk;
+		m_charset = charset_gbk;
 	}
 
 	SourceType	m_type;
-	CharSet		m_char_set;
+	Charset		m_charset;
 	uint32_t	m_port;
 	std::string m_name;
 	std::string m_host;
@@ -42,7 +42,7 @@ ECO_PROPERTY_STR_IMPL(Address, database);
 ECO_PROPERTY_STR_IMPL(Address, password);
 ECO_PROPERTY_VAV_IMPL(Address, uint32_t, port);
 ECO_PROPERTY_VAV_IMPL(Address, SourceType, type);
-ECO_PROPERTY_VAV_IMPL(Address, CharSet, char_set);
+ECO_PROPERTY_VAV_IMPL(Address, Charset, charset);
 ECO_SHARED_IMPL(AddressSet);
 ECO_PROPERTY_SET_IMPL(AddressSet, Address);
 
@@ -63,10 +63,26 @@ const char* Address::get_type_name() const
 		return "sqlite";
 	return "unknown";
 }
+////////////////////////////////////////////////////////////////////////////////
+void Address::set_charset(IN const char* v)
+{
+	if (strcmp(v, "gbk") == 0)
+		set_charset(charset_gbk);
+	else if (strcmp(v, "gbk2312") == 0)
+		set_charset(charset_gb2312);
+	else if (strcmp(v, "utf8") == 0)
+		set_charset(charset_utf8);
+	else if (strcmp(v, "utf16") == 0)
+		set_charset(charset_utf16);
+	else if (strcmp(v, "utf32") == 0)
+		set_charset(charset_utf32);
+	else // default
+		set_charset(charset_gbk);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Address& Address::set(IN const char* v)
+Address& Address::set_address(IN const char* v)
 {
 	impl().m_host.clear();
 	impl().m_port = 0;

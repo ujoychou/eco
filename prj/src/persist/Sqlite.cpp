@@ -51,7 +51,7 @@ class Sqlite::Impl
 public:
 	// connection info.
 	std::string m_db_name;
-	std::string m_char_set;
+	std::string m_charset;
 	// mysql instance.
 	sqlite3* m_sqlite;
 	eco::Mutex m_sqlite_mutex;
@@ -67,36 +67,38 @@ public:
 		close();
 	}
 	
-	inline void set_charset(IN const persist::CharSet v)
+	inline void set_charset(IN const persist::Charset v)
 	{
 		switch (v)
 		{
-		case persist::char_set_gbk :
-			m_char_set = "gbk";
+		case persist::charset_gbk :
+			m_charset = "gbk";
 			return ;
-		case persist::char_set_gb2312 :
-			m_char_set = "gb2312";
+		case persist::charset_gb2312 :
+			m_charset = "gb2312";
 			return ;
-		case persist::char_set_utf8 :
-			m_char_set = "utf8";
+		case persist::charset_utf8 :
+			m_charset = "utf8";
 			return ;
-		case persist::char_set_utf16 :
-			m_char_set = "utf16";
+		case persist::charset_utf16 :
+			m_charset = "utf16";
 			return ;
-		case persist::char_set_utf32 :
-			m_char_set = "utf32";
+		case persist::charset_utf32 :
+			m_charset = "utf32";
 			return ;
 		}
-		m_char_set = "gbk";	// default is gbk.
+		m_charset = "gbk";	// default is gbk.
 	}
 
 	inline void open()
 	{
 		// create sqlite instance.
-		if (sqlite3_open(m_db_name.c_str(), &m_sqlite))
+		sqlite3* sqlite = nullptr;
+		if (sqlite3_open(m_db_name.c_str(), &sqlite))
 		{
 			throw_error();
 		}
+		m_sqlite = sqlite;
 	}
 
 	// connect to server once.
@@ -156,18 +158,18 @@ ECO_SHARED_IMPL(Sqlite);
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::open(IN const persist::Address& addr)
 {
-	open(addr.get_database(), addr.get_char_set());
+	open(addr.get_database(), addr.get_charset());
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::open(
 	IN const char* db_name,
-	IN const persist::CharSet char_set)
+	IN const persist::Charset charset)
 {
 	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex);
 	impl().m_db_name = db_name;
-	impl().set_charset(char_set);
+	impl().set_charset(charset);
 	impl().open();
 }
 
@@ -282,6 +284,9 @@ bool Sqlite::has_table(IN const char* table_name)
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::get_tables(OUT Recordset& tables, IN  const char* db_name)
 {
+	std::string cond_sql("select name from sqlite_master"
+		" where type='table' order by name;");
+	return select(tables, cond_sql.c_str());
 }
 
 

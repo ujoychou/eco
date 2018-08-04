@@ -38,13 +38,13 @@ typedef uint16_t SourceType;
 // data source client character set.
 enum
 {
-	char_set_gbk		= 1,
-	char_set_gb2312		= 2,
-	char_set_utf8		= 3,
-	char_set_utf16		= 4,
-	char_set_utf32		= 5,
+	charset_gbk			= 1,
+	charset_gb2312		= 2,
+	charset_utf8		= 3,
+	charset_utf16		= 4,
+	charset_utf32		= 5,
 };
-typedef uint16_t CharSet;
+typedef uint16_t Charset;
 
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Address
@@ -52,7 +52,7 @@ class ECO_API Address
 	ECO_VALUE_API(Address);
 public:
 	// address: "127.0.0.1:3306".
-	Address& set(IN const char* addr);
+	Address& set_address(IN const char* addr);
 
 	// data source type.
 	void set_type(IN const SourceType);
@@ -64,10 +64,11 @@ public:
 	const char* get_type_name() const;
 
 	// data source char set.
-	void set_char_set(IN const CharSet = char_set_gbk);
-	const CharSet get_char_set() const;
-	CharSet char_set();
-	Address& char_set(IN const CharSet = char_set_gbk);
+	void set_charset(IN const Charset = charset_gbk);
+	const Charset get_charset() const;
+	Charset charset();
+	Address& charset(IN const Charset = charset_gbk);
+	void set_charset(IN const char* v = "gbk");
 
 	// host name
 	void set_name(IN const char*);

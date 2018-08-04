@@ -107,12 +107,12 @@ public:
 		IN const char* db_name,
 		IN const char* user_id,
 		IN const char* password,
-		IN const persist::CharSet char_set = persist::char_set_gbk) {};
+		IN const persist::Charset char_set = persist::charset_gbk) {};
 
 	// connect to sqlite database.
 	virtual void open(
 		IN const char* db_name,
-		IN const persist::CharSet char_set = persist::char_set_gbk) {};
+		IN const persist::Charset char_set = persist::charset_gbk) {};
 
 	// disconnect to server
 	virtual void close() = 0;
@@ -173,12 +173,13 @@ public:
 	// create talbe.
 	inline void create_table(
 		IN const ObjectMapping& map,
-		IN bool check_table_exist = true)
+		IN bool check_table_exist = true,
+		IN const char* table = nullptr)
 	{
-		if (!check_table_exist || !has_table(map.get_table()))
+		if (!check_table_exist || !has_table(map.get_table(table)))
 		{
 			std::string sql;
-			map.get_create_table_sql(sql, &config());
+			map.get_create_table_sql(sql, &config(), table);
 			execute_sql(sql.c_str());
 		}
 	}
@@ -187,13 +188,14 @@ public:
 	template<typename meta_t, typename object_set_t>
 	inline void save_all(
 		IN const object_set_t& obj_set,
-		IN const ObjectMapping& mapping)
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
 	{
 		Transaction trans(*this);
 		object_set_t::const_iterator it = obj_set.begin();
 		for (; it != obj_set.end(); ++it)
 		{
-			save<meta_t>(*it, mapping);
+			save<meta_t>(*it, mapping, table);
 		}
 		trans.commit();
 	}
@@ -202,13 +204,14 @@ public:
 	inline void save_all(
 		IN const object_set_t& obj_set,
 		IN const ObjectMapping& mapping,
-		IN const eco::meta::Stamp s)
+		IN const eco::meta::Stamp s,
+		IN const char* table = nullptr)
 	{
 		Transaction trans(*this);
 		object_set_t::const_iterator it = obj_set.begin();
 		for (; it != obj_set.end(); ++it)
 		{
-			save<meta_t>(*it, mapping, s);
+			save<meta_t>(*it, mapping, s, table);
 		}
 		trans.commit();
 	}
@@ -217,11 +220,12 @@ public:
 	template<typename meta_t, typename object_t>
 	inline uint64_t save(
 		IN const object_t& obj,
-		IN const ObjectMapping& mapping)
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
 	{
 		meta_t meta;
 		meta.attach(obj);
-		uint64_t rows = save<meta_t>(obj, mapping, meta.stamp());
+		uint64_t rows = save<meta_t>(obj, mapping, meta.stamp(), table);
 		// update and insert object will reset stamp to original.
 		eco::meta::clean(meta.stamp());
 		return rows;
@@ -232,7 +236,8 @@ public:
 	inline uint64_t save(
 		IN const object_t& obj,
 		IN const ObjectMapping& mapping,
-		IN const eco::meta::Stamp stamp)
+		IN const eco::meta::Stamp stamp,
+		IN  const char* table = nullptr)
 	{
 		std::string sql;
 		if (eco::meta::is_clean(stamp))		// origin object.
@@ -241,15 +246,15 @@ public:
 		}
 		else if (eco::meta::is_insert(stamp))	// insert object.
 		{
-			mapping.get_insert_sql<meta_t>(sql, obj);
+			mapping.get_insert_sql<meta_t>(sql, obj, table);
 		}
 		else if (eco::meta::is_update(stamp))	// update object.
 		{
-			mapping.get_update_sql<meta_t>(sql, obj);
+			mapping.get_update_sql<meta_t>(sql, obj, table);
 		}
 		else if (eco::meta::is_remove(stamp))	// delete object.
 		{
-			mapping.get_delete_sql<meta_t>(sql, obj);
+			mapping.get_delete_sql<meta_t>(sql, obj, table);
 		}
 		else
 		{
@@ -267,7 +272,8 @@ public:
 		IN object_t& obj,
 		IN const char* prop,
 		IN const char* value,
-		IN const ObjectMapping& mapping)
+		IN const ObjectMapping& mapping,
+		IN  const char* table = nullptr)
 	{
 		auto* p = mapping.find_property(prop);
 		if (p == nullptr)
@@ -280,7 +286,7 @@ public:
 		// sql: "update set prop='value' where pk='v'"
 		std::string sql("update ");
 		sql.reserve(128);
-		sql += mapping.get_table();
+		sql += mapping.get_table(table);
 		sql += " set ";
 		sql += p->get_field();
 		sql += "='";
@@ -298,10 +304,11 @@ public:
 		IN object_t& obj,
 		IN const std::string& prop,
 		IN const std::string& value,
-		IN const ObjectMapping& mapping)
+		IN const ObjectMapping& mapping,
+		IN  const char* table)
 	{
 		return update<meta_t, object_t>(
-			obj, prop.c_str(), value.c_str(), mapping);
+			obj, prop.c_str(), value.c_str(), mapping, table);
 	}
 
 	// removed all data from table.
@@ -340,10 +347,11 @@ public:
 		OUT object_t& obj,
 		IN  const ObjectMapping& mapping,
 		IN  const char* cond_sql,
+		IN  const char* table = nullptr,
 		IN  const char lias_table = 0)
 	{
 		std::string sql;
-		mapping.get_select_sql(sql, cond_sql, lias_table);
+		mapping.get_select_sql(sql, cond_sql, table, lias_table);
 
 		Record rd;
 		select(rd, sql.c_str());
@@ -356,10 +364,11 @@ public:
 		OUT object_set_t& obj_set,
 		IN  const ObjectMapping& mapping,
 		IN  const char* cond_sql = "",
+		IN  const char* table = nullptr,
 		IN  const char lias_table = 0)
 	{
 		std::string sql;
-		mapping.get_select_sql(sql, cond_sql, lias_table);
+		mapping.get_select_sql(sql, cond_sql, table, lias_table);
 		Recordset rd_set;
 		select(rd_set, sql.c_str());
 		mapping.decode_some<meta_t>(obj_set, rd_set, eco_db);
@@ -402,14 +411,10 @@ public:
 		return rows;
 	}
 
-	// auto generate table alias.
-	inline char get_alias(IN const uint32_t i) const
-	{
-		return 'A' + i;
-	}
-
 public:
-	inline uint64_t get_max_id(IN const ObjectMapping& mapping)
+	inline uint64_t get_max_id(
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
 	{
 		// sql: "select max(id) from table".
 		auto* pk = mapping.find_pk();
@@ -420,7 +425,7 @@ public:
 		eco::Stream sql;
 		sql.buffer().reserve(64);
 		sql << "select max(" << pk->get_property() 
-			<< ") from " << mapping.get_table();
+			<< ") from " << mapping.get_table(table);
 
 		// get max id.
 		eco::Record rd;

@@ -31,7 +31,7 @@ class ObjectMapping : public eco::Object<ObjectMapping>
 {
 public:
 	/*@ constructor. */
-	inline ObjectMapping()
+	inline ObjectMapping() : m_id(nullptr)
 	{}
 
 	/*@ destructor. */
@@ -40,6 +40,21 @@ public:
 
 /////////////////////////////////////////////////////////////////////META OBJECT
 public:
+	inline const char* get_table(IN const char* table) const
+	{
+		return (table != nullptr) ? table : m_table.c_str();
+	}
+
+	inline static void get_field_alias(
+		OUT std::string& field_sql, IN const char table_alias)
+	{
+		if (table_alias != 0)
+		{
+			field_sql += table_alias;
+			field_sql += '.';
+		}
+	}
+
 	// throw error.
 	inline void throw_error() const
 	{
@@ -48,10 +63,57 @@ public:
 		throw std::logic_error(temp.c_str());
 	}
 
+	// get create table sql.
+	inline void get_create_table_sql(
+		OUT std::string& sql,
+		IN  DatabaseConfig* cfg,
+		IN  const char* table) const
+	{
+		if (m_prop_map.empty())
+		{
+			throw_error();
+		}
+
+		// create table fields.
+		sql = "CREATE TABLE ";
+		sql += get_table(table);
+		sql += '(';
+		auto it = m_prop_map.begin();
+		for (int i = 0; it != m_prop_map.end(); ++it, ++i)
+		{
+			sql += it->get_field();
+			sql += " ";
+			sql += it->get_field_type_sql(cfg);
+			sql += ",";
+		}
+
+		// primary key: "PRIMARY KEY (pk1, pk2)"
+		std::string pk_sql;
+		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
+		{
+			if (it->is_pk())
+			{
+				pk_sql += it->get_field();
+				pk_sql += ",";
+			}
+		}
+
+		if (!pk_sql.empty())
+		{
+			pk_sql[pk_sql.size() - 1] = ')';
+			sql += "PRIMARY KEY (" + pk_sql + ")";
+		}
+		else
+		{
+			sql[sql.size() - 1] = ')';
+		}
+	}
+
 	template<typename meta_t, typename object_t>
 	void get_insert_sql(
 		OUT std::string& sql,
-		IN  const object_t& obj) const
+		IN  const object_t& obj,
+		IN  const char* table) const
 	{
 		meta_t meta;
 		meta.attach(obj);
@@ -71,7 +133,7 @@ public:
 			field_sql += it->get_field();
 			field_sql += ',';
 			value_sql += '\'';
-			value_sql += meta.get_value(it->get_property(), eco_db);
+			value_sql += meta.get_value(*it, eco_db);
 			value_sql += "',";
 		}
 		// remove end ','.
@@ -80,9 +142,9 @@ public:
 
 		// sql format: 
 		// insert into table(field1,field2,...)values('value1','value2',...)
-		sql.reserve(field_sql.size() + value_sql.size() + m_table.size() + 30);
+		sql.reserve(field_sql.size() + value_sql.size() + 50);
 		sql = "insert into ";
-		sql += m_table;
+		sql += get_table(table);
 		sql += " (";
 		sql += field_sql;
 		sql += ") values(";
@@ -93,7 +155,8 @@ public:
 	template<typename meta_t, typename object_t>
 	void get_update_sql(
 		OUT std::string& sql,
-		IN  const object_t& obj) const
+		IN  const object_t& obj,
+		IN  const char* table) const
 	{
 		meta_t meta;
 		meta.attach(obj);
@@ -109,7 +172,7 @@ public:
 		// update table set field1='value1', field2='value2',... where pk1=v1 and ...
 		sql.reserve(256);
 		sql = "update ";
-		sql += m_table;
+		sql += get_table(table);
 		sql += " set ";
 		std::string cond_sql;
 		get_condition_sql(cond_sql, meta);
@@ -119,7 +182,7 @@ public:
 			{
 				sql += it->get_field();
 				sql += "='";
-				sql += meta.get_value(it->get_property(), eco_db);
+				sql += meta.get_value(*it, eco_db);
 				sql += "',";
 			}
 		}
@@ -130,7 +193,8 @@ public:
 	template<typename meta_t, typename object_t>
 	inline void get_delete_sql(
 		OUT std::string& sql,
-		IN  const object_t& obj) const
+		IN  const object_t& obj,
+		IN  const char* table) const
 	{
 		meta_t meta;
 		meta.attach(obj);
@@ -141,17 +205,16 @@ public:
 		get_condition_sql(cond_sql, meta);
 		sql.reserve(64);
 		sql = "delete from ";
-		sql += m_table;
+		sql += get_table(table);
 		sql += ' ';
 		sql += cond_sql;
 	}
 
-	
-
 	template<typename meta_t, typename object_t>
 	inline void get_select_sql(
 		OUT std::string& sql,
-		IN  const object_t& obj) const
+		IN  const object_t& obj,
+		IN  const char* table) const
 	{
 		meta_t meta;
 		meta.attach(obj);
@@ -166,12 +229,13 @@ public:
 		// construct condition sql.
 		std::string cond_sql;
 		get_condition_sql(cond_sql, meta);
-		get_select_sql(sql, cond_sql.c_str(), 0);
+		get_select_sql(sql, cond_sql.c_str(), table, 0);
 	}
 
 	inline void get_select_sql(
 		OUT std::string& sql,
 		IN  const char* cond_sql,
+		IN  const char* table,
 		IN  const char table_lias) const
 	{
 		// mapping is empty, return a empty sql.
@@ -182,7 +246,7 @@ public:
 		// sql format: 
 		// select field1,field2,... from table where ...
 		sql += " from ";
-		sql += m_table;
+		sql += get_table(table);
 		if (table_lias != 0)
 		{
 			sql += " as ";
@@ -210,7 +274,7 @@ public:
 			{
 				cond_sql += cond_sql.empty() ? " where " : " and ";
 				cond_sql += it->get_field();
-				cond_sql += "='" + meta.get_value(it->get_property(), eco_db);
+				cond_sql += "='" + meta.get_value(*it, eco_db);
 				cond_sql += "'";
 			}
 		}
@@ -240,11 +304,7 @@ public:
 			if (main_table == nullptr || !main_table->find_property(
 				it->get_property(), constraint_pk | constraint_fk))
 			{
-				if (table_lias != 0)
-				{
-					field_sql += table_lias;
-					field_sql += '.';
-				}
+				get_field_alias(field_sql, table_lias);
 				field_sql += it->get_field();
 				field_sql += ',';
 			}
@@ -279,7 +339,7 @@ public:
 
 		if (!cond_sql.empty())
 		{
-			join_sql += "inner join ";
+			join_sql += " inner join ";
 			join_sql += table_name;
 			join_sql += " as ";
 			join_sql += table_alias;
@@ -312,7 +372,7 @@ public:
 		auto it = m_prop_map.begin();
 		for (int i=0; it!=m_prop_map.end(); ++it, ++i)
 		{
-			meta.set_value(it->get_property(), record[i], view);
+			meta.set_value(*it, record[i], view);
 		}
 		eco::meta::clean(meta.stamp());
 	}
@@ -340,61 +400,12 @@ public:
 			auto it = m_prop_map.begin();
 			for (int i = 0; it != m_prop_map.end(); ++it, ++i)
 			{
-				meta.set_value(it->get_property(), record_set[oi][i], view);
+				meta.set_value(*it, record_set[oi][i], view);
 			}
 			eco::meta::clean(meta.stamp());
 			obj_set.push_back(obj);
 		}
 	}
-
-
-////////////////////////////////////////////////////////////////////////////////
-public:
-	// get create table sql.
-	inline void get_create_table_sql(
-		OUT std::string& sql,
-		IN  DatabaseConfig* cfg) const
-	{
-		if (m_prop_map.empty())
-		{
-			throw_error();
-		}
-
-		// create table fields.
-		sql = "CREATE TABLE ";
-		sql += m_table;
-		sql += '(';
-		auto it = m_prop_map.begin();
-		for (int i=0; it!=m_prop_map.end(); ++it, ++i)
-		{
-			sql += it->get_field();
-			sql += " ";
-			sql += it->get_field_type_sql(cfg);
-			sql += ",";
-		}
-
-		// primary key: "PRIMARY KEY (pk1, pk2)"
-		std::string pk_sql;
-		for (auto it=m_prop_map.begin(); it!=m_prop_map.end(); ++it)
-		{
-			if (it->is_pk())
-			{
-				pk_sql += it->get_field();
-				pk_sql += ",";
-			}
-		}
-
-		if (!pk_sql.empty()) 
-		{
-			pk_sql[pk_sql.size() - 1] = ')';
-			sql += "PRIMARY KEY (" + pk_sql + ")";
-		}
-		else
-		{
-			sql[sql.size() - 1] = ')';
-		}
-	}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 public:

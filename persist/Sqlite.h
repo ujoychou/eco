@@ -42,7 +42,7 @@ public:
 	// connect to server and login database.
 	virtual void open(
 		IN const char* db_name,
-		IN const persist::CharSet char_set = persist::char_set_gbk) override;
+		IN const persist::Charset char_set = persist::charset_gbk) override;
 
 	// disconnect to server
 	virtual void close() override;
