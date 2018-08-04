@@ -5,11 +5,13 @@
 #include <eco/filesystem/Operations.h>
 #include <boost/filesystem/path.hpp>
 #include <boost/algorithm/string.hpp>
+
+// windows header and lib.
 #include "windows.h"
 #include "shellapi.h"
 #include "tlhelp32.h"
 #include "psapi.h"
-
+#pragma comment(lib, "psapi.lib")
 
 namespace eco{;
 namespace proxy{;
@@ -18,7 +20,7 @@ inline bool GetProcessFilePath(
 	OUT std::string& proc_path,
 	IN  const DWORD pid)
 {
-	WinAutoHandler proc(OpenProcess(
+	win::AutoHandler proc(OpenProcess(
 		PROCESS_QUERY_INFORMATION |PROCESS_VM_READ, FALSE, pid));
 	if (!proc)
 	{
@@ -49,7 +51,7 @@ inline int FindWin32ProcessId(
 	IN const std::string& exe_name)
 {
 	// create process snapshot.
-	WinAutoHandler snapshot(::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+	win::AutoHandler snapshot(::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
 	if (!snapshot)
 	{
 		return eco::error;
@@ -83,7 +85,7 @@ inline int FindWin32ProcessIdByPath(
 		boost::filesystem::path(exe_path).filename();
 
 	// create process snapshot.
-	WinAutoHandler snapshot(::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+	win::AutoHandler snapshot(::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
 	if (!snapshot)
 	{
 		return eco::error;
@@ -161,7 +163,7 @@ bool TerminateExeFile(IN const std::string& exe_path)
 		{
 			return false;
 		}
-		WinAutoHandler proc(::OpenProcess(PROCESS_TERMINATE, FALSE, pid));
+		win::AutoHandler proc(::OpenProcess(PROCESS_TERMINATE, FALSE, pid));
 		if (!proc)
 		{
 			return false;
@@ -191,7 +193,7 @@ bool TerminateExe(IN const std::string& exe_name)
 		{
 			return false;
 		}
-		WinAutoHandler proc(::OpenProcess(PROCESS_TERMINATE, FALSE, pid));
+		win::AutoHandler proc(::OpenProcess(PROCESS_TERMINATE, FALSE, pid));
 		if (!proc)
 		{
 			return false;
@@ -211,24 +213,38 @@ bool IsExeRunning(IN const std::string& exe_name)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void GetRelativeDirectory(
-	OUT std::string& dest_dir,
-	IN  const std::string& relative_dir)
+std::string GetRelativeDirectory(IN  const std::string& relative_dir)
 {
-	GetModuleDirectory(dest_dir);
+	std::string dest_dir = GetModuleDirectory();
 	dest_dir += '/';
-	dest_dir += relative_dir;
+	return dest_dir += relative_dir;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void GetModuleDirectory(OUT std::string& dest_dir)
+std::string GetModuleFile()
+{
+	char module_file[2048];
+	GetModuleFileNameA(NULL, module_file, 2048);
+	return module_file;
+}
+std::string GetModuleDirectory()
 {
 	TCHAR module_file[2048];
 	GetModuleFileName(NULL, module_file, 2048);
-
 	// Get the parent directory.
-	dest_dir = boost::filesystem::path(module_file).parent_path().string();
+	return boost::filesystem::path(module_file).parent_path().string();
+}
+std::string GetModuleName()
+{
+	char path[256] = { 0 };
+	GetModuleFileNameA(NULL, path, 256);
+	uint32_t start = eco::find_last(path, '\\');
+	if (start == std::string::npos) return eco::empty_str;
+	uint32_t end = eco::find_last(path, '.');
+	if (end == std::string::npos) return eco::empty_str;
+	std::string result(&path[start + 1], end - start - 1);
+	return result;
 }
 
 

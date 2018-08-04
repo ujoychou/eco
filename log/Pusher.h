@@ -59,9 +59,19 @@ public:
 	/*@ logging collector. domain has 'logging', 'monitor', 'report'
 	*/
 	PusherT& set(
+		IN const char* func_name,
 		IN const char* file_name,
 		IN int file_line,
 		IN SeverityLevel sev_level);
+
+	/*@ set pusher without func name. */
+	inline PusherT& set(
+		IN const char* file_name,
+		IN int file_line,
+		IN SeverityLevel sev_level)
+	{
+		return set(nullptr, file_name, file_line, sev_level);
+	}
 
 	/*@ log stream.*/
 	inline Stream& stream()

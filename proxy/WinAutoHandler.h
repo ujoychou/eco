@@ -1,19 +1,19 @@
-#ifndef ECO_PROXY_AUTO_HANDLER_H
-#define ECO_PROXY_AUTO_HANDLER_H
+#ifndef ECO_WIN_AUTO_HANDLER_H
+#define ECO_WIN_AUTO_HANDLER_H
 ////////////////////////////////////////////////////////////////////////////////
 #include "windows.h"
 
 
 namespace eco{;
-namespace proxy{;
+namespace win{;
 ////////////////////////////////////////////////////////////////////////////////
-class WinAutoHandler
+class AutoHandler
 {
 public:
-	inline WinAutoHandler(IN HANDLE hdl) : m_handle(hdl)
+	inline AutoHandler(IN HANDLE hdl) : m_handle(hdl)
 	{}
 
-	inline ~WinAutoHandler()
+	inline ~AutoHandler()
 	{
 		if (m_handle != nullptr)
 		{
@@ -33,7 +33,7 @@ public:
 
 	inline operator bool() const
 	{
-		return (m_handle != nullptr);
+		return (m_handle != nullptr && m_handle != INVALID_HANDLE_VALUE);
 	}
 
 private:

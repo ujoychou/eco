@@ -224,6 +224,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Being.cpp" />
+    <ClCompile Include="..\data_time\DateTime.cpp" />
     <ClCompile Include="..\Eco.cpp" />
     <ClCompile Include="..\App.cpp" />
     <ClCompile Include="..\cmd\Class.cpp" />
@@ -232,7 +233,6 @@
     <ClCompile Include="..\cmd\Group.cpp" />
     <ClCompile Include="..\cmd\Inner.cpp" />
     <ClCompile Include="..\Config.cpp" />
-    <ClCompile Include="..\DateTime.cpp" />
     <ClCompile Include="..\DllObject.cpp" />
     <ClCompile Include="..\DllObjectWin.cpp" />
     <ClCompile Include="..\HeapOperators.cpp" />
@@ -323,6 +323,7 @@
     <ClCompile Include="..\process\ProcessWin.cpp" />
     <ClCompile Include="..\proxy\Proxy.cpp" />
     <ClCompile Include="..\proxy\ProxyWin.cpp" />
+    <ClCompile Include="..\proxy\WinDump.cpp" />
     <ClCompile Include="..\service\Cluster.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -398,7 +399,10 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\asio\Worker.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\asio\WorkerPool.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Context.h" />
-    <ClInclude Include="..\..\..\Date.h" />
+    <ClInclude Include="..\..\..\Any.h" />
+    <ClInclude Include="..\..\..\date_time\Date.h" />
+    <ClInclude Include="..\..\..\date_time\DateTime.h" />
+    <ClInclude Include="..\..\..\date_time\Time.h" />
     <ClInclude Include="..\..\..\net\TcpDispatch.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Ecode.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestHandler.h" />
@@ -462,7 +466,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\topic\Role.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\topic\TopicServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\SourceFile.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h" />
@@ -511,9 +514,11 @@
     <ClInclude Include="..\..\..\persist\Database.h" />
     <ClInclude Include="..\..\..\proto\Object.pb.h" />
     <ClInclude Include="..\..\..\proto\Proto.h" />
+    <ClInclude Include="..\..\..\proxy\WinDump.h" />
     <ClInclude Include="..\..\..\thread\Index.h" />
     <ClInclude Include="..\..\..\thread\Map.h" />
     <ClInclude Include="..\..\..\thread\TimerWheel.h" />
+    <ClInclude Include="..\..\..\thread\topic\TopicQueue.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />

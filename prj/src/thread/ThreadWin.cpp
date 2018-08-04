@@ -16,7 +16,7 @@ namespace this_thread{;
 
 __declspec(thread) uint64_t	t_tid = 0;
 __declspec(thread) char		t_tid_string[16] = {0};
-__declspec(thread) char		t_tname[16] = "--";
+__declspec(thread) char		t_tname[32] = "--";
 ////////////////////////////////////////////////////////////////////////////////
 void sleep(IN int millisecond)
 {
@@ -102,8 +102,10 @@ unsigned __stdcall work(IN void* tdata)
 	{
 		// init this_thread info.
 		eco::this_thread::t_tid = impl.m_handle;
-		strcpy_s(eco::this_thread::t_tid_string, 16, impl.m_tid_string.c_str());
-		strcpy_s(eco::this_thread::t_tname, 16, impl.m_name.c_str());
+		eco::auto_strncpy(
+			eco::this_thread::t_tid_string, impl.m_tid_string.c_str(), 16);
+		eco::auto_strncpy(
+			eco::this_thread::t_tname, impl.m_name.c_str(), 16);
 
 		// run thread func.
 		impl.m_func();

@@ -59,13 +59,13 @@ ECO_API bool TerminateExe(
 	IN const std::string& exe_name);
 
 // Get current module directory
-ECO_API void GetRelativeDirectory(
-	OUT std::string& dest_dir,
+ECO_API std::string GetRelativeDirectory(
 	IN  const std::string& relative_dir);
 
 // Get current module directory
-ECO_API void GetModuleDirectory(
-	OUT std::string& dest_dir);
+ECO_API std::string GetModuleName();
+ECO_API std::string GetModuleFile();
+ECO_API std::string GetModuleDirectory();
 
 // Get system date: 2014-07-07
 ECO_API std::string GetSystemDate();

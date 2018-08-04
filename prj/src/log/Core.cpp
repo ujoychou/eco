@@ -29,17 +29,17 @@ public:
 class Handler
 {
 public:
-	Handler() : m_core(nullptr)
+	inline Handler() : m_core(nullptr)
 	{}
 
-	Handler(IN Core::Impl& imp) : m_core(&imp)
+	inline Handler(IN Core::Impl& imp) : m_core(&imp)
 	{}
 
 	// sync logging.
-	void operator()(IN const eco::Bytes& buf, IN const SeverityLevel level);
+	inline void operator()(IN const eco::Bytes& buf, IN const SeverityLevel level);
 
 	// async logging.
-	void operator()(IN const Pack& buf);
+	inline void operator()(IN const Pack& buf);
 
 private:
 	Core::Impl* m_core;
@@ -60,11 +60,12 @@ public:
 	uint32_t m_async_flush;
 
 	// console sink.
+	eco::Mutex m_sync_mutex;
 	std::auto_ptr<FileSink> m_file_sink;
 	std::auto_ptr<ConsoleSink> m_console_sink;
 	SeverityLevel m_file_sev;
 	SeverityLevel m_console_sev;
-
+	
 	// file sink option.
 	std::string m_file_path;
 	uint32_t m_file_roll_size;
@@ -107,7 +108,7 @@ Core::Impl::Impl()
 	, m_file_roll_size(eco::log::file_roll_size)
 	, m_file_path("./log/")
 	, m_on_create(nullptr)
-	, m_sink_option(eco::log::file_sink)
+	, m_sink_option(eco::value_none)
 	, m_running(false)
 	, m_file_sev(eco::log::info)
 	, m_console_sev(eco::log::info)
@@ -244,6 +245,7 @@ void Core::append(IN const eco::Bytes& buf, IN const SeverityLevel level)
 	}
 	else
 	{
+		eco::Mutex::ScopeLock lock(impl().m_sync_mutex);
 		Handler hdl(impl());			// sync
 		hdl(buf, level);
 	}

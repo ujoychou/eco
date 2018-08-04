@@ -2,7 +2,7 @@
 #define ECO_LOG_PUSHER_INL
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/log/Core.h>
-#include <eco/DateTime.h>
+#include <eco/date_time/DateTime.h>
 #include <eco/thread/Thread.h>
 
 
@@ -50,7 +50,10 @@ PusherT<LogStream>::~PusherT()
 ////////////////////////////////////////////////////////////////////////////////
 template<typename LogStream>
 PusherT<LogStream>& PusherT<LogStream>::set(
-	IN const char* file_name, IN int file_line, IN SeverityLevel sev_level)
+	IN const char* func_name,
+	IN const char* file_name,
+	IN int file_line,
+	IN SeverityLevel sev_level)
 {
 	assert(sev_level >= get_core().get_severity_level());
 	m_severity = sev_level;
@@ -70,6 +73,8 @@ PusherT<LogStream>& PusherT<LogStream>::set(
 	eco::date_time::Timestamp now(eco::date_time::fmt_std_m);
 	m_stream << now.get_value() <= eco::this_thread::id_string()
 		<= Severity::get_display(sev_level) < ' ';
+	if (func_name != nullptr)
+		m_stream << eco::group(func_name) < ' ';
 	return *this;
 }
 

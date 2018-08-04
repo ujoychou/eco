@@ -122,7 +122,7 @@
     <ClCompile Include="..\cmd\Group.cpp" />
     <ClCompile Include="..\cmd\Inner.cpp" />
     <ClCompile Include="..\Config.cpp" />
-    <ClCompile Include="..\DateTime.cpp" />
+    <ClCompile Include="..\data_time\DateTime.cpp" />
     <ClCompile Include="..\DllObject.cpp" />
     <ClCompile Include="..\DllObjectWin.cpp" />
     <ClCompile Include="..\Eco.cpp" />
@@ -152,6 +152,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\process\ProcessWin.cpp" />
+    <ClCompile Include="..\proxy\Proxy.cpp" />
+    <ClCompile Include="..\proxy\ProxyWin.cpp" />
+    <ClCompile Include="..\proxy\WinDump.cpp" />
     <ClCompile Include="..\service\Cluster.cpp" />
     <ClCompile Include="..\service\Deployment.cpp" />
     <ClCompile Include="..\service\dev\ClusterDev.cpp" />
@@ -185,7 +188,6 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\ExportApi.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h" />
@@ -223,6 +225,9 @@
     <ClInclude Include="..\..\..\codec\Zlib.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
+    <ClInclude Include="..\..\..\date_time\Date.h" />
+    <ClInclude Include="..\..\..\date_time\DateTime.h" />
+    <ClInclude Include="..\..\..\date_time\Time.h" />
     <ClInclude Include="..\..\..\filesystem\Operations.h" />
     <ClInclude Include="..\..\..\media\Media.h" />
     <ClInclude Include="..\..\..\meta\Meta.h" />

@@ -52,18 +52,24 @@ logging.
 	if (eco::log::fatal >= eco::log::get_core().get_severity_level())\
 		eco::log::FixPusher().set(__FILE__, __LINE__, eco::log::fatal).stream()
 
-#define EcoLog(sev, size)\
+#define EcoLogx(sev)\
 	if (eco::log::##sev  >= eco::log::get_core().get_severity_level())\
-		eco::log::FixPusherT<size>().set(\
+		eco::log::FixPusher().set(\
 		__FILE__, __LINE__, eco::log::##sev).stream()
+
+#define EcoFunc(sev)\
+	if (eco::log::##sev  >= eco::log::get_core().get_severity_level())\
+		eco::log::FixPusher().set(\
+		__func__, __FILE__, __LINE__, eco::log::##sev).stream()
 
 /* log message with heap memory, it has no length limit instead of FixPusher.
 it's buffer implement is eco::String, so you can dedicated a reserve size.
 */
-#define EcoLogStr(sev, size)\
+#define EcoLog(sev)\
 	if (eco::log::##sev  >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher(size).set(\
+		eco::log::Pusher(512).set(\
 		__FILE__, __LINE__, eco::log::##sev).stream()
+
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif

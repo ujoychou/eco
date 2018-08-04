@@ -124,6 +124,15 @@
     <Filter Include="src\media">
       <UniqueIdentifier>{f5bb5dfc-2285-454a-ad8d-9ae977121a8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\date_time">
+      <UniqueIdentifier>{91905f5a-a5c1-486d-9815-69fbd3bf63e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\date_time">
+      <UniqueIdentifier>{fee9314a-9e4f-4642-b462-e73121099f9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\proxy">
+      <UniqueIdentifier>{6fd4de39-fe7b-45af-805e-d255d8b8dfa1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\App.cpp">
@@ -134,9 +143,6 @@
     </ClCompile>
     <ClCompile Include="..\xml\Reader.cpp">
       <Filter>src\xml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DateTime.cpp">
-      <Filter>src\app</Filter>
     </ClCompile>
     <ClCompile Include="..\log\Core.cpp">
       <Filter>src\log</Filter>
@@ -285,6 +291,18 @@
     <ClCompile Include="..\..\..\codec\md5.cpp">
       <Filter>lib\codec</Filter>
     </ClCompile>
+    <ClCompile Include="..\data_time\DateTime.cpp">
+      <Filter>src\date_time</Filter>
+    </ClCompile>
+    <ClCompile Include="..\proxy\ProxyWin.cpp">
+      <Filter>src\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\proxy\Proxy.cpp">
+      <Filter>src\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\proxy\WinDump.cpp">
+      <Filter>src\proxy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\log\Queue.h">
@@ -309,9 +327,6 @@
       <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Config.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\DateTime.h">
       <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h">
@@ -733,6 +748,15 @@
     </ClInclude>
     <ClInclude Include="..\net\DispatchServer.h">
       <Filter>src\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\date_time\Date.h">
+      <Filter>lib\date_time</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\date_time\DateTime.h">
+      <Filter>lib\date_time</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\date_time\Time.h">
+      <Filter>lib\date_time</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
