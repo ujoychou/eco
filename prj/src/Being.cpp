@@ -88,10 +88,15 @@ void Being::live()
 			{
 				on_live();
 			}
+			catch (eco::Error& e)
+			{
+				EcoError << get_name() << " live: " << e;
+			}
 			catch (std::exception& e) 
 			{
-				EcoError << impl().m_name << " live: " << e.what();
+				EcoError << get_name() << " live: " << e.what();
 			}
+			
 			get_eco()->add_being(this);
 			impl().m_born.ok();
 		}

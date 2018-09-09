@@ -2,6 +2,7 @@
 #include <eco/net/asio/Worker.h>
 #include <eco/thread/Timer.h>
 #include <eco/Bobject.h>
+#include <eco/log/Log.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/system/error_code.hpp>
@@ -109,7 +110,10 @@ public:
 				task(false);
 		}
 		catch (std::exception& e) {
-			e.what();
+			EcoFunc(error) << e.what();
+		}
+		catch (eco::Error& e) {
+			EcoFunc(error) << e;
 		}
 	}
 
@@ -169,7 +173,10 @@ public:
 				task(false);
 		}
 		catch (std::exception& e) {
-			e.what();
+			EcoFunc(error) << e.what();
+		}
+		catch (eco::Error& e) {
+			EcoFunc(error) << e;
 		}
 
 		if (repeated)
@@ -262,7 +269,10 @@ public:
 				task(false);
 		}
 		catch (std::exception& e) {
-			e.what();
+			EcoFunc(error) << e.what();
+		}
+		catch (eco::Error& e) {
+			EcoFunc(error) << e;
 		}
 
 		if (repeated)

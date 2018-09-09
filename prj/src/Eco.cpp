@@ -61,11 +61,15 @@ void Eco::on_live_timer()
 			{
 				be->on_live();			// 2.运行生命对象的活动方法
 			}
+			catch (eco::Error& e)
+			{
+				EcoError << be->get_name() << "live : " << e;
+			}
 			catch (std::exception& e)
 			{
-				EcoError << ("live : ") << e.what();
+				EcoError << be->get_name() << "live : " << e.what();
 			}
-
+			
 			m_running.none();			// 3.生命对象运行结束
 			m_cond_var.notify_one();
 		}
