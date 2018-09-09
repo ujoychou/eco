@@ -334,7 +334,7 @@ public:
 		IN  const ObjectMapping& mapping)
 	{
 		std::string sql;
-		mapping.get_select_sql<meta_t>(sql, obj);
+		mapping.get_select_sql<meta_t>(sql, obj, mapping.get_table());
 
 		Record rd;
 		select(rd, sql.c_str());

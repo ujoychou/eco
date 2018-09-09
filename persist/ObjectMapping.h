@@ -316,6 +316,7 @@ public:
 		OUT std::string& join_sql,
 		IN  const char table_alias,
 		IN  const char* table_name,
+		IN  const char* join_mode,
 		IN  const ObjectMapping& main_table) const
 	{
 		// sql format: inner join YYY B on B.b1=A.a1
@@ -339,7 +340,9 @@ public:
 
 		if (!cond_sql.empty())
 		{
-			join_sql += " inner join ";
+			join_sql += ' ';
+			join_sql += join_mode;
+			join_sql += ' ';
 			join_sql += table_name;
 			join_sql += " as ";
 			join_sql += table_alias;

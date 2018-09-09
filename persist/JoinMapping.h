@@ -22,16 +22,49 @@
 
 
 namespace eco{;
+////////////////////////////////////////////////////////////////////////////////
+enum
+{
+	// 4bit: join option
+	option_join_left		= 0x00000001,
+	option_join_right		= 0x00000002,
+	option_join_inner		= 0x00000004,
+};
+typedef uint32_t JoinOption;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+inline void set_join(IN JoinOption& opt, IN const uint32_t v)
+{
+	opt >>= 4;
+	opt <<= 4;
+	opt |= v;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline const char* get_join(IN const JoinOption v)
+{
+	if (eco::has(v, option_join_inner))
+		return "inner join";
+	else if (eco::has(v, option_join_left))
+		return "left join";
+	else if (eco::has(v, option_join_right))
+		return "right join";
+	return "inner join";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename object_t>
 class JoinMeta
 {
 public:
-	inline JoinMeta(const ObjectMapping* v) : m_map(v)
+	inline JoinMeta(const ObjectMapping* v)
+		: m_map(v), m_option(option_join_inner)
 	{}
 
-	virtual void* create() = 0;
+	virtual object_t create() = 0;
 
 	virtual void set_value(
 		IN const PropertyMapping& prop,
@@ -40,22 +73,23 @@ public:
 
 	virtual eco::meta::Stamp& stamp() = 0;
 
-	virtual void attach(void* object) = 0;
+	virtual void attach(IN object_t& object) = 0;
 
 public:
+	JoinOption m_option;
 	const ObjectMapping* m_map;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename meta_t>
-class JoinMetaImpl : public JoinMeta
+template<typename meta_t, typename object_t>
+class JoinMetaImpl : public JoinMeta<object_t>
 {
 public:
-	JoinMetaImpl(const ObjectMapping& map) : JoinMeta(&map)
+	JoinMetaImpl(const ObjectMapping& map) : JoinMeta<object_t>(&map)
 	{}
 
-	virtual void* create() override
+	virtual object_t create() override
 	{
 		return m_meta.create();
 	}
@@ -73,7 +107,7 @@ public:
 		return m_meta.stamp();
 	}
 
-	virtual void attach(IN void* obj) override
+	virtual void attach(IN object_t& obj) override
 	{
 		m_meta.attach(obj);
 	}
@@ -94,7 +128,7 @@ public:
 
 	inline ~JoinMapping()
 	{
-		eco::release(m_join_meta);
+		eco::release<JoinMeta<object_t>>(m_join_meta);
 	}
 
 	// get object map table alias.
@@ -107,14 +141,27 @@ public:
 	template<typename meta_t>
 	inline void join(IN const ObjectMapping& map)
 	{
-		m_join_meta.push_back(new JoinMetaImpl<meta_t>(map));
+		m_join_meta.push_back(new JoinMetaImpl<meta_t, object_t>(map));
+		set_join(m_join_meta.back()->m_option, option_join_inner);
+	}
+	template<typename meta_t>
+	inline void join_left(IN const ObjectMapping& map)
+	{
+		m_join_meta.push_back(new JoinMetaImpl<meta_t, object_t>(map));
+		set_join(m_join_meta.back()->m_option, option_join_left);
+	}
+	template<typename meta_t>
+	inline void join_right(IN const ObjectMapping& map)
+	{
+		m_join_meta.push_back(new JoinMetaImpl<meta_t, object_t>(map));
+		set_join(m_join_meta.back()->m_option, option_join_right);
 	}
 
 	// add main object and meta.
 	template<typename meta_t>
 	inline void main(IN const ObjectMapping& map)
 	{
-		m_main_meta.reset(new JoinMetaImpl<meta_t>(map));
+		m_main_meta.reset(new JoinMetaImpl<meta_t, object_t>(map));
 	}
 
 	// get main object map table.
@@ -161,8 +208,11 @@ public:
 		// inner join sql.
 		for (uint32_t i = 0; i < size(); ++i)
 		{
-			get_map(i)->get_join_sql(sql, get_table_alias(i + 1),
-				get_map(i)->get_table(), *get_main_table());
+			get_map(i)->get_join_sql(
+				sql, get_table_alias(i + 1),
+				get_map(i)->get_table(),
+				get_join(m_join_meta[i]->m_option),
+				*get_main_table());
 		}
 
 		// where sql.
@@ -183,12 +233,11 @@ public:
 		for (size_t r = 0; r < record_set.size(); ++r)
 		{
 			// create object.
-			void* vobj = m_main_meta->create();
-			object_set_t::value_type obj((object_t*)vobj);
+			object_set_t::value_type obj(m_main_meta->create());
 
 			// set main table object property value.
 			uint32_t field = 0;
-			m_main_meta->attach(vobj);
+			m_main_meta->attach(obj);
 			auto m = get_main_table()->get_map().begin();
 			for (; m != get_main_table()->get_map().end(); ++m)
 			{
@@ -198,8 +247,8 @@ public:
 			// set join table object property value.
 			for (auto j = m_join_meta.begin(); j != m_join_meta.end(); ++j)
 			{
-				JoinMeta* join_meta = *j;
-				join_meta->attach(vobj);
+				JoinMeta<object_t>* join_meta = *j;
+				join_meta->attach(obj);
 				auto it = join_meta->m_map->get_map().begin();
 				for (; it != join_meta->m_map->get_map().end(); ++it)
 				{
@@ -218,8 +267,8 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 private:
-	std::auto_ptr<JoinMeta>	m_main_meta;
-	std::vector<JoinMeta*>  m_join_meta;
+	std::auto_ptr<JoinMeta<object_t>>	m_main_meta;
+	std::vector<JoinMeta<object_t>*>  m_join_meta;
 };
 
 
