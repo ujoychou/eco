@@ -79,9 +79,10 @@ void DisableSetUnhandledExceptionFilter()
 		code[size++] = 0x04;
 		code[size++] = 0x00;
 		DWORD dwOldFlag, dwTempFlag;
-		VirtualProtect(addr, size, PAGE_READWRITE, &dwOldFlag);
+		HANDLE hdl = GetCurrentProcess();
+		VirtualProtectEx(hdl, addr, size, PAGE_EXECUTE_READWRITE, &dwOldFlag);
 		WriteProcessMemory(GetCurrentProcess(), addr, code, size, NULL);
-		VirtualProtect(addr, size, dwOldFlag, &dwTempFlag);
+		VirtualProtectEx(hdl, addr, size, dwOldFlag, &dwTempFlag);
 	}
 }
 
