@@ -173,6 +173,7 @@ public:
 
 	// get key value.
 	const StringAny at(IN const char* key) const;
+	const StringAny* find(IN const char* key) const;
 };
 
 
