@@ -6,8 +6,8 @@
 #	include <QtWidgets/QApplication>
 #	include <QtWidgets/QMessageBox>
 #else
-#	include <QtGui/QApplication>
-#	include <QtGui/QMessageBox>
+#	include <QApplication>
+#	include <QMessageBox>
 #endif
 #include <QtNetwork/qlocalserver.h>
 #include <QtNetwork/qlocalsocket.h>
@@ -18,7 +18,7 @@
 
 namespace eco{;
 extern "C" void init_app(IN App* heap);
-extern "C" void load_app(IN App& ap);
+extern "C" void load_app(IN App& ap, bool ui);
 extern "C" void exit_app();
 extern "C" void exit_log();
 namespace art{;
@@ -73,7 +73,7 @@ int AppWork::run(QApplication& qt_app)
 		eco::init_app(s_create_app());		// init 0 log
 		app().on_init();					// init 1 app
 		// 加载数据
-		eco::load_app(app());				// init 2 eco
+		eco::load_app(app(), true);			// init 2 eco
 		app().on_load();
 
 		qt_app.exec();

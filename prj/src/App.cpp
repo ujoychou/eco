@@ -62,7 +62,7 @@ public:
 
 	// wait command and provider thread.
 	void init();
-	void load();
+	void load(bool ui);
 	void join();
 
 	// exit app and clear provider and consumer.
@@ -591,7 +591,7 @@ net::TcpClient App::get_consumer(IN const char* name)
 }
 uint32_t App::consumer_size()
 {
-	return impl().m_consumer_set.size();
+	return (uint32_t)impl().m_consumer_set.size();
 }
 net::TcpClient App::get_consumer(IN uint32_t pos)
 {
@@ -628,9 +628,9 @@ extern "C" ECO_API void init_app(IN App* app)
 	App::Impl::s_app.reset(app);
 	app->impl().init();
 }
-extern "C" ECO_API void load_app(IN App& app)
+extern "C" ECO_API void load_app(IN App& app, bool ui)
 {
-	app.impl().load();
+	app.impl().load(ui);
 }
 extern "C" ECO_API void exit_app()
 {
@@ -708,18 +708,23 @@ void App::Impl::init()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void App::Impl::load()
+void App::Impl::load(bool ui)
 {
 	// init group and command tree.
-	init_command();
+	if (!ui)
+	{
+		init_command();
+	}
 
 	// start persist & service.
 	start_persist();
 	start_consumer();
 	start_provider();
 	// start command based on app business object and service.
-	start_command();
-
+	if (!ui)
+	{
+		start_command();
+	}
 	on_rx_load();
 }
 
@@ -728,7 +733,10 @@ void App::Impl::load()
 void App::init(IN int argc, IN char* argv[])
 {
 	eco::this_thread::init();
+
+#ifdef WIN32
 	eco::win::Dump::init();		// create dump file.
+#endif
 
 	// init main parameters.
 	for (int i = 0; i < argc; ++i)
@@ -743,7 +751,7 @@ void App::init(IN int argc, IN char* argv[])
 	Impl::s_app->on_init();				// init 1 app
 
 	// finish app config and start business object, load app business data.
-	Impl::s_app->impl().load();			// init 2 eco
+	Impl::s_app->impl().load(false);	// init 2 eco
 	Impl::s_app->on_load();
 }
 
