@@ -245,7 +245,7 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 	meta.set_request_data(session_key);
 	if (!m_protocol->encode(pack->m_request, pack->m_request_start, meta, e))
 	{
-		EcoError << "tcp client async auth: encode data fail." << e;
+		EcoInfo << "tcp client async auth: encode data fail." << e;
 		return;
 	}
 	async_send(pack);
@@ -322,7 +322,7 @@ void TcpClient::Impl::on_read(IN void* peer, IN eco::String& data)
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		EcoError << NetLog(peer_impl->get_id(), ECO_FUNC) <= e;
+		EcoInfo << NetLog(peer_impl->get_id(), ECO_FUNC) <= e;
 		return;
 	}
 

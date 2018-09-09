@@ -90,8 +90,8 @@ SessionData::ptr TcpServer::Impl::add_session(
 {
 	if (m_make_session == nullptr)
 	{
-		EcoError << NetLog(conn.get_id(), ECO_FUNC)
-			<= "this is connection mode, don't supoort session.";
+		EcoWarn << NetLog(conn.get_id(), ECO_FUNC)
+			<= "this is connection mode, don't support session.";
 		return SessionData::ptr();
 	}
 	// session overloaded.
@@ -121,8 +121,6 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 		EcoError << "tcp server on timer error: " << *e;
 		return;
 	}
-
-	EcoDebug << "... ...";
 	m_option.step_tick();
 
 	// send rhythm heartbeat.
@@ -156,7 +154,7 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& p, IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
-		EcoError << "accept: " << e->what();
+		EcoWarn << "accept: " << e->what();
 		return;
 	}
 	p->set_connected();
@@ -192,7 +190,7 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		EcoError << NetLog(peer->get_id(), ECO_FUNC) <= e;
+		EcoInfo << NetLog(peer->get_id(), ECO_FUNC) <= e;
 		return;
 	}
 
@@ -205,7 +203,7 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 		{
 			e.id(e_message_unknown) << "tcp server have no protocol: "
 				<< head.m_version;
-			EcoError << NetLog(peer->get_id(), ECO_FUNC) <= e;
+			EcoWarn << NetLog(peer->get_id(), ECO_FUNC) <= e;
 			return;
 		}
 		// this is thread safe:

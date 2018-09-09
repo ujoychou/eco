@@ -59,7 +59,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	assert(m_state.websocket());
 	if (eco::find(data_head, head_size, "GET ") != data_head)
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC)
+		EcoInfo << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid 'Get '.";
 		return;
 	}
@@ -67,7 +67,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	WebSocketShakeHand shake_hand;
 	if (!shake_hand.parse_req(data_head, head_size))
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC)
+		EcoInfo << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid.";
 		close_and_notify(nullptr);
 		return;
@@ -84,14 +84,14 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
 	assert(m_state.websocket());
 	if (eco::find(data_head, head_size, "HTTP") != data_head)
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC)
+		EcoInfo << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid 'HTTP '.";
 		return;
 	}
 
 	if (!WebSocketShakeHand().parse_rsp(data_head, m_handler->websocket_key()))
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC) 
+		EcoInfo << NetLog(get_id(), ECO_FUNC)
 			<= "web socket shakehand invalid.";
 		close_and_notify(nullptr);
 		return;
@@ -108,7 +108,7 @@ void TcpPeer::Impl::on_connect(
 	// "client on_connect" called only by client peer.
 	if (!is_connected)
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC) <= *e;
+		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *e;
 		return;
 	}
 
@@ -134,7 +134,7 @@ void TcpPeer::Impl::on_read_head(
 {
 	if (err != nullptr)	// if peerection occur error, close it.
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC) <= *err;
+		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *err;
 		close_and_notify(err);
 		return; 
 	}
@@ -144,7 +144,7 @@ void TcpPeer::Impl::on_read_head(
 	uint32_t data_size = 0;
 	if (!protocol_head().decode_data_size(data_size, data_head, head_size, e))
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC) <= e;
+		EcoInfo << NetLog(get_id(), ECO_FUNC) <= e;
 		close_and_notify(&e);
 		return;
 	}
@@ -175,7 +175,7 @@ void TcpPeer::Impl::on_read_data(
 {
 	if (e != nullptr)	// if peer occur error, release it.
 	{
-		EcoError << NetLog(get_id(), ECO_FUNC) <= *e;
+		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *e;
 		close_and_notify(e);
 		return;
 	}

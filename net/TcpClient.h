@@ -186,9 +186,10 @@ public:
 		return request(req_meta, codec, &rsp_set.get());
 	}
 
+#ifndef ECO_NO_PROTOBUF
 	// sync request data set.
 	template<typename codec_t, typename req_t, typename rsp_t>
-	inline eco::Result request_set(
+	inline void request_proto_set(
 		IN uint32_t req_type,
 		IN req_t& req,
 		IN std::vector<std::shared_ptr<rsp_t> >& rsp_set,
@@ -196,19 +197,25 @@ public:
 	{
 		AutoArray<rsp_t> set;
 		auto result = request_set<codec_t>(req_type, req, set, encrypted);
-		if (result == eco::ok)
+		if (result != eco::ok)
 		{
-			rsp_set.reserve(set.size());
-			for (size_t i = 0; i < set.size(); i++)
-			{
-				typedef std::shared_ptr<rsp_t> rsp_ptr;
-				rsp_set.push_back(rsp_ptr(set.release(i)));
-			}
+			EcoThrow(result) << "request_proto_set" <= get_name() <= req_type;
 		}
-		return result;
+		else if (rsp_set.size() == 1 && rsp_set[0]->has_error())
+		{
+			auto& e = rsp_set[0]->error();
+			EcoThrow(e.id()) << "request_proto_set"
+				<= get_name() <= req_type <= e.message();
+		}
+
+		rsp_set.reserve(set.size());
+		for (size_t i = 0; i < set.size(); i++)
+		{
+			typedef std::shared_ptr<rsp_t> rsp_ptr;
+			rsp_set.push_back(rsp_ptr(set.release(i)));
+		}
 	}
 
-#ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void send(
 		IN google::protobuf::Message& msg,
