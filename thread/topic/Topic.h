@@ -39,6 +39,12 @@ protected:
 		m_snap.reset();
 	}
 
+	inline Content::ptr snap() const
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		return m_snap;
+	}
+
 	// latest data.
 	eco::Content::ptr m_snap;
 };

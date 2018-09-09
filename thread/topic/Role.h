@@ -359,6 +359,11 @@ public:
 	// object type id.
 	virtual const uint32_t get_type_id() const = 0;
 
+	// get topic id.
+	virtual bool get_id(OUT const uint64_t*& id) const	{ return false; }
+	virtual bool get_id(OUT const std::string*& id) const { return false; }
+	virtual bool get_id(OUT const eco::TopicId*& id) const { return false; }
+
 	// init topic event.
 	virtual void on_init(IN eco::TopicEvent* event) {}
 
@@ -389,25 +394,23 @@ public:
 	template<typename object_set_t>
 	inline void push_back_set(IN const object_set_t& set)
 	{
+		eco::Mutex::ScopeLock lock(mutex());
 		for (auto it = set.begin(); it != set.end(); ++it)
 		{
-			push_back(*it);
+			push_back_raw(*it);
 		}
 	}
 	template<typename object_t>
 	inline void push_back(IN const object_t& obj)
 	{
-		Content::ptr newc(new ContentT<
-			object_t, object_t>(obj, eco::meta::stamp_insert));
-		do_move(newc);
+		eco::Mutex::ScopeLock lock(mutex());
+		push_back_raw(obj);
 	}
 	template<typename object_t>
 	inline void push_back(IN const std::shared_ptr<object_t>& obj)
 	{
-		typedef std::shared_ptr<object_t> value_t;
-		Content::ptr newc(new ContentT<
-			object_t, value_t>(obj, eco::meta::stamp_insert));
-		do_move(newc);
+		eco::Mutex::ScopeLock lock(mutex());
+		push_back_raw(obj);
 	}
 
 	// topic server: publish snap after subsriber reserve topic.
@@ -424,10 +427,9 @@ public:
 	// topic server: publish new content after append_new()(recv) new content.
 	virtual void publish_new(IN eco::Content::ptr& new_c)
 	{
-		if (!do_move(new_c)) return;
-
 		// publish new content to all subscriber.
 		eco::Mutex::ScopeLock lock(mutex());
+		if (!do_move(new_c)) return;
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
@@ -464,8 +466,8 @@ public:
 	// publish clear all content in topic.
 	virtual void publish_clear_content()
 	{
-		do_clear();
 		eco::Mutex::ScopeLock lock(mutex());
+		do_clear();
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
@@ -478,6 +480,23 @@ public:
 			}
 			node = next;
 		}// end while.
+	}
+
+protected:
+	template<typename object_t>
+	inline void push_back_raw(IN const object_t& obj)
+	{
+		Content::ptr newc(new ContentT<
+			object_t, object_t>(obj, eco::meta::stamp_insert));
+		do_move(newc);
+	}
+	template<typename object_t>
+	inline void push_back_raw(IN const std::shared_ptr<object_t>& obj)
+	{
+		typedef std::shared_ptr<object_t> value_t;
+		Content::ptr newc(new ContentT<
+			object_t, value_t>(obj, eco::meta::stamp_insert));
+		do_move(newc);
 	}
 };
 
@@ -498,6 +517,11 @@ public:
 	inline const TopicId& get_id() const
 	{
 		return m_id;
+	}
+	virtual bool get_id(OUT const TopicId*& id) const override
+	{
+		id = &m_id;
+		return true;
 	}
 	
 protected:

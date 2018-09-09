@@ -157,7 +157,7 @@ public:
 
 	// unsubscribe topic, and remove topic when there is no subscriber.
 	template<typename topic_id_t>
-	inline bool unsubscribe(
+	inline int unsubscribe(
 		IN const topic_id_t& topic_id,
 		IN Subscriber* subscriber,
 		IN TopicEvent::ptr& event = TopicEvent::ptr())
@@ -173,11 +173,12 @@ public:
 				{
 					it->second->on_erase(event.get());
 					topic_map.erase(it);
+					return 2;
 				}
 			}
-			return true;
+			return 1;
 		}
-		return false;
+		return 0;
 	}
 
 	template<typename topic_id_t>
