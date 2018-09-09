@@ -127,6 +127,7 @@ public:
 		m_days = get_day(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 	}
 
+	// set string date: 20180927
 	inline explicit Date(const char* t)
 	{
 		int y = eco::cast<int16_t>(&t[0], 4);
@@ -134,7 +135,6 @@ public:
 		int d = eco::cast<int16_t>(&t[6], 2);
 		m_days = get_day(y, m, d);
 	}
-
 	inline explicit Date(const std::string& t)
 	{
 		int y = eco::cast<int16_t>(&t[0], 4);
@@ -143,7 +143,7 @@ public:
 		m_days = get_day(y, m, d);
 	}
 
-	// ÔËËã·û+/-
+	// operator +/-
 	inline Date& operator+=(int day)
 	{
 		m_days += day;

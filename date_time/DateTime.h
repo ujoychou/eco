@@ -23,7 +23,7 @@ Now.
 *******************************************************************************/
 #include <eco/ExportApi.h>
 #include <eco/Memory.h>
-#include <string>
+#include <eco/date_time/Date.h>
 
 
 namespace eco{;
@@ -66,10 +66,41 @@ enum TimeUnitType
 class ECO_API Timestamp
 {
 public:
-	explicit Timestamp(
-		IN const Format fmt = fmt_iso_m);
+	// get date and time of now.
+	// time second: "00:00:00" -> 0.
+	static void get_time(OUT Date& date, OUT uint32_t& time);
 
-	const char* get_time() const;
+public:
+	/*
+	time_format: time text format.
+	second_clock: get time from a second clock precision.
+	*/
+	inline explicit Timestamp(
+		IN Format time_format = fmt_iso_m,
+		IN bool second_clock = false)
+	{
+		m_time_format = time_format;
+		m_timestamp[0] = '\0';
+		set_clock(second_clock);
+	}
+
+	inline const char* get_time() const
+	{
+		switch (m_time_format)
+		{
+		case eco::date_time::fmt_iso:
+		case eco::date_time::fmt_iso_m:
+			return &m_timestamp[8];
+		case eco::date_time::fmt_isot:
+		case eco::date_time::fmt_isot_m:
+			return &m_timestamp[9];
+		case eco::date_time::fmt_std:
+		case eco::date_time::fmt_std_m:
+		default:
+			break;
+		}
+		return &m_timestamp[11];
+	}
 
 	inline operator const char*() const
 	{
@@ -84,7 +115,7 @@ public:
 	inline std::string get_date() const
 	{
 		std::string val;
-		switch (m_fmt)
+		switch (m_time_format)
 		{
 		case eco::date_time::fmt_iso:
 		case eco::date_time::fmt_iso_m:
@@ -101,7 +132,8 @@ public:
 
 	inline bool operator==(IN const Timestamp& ts) const
 	{
-		return ts.m_fmt == m_fmt && strcmp(ts.m_timestamp, m_timestamp) == 0;
+		return ts.m_time_format == m_time_format
+			&& strcmp(ts.m_timestamp, m_timestamp) == 0;
 	}
 	inline bool operator!=(IN const Timestamp& ts) const
 	{
@@ -109,12 +141,15 @@ public:
 	}
 	inline bool operator<(IN const Timestamp& ts) const
 	{
-		return ts.m_fmt == m_fmt && strcmp(ts.m_timestamp, m_timestamp) < 0;
+		return ts.m_time_format == m_time_format
+			&& strcmp(ts.m_timestamp, m_timestamp) < 0;
 	}
 
 private:
+	void set_clock(IN bool second_clock);
+	
 	char m_timestamp[32];
-	Format m_fmt;
+	Format m_time_format;
 };
 
 

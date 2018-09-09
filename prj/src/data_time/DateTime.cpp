@@ -16,13 +16,28 @@ namespace date_time{;
 
 //##############################################################################
 //##############################################################################
-Timestamp::Timestamp(IN const Format fmt)
+////////////////////////////////////////////////////////////////////////////////
+void Timestamp::get_time(IN Date& date, IN uint32_t& time)
 {
-	m_timestamp[0] = '\0';
-	m_fmt = fmt;
-
 	using namespace boost::posix_time;
-	ptime pt = microsec_clock::local_time();
+	ptime pt = second_clock::local_time();
+	auto dt = pt.date();
+	auto ti = pt.time_of_day();
+	uint32_t y = dt.year();
+	uint32_t m = dt.month();
+	uint32_t d = dt.day();
+	date = eco::date_time::Date(y, m, d);
+	time = (uint32_t)pt.time_of_day().total_seconds();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Timestamp::set_clock(IN bool second_clock)
+{
+	using namespace boost::posix_time;
+	ptime pt = second_clock
+		? second_clock::local_time()
+		: microsec_clock::local_time();
 
 	// format: "20160510 23:05:05.100200"
 	auto dt = pt.date();
@@ -35,7 +50,7 @@ Timestamp::Timestamp(IN const Format fmt)
 	uint32_t s  = static_cast<uint32_t>(ti.seconds());
 	uint32_t ms = static_cast<uint32_t>(ti.total_microseconds() % 1000000);
 
-	switch (m_fmt)
+	switch (m_time_format)
 	{
 	case eco::date_time::fmt_iso:
 		snprintf(m_timestamp, sizeof(m_timestamp),
@@ -70,27 +85,6 @@ Timestamp::Timestamp(IN const Format fmt)
 		break;
 	}
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-const char* Timestamp::get_time() const
-{
-	switch (m_fmt)
-	{
-	case eco::date_time::fmt_iso:
-	case eco::date_time::fmt_iso_m:
-		return &m_timestamp[8];
-	case eco::date_time::fmt_isot:
-	case eco::date_time::fmt_isot_m:
-		return &m_timestamp[9];
-	case eco::date_time::fmt_std:
-	case eco::date_time::fmt_std_m:
-	default:
-		break;
-	}
-	return &m_timestamp[11];
-}
-
 
 
 //##############################################################################
