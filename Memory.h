@@ -20,6 +20,7 @@
 
 *******************************************************************************/
 #include <memory>
+#include <string>
 #include <assert.h>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -292,10 +293,10 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename container>
+template<typename object_t, typename container>
 inline void release(IN container& c)
 {
-	std::for_each(c.begin(), c.end(), [&](IN JoinMeta* pitem) {
+	std::for_each(c.begin(), c.end(), [&](IN object_t* pitem) {
 		delete pitem;
 	});
 	c.clear();
