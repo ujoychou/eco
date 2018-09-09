@@ -207,6 +207,16 @@ ECO_PROPERTY_OBJ_IMPL(ContextNode, ContextNodeSet, children);
 ////////////////////////////////////////////////////////////////////////////////
 const StringAny ContextNode::at(IN const char* key) const
 {
+	auto* any = find(key);
+	if (any == nullptr)
+		EcoThrow << "get context node key value error: " << key;
+	return *any;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+const StringAny* ContextNode::find(IN const char* key) const
+{
 	int node_end = eco::find_first(key, '/');
 	if (node_end == -1)
 	{
@@ -215,7 +225,7 @@ const StringAny ContextNode::at(IN const char* key) const
 		for (; it != impl().m_property_set.end(); ++it)
 		{
 			if (strcmp(key, it->get_key()) == 0)
-				return it->get_value();
+				return &it->get_value();
 		}
 	}
 	else
@@ -225,10 +235,12 @@ const StringAny ContextNode::at(IN const char* key) const
 		for (; it != impl().m_children.end(); ++it)
 		{
 			if (strncmp(it->get_name(), key, node_end) == 0)
-				return it->at(&key[node_end + 1]);
+			{
+				return it->find(&key[node_end + 1]);
+			}
 		}
 	}
-	EcoThrow << "get context node key value error: " << key;
+	return nullptr;
 }
 
 

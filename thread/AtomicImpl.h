@@ -23,14 +23,9 @@ atomic sync.
 #endif
 
 
-
-
-
-
-
 namespace eco{;
 namespace atomic{;
-
+////////////////////////////////////////////////////////////////////////////////
 #ifdef ECO_WIN
 inline int32_t exchange_add(volatile int32_t* v, const int32_t ex)
 {
@@ -51,7 +46,6 @@ inline uint64_t exchange_add(volatile uint64_t* v, int64_t ex)
 #endif
 
 }}// ns
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
