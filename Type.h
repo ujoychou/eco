@@ -69,6 +69,20 @@ inline bool is_snap(IN const ContentType v)
 }
 
 
+// judge integer big/little endian.
+inline bool big_endian()
+{
+	uint32_t v = 0;
+	char* b = (char*)&v;
+	b[0] = 0x01;
+	return (v & 0xFF) == 0;
+}
+inline bool little_endian()
+{
+	return !big_endian();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // when app exit with exception, use _getch to show a console windows.
 // and show the exception error.
@@ -786,6 +800,7 @@ public:
 		return *this;
 	}
 	inline StreamT& operator<<(IN const eco::Error& v);
+	inline StreamT& operator<=(IN const eco::Error& v);
 
 	// append "()[]{}"
 	template<typename T>
@@ -969,6 +984,12 @@ public:
 		m_msg << v;
 		return (*this);
 	}
+	template<typename value_type>
+	inline Error& operator<=(IN const value_type v)
+	{
+		m_msg <= v;
+		return (*this);
+	}
 	inline Error& operator()(IN const int eid)
 	{
 		m_id = eid;
@@ -983,11 +1004,20 @@ private:
 	int m_id;
 	FixStream m_msg;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
 #define EcoThrow throw eco::Error()
 template<typename Buffer>
 inline StreamT<Buffer>& StreamT<Buffer>::operator<<(IN const eco::Error& v)
 {
 	(*this) << v.message() << " #" << v.id();
+	return *this;
+}
+template<typename Buffer>
+inline StreamT<Buffer>& StreamT<Buffer>::operator<=(IN const eco::Error& v)
+{
+	(*this) << ' ' << v.message() << " #" << v.id();
 	return *this;
 }
 
@@ -1087,6 +1117,35 @@ inline char yn(IN const bool v)
 	return v ? 'y' : 'n';
 }
 
+// float number.
+inline bool equal(
+	IN const float v1,
+	IN const float v2,
+	IN const float p = std::numeric_limits<float>::epsilon())
+{
+	return std::fabs(v1 - v2) < p;
+}
+inline bool is_zero(IN const float v)
+{
+	return std::fabs(v) < std::numeric_limits<float>::epsilon();
+}
+
+// get float digit number.
+inline int get_digit(float v)
+{
+	int bit = 0;
+	const float cmp = float(1.0) - std::numeric_limits<float>::epsilon();
+	for (; v < cmp; v *= 10, ++bit) {}
+	return bit;
+}
+// get double digit number.
+inline int get_digit(double v)
+{
+	int bit = 0;
+	const double cmp = double(1.0) - std::numeric_limits<double>::epsilon();
+	for (; v < cmp; v *= 10, ++bit) {}
+	return bit;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 const std::string empty_str;
