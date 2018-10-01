@@ -10,33 +10,56 @@
 
 ECO_NS_BEGIN(eco);
 class Topic;
-class TopicServer;
+typedef eco::Topic* (*MakeTopic)(const void* id);
 ////////////////////////////////////////////////////////////////////////////////
-// define customer topic.
-#define ECO_TOPIC(topic_t) \
-ECO_OBJECT(topic_t) \
-ECO_TYPE(topic_t) \
-public:\
-	inline topic_t() {} \
-	inline static eco::Topic* make(const TopicId& id)\
-	{\
-		eco::PopTopic<TopicId>* topic = new topic_t();\
-		topic->set_id(id);\
-		return topic;\
+class TopicClass
+{
+public:
+	inline TopicClass(
+		IN const uint32_t type_id,
+		IN const char* class_name,
+		IN const MakeTopic make_topic,
+		IN const TopicClass* parent)
+	{
+		m_type_id = type_id;
+		m_make_topic = make_topic;
+		m_class_name = class_name;
+		m_parent = parent;
 	}
 
-// define basic topic supported by topic framework.
-#define ECO_TOPIC_TOPIC(topic_t) \
-ECO_TOPIC(topic_t) \
+public:
+	uint32_t m_type_id;
+	MakeTopic m_make_topic;
+	const char* m_class_name;
+	const TopicClass* m_parent;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// define customer topic.
+#define ECO_TOPIC(topic_t, parent_t) \
+ECO_OBJECT(topic_t) \
 public:\
-	typedef topic_t super;\
-	inline static const char* topic_type()\
+	inline topic_t() {} \
+	static const eco::TopicClass* topic_class()\
 	{\
-		return #topic_t;\
+		static eco::TopicClass s_clss(eco::TypeId<topic_t>::value, \
+			#topic_t, &topic_t::make, parent_t::topic_class());\
+		return &s_clss; \
 	}\
-	virtual const char* get_topic_type() const\
+	static const eco::TopicClass* parent()\
 	{\
-		return topic_type();\
+		return topic_class()->m_parent;\
+	}\
+	virtual const eco::TopicClass* get_topic_class() const\
+	{\
+		return topic_class();\
+	}\
+	inline static eco::Topic* make(const void* id)\
+	{\
+		topic_t* topic = new topic_t();\
+		topic->m_id = *(const TopicId*)id;\
+		return topic; \
 	}
 
 //##############################################################################
@@ -139,15 +162,15 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Content
+class ContentData
 {
-	ECO_OBJECT(Content);
+	ECO_OBJECT(ContentData);
 public:
-	inline Content(IN const eco::meta::Stamp v)	: m_stamp(v)
+	inline ContentData(IN const eco::meta::Stamp v)	: m_stamp(v)
 	{}
 
 	// destructor.
-	virtual ~Content() = 0 
+	virtual ~ContentData() = 0 
 	{}
 
 	// set topic content object_t.
@@ -188,14 +211,14 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Object, typename Value>
-class ContentT : public eco::Content
+class ContentDataT : public eco::ContentData
 {
 public:
-	inline ContentT(IN const Value& v, IN eco::meta::Stamp ts)
-		: m_value((Value&)v), eco::Content(ts)
+	inline ContentDataT(IN const Value& v, IN eco::meta::Stamp ts)
+		: m_value((Value&)v), eco::ContentData(ts)
 	{}
 
-	virtual ~ContentT() override
+	virtual ~ContentDataT() override
 	{}
 
 	virtual const uint32_t get_type_id() const override
@@ -257,21 +280,15 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ContentWrap
+class Content
 {
 public:
-	inline ContentWrap(
-		IN eco::Content::ptr& content,
-		IN eco::ContentType type,
+	inline Content(
+		IN eco::ContentData::ptr& content,
+		IN eco::ContentSnap snap,
 		IN eco::TopicEvent* event = nullptr)
-		: m_event(event), m_type(type), m_content(&content)
+		: m_event(event), m_snap(snap), m_content(&content)
 	{}
-
-	// content type.
-	inline const uint32_t get_type_id() const
-	{
-		return (**m_content).get_type_id();
-	}
 
 	// data context.
 	inline bool has_event() const
@@ -296,14 +313,26 @@ public:
 			? static_cast<value_t*>((**m_content).get_value()) : nullptr;
 	}
 
+	// content type.
+	inline const uint32_t type_id() const
+	{
+		return (**m_content).get_type_id();
+	}
+
 	// content data.
-	inline eco::Content::ptr& data()
+	inline eco::ContentData& data()
+	{
+		return **m_content;
+	}
+	inline const eco::ContentData::ptr& data_ptr() const
 	{
 		return *m_content;
 	}
-	inline const eco::ContentType snap() const
+
+	// content snap.
+	inline const eco::ContentSnap snap() const
 	{
-		return m_type;
+		return m_snap;
 	}
 
 	// content stamp.
@@ -318,8 +347,8 @@ public:
 
 private:
 	eco::TopicEvent* m_event;
-	eco::ContentType m_type;
-	eco::Content::ptr* m_content;
+	eco::ContentSnap m_snap;
+	eco::ContentData::ptr* m_content;
 };
 
 
@@ -332,15 +361,15 @@ public:
 	virtual ~Subscriber() {};
 
 	// publish content: new/remove content.
-	virtual void on_publish(IN eco::Topic& topic, IN eco::ContentWrap& wrap)
+	virtual void on_publish(IN eco::Topic& t, IN eco::Content& c)
 	{}
 
 	// clear topic content
-	virtual void on_clear(IN eco::Topic& opic)
+	virtual void on_clear(IN eco::Topic& t)
 	{}
 
 	// erase topic and clear content.
-	virtual void on_erase(IN eco::Topic& topic)
+	virtual void on_erase(IN eco::Topic& t)
 	{}
 };
 
@@ -350,19 +379,17 @@ class Topic : public detail::Topic
 {
 	ECO_OBJECT(Topic);
 public:
-	// topic type.
-	virtual const char* get_topic_type() const = 0;
-
-	// topic type name.
-	virtual const char* get_type() const = 0;
-
-	// object type id.
-	virtual const uint32_t get_type_id() const = 0;
-
-	// get topic id.
-	virtual bool get_id(OUT const uint64_t*& id) const	{ return false; }
-	virtual bool get_id(OUT const std::string*& id) const { return false; }
-	virtual bool get_id(OUT const eco::TopicId*& id) const { return false; }
+	// topic class.
+	static const TopicClass* topic_class()
+	{
+		static eco::TopicClass s_clss(0, 0, 0, 0);
+		return &s_clss;
+	}
+	// get topic class.
+	virtual const TopicClass* get_topic_class() const
+	{
+		return topic_class();
+	}
 
 	// init topic event.
 	virtual void on_init(IN eco::TopicEvent* event) {}
@@ -378,7 +405,7 @@ protected:
 
 	// move new content to snap content.
 	virtual bool do_move(
-		OUT eco::Content::ptr& new_c) 
+		OUT eco::ContentData::ptr& new_c) 
 	{
 		return true;
 	}
@@ -389,6 +416,18 @@ protected:
 public:
 	inline Topic() {}
 	virtual ~Topic() {}
+
+	// check the topic is a type of Topic.
+	template<typename Topic>
+	inline bool is_a() const
+	{
+		auto* tc = get_topic_class();
+		while (tc && tc != Topic::topic_class())
+		{
+			tc = tc->m_parent;
+		}
+		return tc != 0;
+	}
 
 	// add "object set/object/shared_object" to topic by "load".
 	template<typename object_set_t>
@@ -425,7 +464,7 @@ public:
 	}
 
 	// topic server: publish new content after append_new()(recv) new content.
-	virtual void publish_new(IN eco::Content::ptr& new_c)
+	virtual void publish_new(IN eco::ContentData::ptr& new_c)
 	{
 		// publish new content to all subscriber.
 		eco::Mutex::ScopeLock lock(mutex());
@@ -437,7 +476,7 @@ public:
 			if (node->m_working)
 			{
 				auto* suber = (Subscriber*)node->m_subscriber;
-				suber->on_publish(*this, ContentWrap(new_c, content_new));
+				suber->on_publish(*this, Content(new_c, content_new));
 			}
 			node = next;
 		}
@@ -445,7 +484,7 @@ public:
 	}
 
 	// publish remove topic event.
-	virtual void publish_erase_topic()
+	virtual void publish_erase()
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		Subscription* node = subscriber_head();
@@ -464,7 +503,7 @@ public:
 	}
 
 	// publish clear all content in topic.
-	virtual void publish_clear_content()
+	virtual void publish_clear()
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		do_clear();
@@ -486,7 +525,7 @@ protected:
 	template<typename object_t>
 	inline void push_back_raw(IN const object_t& obj)
 	{
-		Content::ptr newc(new ContentT<
+		ContentData::ptr newc(new ContentDataT<
 			object_t, object_t>(obj, eco::meta::stamp_insert));
 		do_move(newc);
 	}
@@ -494,7 +533,7 @@ protected:
 	inline void push_back_raw(IN const std::shared_ptr<object_t>& obj)
 	{
 		typedef std::shared_ptr<object_t> value_t;
-		Content::ptr newc(new ContentT<
+		ContentData::ptr newc(new ContentDataT<
 			object_t, value_t>(obj, eco::meta::stamp_insert));
 		do_move(newc);
 	}
@@ -506,26 +545,17 @@ protected:
 template<typename TopicId = eco::TopicId>
 class PopTopic : public Topic
 {
-	ECO_TOPIC_TOPIC(PopTopic);
+	ECO_TOPIC(PopTopic, Topic);
+protected:
+	typedef TopicId TopicId;
+	TopicId m_id;
+
 public:
 	// topic identity.
-	typedef TopicId TopicId;
-	inline void set_id(IN const TopicId& id)
-	{
-		m_id = id;
-	}
 	inline const TopicId& get_id() const
 	{
 		return m_id;
 	}
-	virtual bool get_id(OUT const TopicId*& id) const override
-	{
-		id = &m_id;
-		return true;
-	}
-	
-protected:
-	TopicId m_id;
 };
 
 
@@ -539,8 +569,8 @@ public:
 	{
 		mode_publish_snap		= 1,	// when subscribe a topic.
 		mode_publish_new		= 2,	// when publish a content.
-		mode_erase_topic		= 3,	// when erase a topic.
-		mode_clear_content		= 4,	// when clear all content of topic.
+		mode_publish_erase		= 3,	// when erase a topic.
+		mode_publish_clear		= 4,	// when clear all content of topic.
 	};
 	typedef uint32_t Mode;
 
@@ -550,7 +580,7 @@ public:
 	// publish new content.
 	inline Publisher(
 		IN Topic::ptr& topic,
-		IN Content::ptr& new_content)
+		IN ContentData::ptr& new_content)
 		: m_topic(std::move(topic))
 		, m_new_content(std::move(new_content))
 		, m_mode(mode_publish_new)
@@ -603,11 +633,11 @@ public:
 		case mode_publish_snap:
 			m_topic->publish_snap(*m_node, m_event.get());
 			break;
-		case mode_erase_topic:
-			m_topic->publish_erase_topic();
+		case mode_publish_erase:
+			m_topic->publish_erase();
 			break;
-		case mode_clear_content:
-			m_topic->publish_clear_content();
+		case mode_publish_clear:
+			m_topic->publish_clear();
 			break;
 		}
 	}
@@ -616,7 +646,7 @@ private:
 	uint32_t m_mode;
 	Topic::ptr m_topic;
 	TopicEvent::ptr m_event;
-	Content::ptr m_new_content;
+	ContentData::ptr m_new_content;
 	AutoRefPtr<Subscription> m_node;
 };
 

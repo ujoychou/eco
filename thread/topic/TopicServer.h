@@ -9,37 +9,34 @@
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class TopicServer
+template<typename Impl>
+class TopicServerT
 {
-	ECO_OBJECT(TopicServer);
+	ECO_OBJECT(TopicServerT);
 public:
-	inline TopicServer()
+	inline TopicServerT()
 	{}
 
-	inline ~TopicServer()
+	inline ~TopicServerT()
 	{
-		stop();
+		m_impl.stop();
 	}
 
-	// start topic server.
 	inline void start()
 	{
-		m_publish_server.run();
+		m_impl.start();
 	}
 
-	// stop topic server.
 	inline void stop()
 	{
-		m_publish_server.stop();
+		m_impl.stop();
 	}
 
-	// join topic server.
 	inline void join()
 	{
-		m_publish_server.join();
+		m_impl.join();
 	}
 
-public:
 	// publish object to topic, create object if "make != nullptr". 
 	template<typename object_t, typename topic_id_t>
 	inline void publish(
@@ -91,11 +88,11 @@ public:
 		if (topic != nullptr)
 		{
 			auto* set_topic = static_cast<set_topic_t*>(topic.get());
-			Content::ptr newc = set_topic->find(obj_id);
+			ContentData::ptr newc = set_topic->find(obj_id);
 			if (newc)
 			{
 				newc->stamp() = eco::meta::stamp_remove;
-				m_publish_server.post(Publisher(topic, newc));
+				m_impl.publish_new(topic, newc);
 			}
 		}
 	}
@@ -108,8 +105,8 @@ public:
 		IN const object_t& obj,
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
-		Content::ptr newc(new ContentT<object_t, object_t>(obj, stamp));
-		m_publish_server.post(Publisher(topic, newc));
+		ContentData::ptr newc(new ContentDataT<object_t, object_t>(obj, stamp));
+		m_impl.publish_new(topic, newc);
 	}
 
 	// publish shared object to topic.
@@ -120,8 +117,8 @@ public:
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
 		typedef std::shared_ptr<object_t> value_t;
-		Content::ptr newc(new ContentT<object_t, value_t>(obj, stamp));
-		m_publish_server.post(Publisher(topic, newc));
+		ContentData::ptr newc(new ContentDataT<object_t, value_t>(obj, stamp));
+		m_impl.publish_new(topic, newc);
 	}
 
 public:
@@ -131,15 +128,15 @@ public:
 		IN const topic_id_t& topic_id,
 		IN Subscriber* subscriber,
 		IN TopicEvent::ptr& event = TopicEvent::ptr(),
-		IN Topic* (*f)(IN const topic_id_t&) = nullptr)
+		IN eco::MakeTopic make = nullptr)
 	{
-		Topic::ptr topic = get_topic(topic_id, f, event);
+		Topic::ptr topic = get_topic(topic_id, make, event);
 		if (topic != nullptr)
 		{
 			auto supscription = topic->reserve_subscribe(subscriber);
 			if (!supscription.null())
 			{
-				m_publish_server.post(Publisher(topic, supscription, event));
+				m_impl.publish_snap(topic, supscription, event);
 				return true;
 			}
 		}
@@ -216,10 +213,10 @@ public:
 	template<typename topic_id_t>
 	inline Topic::ptr get_topic(
 		IN const topic_id_t& topic_id,
-		IN Topic* (*f)(IN const topic_id_t&) = nullptr,
+		IN eco::MakeTopic make = nullptr,
 		IN TopicEvent::ptr& event = TopicEvent::ptr())
 	{
-		return __get_topic(topic_id, __get_topic_map(topic_id), f, event);
+		return __get_topic(topic_id, __get_topic_map(topic_id), make, event);
 	}
 
 	// find topic.
@@ -228,7 +225,7 @@ public:
 	{
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		auto it = __get_topic_map(topic_id).find(topic_id);
-		return (it != __get_topic_map(topic_id).end()) 
+		return (it != __get_topic_map(topic_id).end())
 			? it->second : Topic::ptr();
 	}
 
@@ -251,10 +248,10 @@ public:
 	template<typename topic_id_t>
 	inline void erase_topic(IN const topic_id_t& topic_id)
 	{
-		Topic::ptr t = pop_topic(topic_id);
-		if (t != nullptr)
+		Topic::ptr topic = pop_topic(topic_id);
+		if (topic != nullptr)
 		{
-			m_publish_server.post(Publisher(t, Publisher::mode_erase_topic));
+			m_impl.publish_erase(topic);
 		}
 	}
 
@@ -298,10 +295,10 @@ public:
 	// find content in repository topic.
 	template<typename set_topic_t, typename topic_id_t,
 		typename object_t, typename object_id_t>
-	inline bool find_content(
-		OUT object_t& obj,
-		IN  const topic_id_t& topic_id,
-		IN  const object_id_t& object_id) const
+		inline bool find_content(
+			OUT object_t& obj,
+			IN  const topic_id_t& topic_id,
+			IN  const object_id_t& object_id) const
 	{
 		auto content = find_content<set_topic_t>(topic_id, object_id);
 		if (content)
@@ -314,7 +311,7 @@ public:
 
 	// find content in repository topic.
 	template<typename set_topic_t, typename topic_id_t, typename object_id_t>
-	inline eco::Content::ptr find_content(
+	inline eco::ContentData::ptr find_content(
 		IN  const topic_id_t& topic_id,
 		IN  const object_id_t& object_id) const
 	{
@@ -331,10 +328,10 @@ public:
 	template<typename topic_id_t>
 	inline void clear_content(IN const topic_id_t& topic_id)
 	{
-		Topic::ptr t = find_topic(topic_id);
-		if (t != nullptr)
+		Topic::ptr topic = find_topic(topic_id);
+		if (topic != nullptr)
 		{
-			m_publish_server.post(Publisher(t, Publisher::mode_clear_content));
+			m_impl.publish_clear(topic);
 		}
 	}
 
@@ -375,7 +372,7 @@ private:
 	inline Topic::ptr __get_topic(
 		IN const topic_id_t& topic_id,
 		IN topic_map_t& topic_map,
-		IN Topic* (*f)(IN const topic_id_t&),
+		IN eco::MakeTopic make,
 		IN TopicEvent::ptr& event = TopicEvent::ptr())
 	{
 		{
@@ -386,10 +383,10 @@ private:
 				return it->second;
 			}
 		}
-		
-		if (f != nullptr)
+
+		if (make != nullptr)
 		{
-			Topic::ptr topic(f(topic_id));
+			Topic::ptr topic(make(&topic_id));
 			topic->on_init(event.get());
 			eco::Mutex::ScopeLock lock(m_topics_mutex);
 			return topic_map[topic_id] = topic;
@@ -404,8 +401,7 @@ private:
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		for (auto it = topic_map.begin(); it != topic_map.end(); ++it)
 		{
-			m_publish_server.post(
-				Publisher(it->second, Publisher::mode_erase_topic));
+			m_impl.publish_erase(it->second);
 		}
 		topic_map.clear();
 	}
@@ -413,13 +409,107 @@ private:
 private:
 	// topic management.
 	mutable eco::Mutex m_topics_mutex;
+	Impl m_impl;
 	std::unordered_map<uint64_t, Topic::ptr> m_int_topics;
 	std::unordered_map<std::string, Topic::ptr> m_str_topics;
 	std::unordered_map<TopicId, Topic::ptr, TopicId::Hash> m_tid_topics;
-	
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class QueueImpl
+{
+public:
+	inline void start()
+	{}
+
+	inline void stop()
+	{}
+
+	inline void join()
+	{}
+
+	inline void publish_new(
+		IN eco::Topic::ptr& topic,
+		IN eco::ContentData::ptr& newc)
+	{
+		topic->publish_new(newc);
+	}
+
+	inline void publish_snap(
+		IN eco::Topic::ptr& topic,
+		IN eco::AutoRefPtr<eco::Subscription>& sub,
+		IN TopicEvent::ptr& event)
+	{
+		topic->publish_snap(*sub, event.get());
+	}
+
+	inline void publish_erase(
+		IN eco::Topic::ptr& topic)
+	{
+		topic->publish_erase();
+	}
+
+	inline void publish_clear(
+		IN eco::Topic::ptr& topic)
+	{
+		topic->publish_clear();
+	}
+};
+typedef TopicServerT<QueueImpl> TopicQueue;
+
+
+////////////////////////////////////////////////////////////////////////////////
+class ServerImpl
+{
+public:
+	inline void start()
+	{
+		m_publish_server.run();
+	}
+
+	inline void stop()
+	{
+		m_publish_server.stop();
+	}
+
+	inline void join()
+	{
+		m_publish_server.join();
+	}
+
+	inline void publish_new(
+		IN eco::Topic::ptr& topic,
+		IN eco::ContentData::ptr& newc)
+	{
+		m_publish_server.post(Publisher(topic, newc));
+	}
+
+	inline void publish_snap(
+		IN eco::Topic::ptr& topic,
+		IN eco::AutoRefPtr<eco::Subscription>& sub,
+		IN TopicEvent::ptr& event)
+	{
+		m_publish_server.post(Publisher(topic, sub, event));
+	}
+
+	inline void publish_erase(
+		IN eco::Topic::ptr& topic)
+	{
+		m_publish_server.post(Publisher(topic, Publisher::mode_publish_erase));
+	}
+
+	inline void publish_clear(
+		IN eco::Topic::ptr& topic)
+	{
+		m_publish_server.post(Publisher(topic, Publisher::mode_publish_clear));
+	}
+
+private:
 	// publish topic message thread.
 	eco::TaskServer<Publisher> m_publish_server;
 };
+typedef TopicServerT<ServerImpl> TopicServer;
 
 
 ////////////////////////////////////////////////////////////////////////////////

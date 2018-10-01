@@ -13,7 +13,7 @@ ECO_NS_BEGIN(eco);
 template<typename TopicId = eco::TopicId>
 class OneTopic : public PopTopic<TopicId>
 {
-	ECO_TOPIC_TOPIC(OneTopic);
+	ECO_TOPIC(OneTopic, PopTopic<TopicId>);
 protected:
 	virtual void do_snap(
 		IN eco::Subscription& node,
@@ -22,13 +22,13 @@ protected:
 		if (m_snap.get() != nullptr)
 		{
 			auto* suber = (Subscriber*)node.m_subscriber;
-			ContentType type = content_snap | content_head | content_last;
+			ContentSnap type = content_snap | content_head | content_last;
 			m_snap->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, ContentWrap(m_snap, type, event));
+			suber->on_publish(*this, Content(m_snap, type, event));
 		}
 	}
 
-	virtual bool do_move(OUT eco::Content::ptr& newc) override
+	virtual bool do_move(OUT eco::ContentData::ptr& newc) override
 	{
 		m_snap = newc;		// update snap with new data.
 		return true;
@@ -39,14 +39,14 @@ protected:
 		m_snap.reset();
 	}
 
-	inline Content::ptr snap() const
+	inline ContentData::ptr snap() const
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		return m_snap;
 	}
 
 	// latest data.
-	eco::Content::ptr m_snap;
+	eco::ContentData::ptr m_snap;
 };
 
 
@@ -55,19 +55,19 @@ protected:
 template<typename TopicId = eco::TopicId>
 class SeqTopic : public PopTopic<TopicId>
 {
-	ECO_TOPIC_TOPIC(SeqTopic);
+	ECO_TOPIC(SeqTopic, PopTopic<TopicId>);
 public:
 	/* exp"market kline", last content can be updated as follow:
 	1) get seq topic last content, check it's id equal with new item?
 	2) if they are equal, merge new item into last content.
 	3) publish last content.
 	*/
-	inline Content::ptr last() const
+	inline ContentData::ptr last() const
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		return !m_snap_set.empty() ? m_snap_set.back() : nullptr;
 	}
-	inline Content::ptr head() const
+	inline ContentData::ptr head() const
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		return !m_snap_set.empty() ? m_snap_set.front() : nullptr;
@@ -78,7 +78,7 @@ public:
 		eco::Mutex::ScopeLock lock(mutex());
 		return m_snap_set.size();
 	}
-	inline const std::deque<eco::Content::ptr>& snap_set_raw() const
+	inline const std::deque<eco::ContentData::ptr>& snap_set_raw() const
 	{
 		return m_snap_set;
 	}
@@ -115,7 +115,7 @@ public:
 	template<typename object_t>
 	inline void push_front_raw(IN const object_t& obj)
 	{
-		Content::ptr newc(new ContentT<
+		ContentData::ptr newc(new ContentDataT<
 			object_t, object_t>(obj, eco::meta::stamp_insert));
 		m_snap_set.push_front(newc);
 	}
@@ -123,7 +123,7 @@ public:
 	inline void push_front_raw(IN const std::shared_ptr<object_t>& obj)
 	{
 		typedef std::shared_ptr<object_t> value_t;
-		Content::ptr newc(new ContentT<
+		ContentData::ptr newc(new ContentT<
 			object_t, value_t>(obj, eco::meta::stamp_insert));
 		m_snap_set.push_front(newc);
 	}
@@ -142,7 +142,7 @@ protected:
 				<< "seq > size()" << seq <= m_snap_set.size();
 		}
 		size_t seq_init = seq + 1;
-		eco::ContentType type = eco::content_snap | eco::content_head;
+		eco::ContentSnap type = eco::content_snap | eco::content_head;
 
 		// *node subscriber may be destruct in "on_publish";
 		// publish the snap, and set a content type.
@@ -156,11 +156,11 @@ protected:
 
 			auto& content = m_snap_set[seq];
 			content->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, ContentWrap(content, type, event));
+			suber->on_publish(*this, Content(content, type, event));
 		}
 	}
 
-	virtual bool do_move(OUT eco::Content::ptr& newc) override
+	virtual bool do_move(OUT eco::ContentData::ptr& newc) override
 	{
 		// update last content.
 		if (eco::meta::is_update(newc->get_stamp()) && m_snap_set.size() > 0)
@@ -176,7 +176,7 @@ protected:
 	}
 
 	// history data.
-	std::deque<eco::Content::ptr> m_snap_set;
+	std::deque<eco::ContentData::ptr> m_snap_set;
 };
 
 
@@ -206,22 +206,22 @@ public:
 template<typename ObjectId, typename Object, 
 	typename ObjectIdAdapter = GetIdAdapter,
 	typename TopicId = eco::TopicId,
-	typename ObjectMap = std::unordered_map<ObjectId, eco::Content::ptr> >
+	typename ObjectMap = std::unordered_map<ObjectId, eco::ContentData::ptr> >
 class SetTopic : public PopTopic<TopicId>
 {
-	ECO_TOPIC_TOPIC(SetTopic);
+	ECO_TOPIC(SetTopic, PopTopic<TopicId>);
 public:
 	// find object by identity.
 	template<typename value_t>
 	inline bool find(OUT value_t& v, IN  const ObjectId& id) const
 	{
-		Content::ptr c = find(id);
+		ContentData::ptr c = find(id);
 		if (c != nullptr) v = *(value_t*)c->get_value();
 		return c != nullptr;
 	}
 
 	// find content by identity.
-	inline Content::ptr find(IN const ObjectId& id) const
+	inline ContentData::ptr find(IN const ObjectId& id) const
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		auto it = m_snap_set.find(id);
@@ -238,8 +238,8 @@ protected:
 	// replace old content with new content.
 	// note that: old_c may be nullptr, when insert first content.
 	virtual bool do_update(
-		IN eco::Content::ptr& new_c,
-		IN eco::Content::ptr& old_c)
+		IN eco::ContentData::ptr& new_c,
+		IN eco::ContentData::ptr& old_c)
 	{
 		old_c = new_c;
 		return true;
@@ -255,7 +255,7 @@ protected:
 		// publish the snap, and set a content type.
 		uint32_t index = 0;
 		auto* suber = (Subscriber*)node.m_subscriber;
-		ContentType snap = content_snap | content_head;
+		ContentSnap snap = content_snap | content_head;
 		auto it = m_snap_set.begin();
 		for (; it != m_snap_set.end() && node.m_working; ++it, ++index)
 		{
@@ -264,11 +264,11 @@ protected:
 			if (index == m_snap_set.size() - 1)
 				eco::add(snap, content_last);
 			it->second->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, ContentWrap(it->second, snap, event));
+			suber->on_publish(*this, Content(it->second, snap, event));
 		}
 	}
 
-	virtual bool do_move(OUT eco::Content::ptr& newc) override
+	virtual bool do_move(OUT eco::ContentData::ptr& newc) override
 	{
 		// get object id.
 		ObjectId obj_id;
