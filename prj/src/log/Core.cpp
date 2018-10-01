@@ -71,8 +71,8 @@ public:
 	uint32_t m_file_roll_size;
 	OnChangedLogFile m_on_create;
 
-	// status.
-	bool m_running;
+	// singleton instance.
+	static Core s_object;
 
 public:
 	Impl();
@@ -81,26 +81,15 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//ECO_TYPE_IMPL(Core);
-Core::Core()
-{
-	m_impl = new Impl;
-	m_impl->init(*this);
-}
-Core::~Core()
-{
-	delete m_impl;
-	m_impl = nullptr;
-}
-ECO_IMPL(Core)
+ECO_TYPE_IMPL(Core);
 ECO_PROPERTY_STR_IMPL(Core, file_path);
 ECO_PROPERTY_BOL_IMPL(Core, async);
 ECO_PROPERTY_VAV_IMPL(Core, SinkOption, sink_option);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, capacity);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, async_flush);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, file_roll_size);
-
-
+Core Core::Impl::s_object;
+ECO_API Core& get_core() { return Core::Impl::s_object; }
 ////////////////////////////////////////////////////////////////////////////////
 Core::Impl::Impl()
 	: m_async(true)
@@ -109,21 +98,27 @@ Core::Impl::Impl()
 	, m_file_path("./log/")
 	, m_on_create(nullptr)
 	, m_sink_option(eco::value_none)
-	, m_running(false)
 	, m_file_sev(eco::log::info)
 	, m_console_sev(eco::log::info)
 {}
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Handler::operator()(IN const eco::Bytes& buf, IN const SeverityLevel level)
 {
 	if (m_core->m_file_sink.get() != nullptr && level >= m_core->m_file_sev)
 	{
 		(*m_core->m_file_sink).append(buf.c_str(), buf.size());
 	}
-	if (m_core->m_console_sink.get() != nullptr && level >= m_core->m_console_sev)
+	if (m_core->m_console_sink.get() != nullptr &&
+		level >= m_core->m_console_sev)
 	{
 		(*m_core->m_console_sink) << buf.c_str();
 	}
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Handler::operator()(IN const Pack& buf)
 {
 	if (m_core->m_file_sink.get() != nullptr)
@@ -181,8 +176,10 @@ void Core::run()
 			impl().m_file_roll_size, 0,
 			false, impl().m_on_create));
 	}
-	m_impl->m_running = true;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Core::stop()
 {
 	if (impl().m_server != nullptr)
@@ -197,10 +194,9 @@ void Core::join()
 		impl().m_server->join();
 	}
 }
-bool Core::is_running() const
-{
-	return impl().m_running;
-}
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Core::set_severity_level(IN const char* v, IN const int flag)
 {
 	set_severity_level(eco::log::Severity::get_level(v), flag);
@@ -217,6 +213,9 @@ const SeverityLevel Core::get_severity_level() const
 	return (impl().m_file_sev < impl().m_console_sev)
 		? impl().m_file_sev : impl().m_console_sev;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Core::add_file_sink(IN bool is_add)
 {
 	eco::set(impl().m_sink_option, eco::log::file_sink, is_add);
@@ -233,6 +232,9 @@ bool Core::has_console_sink() const
 {
 	return eco::has(impl().m_sink_option, eco::log::console_sink);
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Core::set_file_on_create(IN eco::log::OnChangedLogFile& func)
 {
 	impl().m_on_create = func;
@@ -249,13 +251,6 @@ void Core::append(IN const eco::Bytes& buf, IN const SeverityLevel level)
 		Handler hdl(impl());			// sync
 		hdl(buf, level);
 	}
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-Core& get_core()
-{
-	return eco::Singleton<Core>::instance();
 }
 
 
@@ -279,9 +274,6 @@ const char* const g_sev_display[] =
 	"[error]",
 	"[fatal]",
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
 SeverityLevel Severity::get_level(IN const char* sev_name)
 {
 	for (size_t i = 0; i<sizeof(g_sev_name) / sizeof(char*); ++i)

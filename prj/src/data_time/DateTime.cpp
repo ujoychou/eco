@@ -97,8 +97,10 @@ public:
 	std::string m_time;
 
 public:
-	void set_date_time(IN const char* str)
+	bool set_date_time(IN const char* str)
 	{
+		if (str == nullptr) str = eco::empty_str.c_str();
+
 		// 去除空格
 		std::string dt_v(str);
 		boost::trim(dt_v);
@@ -110,7 +112,7 @@ public:
 		{
 			m_date = dt_v.substr(0, 10);
 			m_time = dt_v.substr(11, 8);
-			return;
+			return true;
 		}
 		// 格式"2014-01-01"：转换为"2014-01-01x00:00:00"
 		if (dt_v.size() == 10 &&
@@ -118,7 +120,7 @@ public:
 		{
 			m_date = dt_v;
 			m_time = "00:00:00";
-			return;
+			return true;
 		}
 		// 格式"20140101"：转换为"2014-01-01x00:00:00"
 		if (dt_v.size() == 8 &&
@@ -128,7 +130,7 @@ public:
 			dt_v.insert(4, 1, '-');
 			m_date = dt_v;
 			m_time = "00:00:00";
-			return;
+			return true;
 		}
 		// 格式"00:00:00"：转换为"1900-01-01x00:00:00"
 		if (dt_v.size() == 8 &&
@@ -136,7 +138,7 @@ public:
 		{
 			m_date = ("1900-01-01");
 			m_time = dt_v;
-			return;
+			return true;
 		}
 		// 格式"000000"：转换为"1900-01-01x00:00:00"
 		if (dt_v.size() == 6)
@@ -145,7 +147,7 @@ public:
 			dt_v.insert(2, 1, ':');
 			m_date = ("1900-01-01");
 			m_time = dt_v;
-			return;
+			return true;
 		}
 		// 格式"20140101T00:00:00"：转换为"2014-01-01x00:00:00"
 		if (dt_v.size() == 17 &&
@@ -156,7 +158,7 @@ public:
 			dt_v.insert(4, 1, '-');
 			m_date = dt_v.substr(0, 10);
 			m_time = dt_v.substr(11, 8);
-			return;
+			return true;
 		}
 		// 格式"20140101000000"：转换为"2014-01-01x00:00:00"
 		if (dt_v.size() == 14 &&
@@ -170,7 +172,7 @@ public:
 			dt_v.insert(4, 1, '-');
 			m_date = dt_v.substr(0, 10);
 			m_time = dt_v.substr(11, 8);
-			return;
+			return true;
 		}
 		// 格式"20140101T000000"：转换为"2014-01-01x00:00:00"
 		if (dt_v.size() == 15 &&
@@ -183,21 +185,21 @@ public:
 			dt_v.insert(4, 1, '-');
 			m_date = dt_v.substr(0, 10);
 			m_time = dt_v.substr(11, 8);
-			return;
+			return true;
 		}
 
 		m_date = "1900-01-01";
 		m_time = "00:00:00";
+		return false;
 	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_VALUE_IMPL(DateTime);
-DateTime& DateTime::set(IN const char* str)
+bool DateTime::set(IN const char* str)
 {
-	m_impl->set_date_time(str);
-	return *this;
+	return m_impl->set_date_time(str);
 }
 const char* DateTime::get_date() const
 {

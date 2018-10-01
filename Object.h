@@ -94,45 +94,51 @@ inline T* object_t(std::shared_ptr<T>& ptr) { return ptr.get(); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // singleton proxy object that instantiate the object.
-template<typename ObjectType>
+template<typename object_t>
 class Singleton
 {
 	ECO_OBJECT(Singleton);
 public:
-	inline static ObjectType& instance()
+	inline static object_t& instance()
 	{
 		return s_object;
 	}
 private:
-	static ObjectType s_object;
+	static object_t s_object;
 };
-template<typename ObjectType>
-ObjectType Singleton<ObjectType>::s_object;
+template<typename object_t>
+object_t Singleton<object_t>::s_object;
 
 
 /*@ singleton instance to access singleton object. */
-#define ECO_SINGLETON(ObjectType)\
-	ECO_NONCOPYABLE(ObjectType);\
+#define ECO_SINGLETON(object_t)\
+	ECO_NONCOPYABLE(object_t);\
 public:\
-	inline ~ObjectType(){}\
+	inline ~object_t(){}\
 private:\
-	friend class eco::Singleton<ObjectType>;\
-	inline ObjectType(){}
+	friend class eco::Singleton<object_t>;\
+	inline object_t(){}
 
-#define ECO_SINGLETON_UNINIT(ObjectType)\
-	ECO_NONCOPYABLE(ObjectType);\
+#define ECO_SINGLETON_UNINIT(object_t)\
+	ECO_NONCOPYABLE(object_t);\
 public:\
-	friend class eco::Singleton<ObjectType>;\
-	~ObjectType();\
+	~object_t();\
 private:\
-	ObjectType();
+	friend class eco::Singleton<object_t>;\
+	object_t();
 
 
 /*@ singleton get function to access singleton object.*/
-#define ECO_SINGLETON_NAME(ObjectType, method)\
-inline ObjectType& method()\
+#define ECO_SINGLETON_NAME(object_t, method)\
+inline object_t& method()\
 {\
-	return eco::Singleton<ObjectType>::instance();\
+	return eco::Singleton<object_t>::instance();\
+}
+#define ECO_NAME(object_t, method)\
+inline object_t& method()\
+{\
+	static object_t s_object;\
+	return s_object;\
 }
 
 

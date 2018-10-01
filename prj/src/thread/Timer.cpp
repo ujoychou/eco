@@ -54,9 +54,6 @@ public:
 	// timer io service.
 	net::asio::Worker m_worker;
 
-	// asio timer
-	timer_shared_ptr m_timer;
-
 public:
 	// timer work.
 	inline void start()
@@ -73,12 +70,6 @@ public:
 	{
 		// first release timer, then release io service, else it will throw
 		// exception.
-		if (m_timer != nullptr)
-		{
-			boost::system::error_code e;
-			m_timer->cancel(e);
-			m_timer.reset();
-		}
 		m_worker.stop();
 	}
 

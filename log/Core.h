@@ -31,13 +31,13 @@ namespace eco{;
 namespace log{;
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Core
 {
 	ECO_IMPL_API();
-	ECO_SINGLETON_UNINIT(Core);
 public:
+	~Core();
+
 	/*@ option: severity level. */
 	void set_severity_level(IN const char* v, IN const int flag = 0);
 	void set_severity_level(IN const SeverityLevel v, IN const int flag = 0);
@@ -101,11 +101,11 @@ public:
 	// join this logging thread.
 	void join();
 
-	/*@ is logging running.*/
-	bool is_running() const;
-
 	/*@ append log info.*/
 	void append(IN const eco::Bytes& buf, IN const SeverityLevel level);
+
+private:
+	Core();
 };
 
 

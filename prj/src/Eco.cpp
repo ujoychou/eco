@@ -67,7 +67,7 @@ void Eco::on_live_timer()
 			}
 			catch (std::exception& e)
 			{
-				EcoError << be->get_name() << "live : " << e.what();
+				EcoLog(error) << be->get_name() << "live : " << e.what();
 			}
 			
 			m_running.none();			// 3.生命对象运行结束
