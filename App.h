@@ -56,11 +56,10 @@ protected:
 	virtual void on_exit() {}
 
 public:
-	typedef App* (*CreateAppFunc)(void);
 	virtual ~App();
 
 	/*@ get app instance.*/
-	static App& instance();
+	static App* app();
 
 	/*@ get command param size. it's parse from argc and argv.*/
 	static uint32_t get_param_size();
@@ -96,7 +95,7 @@ public:
 	uint32_t consumer_size();
 	net::TcpClient get_consumer(IN const char* name);
 	net::TcpClient find_consumer(IN const char* name);
-	net::TcpClient get_consumer(IN uint32_t pos);
+	net::TcpClient get_consumer(IN uint32_t index);
 
 	// get persist.
 	eco::Persist persist(IN const char* name = nullptr);
@@ -110,14 +109,14 @@ public:
 private:
 	friend class Startup;
 	// set initiatiate
-	static void set_create_app_func(IN CreateAppFunc func);
+	static void set_app(IN App& app);
 
 	// will first called by c++ raw main.
-	static int main(IN int argc, IN char* argv[]);
+	static int  main(IN App& app, IN int argc, IN char* argv[]);
 
 	// app life cycle managed by other app.
-	static void init(IN int argc, IN char* argv[]);
-	static void exit();
+	static void init(IN App& app, bool command);
+	static void exit(IN App& app);
 };
 
 
@@ -125,34 +124,35 @@ private:
 class Startup
 {
 public:
+	// app main mode
 	typedef int (*CMainFunc)(int argc, char* argv[]);
-	inline Startup(IN App::CreateAppFunc func, IN CMainFunc main_func)
+	inline Startup(IN App& app, IN CMainFunc main_func)
 	{
+		App::set_app(app);
 		main_func = nullptr;
-		App::set_create_app_func(func);
 	}
+
 	inline static int main(IN int argc, IN char* argv[])
 	{
-		return App::main(argc, argv);
+		return App::main(*eco::App::app(), argc, argv);
 	}
 
 public:
-	inline Startup()
-	{}
-
-	inline void set_app(void* func)
+	// dll mode
+	inline Startup(IN App& app)
 	{
-		App::set_create_app_func((App::CreateAppFunc)func);
+		init(app);
 	}
 
-	inline void init(eco::App& app, IN int argc, IN char* argv[])
+	inline static void init(IN App& app)
 	{
-		app.init(argc, argv);
+		App::set_app(app);
+		eco::App::init(app, false);
 	}
 
-	inline void exit(eco::App& app)
+	inline static void exit(IN App& app)
 	{
-		app.exit();
+		eco::App::exit(app);
 	}
 };
 ECO_NS_END(eco);
@@ -164,24 +164,10 @@ T main(T argc, char* argv[])
 {
 	return MainT::main(argc, argv);
 }
-
-
 /*@ eco app declare: implement a app instance.*/
-#define ECO_APP_BASE(AppClass, AppGet)\
-inline AppClass* eco_create_app()\
-{\
-	static AppClass* s_app(new AppClass());\
-	return s_app;\
-}\
-inline AppClass& AppGet()\
-{\
-	return *eco_create_app();\
-}
-
 #define ECO_APP(AppClass, AppGet)\
-ECO_APP_BASE(AppClass, AppGet)\
-const eco::Startup eco_startup(\
-(eco::App::CreateAppFunc)&eco_create_app, &main<int, eco::Startup>)
+ECO_NAME(AppClass, AppGet)\
+const eco::Startup eco_startup(AppGet(), &main<int, eco::Startup>)
 
 
 ////////////////////////////////////////////////////////////////////////////////

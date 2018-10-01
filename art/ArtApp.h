@@ -56,11 +56,9 @@ class AppWork : public QObject
 {
 	Q_OBJECT
 public:
-	typedef App* (*createAppFunc)(void);
-
 	// 运行主函数。
 	int  main(int argc, char* argv[]);
-	static void setApp(createAppFunc func, bool run_once);
+	static void setApp(App& app, bool run_once);
 
 	// 运行主窗口逻辑。
 	int run(QApplication& qt_app);
@@ -86,12 +84,12 @@ class Startup
 {
 public:
 	Startup(
-		IN AppWork::createAppFunc func, 
+		IN App& app,
 		IN eco::Startup::CMainFunc main_func,
 		IN bool run_once)
 	{
 		main_func = nullptr;
-		AppWork::setApp(func, run_once);
+		AppWork::setApp(app, run_once);
 	}
 
 	inline static int main(IN int argc, IN char* argv[])
@@ -105,10 +103,9 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_ART_APP(AppClass, AppGet, run_once)\
-ECO_APP_BASE(AppClass, AppGet)\
+ECO_NAME(AppClass, AppGet)\
 const eco::art::Startup eco_art_start_up(\
-(eco::art::AppWork::createAppFunc)&eco_create_app, \
-&main<int, eco::art::Startup>, run_once)
+AppGet(), &main<int, eco::art::Startup>, run_once)
 
 
 

@@ -17,24 +17,23 @@
 
 
 namespace eco{;
-extern "C" void init_app(IN App* heap);
-extern "C" void load_app(IN App& ap, bool ui);
-extern "C" void exit_app();
-extern "C" void exit_log();
+extern "C" void init_app(IN App& app);
+extern "C" void load_app(IN App& app, bool command);
+extern "C" void exit_app(IN App& app);
+extern "C" void exit_log(IN App& app);
 namespace art{;
 ////////////////////////////////////////////////////////////////////////////////
 uint32_t AppWork::s_run_once = true;
-static AppWork::createAppFunc s_create_app(nullptr);
 static inline App& app()
 {
-	return static_cast<App&>(eco::App::instance());
+	return static_cast<App&>(*eco::App::app());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void AppWork::setApp(createAppFunc func, bool run_once)
+void AppWork::setApp(App& app, bool run_once)
 {
 	s_run_once = run_once;
-	s_create_app = func;
+	eco::Startup startup(app, nullptr);
 }
 
 
@@ -70,7 +69,7 @@ int AppWork::run(QApplication& qt_app)
 	try
 	{
 		// 创建与初始化APP对象
-		eco::init_app(s_create_app());		// init 0 log
+		eco::init_app(app());				// init 0 log
 		app().on_init();					// init 1 app
 		// 加载数据
 		eco::load_app(app(), true);			// init 2 eco
@@ -79,18 +78,18 @@ int AppWork::run(QApplication& qt_app)
 		qt_app.exec();
 
 		// 释放APP对象
-		eco::exit_app();					// exit 2 eco
+		eco::exit_app(app());				// exit 2 eco
 		app().on_exit();					// exit 1 app
-		exit_log();							// exit 0 log
+		exit_log(app());					// exit 0 log
 	}
 	catch (eco::Error& e)
 	{
-		eco::exit_app();
+		eco::exit_app(app());
 		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
 	}
 	catch (std::exception& e)
 	{
-		eco::exit_app();
+		eco::exit_app(app());
 		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
 	}
 	return 0;
