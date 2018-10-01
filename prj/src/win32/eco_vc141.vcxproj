@@ -116,7 +116,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ECO_EXPORT;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -172,7 +172,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -226,7 +226,10 @@
     <ClCompile Include="..\Being.cpp" />
     <ClCompile Include="..\data_time\DateTime.cpp" />
     <ClCompile Include="..\Eco.cpp" />
-    <ClCompile Include="..\App.cpp" />
+    <ClCompile Include="..\App.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\cmd\Class.cpp" />
     <ClCompile Include="..\cmd\Context.cpp" />
     <ClCompile Include="..\cmd\Engine.cpp" />
@@ -319,6 +322,8 @@
     <ClCompile Include="..\PrecHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\process\ProcessWin.cpp" />
     <ClCompile Include="..\proxy\Proxy.cpp" />
@@ -403,6 +408,7 @@
     <ClInclude Include="..\..\..\date_time\Date.h" />
     <ClInclude Include="..\..\..\date_time\DateTime.h" />
     <ClInclude Include="..\..\..\date_time\Time.h" />
+    <ClInclude Include="..\..\..\net\protocol\TcpProtocolX.h" />
     <ClInclude Include="..\..\..\net\TcpDispatch.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Ecode.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestHandler.h" />
@@ -518,7 +524,6 @@
     <ClInclude Include="..\..\..\thread\Index.h" />
     <ClInclude Include="..\..\..\thread\Map.h" />
     <ClInclude Include="..\..\..\thread\TimerWheel.h" />
-    <ClInclude Include="..\..\..\thread\topic\TopicQueue.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />

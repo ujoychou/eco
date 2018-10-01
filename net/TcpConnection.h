@@ -181,12 +181,12 @@ public:
 	inline void publish(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const ContentType content_type,
+		IN const ContentSnap snap,
 		IN const bool encrypted = true,
 		IN const SessionId sess_id = none_session)
 	{
 		MessageMeta meta(codec, sess_id, type, encrypted);
-		meta.set_request_data(uint8_t(content_type));
+		meta.set_request_data(uint8_t(snap));
 		send(meta);
 	}
 
@@ -219,13 +219,13 @@ public:
 	inline void publish(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const ContentType content_type,
+		IN const ContentSnap snap,
 		IN const bool encrypted = true,
 		IN const SessionId sess_id = none_session)
 	{
 		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, sess_id, type, encrypted);
-		meta.set_request_data(uint8_t(content_type));
+		meta.set_request_data(uint8_t(snap));
 		send(meta);
 	}
 #endif

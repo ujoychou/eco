@@ -33,15 +33,6 @@ public:
 	inline ExclusiveMonitor()
 	{}
 
-	inline void wait()
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		while (busy())
-		{
-			m_cond_var.wait();
-		}
-	}
-
 	inline void wait_occupy()
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);

@@ -137,10 +137,10 @@ public:
 	inline void publish(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const ContentType content_type,
+		IN const ContentSnap snap,
 		IN const bool encrypted = true)
 	{
-		m_conn.publish(codec, type, content_type, encrypted, m_id);
+		m_conn.publish(codec, type, snap, encrypted, m_id);
 	}
 
 #ifndef ECO_NO_PROTOBUF
@@ -158,10 +158,10 @@ public:
 	inline void publish(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const ContentType content_type,
+		IN const ContentSnap snap,
 		IN const bool encrypted = true)
 	{
-		m_conn.publish(msg, type, content_type, encrypted, m_id);
+		m_conn.publish(msg, type, snap, encrypted, m_id);
 	}
 #endif
 

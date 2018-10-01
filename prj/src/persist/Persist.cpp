@@ -66,8 +66,10 @@ public:
 	eco::atomic::State		m_state;
 	persist::Address		m_address;
 
-	inline Impl() : m_handler(nullptr) 
-	{}
+	inline Impl() : m_handler(nullptr)
+	{
+		eco::Being::set_name("persist");
+	}
 
 	inline void init(IN Persist& parent)
 	{
@@ -107,72 +109,61 @@ bool Persist::Impl::on_born()
 ////////////////////////////////////////////////////////////////////////////////
 void Persist::Impl::on_live()
 {
-	try
+	// 4.connect to database server.
+	if (!m_master->is_open())
 	{
-		// 4.connect to database server.
-		if (!m_master->is_open())
-		{
-			eco::persist::Address& addr = m_address;
-			m_master->open(addr);
+		eco::persist::Address& addr = m_address;
+		m_master->open(addr);
 
-			// logging persist detail info.
-			char log[128] = { 0 };
-			sprintf(log, "\n+[persist %s %s]\n""-open %s by %s(%s) at %s:%d\n",
-				addr.get_type_name(), addr.get_name(),
-				addr.get_database(), addr.get_user(), addr.get_password(),
-				addr.get_host(), addr.get_port());
-			EcoInfo << log;
-		}
-
-		// 5.upgrade database according to it's current version.
-		if (!m_state.has(state_init))
-		{
-			// get database version.
-			char cond_sql[64] = { 0 };
-			const char* app_name = eco::App::instance().get_name();
-			sprintf(cond_sql, "where %s='%s' order by %s desc",
-				m_orm_version.find_property("module")->get_field(), app_name,
-				m_orm_version.find_property("value")->get_field());
-			eco::persist::Version version(app_name);
-			m_master->create_table(m_orm_version);
-			m_master->read<eco::persist::VersionMeta>(
-				version, m_orm_version, cond_sql);
-
-			// upgrade database.
-			auto it = m_upgrade_seq.begin();
-			for (; it != m_upgrade_seq.end(); ++it)
-			{
-				if (it->m_version > version.m_value)
-				{
-					// upgrade fail, transaction will rollback it's operation.
-					eco::Database::Transaction trans(*m_master);
-					it->m_func();
-					m_master->save<persist::VersionMeta>(
-						version.value(it->m_version),
-						m_orm_version, eco::meta::stamp_insert);
-					trans.commit();
-				}
-			}
-			m_state.add(state_init);
-		}
-
-		// 6.init business data from persist.
-		if (!m_state.has(state_load))
-		{
-			if (m_handler != nullptr)
-			{
-				m_handler->on_load();
-			}
-			m_state.add(state_load);
-		}
+		// logging persist detail info.
+		char log[128] = { 0 };
+		sprintf(log, "\n+[persist %s %s]\n""-open %s by %s(%s) at %s:%d\n",
+			addr.get_type_name(), addr.get_name(),
+			addr.get_database(), addr.get_user(), addr.get_password(),
+			addr.get_host(), addr.get_port());
+		EcoInfo << log;
 	}
-	catch (std::exception& e)
+
+	// 5.upgrade database according to it's current version.
+	if (!m_state.has(state_init))
 	{
-		EcoLog(error) << e.what();
+		// get database version.
+		char cond_sql[64] = { 0 };
+		const char* app_name = eco::App::app()->get_name();
+		sprintf(cond_sql, "where %s='%s' order by %s desc",
+			m_orm_version.find_property("module")->get_field(), app_name,
+			m_orm_version.find_property("value")->get_field());
+		eco::persist::Version version(app_name);
+		m_master->create_table(m_orm_version);
+		m_master->read<eco::persist::VersionMeta>(
+			version, m_orm_version, cond_sql);
+
+		// upgrade database.
+		auto it = m_upgrade_seq.begin();
+		for (; it != m_upgrade_seq.end(); ++it)
+		{
+			if (it->m_version > version.m_value)
+			{
+				// upgrade fail, transaction will rollback it's operation.
+				eco::Database::Transaction trans(*m_master);
+				it->m_func();
+				m_master->save<persist::VersionMeta>(
+					version.value(it->m_version),
+					m_orm_version, eco::meta::stamp_insert);
+				trans.commit();
+			}
+		}
+		m_state.add(state_init);
 	}
-	catch (eco::Error& e)
+
+	// 6.init business data from persist.
+	if (!m_state.has(state_load))
 	{
-		EcoError << e;
+		if (m_handler != nullptr)
+		{
+			m_handler->on_load();
+		}
+		m_state.add(state_load);
 	}
 }
 
