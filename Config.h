@@ -34,7 +34,10 @@ class ECO_API Config
 	ECO_OBJECT_API(Config);
 public:
 	/*@ read config data from file.*/
-	void init(IN const std::string& file);
+	void init(IN const char* file);
+
+	/*@ read config data from xml text.*/
+	void init(IN const char* text, IN const uint32_t size);
 
 	/*@ find key return true, else false.*/
 	bool find(

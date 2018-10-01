@@ -21,12 +21,21 @@ public:
 	eco::HashMap<std::string, StringAny> m_data;
 
 public:
-	void init(IN const std::string& file)
+	////////////////////////////////////////////////////////////////////////////
+	inline void init(IN const char* file, IN const uint32_t text_size = 0)
 	{
 		try
 		{
 			xml::Reader reader;
-			reader.read(m_root, file.c_str());
+			if (text_size == 0)
+			{
+				reader.read(m_root, file);
+			}
+			else
+			{
+				const char* text = file;
+				reader.read(m_root, text, text_size);
+			}
 
 			// setup index for config key.
 			m_root.set_name("");
@@ -38,6 +47,7 @@ public:
 		}
 	}
 
+	////////////////////////////////////////////////////////////////////////////
 	inline void get_property_set(
 		OUT eco::Context& result,
 		IN  const char* node_key) const
@@ -52,8 +62,8 @@ public:
 		}
 	}
 
-	inline eco::ContextNodeSet get_children(
-		IN  const char* parent_key) const
+	////////////////////////////////////////////////////////////////////////////
+	inline eco::ContextNodeSet get_children(IN  const char* parent_key) const
 	{
 		eco::Mutex::ScopeLock lock(m_data.mutex());
 		if (m_root.has_children())
@@ -66,6 +76,7 @@ public:
 		return eco::null;
 	}
 
+	////////////////////////////////////////////////////////////////////////////
 	inline void setup_index(
 		IN const eco::ContextNode& node,
 		IN const std::string& parent_name)
@@ -102,9 +113,14 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_OBJECT_IMPL(Config);
-void Config::init(IN const std::string& file)
+void Config::init(IN const char* file)
 {
 	impl().init(file);
+}
+void Config::init(IN const char* text, IN const uint32_t size)
+{
+	assert(size != 0);
+	impl().init(text, size);
 }
 bool Config::find(OUT eco::StringAny& v, IN const char* key) const
 {
