@@ -121,7 +121,7 @@ public:
 		return m_meta.m_message_type;
 	}
 
-	inline const ContentType get_content_type() const
+	inline const ContentSnap get_snap() const
 	{
 		return m_meta.get_req1();
 	}

@@ -182,4 +182,20 @@ void Reader::read(OUT eco::ContextNode& node, IN const char* file)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+void Reader::read(
+	OUT eco::ContextNode& node,
+	IN const char* xml_text,
+	IN const uint32_t xml_size)
+{
+	using namespace boost::property_tree;
+	using namespace boost::property_tree::xml_parser;
+	boost::property_tree::ptree doc;
+	std::stringstream in;
+	in.write(xml_text, xml_size);
+	xml_parser::read_xml(in, doc, trim_whitespace | no_comments);
+	read_node(node, "root", doc.get_child("root"));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 }}

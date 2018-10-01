@@ -59,11 +59,11 @@ enum
 	content_snap		= 4,
 	content_new			= 8,
 };
-typedef uint8_t ContentType;
+typedef uint8_t ContentSnap;
 
 
 // judge whether it is a snap.
-inline bool is_snap(IN const ContentType v)
+inline bool is_snap(IN const ContentSnap v)
 {
 	return eco::has(v, content_snap);
 }

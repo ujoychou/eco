@@ -37,8 +37,21 @@ class ECO_API Reader
 {
 	ECO_SHARED_API(Reader);
 public:
-	void read(OUT eco::Context& vals, IN const char* file);
-	void read(OUT eco::ContextNode& node, IN const char* file);
+	// read key/values from xml file by file path
+	void read(
+		OUT eco::Context& vals,
+		IN  const char* file_path);
+	
+	// read xml nodes from xml file by file path
+	void read(
+		OUT eco::ContextNode& node,
+		IN  const char* file_path);
+
+	// read from xml text string.
+	void read(
+		OUT eco::ContextNode& node,
+		IN  const char* xml_text,
+		IN  const uint32_t xml_size);
 };
 
 
