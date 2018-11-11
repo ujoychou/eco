@@ -34,6 +34,10 @@ class ECO_API MySql : public eco::Database
 	ECO_SHARED_API(MySql);
 ////////////////////////////////////////////////////////////////////////////////
 public:
+	// create database
+	virtual void create_database(
+		IN const char* db_name) override;
+
 	// connect to database address.
 	virtual void open(
 		IN const persist::Address& addr) override;

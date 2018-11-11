@@ -96,6 +96,10 @@ class ECO_API Database
 public:
 	inline Database() {}
 
+	// create database
+	virtual void create_database(
+		IN const char* db_name) = 0;
+
 	// connect to database address.
 	virtual void open(
 		IN const persist::Address& addr) {};

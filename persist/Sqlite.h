@@ -35,6 +35,10 @@ class ECO_API Sqlite : public eco::Database
 	ECO_SHARED_API(Sqlite);
 ////////////////////////////////////////////////////////////////////////////////
 public:
+	// create database
+	virtual void create_database(
+		IN const char* db_name) override {};
+
 	// connect to database address.
 	virtual void open(
 		IN const persist::Address& addr) override;
