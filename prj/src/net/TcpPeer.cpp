@@ -109,6 +109,7 @@ void TcpPeer::Impl::on_connect(
 	if (!is_connected)
 	{
 		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *e;
+		m_handler->on_connect(e);
 		return;
 	}
 
@@ -206,6 +207,7 @@ void TcpPeer::Impl::on_write(IN const uint32_t size, IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
+		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *e;
 		close_and_notify(e);
 		return;
 	}

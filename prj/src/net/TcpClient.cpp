@@ -274,32 +274,35 @@ eco::Result TcpClient::Impl::request(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::on_connect()
+void TcpClient::Impl::on_connect(IN const eco::Error* e)
 {
 	eco::Mutex::ScopeLock lock(m_mutex);
-	// set peer option: no delay.
-	peer().set_option(m_option.no_delay());
-
-	// reconnect to server: session authority.
-	for (auto it = m_authority_map.begin(); it != m_authority_map.end(); ++it)
+	if (e == nullptr)
 	{
-		eco::String data;
-		SessionDataPack& pack = (*it->second);
-		data.asign(pack.m_request.c_str(), pack.m_request.size());
-		async_send(data, pack.m_request_start);
+		// set peer option: no delay.
+		peer().set_option(m_option.no_delay());
+
+		// reconnect to server: session authority.
+		for (auto it = m_authority_map.begin(); it != m_authority_map.end(); ++it)
+		{
+			eco::String data;
+			SessionDataPack& pack = (*it->second);
+			data.asign(pack.m_request.c_str(), pack.m_request.size());
+			async_send(data, pack.m_request_start);
+		}
+		EcoInfo << NetLog(peer().get_id(), ECO_FUNC);
 	}
-	EcoInfo << NetLog(peer().get_id(), ECO_FUNC);
 
 	// notify on connect.
 	if (m_on_open)
 	{
-		m_on_open();
+		m_on_open(e);
 	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::on_close(IN uint64_t peer_id)
+void TcpClient::Impl::on_close(IN const ConnectionId peer_id)
 {
 	m_session_map.clear();
 	EcoInfo << NetLog(peer_id, ECO_FUNC);

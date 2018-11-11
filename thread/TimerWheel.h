@@ -34,8 +34,9 @@ private:
 	uint32_t m_count;
 	uint32_t m_timeout;
 	uint16_t m_repeated;
+	uint16_t m_paused;
 	
-	// timer position.
+	// position in timer wheel.
 	typedef std::shared_ptr<TimerWheelTask> Timer;
 	typedef std::list<Timer> TimerList;
 	TimerList* m_timer_list;
@@ -48,14 +49,24 @@ public:
 		IN const uint32_t count,
 		IN const uint32_t timeout,
 		IN const bool repeated)
-		: m_task(std::move(task)), m_repeated(repeated)
-		, m_count(count), m_timeout(timeout)
-		, m_wheel(nullptr), m_timer_list(nullptr)
+		: m_task(std::move(task))
+		, m_repeated(repeated)
+		, m_paused(false)
+		, m_count(count)
+		, m_timeout(timeout)
+		, m_wheel(nullptr)
+		, m_timer_list(nullptr)
 	{}
 
 	inline Task& task()
 	{
 		return m_task;
+	}
+
+	// null task.
+	inline bool null() const
+	{
+		return m_wheel == nullptr || m_timer_list == nullptr;
 	}
 
 	inline bool expired() const
@@ -67,14 +78,21 @@ public:
 		return count == -1;
 	}
 
+	inline void pause(bool is_v)
+	{
+		m_paused = is_v;
+	}
+	inline bool paused() const
+	{
+		return m_paused;
+	}
+
 	inline void restart(
 		IN const uint32_t timeout = -1,
 		IN const uint16_t repeated = -1)
 	{
-		if (timeout != uint32_t(-1))
-			m_timeout = timeout;
-		if (repeated != uint16_t(-1))
-			m_repeated = repeated;
+		if (timeout != uint32_t(-1)) m_timeout = timeout;
+		if (repeated != uint16_t(-1)) m_repeated = repeated;
 		m_wheel->restart(m_timeout, m_repeated, *m_timer_list, m_it);
 	}
 
@@ -95,15 +113,24 @@ class TimerWheel
 	ECO_OBJECT(TimerWheel);
 public:
 	typedef TimerWheelTask<Task> TimerTask;
-	typedef std::shared_ptr<TimerTask> Timer;
-	typedef std::list<Timer> TimerList;
+	typedef std::shared_ptr<TimerTask> TimerTaskPtr;
+	typedef std::list<TimerTaskPtr> TimerList;
+
+	struct Position
+	{
+		uint32_t wheel;
+		uint32_t count;
+		inline Position() : wheel(0), count(0) {}
+	};
 
 	// construct & destruct.
-	inline TimerWheel() : m_curr(0), m_precision(0), m_max_timeout(0)
-	{}
+	inline TimerWheel()
+	{
+		reset();
+	}
 	inline ~TimerWheel()
 	{
-		stop();
+		reset();
 	}
 
 	/*@start timer wheel.
@@ -121,75 +148,7 @@ public:
 	// stop wheel.
 	inline void stop()
 	{
-		m_curr = 0;
-		m_precision = 0;
-		m_wheel.clear();
-	}
-
-	// turn the wheel in duration time.
-	inline uint32_t step(IN const uint32_t duration)
-	{
-		uint32_t tick = duration / m_precision;
-		for (uint32_t i = 0; i < tick; ++i)
-		{
-			on_tick(0);
-		}
-		return tick * m_precision;
-	}
-
-	// clear wheel.
-	inline uint32_t step_to(IN const uint32_t duration)
-	{
-		if (m_max_timeout == 0)
-		{
-			return duration;
-		}
-		if (duration > m_max_timeout)
-		{
-			call_once_and_restart_repeated();
-			return duration;
-		}
-
-		uint32_t tick = duration / m_precision;
-		for (uint32_t i = 0; i < tick; ++i)
-		{
-			on_tick(tick - 1 - i);
-		}
-		return tick * m_precision;
-	}
-
-	/*@add timer to wheel.
-	* @param.timeout: timer timeout, unit is undefined.
-	* @param.wheel_size: size of wheel.
-	*/
-	inline Timer add_timer(
-		IN const uint32_t timeout,
-		IN const bool repeated,
-		IN Task& task)
-	{
-		auto result = get_wheel_count(timeout);
-		auto& timer_list = m_wheel[result.first];
-		Timer timer(new TimerTask(task, result.second, timeout, repeated));
-		timer_list.push_back(timer);
-		timer->m_wheel = this;
-		timer->m_timer_list = &timer_list;
-		timer->m_it = --timer_list.end();
-		return timer;
-	}
-
-	// add timer.
-	inline Timer add_timer_v(
-		IN const uint32_t timeout,
-		IN const bool repeated,
-		IN Task task)
-	{
-		return add_timer(timeout, repeated, task);
-	}
-
-	// get max timeout.
-	inline uint32_t max_timeout() const
-	{
-		return m_max_timeout;
+		reset();
 	}
 
 	// get tick precision.
@@ -198,17 +157,96 @@ public:
 		return m_precision;
 	}
 
+	/*@add timer to wheel.
+	* @param.timeout: timer timeout, unit is undefined.
+	* @param.wheel_size: size of wheel.
+	*/
+	inline TimerTaskPtr add_timer(
+		IN const uint32_t timeout,
+		IN const bool repeated,
+		IN Task& task)
+	{
+		auto pos = get_wheel_pos(timeout);
+		auto& timer_list = m_wheel[pos.wheel];
+		TimerTaskPtr timer(new TimerTask(task, pos.count, timeout, repeated));
+		timer->m_wheel = this;
+		timer_list.push_back(timer);
+		timer->m_it = --timer_list.end();
+		timer->m_timer_list = &timer_list;
+		return timer;
+	}
+
+	// add timer.
+	inline TimerTaskPtr add_timer_value(
+		IN const uint32_t timeout,
+		IN const bool repeated,
+		IN Task task)
+	{
+		return add_timer(timeout, repeated, task);
+	}
+
+public:
+	// turn the wheel in duration time.
+	inline void step(IN const uint32_t tick)
+	{
+		for (uint32_t i = 0; i < tick; ++i)
+		{
+			on_tick();
+		}
+	}
+
+	// turn the wheel in duration time.
+	inline void step_time(IN const uint32_t duration)
+	{
+		uint32_t left = m_clock % m_precision;
+		m_clock += duration;
+		uint32_t tick = (left + duration) / m_precision;
+		step(tick);
+	}
+
+	// turn the wheel to the time.
+	inline void step_time_to(IN const uint64_t now)
+	{
+		// init clock.
+		if (m_clock == 0)
+		{
+			m_clock = now;
+			return;
+		}
+
+		// clock drive timer wheel.
+		if (now > m_clock)
+		{
+			uint32_t left = m_clock % m_precision;
+			uint32_t tick = uint32_t(now - m_clock + left);
+			m_clock = now;
+			tick /= m_precision;
+			step(tick);
+		}
+	}
+
+	// restart timer clock.
+	inline void reset_clock()
+	{
+		m_clock = 0;
+	}
+
 protected:
+	// stop wheel.
+	inline void reset()
+	{
+		m_clock = 0;
+		m_wheel_curr = 0;
+		m_precision = 0;
+		m_wheel.clear();
+	}
+
 	// trigger tick event.
-	inline void on_tick(IN const uint32_t delay = 0)
+	inline void on_tick()
 	{
 		// step to next wheel slot.
-		m_curr = (m_curr + 1) % m_wheel.size();
-		m_max_timeout = (m_max_timeout > m_precision)
-			? m_max_timeout - m_precision : 0;
-		EcoInfo << "on_tick:" <= m_max_timeout <= m_curr;
-
-		TimerList& timer_list = m_wheel[m_curr];
+		m_wheel_curr = (m_wheel_curr + 1) % m_wheel.size();
+		TimerList& timer_list = m_wheel[m_wheel_curr];
 		for (auto it = timer_list.begin(); it != timer_list.end(); )
 		{
 			// if timer hasn't reached, reduce timer count.
@@ -218,8 +256,14 @@ protected:
 				++it;
 				continue;
 			}
+			if (timer.paused())
+			{
+				++it;
+				continue;
+			}
+
 			// if timer has reached, call timer.
-			timer.m_task(timer);
+			timer.m_task();
 
 			// remove once timer.
 			if (!timer.m_repeated)
@@ -228,40 +272,8 @@ protected:
 				continue;
 			}
 			// move repeated timer to new wheel pos.
-			auto timeout = timer.m_timeout + delay * m_precision;
-			restart(timeout, true, timer_list, it++);
+			restart(timer.m_timeout, true, timer_list, it++);
 		}
-	}
-
-	// trigger all timer event.
-	inline void call_once_and_restart_repeated()
-	{
-		uint32_t curr_end = (m_curr + 1) % m_wheel.size();
-		do
-		{
-			m_curr = (m_curr + 1) % m_wheel.size();
-			TimerList& timer_list = m_wheel[m_curr];
-			for (auto it = timer_list.begin(); it != timer_list.end(); )
-			{
-				auto& timer = **it;
-				timer.m_task(timer);
-				it = (!timer.m_repeated) ? timer_list.erase(it) : ++it;
-			}
-		} while (m_curr != curr_end);
-
-		// reset repeated timer.
-		uint32_t curr = m_curr = 0;
-		m_max_timeout = 0;
-		do
-		{
-			TimerList& timer_list = m_wheel[curr];
-			for (auto it = timer_list.begin(); it != timer_list.end(); )
-			{
-				auto& timer = **it;
-				restart(timer.m_timeout, true, timer_list, it++);
-			}
-			curr = (curr + 1) % m_wheel.size();
-		} while (curr != 0);
 	}
 
 	// move timer to new place.
@@ -272,40 +284,43 @@ protected:
 		IN typename TimerList::iterator& it)
 	{
 		auto& timer = **it;
-		auto pos = get_wheel_count(timeout);
-		auto& timer_list_new = m_wheel[pos.first];
-		// timer second changed.
-		if (&timer_list != &timer_list_new || timer.m_count != pos.second)
+		auto pos = get_wheel_pos(timeout);
+		auto& timer_list_new = m_wheel[pos.wheel];
+		timer.m_count = pos.count;
+		timer.m_repeated = repeated ? 1 : 0;
+		timer.m_paused = false;
+		if (&timer_list != &timer_list_new)	// slots changed.
 		{
 			timer_list_new.splice(timer_list_new.end(), timer_list, it);
 			timer.m_it = --timer_list_new.end();
-			timer.m_count = pos.second;
-			timer.m_repeated = repeated ? 1 : 0;
 			timer.m_timer_list = &timer_list_new;
 		}
-		EcoInfo << "restart:" <= m_max_timeout <= m_curr;
 	}
 
 	// calculate wheel and count.
-	inline std::pair<uint32_t, uint32_t>
-		get_wheel_count(IN uint32_t timeout)
+	inline Position get_wheel_pos(IN uint32_t timeout)
 	{
-		std::pair<uint32_t, uint32_t> result;
-		auto tick = timeout / m_precision;
-		result.second = tick / m_wheel.size();	// count
-		result.first = (tick + m_curr) % m_wheel.size();	// wheel
-		// count the max timeout.
-		// max_timeout = tick + 1; timeout = (tick + 0.n)
-		if (m_max_timeout < (tick * m_precision))
-			m_max_timeout = (tick + 1) * m_precision;
-		return result;
+		/*
+		[precision=1000, wheel_size=10, curr=0]
+		timeout=1000 tick=1
+		timeout=1500 tick=2
+		timeout=2000 tick=2
+		*/
+		Position pos;
+		auto tick = (timeout / m_precision);
+		auto left = (timeout - tick * m_precision);
+		if (left > 0) ++tick;
+		pos.count = (tick / m_wheel.size());
+		pos.wheel = (tick + m_wheel_curr) % m_wheel.size();
+		return pos;
 	}
 
 private:
 	friend class TimerTask;
-	uint32_t m_curr;
+	// clock drive this timer wheel.
+	uint64_t m_clock;
 	uint32_t m_precision;
-	uint32_t m_max_timeout;
+	uint32_t m_wheel_curr;
 	std::vector<TimerList> m_wheel;
 };
 
@@ -316,14 +331,14 @@ class WheelTimer : public TimerWheel<Task>
 {
 public:
 	/*@start timer wheel.
-	* @param.tick: tick precision, unit is "milli second".
+	* @param.precision: tick precision, millisecond unit.
 	* @param.wheel_size: size of wheel.
 	*/
 	inline void start(
-		IN const uint32_t tick,
+		IN const uint32_t precision,
 		IN const uint32_t wheel_size)
 	{
-		TimerWheel<Task>::start(tick, wheel_size);
+		TimerWheel<Task>::start(precision, wheel_size);
 		m_timer.start();
 		m_timer.add_timer(precision, true, std::bind(
 			&WheelTimer::on_tick, this, std::placeholders::_1));
@@ -343,8 +358,7 @@ private:
 	// trigger tick event.
 	inline void on_tick(IN bool is_cancel)
 	{
-		if (!is_cancel)
-			TimerWheel<Task>::on_tick();
+		if (!is_cancel) TimerWheel<Task>::on_tick();
 	}
 
 	eco::Timer m_timer;

@@ -318,13 +318,13 @@ public:
 
 public:
 	// when peer has connected to server.
-	virtual void on_connect() override;
+	virtual void on_connect(IN const eco::Error* e) override;
 
 	// when peer has received a message data bytes.
 	virtual void on_read(IN void* peer, IN eco::String& data) override;
 
 	// when peer has been closed.
-	virtual void on_close(IN uint64_t peer_id);
+	virtual void on_close(IN const ConnectionId peer_id) override;
 
 	// protocol.
 	virtual ProtocolHead& protocol_head() const override

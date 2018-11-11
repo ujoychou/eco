@@ -76,12 +76,20 @@ public:
 	second_clock: get time from a second clock precision.
 	*/
 	inline explicit Timestamp(
-		IN Format time_format = fmt_iso_m,
-		IN bool second_clock = false)
+		IN Format time_format = fmt_iso_m)
 	{
 		m_time_format = time_format;
 		m_timestamp[0] = '\0';
-		set_clock(second_clock);
+		if (time_format == fmt_iso_m || 
+			time_format == fmt_isot_m ||
+			time_format == fmt_std_m)
+		{
+			set_clock(false);
+		}
+		else
+		{
+			set_clock(true);
+		}
 	}
 
 	inline const char* get_time() const

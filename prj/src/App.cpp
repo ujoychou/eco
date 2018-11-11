@@ -148,11 +148,6 @@ inline void App::Impl::init_eco()
 			get_eco()->set_unit_live_tick_seconds(v);
 		if (m_sys_config.find(v, "eco/task_server_thread_size"))
 			get_eco()->set_task_server_thread_size(v);
-		// set default value.
-		if (get_eco()->get_unit_live_tick_seconds() == 0)
-			get_eco()->set_unit_live_tick_seconds(5);
-		if (get_eco()->get_unit_live_tick_seconds() == 0)
-			get_eco()->set_task_server_thread_size(2);
 		get_eco()->start();
 	}
 }

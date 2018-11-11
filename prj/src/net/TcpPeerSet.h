@@ -86,6 +86,7 @@ public:
 		}
 		// add to connection set.
 		m_peer_map[p->get_id()] = p;
+		EcoInfo << "connections size: " << m_peer_map.size();
 		return true;
 	}
 

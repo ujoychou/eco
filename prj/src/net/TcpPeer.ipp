@@ -139,7 +139,7 @@ public:
 	inline void async_recv_by_client()
 	{
 		m_state.set_ready();
-		m_handler->on_connect();
+		m_handler->on_connect(nullptr);
 		async_recv();
 	}
 

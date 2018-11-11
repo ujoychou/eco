@@ -11,7 +11,7 @@ Eco::Eco()
 {
 	m_tick_count = 0;
 	m_unit_live_tick_sec = 5;		// 默认每5秒1次，检测与修复系统。
-	m_task_server_thread_size = 2;
+	m_task_server_thread_size = 0;
 	reset_current_being();
 }
 
@@ -31,7 +31,10 @@ void Eco::start()
 
 	// 启动生命活动线程
 	m_timer.start();
-	m_task_server.run(m_task_server_thread_size, "eco_task");
+	if (m_task_server_thread_size > 0)
+	{
+		m_task_server.run(m_task_server_thread_size, "eco_task");
+	}
 
 	// 启动生命节奏：定时执行系统维护工作。
 	uint32_t millsecs = m_unit_live_tick_sec * 1000;
@@ -43,7 +46,10 @@ void Eco::start()
 void Eco::stop()
 {
 	m_timer.stop();
-	m_task_server.stop();
+	if (m_task_server_thread_size > 0)
+	{
+		m_task_server.stop();
+	}
 }
 
 
