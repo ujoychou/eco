@@ -27,6 +27,7 @@
 #include <eco/net/protocol/Protocol.h>
 #include <eco/net/protocol/ProtobufCodec.h>
 #include <eco/net/TcpPeer.h>
+#include <eco/thread/topic/Role.h>
 #include <memory>
 
 namespace eco{;
@@ -181,7 +182,7 @@ public:
 	inline void publish(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const ContentSnap snap,
+		IN const Snap snap,
 		IN const bool encrypted = true,
 		IN const SessionId sess_id = none_session)
 	{
@@ -219,7 +220,7 @@ public:
 	inline void publish(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const ContentSnap snap,
+		IN const Snap snap,
 		IN const bool encrypted = true,
 		IN const SessionId sess_id = none_session)
 	{
@@ -307,7 +308,7 @@ typedef ConnectionData* (*MakeConnectionDataFunc)();
 
 ////////////////////////////////////////////////////////////////////// TcpClient
 // tcp client on connect/close event.
-typedef std::function<void(void)> OpenFunc;
+typedef std::function<void(IN const eco::Error* e)> OpenFunc;
 typedef std::function<void(void)> CloseFunc;
 
 

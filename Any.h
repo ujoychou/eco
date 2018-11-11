@@ -26,7 +26,7 @@ class Any
 	public:
 		inline DataT(IN const T& v) : m_value(v)
 		{}
-		virtual ~DataT() override
+		virtual ~DataT()
 		{}
 		virtual void* get_value() override
 		{

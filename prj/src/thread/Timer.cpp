@@ -159,19 +159,24 @@ public:
 	{
 		try {
 			if (ec == boost::asio::error::operation_aborted)
+			{
 				task(true);		// task has been cancelled.
+			}
 			else if (!ec)
+			{
 				task(false);
+				if (repeated)
+					add_closure_timer(millsecs, true, task);
+			}
 		}
-		catch (std::exception& e) {
+		catch (std::exception& e)
+		{
 			EcoFunc(error) << e.what();
 		}
-		catch (eco::Error& e) {
+		catch (eco::Error& e)
+		{
 			EcoFunc(error) << e;
-		}
-
-		if (repeated)
-			add_closure_timer(millsecs, true, task);
+		}	
 	}
 
 	/*@ add task timer.*/
@@ -199,9 +204,11 @@ public:
 		IN const boost::system::error_code& ec)
 	{
 		if (!ec)
+		{
 			task->start();
-		if (repeated)
-			add_task_timer(millsecs, true, task);
+			if (repeated)
+				add_task_timer(millsecs, true, task);
+		}
 	}
 
 	// add daily timer that can be repeated.
@@ -228,9 +235,11 @@ public:
 		IN const boost::system::error_code& ec)
 	{
 		if (!ec)
+		{
 			task->start();
-		if (repeated)
-			add_task_daily_timer(time, repeated, task);
+			if (repeated)
+				add_task_daily_timer(time, repeated, task);
+		}
 	}
 	inline void add_closure_daily_timer(
 		IN std::string& time,
@@ -253,21 +262,27 @@ public:
 		IN timer_shared_ptr& timer,
 		IN const boost::system::error_code& ec)
 	{
-		try	{
+		try
+		{
 			if (ec == boost::asio::error::operation_aborted)
+			{
 				task(true);		// task has been cancelled.
+			}
 			else if (!ec)
+			{
 				task(false);
+				if (repeated)
+					add_closure_daily_timer(time, repeated, task);
+			}
 		}
-		catch (std::exception& e) {
+		catch (std::exception& e)
+		{
 			EcoFunc(error) << e.what();
 		}
-		catch (eco::Error& e) {
+		catch (eco::Error& e)
+		{
 			EcoFunc(error) << e;
 		}
-
-		if (repeated)
-			add_closure_daily_timer(time, repeated, task);
 	}
 
 	inline void get_universal(

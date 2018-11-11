@@ -50,25 +50,6 @@ enum
 typedef int Result;
 
 
-////////////////////////////////////////////////////////////////////////////////
-// topic content snap type.
-enum 
-{
-	content_head		= 1,
-	content_last		= 2,
-	content_snap		= 4,
-	content_new			= 8,
-};
-typedef uint8_t ContentSnap;
-
-
-// judge whether it is a snap.
-inline bool is_snap(IN const ContentSnap v)
-{
-	return eco::has(v, content_snap);
-}
-
-
 // judge integer big/little endian.
 inline bool big_endian()
 {
@@ -1130,22 +1111,6 @@ inline bool is_zero(IN const float v)
 	return std::fabs(v) < std::numeric_limits<float>::epsilon();
 }
 
-// get float digit number.
-inline int get_digit(float v)
-{
-	int bit = 0;
-	const float cmp = float(1.0) - std::numeric_limits<float>::epsilon();
-	for (; v < cmp; v *= 10, ++bit) {}
-	return bit;
-}
-// get double digit number.
-inline int get_digit(double v)
-{
-	int bit = 0;
-	const double cmp = double(1.0) - std::numeric_limits<double>::epsilon();
-	for (; v < cmp; v *= 10, ++bit) {}
-	return bit;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 const std::string empty_str;

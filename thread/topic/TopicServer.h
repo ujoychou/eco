@@ -170,8 +170,8 @@ public:
 				{
 					it->second->on_erase(event.get());
 					topic_map.erase(it);
-					return 2;
 				}
+				return 2;
 			}
 			return 1;
 		}

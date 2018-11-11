@@ -137,7 +137,7 @@ public:
 	inline void publish(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const ContentSnap snap,
+		IN const Snap snap,
 		IN const bool encrypted = true)
 	{
 		m_conn.publish(codec, type, snap, encrypted, m_id);
@@ -158,7 +158,7 @@ public:
 	inline void publish(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const ContentSnap snap,
+		IN const Snap snap,
 		IN const bool encrypted = true)
 	{
 		m_conn.publish(msg, type, snap, encrypted, m_id);

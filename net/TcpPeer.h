@@ -41,7 +41,7 @@ class TcpPeerHandler
 {
 public:
 	// when peer has connected to server.
-	virtual void on_connect()
+	virtual void on_connect(IN const eco::Error* e)
 	{}
 
 	// when peer has received a message data bytes.

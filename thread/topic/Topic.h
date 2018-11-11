@@ -22,7 +22,7 @@ protected:
 		if (m_snap.get() != nullptr)
 		{
 			auto* suber = (Subscriber*)node.m_subscriber;
-			ContentSnap type = content_snap | content_head | content_last;
+			Snap type = snap_head | snap_last;
 			m_snap->stamp() = eco::meta::stamp_insert;
 			suber->on_publish(*this, Content(m_snap, type, event));
 		}
@@ -123,7 +123,7 @@ public:
 	inline void push_front_raw(IN const std::shared_ptr<object_t>& obj)
 	{
 		typedef std::shared_ptr<object_t> value_t;
-		ContentData::ptr newc(new ContentT<
+		ContentData::ptr newc(new ContentDataT<
 			object_t, value_t>(obj, eco::meta::stamp_insert));
 		m_snap_set.push_front(newc);
 	}
@@ -142,7 +142,7 @@ protected:
 				<< "seq > size()" << seq <= m_snap_set.size();
 		}
 		size_t seq_init = seq + 1;
-		eco::ContentSnap type = eco::content_snap | eco::content_head;
+		eco::Snap type = eco::snap_head;
 
 		// *node subscriber may be destruct in "on_publish";
 		// publish the snap, and set a content type.
@@ -150,9 +150,9 @@ protected:
 		for (; seq < m_snap_set.size() && node.m_working; ++seq)
 		{
 			if (seq == seq_init)
-				eco::del(type, eco::content_head);
+				eco::del(type, eco::snap_head);
 			if (seq == m_snap_set.size() - 1)
-				eco::add(type, eco::content_last);
+				eco::add(type, eco::snap_last);
 
 			auto& content = m_snap_set[seq];
 			content->stamp() = eco::meta::stamp_insert;
@@ -255,14 +255,14 @@ protected:
 		// publish the snap, and set a content type.
 		uint32_t index = 0;
 		auto* suber = (Subscriber*)node.m_subscriber;
-		ContentSnap snap = content_snap | content_head;
+		Snap snap = snap_head;
 		auto it = m_snap_set.begin();
 		for (; it != m_snap_set.end() && node.m_working; ++it, ++index)
 		{
 			if (index == 1)
-				eco::del(snap, content_head);
+				eco::del(snap, snap_head);
 			if (index == m_snap_set.size() - 1)
-				eco::add(snap, content_last);
+				eco::add(snap, snap_last);
 			it->second->stamp() = eco::meta::stamp_insert;
 			suber->on_publish(*this, Content(it->second, snap, event));
 		}

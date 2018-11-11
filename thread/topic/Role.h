@@ -11,6 +11,39 @@
 ECO_NS_BEGIN(eco);
 class Topic;
 typedef eco::Topic* (*MakeTopic)(const void* id);
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// topic content snap type.
+enum
+{
+	snap_head = 1,
+	snap_last = 2,
+	snap_none = 4,
+};
+typedef uint8_t Snap;
+
+
+// whether it is a snap.
+inline bool is_newc(IN const Snap v)
+{
+	return eco::has(v, snap_none);
+}
+inline bool is_snap(IN const Snap v)
+{
+	return !is_newc(v);
+}
+inline bool is_snap_last(IN const Snap v)
+{
+	return eco::has(v, snap_last);
+}
+inline bool is_snap_head(IN const Snap v)
+{
+	return eco::has(v, snap_head);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 class TopicClass
 {
@@ -218,7 +251,7 @@ public:
 		: m_value((Value&)v), eco::ContentData(ts)
 	{}
 
-	virtual ~ContentDataT() override
+	virtual ~ContentDataT()
 	{}
 
 	virtual const uint32_t get_type_id() const override
@@ -285,7 +318,7 @@ class Content
 public:
 	inline Content(
 		IN eco::ContentData::ptr& content,
-		IN eco::ContentSnap snap,
+		IN eco::Snap snap,
 		IN eco::TopicEvent* event = nullptr)
 		: m_event(event), m_snap(snap), m_content(&content)
 	{}
@@ -330,9 +363,27 @@ public:
 	}
 
 	// content snap.
-	inline const eco::ContentSnap snap() const
+	inline eco::Snap snap() const
 	{
 		return m_snap;
+	}
+
+	// get snap type.
+	inline bool is_snap() const
+	{
+		return !eco::is_newc(m_snap);
+	}
+	inline bool is_newc() const
+	{
+		return eco::is_newc(m_snap);
+	}
+	inline bool is_snap_head() const
+	{
+		return eco::is_snap_head(m_snap);
+	}
+	inline bool is_snap_last() const
+	{
+		return eco::is_snap_last(m_snap);
 	}
 
 	// content stamp.
@@ -347,7 +398,7 @@ public:
 
 private:
 	eco::TopicEvent* m_event;
-	eco::ContentSnap m_snap;
+	eco::Snap m_snap;
 	eco::ContentData::ptr* m_content;
 };
 
@@ -476,7 +527,7 @@ public:
 			if (node->m_working)
 			{
 				auto* suber = (Subscriber*)node->m_subscriber;
-				suber->on_publish(*this, Content(new_c, content_new));
+				suber->on_publish(*this, Content(new_c, snap_none));
 			}
 			node = next;
 		}
