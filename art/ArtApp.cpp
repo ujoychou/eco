@@ -72,7 +72,7 @@ int AppWork::run(QApplication& qt_app)
 		eco::init_app(app());				// init 0 log
 		app().on_init();					// init 1 app
 		// 加载数据
-		eco::load_app(app(), true);			// init 2 eco
+		eco::load_app(app(), false);		// init 2 eco
 		app().on_load();
 
 		qt_app.exec();
