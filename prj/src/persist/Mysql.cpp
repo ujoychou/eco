@@ -110,7 +110,7 @@ public:
 			m_server_ip.c_str(), 
 			m_user_id.c_str(),
 			m_password.c_str(),
-			m_db_name.c_str(),
+			nullptr,
 			m_port, nullptr, 0))
 		{
 			close_throw_open_error("connect");
@@ -128,6 +128,9 @@ public:
 		{
 			close_throw_open_error("charset");
 		}
+
+		// create database.
+		create_database(m_db_name.c_str());
 
 		// connect to mysql server success.
 		// connect to dedicated server.
@@ -218,9 +221,7 @@ public:
 		}
 		throw std::logic_error(msg.c_str());
 	}
-
 	
-
 	// reconnect mysql.
 	inline void reconnect()
 	{
@@ -268,8 +269,33 @@ public:
 			}
 		}// end if.
 	}
+
+	inline uint64_t execute_sql(IN const char* sql)
+	{
+		// query sql fail, reconnect it.
+		query_sql(sql);
+		return mysql_affected_rows(m_mysql);
+	}
+
+	inline void create_database(IN const char* db_name)
+	{
+		std::string sql("create database if not exists ");
+		sql += db_name;
+		sql += " character set = utf8";
+		execute_sql(sql.c_str());
+	}
 };
 ECO_SHARED_IMPL(MySql);
+////////////////////////////////////////////////////////////////////////////////
+void MySql::create_database(IN const char* db_name)
+{
+	std::string sql("create database if not exists ");
+	sql += db_name;
+	sql += " character set = utf8";
+	execute_sql(sql.c_str());
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 void MySql::open(IN const persist::Address& addr) 
 {
@@ -379,7 +405,6 @@ uint64_t MySql::execute_sql(IN const char* sql)
 
 	// query sql fail, reconnect it.
 	impl().query_sql(sql);
-
 	return mysql_affected_rows(impl().m_mysql);
 }
 
