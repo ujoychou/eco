@@ -19,28 +19,57 @@
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <memory>
-#include <string>
-#include <assert.h>
+#include <eco/Export.h>
+#include <algorithm>
+#include <stdarg.h>
+
+
+ECO_NS_BEGIN(eco);
+////////////////////////////////////////////////////////////////////////////////
+inline bool is_upper(IN const char v)
+{
+	return v >= 'A' && v <= 'Z';
+}
+inline bool is_lower(IN const char v)
+{
+	return v >= 'a' && v <= 'z';
+}
+inline bool is_char(IN const char v)
+{
+	return is_upper(v) || is_lower(v);
+}
+inline char upper(IN const char v)
+{
+	return is_lower(v) ? v + 'A' - 'a' : v;
+}
+inline char lower(IN const char v)
+{
+	return is_upper(v) ? v + 'a' - 'A' : v;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef ECO_WIN32
-#	define snprintf _snprintf
+inline int snprintf(OUT char* buf, IN size_t size, IN const char* format, ...)
+{
+	va_list arglist;
+	va_start(arglist, format);
+	int result = _vsnprintf(buf, size, format, arglist);
+	va_end(arglist);
+	return result;
+}
 #endif
 
 
-namespace eco{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
-/*@ auto_strncpy copy like strncpy but return the length of copyed string instead
+/*@ strncpy copy like strncpy but return the length of copyed string instead
 of return the dest string. 
-1.auto_strncpy is more effective than strncpy, because strncpy will set left 
+1.strncpy is more effective than strncpy, because strncpy will set left 
 memory to '\0' when dest len is max than src.
-2.auto_strncpy will auto add '\0' to dest when src len is equal or more than dest.
+2.strncpy will auto add '\0' to dest when src len is equal or more than dest.
 but strncpy not, and it will make crash sometimes.
 */
-inline size_t auto_strncpy(OUT char* dest, IN const char* src, IN size_t len)
+inline size_t strncpy(OUT char* dest, IN const char* src, IN size_t len)
 {
 	assert(dest != nullptr && src != nullptr && len != 0);
 	// copy string like strncpy.
@@ -48,16 +77,49 @@ inline size_t auto_strncpy(OUT char* dest, IN const char* src, IN size_t len)
 	char* temp = dest;
 	while (cpy_len++ < len && (*temp++ = *src++) != '\0') {}
 	// auto add '\0' to dest.
-	if (--cpy_len == len) dest[--cpy_len] = '\0';
+	if (--cpy_len == len) dest[len] = '\0';
 	return cpy_len;
 }
 
-inline size_t auto_strncat(OUT char* dest, IN const char* src, IN size_t len)
+inline size_t strncat(OUT char* dest, IN const char* src, IN size_t len)
 {
 	size_t dest_end = strlen(dest);
-	return auto_strncpy(&dest[dest_end], src, len - dest_end);
+	return strncpy(&dest[dest_end], src, len - dest_end);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+inline void cpy_pos(OUT char& dest, OUT uint32_t& pos, IN  const char sour)
+{
+	dest = sour;
+	pos += 1;
+}
+inline void cpy_pos(OUT char* dest, OUT uint32_t& pos,
+	IN  const char* sour, IN uint32_t size)
+{
+	memcpy(dest, sour, size);
+	pos += size;
+}
+#define eco_cpy_pos_dest(dest, pos, sour) \
+{\
+	memcpy(dest, sour, sizeof(dest));\
+	pos += sizeof(dest);\
+}
+#define eco_cpy_pos_sour(dest, pos, sour) \
+{\
+	memcpy(dest, sour, sizeof(sour));\
+	pos += sizeof(sour);\
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+#define eco_cpyc(dest, sour) eco::strncpy(dest, sour, sizeof(dest) - 1)
+#define eco_cpys(dest, sour) eco::strncpy(dest, (sour).c_str(), sizeof(dest) - 1);
+#define eco_catc(dest, sour) eco::strncat(dest, sour, sizeof(dest) - 1)
+#define eco_cats(dest, sour) eco::strncat(dest, (sour).c_str(), sizeof(dest) - 1);
+
+
+////////////////////////////////////////////////////////////////////////////////
 inline bool find_cmp(IN const char* dest, IN const char* v)
 {
 	for (; *dest != '\0' && *v != '\0' && *dest == *v; ++dest, ++v) {}
@@ -75,10 +137,8 @@ inline const char* find(IN const char* dest, IN const char* v)
 }
 
 inline const char* find(
-	IN const char* dest,
-	IN const size_t size,
-	IN const char* v,
-	IN size_t v_size = 0)
+	IN const char* dest, IN const size_t size,
+	IN const char* v, IN size_t v_size = 0)
 {
 	if (v_size == 0) v_size = strlen(v);
 	const char* end = &dest[size - v_size];
@@ -91,13 +151,12 @@ inline const char* find(
 }
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 inline uint32_t find_first(IN const char* key, IN const char flag)
 {
 	uint32_t pos = 0;
 	for (; *key != 0 && *key != flag; ++key, ++pos) {}
-	return (*key == 0) ? - 1 : pos;
+	return (*key == 0) ? -1 : pos;
 }
 inline uint32_t find_last(IN const char* key, IN const uint32_t end,
 	IN const char flag)
@@ -150,41 +209,59 @@ inline void insert(OUT char* dest, IN uint32_t pos, IN uint32_t num, char c)
 ////////////////////////////////////////////////////////////////////////////////
 inline void replace(OUT char* path, IN const char c, IN const char r)
 {
-	for (char* ch = path; *ch != 0; ++ch){
+	for (char* ch = path; *ch != 0; ++ch)
+	{
 		if (*ch == c) *ch = r;
 	}
 }
+inline bool equal(IN const char* s1, IN const char* s2)
+{
+	return std::strcmp(s1, s2) == 0;
+}
+inline bool iequal(IN const char* s1, IN const char* s2)
+{
+	char c1 = 0, c2 = 0;
+	for (size_t i = 0; true; ++i)
+	{
+		c1 = upper(s1[i]);
+		c2 = upper(s2[i]);
+		if (c1 != c2 || c1 == 0 || c2 == 0) break;
+	}
+	return c1 == 0 && c2 == 0;
+}
+inline void remove(IN std::string& v, IN char ch)
+{
+	v.erase(std::remove(v.begin(), v.end(), ch), v.end());
+}
+inline void remove(IN char* v, IN char ch)
+{
+	char* p = v;
+	for (; *v != 0; ++v)
+	{
+		if (*v == ch) continue;
+		*p = *v; ++p;
+	}
+	*p = 0;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void cpy_pos(OUT char& dest, OUT uint32_t& pos, IN  const char sour)
+template<typename array_t>
+inline void split(OUT array_t& set, IN const char* str, IN char token)
 {
-	dest = sour;
-	pos += 1;
+	const char* v = str;
+	uint32_t pos = eco::find_first(v, token);
+	while (pos != -1)
+	{
+		set.push_back(std::string(v, pos));
+		v += pos + 1;
+		pos = eco::find_first(v, token);
+	}
+	if (!eco::empty(v))
+	{
+		set.push_back(v);
+	}
 }
-inline void cpy_pos(OUT char* dest, OUT uint32_t& pos,
-	IN  const char* sour, IN uint32_t size)
-{
-	memcpy(dest, sour, size);
-	pos += size;
-}
-#define eco_cpy_pos_dest(dest, pos, sour) \
-{\
-	memcpy(dest, sour, sizeof(dest));\
-	pos += sizeof(dest);\
-}
-#define eco_cpy_pos_sour(dest, pos, sour) \
-{\
-	memcpy(dest, sour, sizeof(sour));\
-	pos += sizeof(sour);\
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-#define eco_cpyc(dest, sour) eco::auto_strncpy(dest, sour, sizeof(dest))
-#define eco_cpys(dest, sour) eco::auto_strncpy(dest, sour.c_str(), sizeof(dest));
-#define eco_catc(dest, sour) eco::auto_strncat(dest, sour, sizeof(dest))
-#define eco_cats(dest, sour) eco::auto_strncat(dest, sour.c_str(), sizeof(dest));
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -193,26 +270,26 @@ template<typename int_type>
 inline int_type intcpy(IN const char* v)
 {
 	int_type int_v = 0;
-	eco::auto_strncpy((char*)&int_v, v, sizeof(int_type));
+	eco::strncpy((char*)&int_v, v, sizeof(int_type));
 	return int_v;
 }
 template<typename int_type>
 inline int_type intcpy(IN const std::string& v)
 {
 	int_type int_v = 0;
-	eco::auto_strncpy((char*)&int_v, v.c_str(), sizeof(int_type));
+	eco::strncpy((char*)&int_v, v.c_str(), sizeof(int_type));
 	return int_v;
 }
 template<typename int_type>
 inline void intcpy(OUT char* v, IN int_type int_v)
 {
-	eco::auto_strncpy(&v[0], (const char*)&int_v, sizeof(int_type));
+	eco::strncpy(&v[0], (const char*)&int_v, sizeof(int_type));
 }
 template<typename int_type>
 inline std::string intcpy(IN int_type int_v)
 {
 	char buf[20] = { 0 };
-	eco::auto_strncpy(buf, (const char*)&int_v, sizeof(int_type));
+	eco::strncpy(buf, (const char*)&int_v, sizeof(int_type));
 	return buf;
 }
 
@@ -344,8 +421,6 @@ inline uint64_t hash_value(const Types&... args)
 	return seed;
 }
 #endif
-
-
 ////////////////////////////////////////////////////////////////////////////////
-}
+ECO_NS_END(eco);
 #endif

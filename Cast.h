@@ -17,13 +17,11 @@ convert types.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <cstdint>
-#include <string>
 #include <eco/Export.h>
 #include <eco/Memory.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 enum Scale
 {
@@ -223,7 +221,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 inline void cast(OUT bool& v, IN const char* sv)
 {
-	v = (sv != nullptr && sv[0] == '1');
+	v = sv && (sv[0] == '1' || eco::iequal(sv, "true"));
 }
 inline void cast(OUT char& v, IN const char* sv)
 {
@@ -293,8 +291,8 @@ template<uint32_t size> struct get_char
 	inline get_char(IN const char* sv, IN uint32_t len)
 	{
 		str[0] = 0;
-		if (++len > size) len = size;
-		eco::auto_strncpy(str, sv, len);
+		if (len > size - 1) len = size - 1;
+		eco::strncpy(str, sv, len);
 	}
 
 	inline operator const char*() const
@@ -479,5 +477,5 @@ inline char first(IN const char* sv)
 	return (sv != nullptr && sv[0] != '\0') ? sv[0] : 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
-}
+ECO_NS_END(eco);
 #endif

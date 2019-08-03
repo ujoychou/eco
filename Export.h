@@ -27,14 +27,18 @@ dll export template declare.
 #include <cstdint>
 #include <xutility>
 #include <memory>
+#include <string>
+#include <functional>
+#include <assert.h>
 
 
+#undef min
+#undef max
 ////////////////////////////////////////////////////////////////////////////////
 /*@ eco namespace.*/
 namespace eco{}
 #define ECO_NS_BEGIN(ns) namespace ns{
 #define ECO_NS_END(ns) }
-
 
 /*@ c++ 11.*/
 #ifdef ECO_NO_CXX11
@@ -45,13 +49,12 @@ namespace eco{}
 #ifdef ECO_VC100
 #define ECO_NO_VARIADIC_TEMPLATE
 #define ECO_NO_FUNCTION_TEMPLATE_DEFAULT
-#define __func__ __FUNCTION__
+#define __func__ eco::func(__FUNCTION__)
 #endif
 
 /*@ include protobuf.*/
 #ifdef ECO_NO_PROTOBUF
 #endif
-
 
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef WIN32
@@ -65,8 +68,6 @@ namespace eco{}
 #	include <SDKDDKVer.h>
 #endif
 
-
-////////////////////////////////////////////////////////////////////////////////
 /*@ [LINUX]*/
 #ifdef ECO_LINUX
 #endif
@@ -103,59 +104,43 @@ output parameters are located in front of the input parameters.
 #	define FCALL __cdecl
 #endif
 
-ECO_NS_BEGIN(eco);
-////////////////////////////////////////////////////////////////////////////////
-template<typename type_t = int>
-class TypeCount
-{
-public:
-	static uint32_t s_type_count;
-};
-template<typename type_t>
-uint32_t TypeCount<type_t>::s_type_count = 0;
-
-template<typename type_t>
-class TypeId
-{
-public:
-	inline operator const uint32_t() const
-	{
-		return value;
-	}
-	static uint32_t value;
-};
-template<typename type_t>
-uint32_t TypeId<type_t>::value = TypeCount<>::s_type_count++;
-
-/*
-template<typename type_t>
-inline const char* get_type()
-{
-	static const char* s_v = typeid(type_t).name();
-	return s_v;
-}*/
-ECO_NS_END(eco);
-
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_TYPE(object_t)\
-public:\
-	inline static const uint32_t type_id()\
-	{\
-		return eco::TypeId<object_t>::value;\
-	}\
-	virtual const uint32_t get_type_id() const\
-	{\
-		return type_id();\
-	}\
-	inline static const char* type()\
-	{\
-		return #object_t;\
-	}\
-	virtual const char* get_type() const\
-	{\
-		return type();\
-	}
+/* macro overload method. and eco using method 1.
+1.using "GET_MACRO".
+#define MACRO_1(a)
+#define MACRO_2(a, b)
+#define GET_MACRO(_1, _2, NAME, ...) NAME
+#define MACRO(...) GET_MACRO(__VA_ARGS__, MACRO_2, MACRO_1)(__VA_ARGS__)
+exp: ECO_BTASK
+
+2.using "PP_CAT & PP_GETN"
+#define MACRO_1(a)
+#define MACRO_2(a, b)
+#define MACRO_3(a, b, c)
+#define MACRO(...) PP_CAT(MACRO_, PP_GETN(__VA_ARGS__))(__VA_ARGS__)
+boost impl: <boost/preprocessor/variadic/size.hpp>
+BOOST_PP_CAT & BOOST_PP_VARIADIC_SIZE;
+*/
+#define ECO_MACRO_CAT_(a, b) a##b
+#define ECO_MACRO_CAT(a, b) ECO_MACRO_CAT_(a, b)
+#define ECO_MACRO_STR_(a) #a
+#define ECO_MACRO_STR(a) ECO_MACRO_STR_(a)
+#define ECO_MACRO_GETN_(n0,n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14,n15,\
+n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,size,...) size
+// ECO_MACRO_CAT_WIN for windows and linux.
+#ifdef ECO_WIN
+#	define ECO_MACRO_CAT_WIN ECO_MACRO_CAT
+#else
+#	define ECO_MACRO_CAT_WIN_(a, b) a
+#	define ECO_MACRO_CAT_WIN(a, b) ECO_MACRO_CAT_WIN_(a, b)
+#endif
+#define ECO_MACRO_GETN(...) ECO_MACRO_CAT_WIN(ECO_MACRO_GETN_(__VA_ARGS__,32,\
+31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,\
+3,2,1,),)
+#define ECO_MACRO(macro, ...) ECO_MACRO_CAT(ECO_MACRO_CAT(macro,\
+ECO_MACRO_GETN(__VA_ARGS__))(__VA_ARGS__), )
+
 
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_NONCOPYABLE(object_t) \
@@ -195,13 +180,18 @@ public:\
 	void reset();\
 	ECO_TYPE_API(object_t)\
 	ECO_NONCOPYABLE(object_t)
+#define ECO_OBJECT_COPY_API(object_t) \
+public: object_t copy() const; \
+ECO_OBJECT_API(object_t)
 
 #define ECO_MOVABLE_API(object_t)\
 public:\
 	object_t(IN object_t&& moved);\
 	object_t& operator=(IN object_t&& moved);\
 	ECO_OBJECT_API(object_t)
-
+#define ECO_MOVABLE_COPY_API(object_t) \
+public: object_t copy() const; \
+ECO_MOVABLE_API(object_t)
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
@@ -235,6 +225,11 @@ public:\
 	inline Impl& impl() const;\
 protected:\
 	Proxy* m_proxy;
+#define ECO_SHARED_COPY_API(object_t) \
+public: object_t copy() const; \
+ECO_SHARED_API(object_t)
+
+
 
 #define ECO_IMPL_INIT(type_t)\
 public:\
@@ -243,7 +238,6 @@ public:\
 
 
 ECO_NS_BEGIN(eco);
-
 ////////////////////////////////////////////////////////////////////////////////
 // empty vlaue, using for init.
 enum { value_none = 0 };
@@ -364,5 +358,60 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////
+// general value type
+enum
+{
+	type_bool			= 1,
+	type_int32			= 2,
+	type_int64			= 3,
+	type_string			= 4,
+	type_double			= 5,
+	type_date			= 6,
+	type_time			= 7,
+	type_date_time		= 8,
+};
+typedef uint16_t ValueType;
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Type
+{
+	ECO_NONCOPYABLE(Type);
+public:
+	// init.
+	inline Type(uint32_t id, const char* name, const Type* parent, void*)
+		: m_id(id), m_name(name), m_parent(parent) {}
+
+	// get type id of this type.
+	inline const uint32_t id() const { return m_id; }
+
+	// get type name of this type.
+	inline const char* name() const { return m_name; }
+
+	// get parent of this type.
+	inline const Type* parent() const { return m_parent; }
+
+	// is kind of runtime class.
+	inline bool kind_of(IN const Type* clss_sup) const
+	{
+		const Type* me = this;
+		for (; me != nullptr && clss_sup != me; me = me->m_parent) {}
+		return (me != nullptr);
+	}
+
+private:
+	const Type* m_parent;
+	const char* m_name;
+	const uint32_t m_id;
+};
+template<typename t>
+struct TypeInit
+{
+	inline TypeInit() { t::type(); }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);
 #endif

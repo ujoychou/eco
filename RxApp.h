@@ -46,11 +46,11 @@ class ECO_API RxDll : public DllObject
 	ECO_OBJECT(RxDll);
 public:
 	inline RxDll(
-		IN const char* dll_name,
-		IN const char* dll_path)
+		IN const char* dll_path,
+		IN const char* dll_name = "")
 		: m_rx_msg(0)
 	{
-		set_dll(dll_name, dll_path);
+		DllObject::load(dll_path, dll_name);
 		m_entry_point = cast_function<RxEntryPoint>("erx_entry_point");
 	}
 
@@ -179,7 +179,7 @@ inline rx_class& get_erx() \
 	static rx_class s_rx_app;\
 	return s_rx_app;\
 }\
-extern "C" inline eco::Result ECO_EXPORT_API \
+extern "C" inline eco::Result ECO_ERX_API \
 	erx_entry_point(IN eco::RxMessageId msg, IN void* ap)\
 {\
 	return get_erx().entry_point(msg, ap);\

@@ -21,12 +21,9 @@ dll entry
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/App.h>
 
 
 namespace eco{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 typedef void  (*DllFunc)(void);		// function ptr.
 ECO_API void* load_dll(IN const char* dll_name);
@@ -39,15 +36,15 @@ class ECO_API DllObject
 {
 	ECO_OBJECT_API(DllObject);
 public:
-	void set_dll(
-		IN const char* dll_name,
-		IN const char* dll_path);
+	void load(
+		IN const char* dll_path,
+		IN const char* dll_name = "");
 
-	const char* get_dll_path() const;
+	const char* get_path() const;
 
-	void set_dll_name(IN const char* name);
-	const char* get_dll_name() const;
-	DllObject& dll_name(IN const char*);
+	void set_name(IN const char* name);
+	const char* get_name() const;
+	DllObject& name(IN const char*);
 	
 	DllFunc get_function(IN const char* func_name);
 	template<typename FunctionT>

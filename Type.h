@@ -23,18 +23,17 @@ eco basic type.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <map>
 #include <limits>
-#include <functional>
 #include <iostream>
 #include <unordered_map>
 #include <eco/Cast.h>
-#include <eco/Memory.h>
+#include <eco/ExportApi.h>
 
 
 ECO_NS_BEGIN(eco);
 #undef max
 #undef min
+const std::string empty_str;
 ////////////////////////////////////////////////////////////////////////////////
 // closure method.
 typedef std::function<void(void)> Closure;
@@ -168,13 +167,37 @@ template<
 class BidiMap
 {
 public:
-	OneMap m_one_map;
-	TwoMap m_two_map;
+	OneMap one;
+	TwoMap two;
 
-	inline void set_value(IN const KeyOne& key_one, IN const KeyTwo& key_two)
+	inline void set_value(
+		IN const KeyOne& key_one,
+		IN const KeyTwo& key_two)
 	{
-		m_one_map[key_one] = key_two;
-		m_two_map[key_two] = key_one;
+		one[key_one] = key_two;
+		two[key_two] = key_one;
+	}
+
+	inline KeyTwo* get_by_one(IN const KeyOne& key)
+	{
+		auto it = one.find(key);
+		return it != one.end() ? &it->second : nullptr;
+	}
+	inline const KeyTwo* get_by_one(IN const KeyOne& key) const
+	{
+		auto it = one.find(key);
+		return it != one.end() ? &it->second : nullptr;
+	}
+
+	inline KeyOne* get_by_two(IN const KeyTwo& key)
+	{
+		auto it = two.find(key);
+		return it != two.end() ? &it->second : nullptr;
+	}
+	inline const KeyOne* get_by_two(IN const KeyTwo& key) const
+	{
+		auto it = two.find(key);
+		return it != two.end() ? &it->second : nullptr;
 	}
 };
 
@@ -226,14 +249,16 @@ inline eco::Bytes func(IN const char* full_func_name)
 	uint32_t end = eco::find_last(full_func_name, len, '(');
 	if (end == -1) end = len;
 	uint32_t start = eco::find_last(full_func_name, end, ':');
-	if (start == -1) start = 0;
+	start = (start == -1) ? 0 : start + 1;
 	return eco::Bytes(full_func_name + start, end - start);
 }
-#ifdef ECO_VC100
-#	define ECO_FUNC eco::func("")
-#else
-#	define ECO_FUNC eco::func(__func__)
-#endif
+inline const char* clss(IN const char* full_clss_name)
+{
+	uint32_t end = (uint32_t)strlen(full_clss_name);
+	uint32_t start = eco::find_last(full_clss_name, end, ':');
+	start = (start == -1) ? 0 : start + 1;
+	return (full_clss_name + start);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -313,6 +338,14 @@ public:
 		asign(v);
 	}
 
+	explicit inline String(IN const std::string& v)
+		: m_data(nullptr)
+		, m_size(0)
+		, m_capacity(0)
+	{
+		asign(v.c_str(), v.size());
+	}
+
 	inline String(IN String&& v)
 		: m_data(v.m_data)
 		, m_size(v.m_size)
@@ -385,6 +418,10 @@ public:
 		resize(s);
 		memcpy(&m_data[0], d, s);
 	}
+	inline void asign(IN const std::string& v)
+	{
+		asign(v.c_str(), v.size());
+	}
 
 	inline void append(IN const char* d)
 	{
@@ -403,6 +440,10 @@ public:
 		memset(&m_data[m_size], c, s);
 		m_size += s;
 		m_data[m_size] = 0;
+	}
+	inline void append(IN const std::string& v)
+	{
+		append(v.c_str(), v.size());
 	}
 	inline void append(IN const char c)
 	{
@@ -856,6 +897,17 @@ public:
 	}
 
 public:
+	inline void clear()
+	{
+		m_buffer.clear();
+	}
+
+	inline StreamT& operator=(IN const char* buf)
+	{
+		m_buffer = buf;
+		return *this;
+	}
+
 	inline Buffer& buffer()
 	{
 		return m_buffer;
@@ -865,7 +917,7 @@ public:
 		return m_buffer;
 	}
 
-	inline const Bytes get_bytes() const
+	inline Bytes get_bytes() const
 	{
 		return Bytes((char*)m_buffer.c_str(), m_buffer.size());
 	}
@@ -903,42 +955,48 @@ typedef eco::StreamT<FixBuffer<fix_size> > FixStream;
 
 ////////////////////////////////////////////////////////////////////////////////
 // get default Error log format.
-class Error
+class Error : public std::exception
 {
 public:
-	inline explicit Error(IN const int eid = 0) : m_id(eid)
-	{}
-
-	inline explicit Error(
-		IN const int eid,
-		IN const std::string& msg)
-		: m_id(eid)
+	virtual ~Error() throw() {}
+	inline explicit Error(int eid = 0) : m_id(eid) {}
+	inline explicit Error(const char* msg) : m_id(-1) { m_msg << msg; }
+	inline explicit Error(int eid, const char* msg) : m_id(eid) { m_msg << msg; }
+	inline explicit Error(const char* msg, int eid) : m_id(eid) { m_msg << msg; }
+	inline explicit Error(int eid, const std::string& msg) : m_id(eid)
+	{
+		m_msg << msg;
+	}
+	inline explicit Error(const std::string& msg, int eid) : m_id(eid)
 	{
 		m_msg << msg;
 	}
 
-	inline explicit Error(
-		IN const std::string& msg,
-		IN const int eid)
-		: m_id(eid)
-	{
-		m_msg << msg;
-	}
-
-	virtual ~Error() throw()
-	{}
-
-	inline void set_error(
-		IN const int eid,
-		IN const std::string& msg)
+	inline void set_error(int eid, const std::string& msg)
 	{
 		m_id = eid;
 		m_msg.buffer().clear();
 		m_msg << msg;
 	}
+	inline void set_error(int eid, const char* msg)
+	{
+		m_id = eid;
+		m_msg.buffer().clear();
+		m_msg << msg;
+	}
+	inline void clear()
+	{
+		m_id = 0;
+		m_msg.buffer().clear();
+	}
+
+	inline bool has_error() const
+	{
+		return m_id != 0;
+	}
 
 	// error code.
-	inline Error& id(IN const int eid)
+	inline Error& id(int eid)
 	{
 		m_id = eid;
 		return *this;
@@ -953,9 +1011,24 @@ public:
 	{
 		return m_msg.get_buffer().c_str();
 	}
-	virtual const char* what() const throw()
+	virtual const char* what() const override
 	{
 		return m_msg.get_buffer().c_str();
+	}
+
+	inline Error& operator()(int eid)
+	{
+		m_id = eid;
+		return (*this);
+	}
+	inline Error& operator()(const char* msg)
+	{
+		m_msg << msg;
+		return (*this);
+	}
+	inline operator bool() const
+	{
+		return m_id != 0;
 	}
 
 public:
@@ -971,14 +1044,35 @@ public:
 		m_msg <= v;
 		return (*this);
 	}
-	inline Error& operator()(IN const int eid)
+	inline Error& operator<=(IN const eco::String& v)
 	{
-		m_id = eid;
+		m_msg <= v;
 		return (*this);
 	}
-	inline operator bool() const
+	inline Error& operator<<(IN const eco::String& v)
 	{
-		return m_id != 0;
+		m_msg << v;
+		return (*this);
+	}
+	inline Error& operator<=(IN const eco::Bytes& v)
+	{
+		m_msg <= v;
+		return (*this);
+	}
+	inline Error& operator<<(IN const eco::Bytes& v)
+	{
+		m_msg << v;
+		return (*this);
+	}
+	inline Error& operator<=(IN const eco::Error& v)
+	{
+		m_msg <= v;
+		return (*this);
+	}
+	inline Error& operator<<(IN const eco::Error& v)
+	{
+		m_msg << v;
+		return (*this);
 	}
 
 private:
@@ -988,7 +1082,14 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define EcoThrow throw eco::Error()
+#define ECO_THROW_1(eid) throw eco::Error(eid)
+#define ECO_THROW_2(eid, emsg) throw eco::Error(eid, emsg) << ' '
+#define ECO_THROW(...) ECO_MACRO(ECO_THROW_,__VA_ARGS__)
+#define ECO_THROW_FUNC_1(eid) throw eco::Error(eid, __func__) << ' '
+#define ECO_THROW_FUNC_2(eid, emsg) \
+throw eco::Error(eid, __func__) << ' ' << emsg << ' '
+#define ECO_THROW_FUNC(...) ECO_MACRO(ECO_THROW_FUNC_, __VA_ARGS__)
+
 template<typename Buffer>
 inline StreamT<Buffer>& StreamT<Buffer>::operator<<(IN const eco::Error& v)
 {
@@ -1044,15 +1145,17 @@ inline bool equal(
 {
 	return std::fabs(v1 - v2) < p;
 }
-
 inline bool is_zero(IN const double v)
 {
 	return std::fabs(v) < std::numeric_limits<double>::epsilon();
 }
-
 inline bool is_number(IN const char v)
 {
 	return v >= '0' && v <= '9';
+}
+inline bool is_number_char(IN const char v)
+{
+	return is_number(v) || is_char(v);
 }
 inline bool is_number(IN const char* v)
 {
@@ -1099,9 +1202,7 @@ inline char yn(IN const bool v)
 }
 
 // float number.
-inline bool equal(
-	IN const float v1,
-	IN const float v2,
+inline bool equal(IN const float v1, IN const float v2,
 	IN const float p = std::numeric_limits<float>::epsilon())
 {
 	return std::fabs(v1 - v2) < p;
@@ -1110,31 +1211,9 @@ inline bool is_zero(IN const float v)
 {
 	return std::fabs(v) < std::numeric_limits<float>::epsilon();
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-const std::string empty_str;
-
-
-////////////////////////////////////////////////////////////////////////////////
-template<typename StringSet>
-void split(
-	OUT StringSet& set,
-	IN  const std::string& str,
-	IN  const char ch)
+inline double round(double v)
 {
-	size_t start_pos = 0;
-	size_t end_pos = str.find(ch);
-	while (end_pos != std::string::npos)
-	{
-		set.push_back(str.substr(start_pos, end_pos - start_pos));
-		start_pos = end_pos + 1;
-		end_pos = str.find(ch, start_pos);
-	}
-	if (start_pos < str.size())
-	{
-		set.push_back(str.substr(start_pos, str.size() - start_pos));
-	}
+	return (v > 0.0) ? floor(v + 0.5) : ceil(v - 0.5);
 }
 
 
@@ -1156,37 +1235,41 @@ public:
 	template<typename T>
 	inline Format& operator%(IN const T v)
 	{
-		if (m_cur_pos == -1)
-		{
-			return *this;
-		}
-
-		const char* str = m_format + m_cur_pos;
-		m_cur_pos = eco::find_first(str, '@');
-		if (m_cur_pos == -1)
-		{
-			m_stream << str;
-			return *this;
-		}
-		m_stream.buffer().append(str, m_cur_pos);
-		m_stream << v;
-		return *this;
-	}
-
-	inline operator const char* ()
-	{
 		if (m_cur_pos != -1)
 		{
 			const char* str = m_format + m_cur_pos;
-			m_stream << str;
+			m_cur_pos = eco::find_first(str, '%');
+			if (m_cur_pos == -1)
+			{
+				m_stream << str;
+				return *this;
+			}
+			m_stream.buffer().append(str, m_cur_pos++);
+			m_cur_pos += int(str - m_format);
+			m_stream << v;
+		}
+		return *this;
+	}
+
+	inline operator const char* () const
+	{
+		return c_str();
+	}
+
+	inline const char* c_str() const
+	{
+		if (m_cur_pos != -1)
+		{
+			m_stream << (m_format + m_cur_pos);
+			m_cur_pos = -1;
 		}
 		return m_stream.c_str();
 	}
 
 private:
 	const char* m_format;
-	uint32_t m_cur_pos;
-	eco::StreamT<eco::FixBuffer<size> > m_stream;
+	mutable uint32_t m_cur_pos;
+	mutable eco::StreamT<eco::FixBuffer<size> > m_stream;
 };
 typedef Format<fix_size> FixFormat;
 
@@ -1253,5 +1336,341 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}//
+class StringAny
+{
+public:
+	inline StringAny(IN const char*);
+	inline StringAny& operator=(IN const char*);
+	inline bool empty() const;
+	inline const char* c_str() const;
+	inline eco::ValueType type() const;
+
+public:
+	inline bool operator==(IN const StringAny&) const;
+	inline bool operator==(IN const char*) const;
+	inline bool operator==(IN const std::string& v) const
+	{
+		return (operator==(v.c_str()));
+	}
+	template<typename string_t>
+	inline bool operator!=(IN const string_t v) const
+	{
+		return !(operator==(v));
+	}
+
+public:
+	inline StringAny();
+	inline StringAny(IN bool v);
+	inline StringAny(IN char v);
+	inline StringAny(IN unsigned char v);
+	inline StringAny(IN short v);
+	inline StringAny(IN unsigned short v);
+	inline StringAny(IN int v);
+	inline StringAny(IN unsigned int v);
+	inline StringAny(IN long v);
+	inline StringAny(IN unsigned long v);
+	inline StringAny(IN int64_t v);
+	inline StringAny(IN uint64_t v);
+	inline StringAny(IN double v, IN int precision = -1);
+
+public:
+	inline operator const char*() const;
+	inline operator const char() const;
+	inline operator const unsigned char() const;
+	inline operator const short() const;
+	inline operator const unsigned short() const;
+	inline operator const int() const;
+	inline operator const unsigned int() const;
+	inline operator const long() const;
+	inline operator const unsigned long() const;
+	inline operator const int64_t() const;
+	inline operator const uint64_t() const;
+	inline operator const float() const;
+	inline operator const double() const;
+	inline operator const bool() const;
+
+private:
+	ValueType m_vtype;
+	std::string m_value;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_API uint32_t __typeid(const char* type_info_name);
+template<typename type_t>
+class TypeId
+{
+public:
+	inline operator const uint32_t() const
+	{
+		return value;
+	}
+	static const uint32_t value;
+};
+template<typename type_t>
+const uint32_t TypeId<type_t>::value = __typeid(typeid(type_t).name());
+
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_TYPE_1(type_t) ECO_TYPE__(type_t)\
+public:\
+	inline static const eco::Type* type()\
+	{\
+		static eco::Type t(type_id(), #type_t, nullptr,\
+			&eco::Singleton<eco::TypeInit<type_t> >::instance());\
+		return &t;\
+	}\
+	inline bool kind_of(const type_t& obj) const\
+	{\
+		return get_type()->kind_of(obj.get_type());\
+	}\
+	template<typename type_tt>\
+	inline bool kind_of() const\
+	{\
+		return get_type()->kind_of(type_tt::type());\
+	}
+#define ECO_TYPE_2(type_t, parent) ECO_TYPE__(type_t)\
+public:\
+	inline static const eco::Type* type()\
+	{\
+		static eco::Type t(type_id(), #type_t, parent::type(),\
+			&eco::Singleton<eco::TypeInit<type_t> >::instance());\
+		return &t;\
+	}
+#define ECO_TYPE__(type_t)\
+public:\
+	virtual const eco::Type* get_type() const\
+	{\
+		return type();\
+	}\
+	inline static const uint32_t type_id()\
+	{\
+		return eco::TypeId<type_t>::value;\
+	}\
+	virtual const uint32_t get_type_id() const\
+	{\
+		return type_id();\
+	}\
+	inline static const char* type_name()\
+	{\
+		return #type_t;\
+	}\
+	virtual const char* get_type_name() const\
+	{\
+		return type_name();\
+	}
+#define ECO_TYPE(...) ECO_MACRO(ECO_TYPE_,__VA_ARGS__)
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Parameter
+{
+public:
+	inline Parameter() {}
+
+	/*@ name.*/
+	inline void set_name(IN const char*);
+	inline const char* get_name() const;
+	inline Parameter& name(IN const char*);
+
+	/*@ value.*/
+	inline void set_value(IN const StringAny& val);
+	inline StringAny& value();
+	inline void set_value(IN const char* val);
+	inline const StringAny& get_value() const;
+	inline Parameter& value(IN const StringAny& val);
+	inline Parameter& value(IN const char* val);
+
+public:
+	inline operator const char*() const;
+	inline operator const char() const;
+	inline operator const unsigned char() const;
+	inline operator const short() const;
+	inline operator const unsigned short() const;
+	inline operator const int() const;
+	inline operator const unsigned int() const;
+	inline operator const long() const;
+	inline operator const unsigned long() const;
+	inline operator const int64_t() const;
+	inline operator const uint64_t() const;
+	inline operator const float() const;
+	inline operator const double() const;
+	inline operator const bool() const;
+
+private:
+	std::string m_name;
+	StringAny m_value;
+	inline Parameter& impl() { return *this; }
+	inline const Parameter& impl() const { return *this; }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class ECO_API Context
+{
+	ECO_VALUE_API(Context);
+public:
+	/*@ parameter iterator.*/
+	typedef eco::iterator<Parameter> iterator;
+	typedef eco::iterator<const Parameter> const_iterator;
+	iterator begin();
+	const_iterator begin() const;
+	iterator end();
+	const_iterator end() const;
+
+	/*@ add parameter.*/
+	Parameter& add();
+	void add(IN const Parameter&);
+	void push_back(IN const Parameter&);
+
+	/*@ move & copy.*/
+	void add_move(IN Context&);
+	void add_copy(IN const Context&);
+
+	/*@ remove parameter.*/
+	void erase(IN int);
+	iterator erase(IN iterator& it);
+	void pop_back();
+
+	/*@ clear parameter.*/
+	void clear();
+
+	/*@ get context parameter set size.*/
+	size_t size() const;
+	bool empty() const;
+	void reserve(IN const size_t capacity);
+
+	/*@ access parameter by item index.*/
+	Parameter& at(IN const int i);
+	const Parameter& at(IN const int i) const;
+
+public:
+	// whether has a key.
+	bool has(IN const char* key) const;
+
+	// get the key value.
+	const StringAny& at(IN const char* key) const;
+
+	// get the key value.
+	const StringAny* find(IN const char* key) const;
+
+	// get the key value.
+	const StringAny get(IN const char* key) const;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class ContextNodeSet;
+class ECO_API ContextNode
+{
+	ECO_SHARED_API(ContextNode);
+public:
+	void set_name(IN const char*);
+	const char* get_name() const;
+	ContextNode& name(IN const char*);
+
+	void set_value(IN const char*);
+	const char* get_value() const;
+	ContextNode& value(IN const char*);
+
+	void set_property_set(IN const eco::Context&);
+	eco::Context& property_set();
+	const eco::Context& get_property_set() const;
+	ContextNode& property_set(IN const eco::Context&);
+
+	bool has_children() const;
+	void set_children(IN eco::ContextNodeSet&);
+	eco::ContextNodeSet& children();
+	const eco::ContextNodeSet& get_children() const;
+
+	// get children
+	eco::ContextNode get_children(const char* key) const;
+
+	// get children
+	bool get_property_set(eco::Context& context, const char* key) const;
+
+	// get key value.
+	const StringAny& at(IN const char* key) const;
+	const StringAny* find(IN const char* key) const;
+	const StringAny get(IN const char* key) const;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class ECO_API ContextNodeSet
+{
+	ECO_SHARED_API(ContextNodeSet);
+public:
+	/*@ parameter iterator.*/
+	typedef eco::iterator<ContextNode> iterator;
+	typedef eco::iterator<const ContextNode> const_iterator;
+	iterator begin();
+	const_iterator begin() const;
+	iterator end();
+	const_iterator end() const;
+
+	/*@ move & copy.*/
+	void add_move(IN ContextNodeSet&);
+	void add_copy(IN const ContextNodeSet&);
+
+	/*@ add parameter.*/
+	ContextNode& add();
+	void add(IN const ContextNode&);
+	void push_back(IN const ContextNode&);
+
+	/*@ remove parameter.*/
+	void erase(IN int);
+	iterator erase(IN iterator& it);
+	void pop_back();
+
+	/*@ clear parameter.*/
+	void clear();
+
+	/*@ get context parameter set size.*/
+	size_t size() const;
+	bool empty() const;
+	void reserve(IN const size_t capacity);
+
+	/*@ access parameter by item index.*/
+	ContextNode& at(IN const int i);
+	const ContextNode& at(IN const int i) const;
+
+	// get property set.
+	bool get_property_set(
+		OUT eco::Context& result,
+		IN const char* parent_key) const;
+
+	// get context node.
+	ContextNodeSet get_children(
+		IN const char* parent_key) const;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Context::Impl
+{
+	ECO_IMPL_INIT(Context);
+public:
+	std::vector<Parameter> m_items;
+};
+class ContextNode::Impl
+{
+	ECO_IMPL_INIT(ContextNode);
+public:
+	std::string  m_name;
+	std::string  m_value;
+	eco::Context m_property_set;
+	eco::ContextNodeSet m_children;
+	Impl() : m_children(eco::null) {}
+};
+class ContextNodeSet::Impl
+{
+	ECO_IMPL_INIT(ContextNodeSet);
+public:
+	std::vector<ContextNode> m_items;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(eco);
+#include <eco/Type.inl>
 #endif

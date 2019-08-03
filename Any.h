@@ -1,7 +1,7 @@
 ﻿#ifndef ECO_ANY_H
 #define ECO_ANY_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Export.h>
+#include <eco/Type.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -60,9 +60,59 @@ public:
 		release();
 	}
 
-	template<typename T>
-	inline explicit Any(IN const T& v) : m_data(new DataT<T>(v))
+	inline Any(eco::Null) : m_data(nullptr)
 	{}
+	inline Any& operator=(eco::Null)
+	{
+		release();
+	}
+
+	template<typename T>
+	inline Any(IN const T& v) : m_data(new DataT<T>(v))
+	{}
+
+	inline Any(IN const char* v) : m_data(new DataT<std::string>(v))
+	{}
+
+	inline Any(IN bool v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN char v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN unsigned char v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN short v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN unsigned short v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN int v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN unsigned int v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN long v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN unsigned long v) : m_data(new DataT<uint32_t>(v))
+	{}
+
+	inline Any(IN int64_t v) : m_data(new DataT<uint64_t>(v))
+	{}
+
+	inline Any(IN uint64_t v) : m_data(new DataT<uint64_t>(v))
+	{}
+
+	inline Any(IN float v) : m_data(new DataT<float>(v))
+	{}
+
+	inline Any(IN double v) : m_data(new DataT<double>(v))
+	{}
+
 	inline Any(IN const Any& v) : m_data(v.null() ? v.m_data : v.m_data->copy())
 	{}
 	inline Any(IN Any&& v) : m_data(v.m_data)
@@ -163,12 +213,19 @@ public:
 	template<typename value_t>
 	inline static value_t& cast(Any& any)
 	{
-		return *cast<value_t>(&any);
+		return (value_t&)cast<value_t>((const Any&)any);
 	}
 	template<typename value_t>
 	inline static const value_t& cast(const Any& any)
 	{
-		return *cast<value_t>(&any);
+		const value_t* v = cast<value_t>(&any);
+		if (v == nullptr)
+		{
+			eco::FixFormat fmt("cast eco::any fail, % to %");
+			fmt % any.get_type_id() % typeid(value_t).name();
+			throw std::logic_error(fmt);
+		}
+		return *v;
 	}
 
 	// get content object.
@@ -193,11 +250,83 @@ public:
 		return eco::Any::cast<value_t>(*this);
 	}
 
+public:
+	inline operator const char*() const
+	{
+		return eco::Any::cast<std::string>(*this).c_str();
+	}
+	inline operator const bool() const
+	{
+		return eco::Any::cast<uint32_t>(*this) != 0;
+	}
+	inline operator const char() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const unsigned char() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const short() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const unsigned short() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const int() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const unsigned int() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const long() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const unsigned long() const
+	{
+		return eco::Any::cast<uint32_t>(*this);
+	}
+	inline operator const int64_t() const
+	{
+		return eco::Any::cast<uint64_t>(*this);
+	}
+	inline operator const uint64_t() const
+	{
+		return eco::Any::cast<uint64_t>(*this);
+	}
+	inline operator const float() const
+	{
+		return eco::Any::cast<float>(*this);
+	}
+	inline operator const double() const
+	{
+		return eco::Any::cast<double>(*this);
+	}
+
+public:
+	inline std::string format(int prec = 0) const
+	{
+		auto d = eco::Any::cast<double>(this);
+		if (d != nullptr) return eco::Double(*d, prec).c_str();
+		auto sz = eco::Any::cast<std::string>(this);
+		if (sz != nullptr) return *sz;
+		auto i32 = eco::Any::cast<uint32_t>(this);
+		if (i32 != nullptr) return eco::Integer<uint32_t>(*i32).c_str();
+		auto i64 = eco::Any::cast<uint64_t>(this);
+		if (i64 != nullptr) return eco::Integer<uint64_t>(*i64).c_str();
+		auto f = eco::Any::cast<float>(this);
+		if (f != nullptr) return eco::Double(*f, prec).c_str();
+		return eco::empty_str;
+	}
+
 private:
 	Data* m_data;
 };
-
-
 ////////////////////////////////////////////////////////////////////////////////
-}
+ECO_NS_END(eco);
 #endif

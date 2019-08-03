@@ -97,7 +97,15 @@ void object_t::reset()\
 	delete m_impl;\
 	m_impl = nullptr;\
 }
-
+#define ECO_OBJECT_COPY_IMPL(object_t) \
+ECO_OBJECT_IMPL(object_t);\
+object_t* object_t::copy() const\
+{\
+	object_t* obj = new object_t(eco::null);\
+	obj->m_impl = new Impl(*m_impl);\
+	obj->m_impl->init(*this);\
+	return obj;\
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_MOVABLE_IMPL(object_t) \
@@ -113,7 +121,15 @@ object_t& object_t::operator=(IN object_t&& obj)\
 	obj.reset();\
 	return *this;\
 }
-
+#define ECO_MOVABLE_COPY_IMPL(object_t) \
+ECO_MOVABLE_IMPL(object_t);\
+object_t* object_t::copy() const\
+{\
+	object_t* obj = new object_t(eco::null);\
+	obj->m_impl = new Impl(*m_impl);\
+	obj->m_impl->init(*this);\
+	return obj;\
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_SHARED_PROXY(object_t) \
@@ -209,11 +225,23 @@ void object_t::reserve()\
 		m_proxy->m_impl->init(*this);\
 	}\
 }
+#define ECO_SHARED_COPY_IMPL__(object_t) \
+ECO_SHARED_IMPL__(object_t);\
+object_t object_t::copy() const\
+{\
+	object_t obj = eco::null;\
+	obj.m_proxy->m_impl.reset(new Impl(*m_proxy->m_impl));\
+	obj.m_proxy->m_impl->init(obj);\
+	return obj;\
+}
+
 
 #define ECO_SHARED_IMPL(object_t)\
 ECO_SHARED_PROXY(object_t) \
 ECO_SHARED_IMPL__(object_t)
-
+#define ECO_SHARED_COPY_IMPL(object_t) \
+ECO_SHARED_PROXY(object_t) \
+ECO_SHARED_COPY_IMPL__(object_t);
 
 ////////////////////////////////////////////////////////////////////////////////
 // export value property implement

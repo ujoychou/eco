@@ -19,7 +19,6 @@
 *******************************************************************************/
 #include <eco/ExportApi.h>
 #include <eco/Object.h>
-#include <eco/Btask.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -32,12 +31,8 @@ public:
 	// 生命对象单位生命活动频率
 	static const uint32_t get_unit_live_tick_seconds();
 
-	// 任务队列
-	static void post_task(IN Btask& task);
-
-public:
-	// 构建生命。默认时间 = live_ticks * unit_live_tick_seconds = 30s.
-	Being(IN uint32_t live_ticks = 6);
+	// 构建生命。默认时间 = 10 seconds.
+	Being(IN uint32_t live_secs = 10, IN const char* name = "");
 
 	// 析构生命
 	virtual ~Being();
@@ -54,9 +49,14 @@ public:
 	// 生命是否已开始
 	bool is_born() const;
 
-	// 生命活动频率
-	void set_live_ticks(IN const uint32_t ticks);
-	const uint32_t get_live_ticks() const;
+	// 生命活动频率：按Tick或按Seconds。
+	void set_live_ticks(IN uint32_t ticks);
+	uint32_t get_live_ticks() const;
+	void set_live_seconds(IN uint32_t secs);
+	uint32_t get_live_seconds() const;
+
+	// 生命活动频率：实际运行时间
+	uint32_t get_living_seconds() const;
 
 	// 生命体名称
 	void set_name(IN const char*);

@@ -22,18 +22,20 @@ app that run process.
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/Being.h>
 #include <eco/Config.h>
 #include <eco/log/Log.h>
 #include <eco/cmd/Group.h>
 #include <eco/HeapOperators.h>
 #include <eco/net/TcpServer.h>
 #include <eco/net/TcpClient.h>
+#include <eco/net/Subscriber.h>
 #include <eco/thread/Timer.h>
 #include <eco/persist/Persist.h>
 
 
 ECO_NS_BEGIN(eco);
+class RxDll;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API App : public HeapOperators
 {
@@ -52,14 +54,31 @@ protected:
 	// load app business data after app init finish.
 	virtual void on_load() {}
 
+	// before app exit.
+	virtual void to_exit() {}
+
 	// app exit.
 	virtual void on_exit() {}
+
+public:
+	// console mode: consle event.
+	virtual bool on_console(int event) 
+	{
+		return true;
+	}
 
 public:
 	virtual ~App();
 
 	/*@ get app instance.*/
 	static App* app();
+
+	/*@ get app instance template.*/
+	template<typename app_t>
+	static inline app_t* get()
+	{
+		return static_cast<app_t*>(app());
+	}
 
 	/*@ get command param size. it's parse from argc and argv.*/
 	static uint32_t get_param_size();
@@ -95,7 +114,7 @@ public:
 	uint32_t consumer_size();
 	net::TcpClient get_consumer(IN const char* name);
 	net::TcpClient find_consumer(IN const char* name);
-	net::TcpClient get_consumer(IN uint32_t index);
+	net::TcpClient get_consumer(IN uint32_t index = 0);
 
 	// get persist.
 	eco::Persist persist(IN const char* name = nullptr);
@@ -105,6 +124,9 @@ public:
 
 	// eco timer.
 	Timer& timer();
+
+	// eco erx
+	std::shared_ptr<RxDll> get_erx(IN const char* name);
 
 private:
 	friend class Startup;
@@ -159,15 +181,15 @@ ECO_NS_END(eco);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename T, typename MainT>
-T main(T argc, char* argv[])
+template<typename MainT>
+int main(int argc, char* argv[])
 {
 	return MainT::main(argc, argv);
 }
 /*@ eco app declare: implement a app instance.*/
 #define ECO_APP(AppClass, AppGet)\
 ECO_NAME(AppClass, AppGet)\
-const eco::Startup eco_startup(AppGet(), &main<int, eco::Startup>)
+const eco::Startup eco_startup(AppGet(), &main<eco::Startup>)
 
 
 ////////////////////////////////////////////////////////////////////////////////

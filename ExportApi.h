@@ -27,7 +27,7 @@ dll export api.
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(ECO_LINUX)
 #	define ECO_API
-#	define ECO_EXPORT_API
+#	define ECO_ERX_API
 #endif
 
 #ifndef ECO_API
@@ -38,8 +38,8 @@ dll export api.
 #	endif
 #endif
 
-#ifndef ECO_EXPORT_API
-#	define ECO_EXPORT_API  __declspec(dllexport)
+#ifndef ECO_ERX_API
+#	define ECO_ERX_API  __declspec(dllexport)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -23,15 +23,13 @@ key value config data.
 
 *******************************************************************************/
 #include <eco/Type.h>
-#include <eco/Typex.h>
-
 
 
 namespace eco{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Config
 {
-	ECO_OBJECT_API(Config);
+	ECO_SHARED_API(Config);
 public:
 	/*@ read config data from file.*/
 	void init(IN const char* file);
@@ -46,6 +44,10 @@ public:
 
 	/*@ get value.*/
 	const eco::StringAny at(
+		IN const char* key) const;
+
+	/*@ get value.*/
+	const eco::StringAny get(
 		IN const char* key) const;
 
 	/*@ add key and value.*/
