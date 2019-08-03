@@ -26,19 +26,18 @@
 *******************************************************************************/
 #include <eco/net/RequestHandler.h>
 #include <eco/net/protocol/ProtobufCodec.h>
+#include <eco/proxy/Win.h>
 
 
 
 namespace eco{;
 namespace net{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
-template<typename ProtobufMessage>
-class ProtobufHandler : public RequestHandler<ProtobufMessage>
+template<typename message_t, typename handler_t>
+class ProtobufHandler : public RequestHandler<message_t, handler_t>
 {
 public:
-	typedef ProtobufHandler<ProtobufMessage> Handler;
+	typedef ProtobufHandler<message_t, handler_t> Handler;
 
 	inline bool on_decode(
 		IN const char* bytes,
@@ -51,12 +50,40 @@ public:
 	// response message to the request.
 	inline void response(
 		IN google::protobuf::Message& msg,
-		IN uint32_t type = 0,
+		IN const uint32_t type,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
-		if (type == 0) type = get_response_type();
 		context().response(ProtobufCodec(msg), type, last, encrypted);
+	}
+
+	// response message to the request.
+	inline void response(
+		IN google::protobuf::Message& msg,
+		IN const bool last = true,
+		IN const bool encrypted = false)
+	{
+		auto type = get_response_type();
+		context().response(ProtobufCodec(msg), type, last, encrypted);
+	}
+
+	// response message to the request.
+	inline static void async_message(
+		IN google::protobuf::Message& msg,
+		IN uint32_t req_id,
+		IN const bool last = true,
+		IN const bool encrypted = false,
+		IN const bool logging = true)
+	{
+		auto h = pop_async(req_id, last);
+		if (h == 0 && logging)
+		{
+			ECO_LOG(warn)(eco::net::rsp) << eco::net::Log(
+				nullptr, handler_t::response_type(), handler_t::name());
+			return;
+		}
+		h->response(msg, last, encrypted);
+		if (logging) ECO_HDL(debug, *h);
 	}
 };
 

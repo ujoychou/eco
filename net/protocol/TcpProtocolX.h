@@ -105,7 +105,7 @@ public:
 		OUT eco::String& bytes) const
 	{
 		MessageHead head;
-		head.m_version = 1;
+		head.m_version = -1;
 		head.m_category = category_heartbeat;
 		encode_append(bytes, head);
 	}
@@ -196,10 +196,7 @@ private:
 
 ///////////////////////////////////////////////////////////////////////// DECODE
 public:
-	TcpProtocol(
-		IN eco::net::Check* check = nullptr,
-		IN eco::net::Crypt* crypt = nullptr)
-		: m_crypt(crypt), m_check(check)
+	TcpProtocol() : m_crypt(nullptr), m_check(nullptr)
 	{}
 
 	virtual uint32_t version() override
@@ -216,8 +213,7 @@ public:
 		// check sum message.
 		uint32_t check_sum_size = 0;
 		uint32_t head_size = eco::net::TcpProtocolHead::size_head;
-		if (eco::has(meta.m_category, category_checksum) &&
-			m_check.get() != nullptr)
+		if (eco::has(meta.m_category, category_checksum) && m_check != nullptr)
 		{
 			if (!m_check->decode(bytes))
 			{
@@ -228,8 +224,7 @@ public:
 			check_sum_size = m_check->get_byte_size();
 		}
 		// decrypt message.
-		if (eco::has(meta.m_category, category_encrypted) &&
-			m_crypt.get() != nullptr)
+		if (eco::has(meta.m_category, category_encrypted) && m_crypt != nullptr)
 		{
 			uint32_t crypt_size = bytes.size();
 			crypt_size -= (head_size + check_sum_size);
@@ -249,7 +244,7 @@ public:
 				<< bytes.size() << '<' << opt_data_pos;
 			return false;
 		}
-		meta.m_model  = MessageModel(bytes[get_model_pos(head_size)]);
+		meta.m_model = MessageModel(bytes[get_model_pos(head_size)]);
 		meta.m_option = MessageOption(bytes[get_option_pos(head_size)]);
 
 		// get option data.
@@ -315,14 +310,12 @@ public:
 		uint32_t byte_size = get_meta_size(meta);			// #@meta size.
 		uint32_t code_size = meta.m_codec->get_byte_size();	// #@message size.	
 		byte_size += code_size;
-		if (eco::has(meta.m_category, category_encrypted) &&
-			m_crypt.get() != nullptr)
+		if (eco::has(meta.m_category, category_encrypted) && m_crypt != nullptr)
 		{
 			byte_size = m_crypt->get_byte_size(byte_size);	// [#]@crypt size.
 		}
 		byte_size += head_size;
-		if (eco::has(meta.m_category, category_checksum) &&
-			m_check.get() != nullptr)
+		if (eco::has(meta.m_category, category_checksum) && m_check != nullptr)
 		{
 			byte_size += m_check->get_byte_size();			// [@]checksum size.
 		}
@@ -364,8 +357,7 @@ public:
 		meta.m_codec->encode_append(bytes, code_size);
 
 		// 6.encrypt message.
-		if (eco::has(head.m_category, category_encrypted) &&
-			m_crypt.get() != nullptr)
+		if (eco::has(head.m_category, category_encrypted) && m_crypt != nullptr)
 		{
 			bytes = m_crypt->encode(bytes, head_size);
 			if (bytes.null())
@@ -376,8 +368,7 @@ public:
 		}
 
 		// 7.append checksum.
-		if (eco::has(head.m_category, category_checksum) &&
-			m_check.get() != nullptr)
+		if (eco::has(head.m_category, category_checksum) && m_check != nullptr)
 		{
 			m_check->encode(bytes);
 		}
@@ -388,8 +379,8 @@ public:
 	}
 
 private:
-	std::auto_ptr<Crypt> m_crypt;
-	std::auto_ptr<Check> m_check;
+	Crypt* m_crypt;
+	Check* m_check;
 };
 
 

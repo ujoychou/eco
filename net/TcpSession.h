@@ -128,7 +128,7 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		m_conn.send(codec, type, last, encrypted, m_id);
 	}
@@ -137,10 +137,10 @@ public:
 	inline void publish(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const Snap snap,
-		IN const bool encrypted = true)
+		IN const uint8_t pub,
+		IN const bool encrypted = false)
 	{
-		m_conn.publish(codec, type, snap, encrypted, m_id);
+		m_conn.publish(codec, type, pub, encrypted, m_id);
 	}
 
 #ifndef ECO_NO_PROTOBUF
@@ -149,7 +149,7 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		m_conn.send(msg, type, last, encrypted, m_id);
 	}
@@ -158,10 +158,10 @@ public:
 	inline void publish(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const Snap snap,
-		IN const bool encrypted = true)
+		IN const uint8_t pub,
+		IN const bool encrypted = false)
 	{
-		m_conn.publish(msg, type, snap, encrypted, m_id);
+		m_conn.publish(msg, type, pub, encrypted, m_id);
 	}
 #endif
 
@@ -243,7 +243,7 @@ public:
 	inline void send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, get_id(), type, encrypted);
@@ -254,7 +254,7 @@ public:
 	inline void authorize(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, none_session, type, encrypted);
@@ -267,7 +267,7 @@ public:
 		IN const uint32_t type,
 		IN const Context& context,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		ProtobufCodec codec(msg);
 		response(codec, type, context, last, encrypted);
@@ -280,7 +280,7 @@ public:
 		IN const uint32_t type,
 		IN const Context& context,
 		IN const bool last = true,
-		IN const bool encrypted = true);
+		IN const bool encrypted = false);
 
 
 	// async send message.

@@ -96,19 +96,9 @@ public:
 		m_stream.buffer().reserve(size);
 	}
 };
+typedef PusherT<eco::StreamT<FixBuffer<text_size> > > LogPusher;
+typedef LogPusher::Stream LogStream;
 
-
-////////////////////////////////////////////////////////////////////////////////
-template<uint32_t size>
-class FixPusherT : public PusherT<eco::StreamT<FixBuffer<size> > >
-{
-	typedef PusherT<eco::StreamT<FixBuffer<size> > > Super;
-public:
-	inline FixPusherT()
-	{}
-};
-typedef FixPusherT<text_size> FixPusher;
-typedef FixPusher::Stream LogStream;
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

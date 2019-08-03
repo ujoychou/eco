@@ -67,7 +67,7 @@ public:
 		IN const uint32_t size)
 	{
 		return false;
-	}	
+	}
 };
 
 

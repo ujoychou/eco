@@ -24,16 +24,12 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/net/protocol/Protocol.h>
-#include <eco/net/protocol/ProtobufCodec.h>
 #include <eco/net/TcpPeer.h>
-#include <eco/thread/topic/Role.h>
-#include <memory>
+#include <eco/net/protocol/ProtobufCodec.h>
+
 
 namespace eco{;
 namespace net{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // noncopyable conn data, only can be used in local.
 template<typename ConnectionDataT>
@@ -50,6 +46,11 @@ public:
 		: m_peer(std::move(v.peer))
 		, m_data(static_cast<ConnectionDataT*>(v.m_data))
 	{}
+
+	inline TcpPeer::ptr peer()
+	{
+		return m_peer;
+	}
 
 private:
 	TcpPeer::ptr m_peer;
@@ -88,7 +89,7 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			peer->close_and_notify(nullptr);
+			peer->close_and_notify();
 		}
 	}
 
@@ -120,7 +121,7 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer == nullptr)
 		{
-			EcoThrow(e_peer_expired)
+			ECO_THROW(e_peer_expired)
 				<< "get_ip fail peer has expired, it has been closed.";
 		}
 		return std::move(peer->get_ip());
@@ -132,7 +133,7 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer == nullptr)
 		{
-			EcoThrow(e_peer_expired)
+			ECO_THROW(e_peer_expired)
 				<< "cast data fail peer has expired, it has been closed.";
 		}
 		return ConnectionDataPtr<ConnectionDataT>(peer);
@@ -154,7 +155,7 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const bool last = true,
-		IN const bool encrypted = true,
+		IN const bool encrypted = false,
 		IN const SessionId sess_id = none_session)
 	{
 		MessageMeta meta(codec, sess_id, type, encrypted);
@@ -168,7 +169,7 @@ public:
 		IN const uint32_t type,
 		IN const Context& context,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
@@ -182,12 +183,12 @@ public:
 	inline void publish(
 		IN Codec& codec,
 		IN const uint32_t type,
-		IN const Snap snap,
-		IN const bool encrypted = true,
+		IN const uint8_t pub,
+		IN const bool encrypted = false,
 		IN const SessionId sess_id = none_session)
 	{
 		MessageMeta meta(codec, sess_id, type, encrypted);
-		meta.set_request_data(uint8_t(snap));
+		meta.set_request_data(pub);
 		send(meta);
 	}
 
@@ -198,7 +199,7 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
 		IN const bool last = true,
-		IN const bool encrypted = true,
+		IN const bool encrypted = false,
 		IN const SessionId sess_id = none_session)
 	{
 		send(ProtobufCodec(msg), type, last, encrypted, sess_id);
@@ -210,7 +211,7 @@ public:
 		IN const uint32_t type,
 		IN const Context& context,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		ProtobufCodec codec(msg);
 		response(codec, type, context, last, encrypted);
@@ -220,13 +221,13 @@ public:
 	inline void publish(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const Snap snap,
-		IN const bool encrypted = true,
+		IN const uint8_t pub,
+		IN const bool encrypted = false,
 		IN const SessionId sess_id = none_session)
 	{
 		ProtobufCodec codec(msg);
 		MessageMeta meta(codec, sess_id, type, encrypted);
-		meta.set_request_data(uint8_t(snap));
+		meta.set_request_data(pub);
 		send(meta);
 	}
 #endif

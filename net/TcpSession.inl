@@ -104,7 +104,7 @@ inline std::shared_ptr<SessionDataT> TcpSession::cast()
 	auto sess = m_impl.m_session_wptr.lock();
 	if (sess == nullptr)
 	{
-		EcoThrow(e_session_expired)
+		ECO_THROW(e_session_expired)
 			<< "cast data fail, session data has expired.";
 	}
 	return std::dynamic_pointer_cast<SessionDataT>(sess);

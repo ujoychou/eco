@@ -25,6 +25,7 @@
 *******************************************************************************/
 #include <eco/net/protocol/Codec.h>
 #include <eco/net/protocol/ProtocolHead.h>
+#include <eco/Object.h>
 
 
 

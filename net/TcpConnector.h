@@ -47,8 +47,7 @@ public:
 	{}
 
 	virtual void on_read_head(
-		IN char* data,
-		IN const uint32_t head_size,
+		IN eco::String& data,
 		IN const eco::Error* error) = 0;
 
 	virtual void on_read_data(
@@ -94,7 +93,7 @@ public:
 	* @ para.data: memory space for storing comming data.
 	* @ para.size: size of memory space.
 	*/
-	void async_read_head(IN char* data, IN const uint32_t head_size);
+	void async_read_head(IN const uint32_t head_size);
 
 	/*@ asynchronous read data from client.
 	* @ para.data: memory space for storing comming data.

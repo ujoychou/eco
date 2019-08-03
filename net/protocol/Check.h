@@ -17,6 +17,7 @@
 
 *******************************************************************************/
 #include <eco/net/Net.h>
+#include <eco/codec/Zlib.h>
 #include <exception>
 
 
@@ -87,7 +88,7 @@ typedef uint32_t (*CheckSum32Func)(IN const char* bytes, IN uint32_t size);
 
 ////////////////////////////////////////////////////////////////////////////////
 template<CheckSum32Func func, typename CheckSumType = uint32_t>
-class CheckSumProtocol : public Check
+class CheckT : public Check
 {
 public:
 	/*@ get sync protocol byte size.*/
@@ -104,12 +105,11 @@ public:
 		OUT eco::String& bytes,
 		IN  const uint32_t checksum_start) override
 	{
-		using namespace boost::asio::detail::socket_ops;
 		assert(bytes.size() > checksum_start);
 		const char* start = bytes.c_str() + checksum_start;
 		uint32_t size = bytes.size() - checksum_start;
 		uint32_t checksum = func(start, size);
-		append_network_int(bytes, checksum);
+		append_hton(bytes, checksum);
 	}
 
 	/*@ verify bytes stream checksum is correct.
@@ -128,8 +128,7 @@ public:
 			return false;
 		}
 		
-		uint32_t origin_checksum = network_to_host_int32(
-			&bytes[start + checksum_bytes_size]);
+		uint32_t origin_checksum = ntoh32(&bytes[start + checksum_bytes_size]);
 		uint32_t checksum = func(&bytes[start], checksum_bytes_size);
 		if (checksum != origin_checksum)
 		{
@@ -138,6 +137,7 @@ public:
 		return true;
 	}// end decode.
 };
+typedef eco::net::CheckT<&eco::codec::zlib::adler32> CheckAdler32;
 
 
 }// ns::net

@@ -103,6 +103,10 @@ public:
 	// set tcp peer state to connected.
 	void set_connected();
 
+	// tcp peer connection state.
+	eco::atomic::State& data_state();
+	const eco::atomic::State& get_data_state() const;
+
 	// set tcp peer option
 	void set_option(IN bool no_delay);
 
@@ -121,7 +125,7 @@ public:
 	void close();
 
 	// close peer and notify peer handler.
-	void close_and_notify(IN const eco::Error* e);
+	void close_and_notify();
 
 	// async send string message.
 	void async_send(IN eco::String& data, IN const uint32_t start);

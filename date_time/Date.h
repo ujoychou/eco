@@ -25,6 +25,23 @@ convert types.
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(date_time);
 ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+enum Fmt
+{
+	// iso: "20160510230505".
+	fmt_iso			= 0x0001,
+	// iso_m: "20160510230505100200".
+	fmt_iso_m		= 0x0002,
+	// iso: "20160510 23:05:05".
+	fmt_isot		= 0x0003,
+	// iso: "20160510 23:05:05.688675".
+	fmt_isot_m		= 0x0004,
+	// std: "2016-05-10 23:05:05".
+	fmt_std			= 0x0005,
+	// std: "2016-05-10 23:05:05.688675".
+	fmt_std_m		= 0x0006,
+};
+
 enum
 {
 	week_sunday			= 0,
@@ -40,6 +57,19 @@ enum
 };
 typedef uint32_t WeekDay;
 
+// time unit type.
+enum TimeUnitType
+{
+	ttype_second		= 1,
+	ttype_minute		= 2,
+	ttype_hour			= 3,
+	ttype_day			= 4,
+	ttype_week			= 5,
+	ttype_month			= 6,
+	ttype_season		= 7,
+	ttype_year			= 8,
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 class Date : public eco::Value<Date>
@@ -50,6 +80,21 @@ public:
 		int year;
 		int month;
 		int day;
+
+		inline int season() const
+		{
+			return month / 4 + 1;
+		}
+
+		inline int months() const
+		{
+			return (year * 12 + month);
+		}
+
+		inline int seasons() const
+		{
+			return months() / 4 + 1;
+		}
 	};
 
 	/* get julian day. 
@@ -128,18 +173,28 @@ public:
 	}
 
 	// set string date: 20180927
-	inline explicit Date(const char* t)
+	inline explicit Date(const char* t, int fmt = fmt_iso)
 	{
-		int y = eco::cast<int16_t>(&t[0], 4);
-		int m = eco::cast<int16_t>(&t[4], 2);
-		int d = eco::cast<int16_t>(&t[6], 2);
-		m_days = get_day(y, m, d);
+		set(t, fmt);
 	}
-	inline explicit Date(const std::string& t)
+	inline explicit Date(const std::string& t, int fmt = fmt_iso)
 	{
+		set(t.c_str(), fmt);
+	}
+
+	inline void set(const char* t, int fmt = fmt_iso)
+	{
+		if (fmt == fmt_iso)
+		{
+			int y = eco::cast<int16_t>(&t[0], 4);
+			int m = eco::cast<int16_t>(&t[4], 2);
+			int d = eco::cast<int16_t>(&t[6], 2);
+			m_days = get_day(y, m, d);
+			return;
+		}
 		int y = eco::cast<int16_t>(&t[0], 4);
-		int m = eco::cast<int16_t>(&t[4], 2);
-		int d = eco::cast<int16_t>(&t[6], 2);
+		int m = eco::cast<int16_t>(&t[5], 2);
+		int d = eco::cast<int16_t>(&t[8], 2);
 		m_days = get_day(y, m, d);
 	}
 
@@ -158,6 +213,11 @@ public:
 	inline void swap(Date& that)
 	{
 		std::swap(m_days, that.m_days);
+	}
+
+	inline bool invalid() const
+	{
+		return m_days == invalid_julian_day;
 	}
 
 	// format julian day to ios string like "20170506";
@@ -198,7 +258,7 @@ public:
 
 	inline int week() const
 	{
-		return week(m_days);
+		return week(get_monday());
 	}
 
 	// get julian day.
@@ -208,7 +268,7 @@ public:
 	}
 
 	// get monday.
-	inline uint32_t get_monday()
+	inline uint32_t get_monday() const
 	{
 		return m_days - (week_day7() - 1);
 	}

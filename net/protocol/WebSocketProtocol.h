@@ -470,7 +470,7 @@ public:
 		if (!head.decode_head(fin, frame, payload_len, mask,
 			pos, bytes.c_str(), bytes.size(), e))
 		{
-			EcoError << e;
+			ECO_ERROR << e;
 			return nullptr;
 		}
 		if (mask)
@@ -481,7 +481,7 @@ public:
 			head.mask_data(bytes, pos, masking_key);
 		}
 		
-		EcoInfo << "[WebSocket] " 
+		ECO_INFO << "[WebSocket] " 
 			<< " fin=" << int(fin)
 			<< " opcode=" << int(frame)
 			<< " mask=" << bool(mask != 0)
@@ -613,7 +613,7 @@ public:
 		OUT eco::String& bytes,
 		OUT uint32_t& start,
 		IN  const char* message,
-		IN  MessageCategory category = category_encrypted)
+		IN  MessageCategory category = category_message)
 	{
 		WebSocketProtocolHead prot_head;
 		eco::set(category, category_encrypted, m_mask > 0);

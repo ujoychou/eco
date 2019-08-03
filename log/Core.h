@@ -102,7 +102,7 @@ public:
 	void join();
 
 	/*@ append log info.*/
-	void append(IN const eco::Bytes& buf, IN const SeverityLevel level);
+	void append(IN eco::Bytes& buf, IN const SeverityLevel level);
 
 private:
 	Core();

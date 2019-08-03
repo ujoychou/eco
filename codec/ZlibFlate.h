@@ -17,7 +17,7 @@
 
 *******************************************************************************/
 #include <eco/codec/Zlib.h>
-
+#include <assert.h>
 
 namespace eco{;
 namespace codec{;

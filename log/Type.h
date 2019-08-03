@@ -34,8 +34,7 @@ namespace log{;
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
-	trace = 0,
-	debug,
+	debug = 1,
 	info,
 	warn,
 	error,
@@ -49,9 +48,11 @@ typedef uint16_t SeverityLevel;
 enum 
 {
 	// logging persist in file.
-	file_sink = 0x0001,
+	file_sink		= 0x0001,
 	// logging display on console.
-	console_sink = 0x0002,
+	console_sink	= 0x0002,
+	// logging remote to monitor.
+	remote_sink		= 0x0004,
 };
 typedef int SinkOption;
 
@@ -71,10 +72,6 @@ enum
 };
 
 
-////////////////////////////////////////////////////////////////////////////////
-typedef eco::FixBuffer<pack_size>	Pack;
 typedef void (*OnChangedLogFile)(IN const char* file_path);
-
-
 }}
 #endif

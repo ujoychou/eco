@@ -39,27 +39,27 @@ inline void handle_context(IN Context& c)
 	// 1.filter request
 	const char* e = nullptr;
 	// sessesion auth or session request after authed.
-	if (Handler::auth_flag() > 0)
+	if (Handler::auth() != MessageHandler::auth_none)
 	{
 		if (eco::has(c.m_meta.m_category, category_session))
 		{
-			if (Handler::auth_flag() && !c.m_session.authorized())
+			if (Handler::auth() && !c.m_session.authorized())
 				e = "session isn't authed when recv";
-			if (!Handler::auth_flag() && c.m_session.authorized())
+			if (!Handler::auth() && c.m_session.authorized())
 				e = "session is authed when recv";
 		}
 		else
 		{
-			if (Handler::auth_flag() && !conn.authorized())
+			if (Handler::auth() && !conn.authorized())
 				e = "connection isn't authed when recv";
-			if (!Handler::auth_flag() && conn.authorized())
+			if (!Handler::auth() && conn.authorized())
 				e = "connection is authed when recv";
 		}
 	}
 	
 	if (e != nullptr)
 	{
-		EcoError(eco::net::req) << Log(c.m_session,
+		ECO_ERROR(eco::net::req) << Log(c.m_session,
 			c.m_meta.m_message_type, Handler::name()) <= e;
 		return;
 	}
@@ -71,7 +71,7 @@ inline void handle_context(IN Context& c)
 		std::shared_ptr<Handler> hdl(new Handler);
 		if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
 		{
-			EcoError(eco::net::req) << Log(c.m_session, c.m_meta.m_message_type,
+			ECO_ERROR(eco::net::req) << Log(c.m_session, c.m_meta.m_message_type,
 				Handler::name()) <= "decode message fail";
 			return;
 		}
@@ -82,11 +82,9 @@ inline void handle_context(IN Context& c)
 		// 3.handle request.
 		hdl->on_request();
 	} 
-	catch (eco::Error& e) {
-		EcoError << e;
-	}
-	catch (std::exception& e) {
-		EcoLog(error) << e.what();
+	catch (std::exception& e)
+	{
+		ECO_LOGX(error) << e.what();
 	}
 }
 

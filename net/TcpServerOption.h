@@ -95,7 +95,7 @@ public:
 	TcpServerOption& heartbeat_recv_tick(IN const uint32_t);
 
 	/*@ set tcp server heartbeat mode.
-	* @ para.is_conn_mode: if "true", each connection will set a timer by itself
+	* @ para.io_heartbeat: if "true", each connection will set a timer by itself
 	to send	heartbeat, so the thread of sending heartbeat is same with thread
 	that handle	connection request, but it will reduce the performance of
 	server.
@@ -122,14 +122,6 @@ public:
 	void set_io_heartbeat(IN const bool);
 	bool io_heartbeat() const;
 	TcpServerOption& io_heartbeat(IN const bool);
-
-	/*@ set intervals that clean the inactive connection peer.
-	* @ para.tick: the server ticks of interval.
-	*/
-	void set_clean_inactive_peer_tick(IN const uint32_t tick);
-	uint32_t clean_inactive_peer_tick();
-	const uint32_t get_clean_inactive_peer_tick() const;
-	TcpServerOption& clean_inactive_peer_tick(IN const uint32_t);
 
 	/*@ server io thread size to handle net data.*/
 	void set_io_thread_size(IN const uint16_t);

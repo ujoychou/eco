@@ -37,103 +37,108 @@ public:
 	2.websocket: closed->conneted->ready(websocket)->live\closed.
 	*/
 	// constructor.
-	TcpState() : m_state(eco::atomic::State::_no)
+	inline TcpState() : m_state(eco::atomic::State::_no)
 	{}
-
-	// set close state, and this is a prepare state.
-	inline void set_closed()
-	{
-		m_state = eco::atomic::State::_no;
-	}
-	// whether it is close state.
-	inline bool closed() const
-	{
-		return (m_state == eco::atomic::State::_no);
-	}
 
 	// set server state.
 	inline void set_server()
 	{
-		m_state = eco::atomic::State::_a;
+		m_state.add(eco::atomic::State::_a);
 	}
 	// whether it is a server.
 	inline bool server() const
 	{
-		return (m_state & eco::atomic::State::_a) > 0;
-	}
-
-	// set connected state.
-	inline void set_connected()
-	{
-		m_state = eco::atomic::State::_b;
-	}
-	// whether it is connected state.
-	inline bool connected() const
-	{
-		return (m_state & eco::atomic::State::_b) > 0;
-	}
-
-	// set ready state: use in websocket.
-	inline void set_ready()
-	{
-		m_state.add(eco::atomic::State::_c);
-	}
-	// whether it is ready state.
-	inline bool ready() const
-	{
-		return (m_state & eco::atomic::State::_c) > 0;
+		return m_state.has(eco::atomic::State::_a);
 	}
 
 	// set ready state: use in websocket.
 	inline void set_websocket()
 	{
-		m_state.add(eco::atomic::State::_d);
+		m_state.add(eco::atomic::State::_b);
 	}
 	// whether it is ready state.
 	inline bool websocket() const
 	{
-		return (m_state & eco::atomic::State::_d) > 0;
+		return m_state.has(eco::atomic::State::_b);
+	}
+
+public:
+	// set connected state.
+	inline void set_connected(bool is = true)
+	{
+		m_state.del_high();
+		m_state.set(is, eco::atomic::State::_aa);
+	}
+	// whether it is connected state.
+	inline bool connected() const
+	{
+		return m_state.has(eco::atomic::State::_aa);
+	}
+
+	// set close state, and this is a prepare state.
+	inline void set_closed()
+	{
+		set_connected(false);
+	}
+	// whether it is close state.
+	inline bool closed() const
+	{
+		return !connected();
+	}
+
+	// set ready state: use in websocket.
+	inline void set_ready()
+	{
+		m_state.add(eco::atomic::State::_bb);
+	}
+	// whether it is ready state.
+	inline bool ready() const
+	{
+		return m_state.has(eco::atomic::State::_bb);
 	}
 
 	// whether this connection is alive, this is help to avoid to send heartbeat
 	// to a live connection, that will improve performance.
 	inline void set_self_live(IN bool is)
 	{
-		m_state.set(is, eco::atomic::State::_e);
+		m_state.set(is, eco::atomic::State::_cc);
 	}
 	inline bool self_live() const
 	{
-		return m_state.has(eco::atomic::State::_e);
+		return m_state.has(eco::atomic::State::_cc);
 	}
 
 	// whether peer of this connection is alive, is help to clean dead peer.
 	inline void set_peer_live(IN bool is)
 	{
-		if (is) {
-			m_state.add(eco::atomic::State::_f);
+		if (!is)
+		{
+			m_state.del(eco::atomic::State::_dd);
+			set_peer_active(false);
+			return;
 		}
-		else {
-			m_state.del(eco::atomic::State::_f | eco::atomic::State::_g);
-		}
+		m_state.add(eco::atomic::State::_dd);
 	}
 	inline bool peer_live() const
 	{
-		return m_state.has(eco::atomic::State::_f);
+		return m_state.has(eco::atomic::State::_dd);
 	}
 
 	// whether peer of this connection is active, is help to clean unactive
 	// peer.
 	inline void set_peer_active(IN bool is)
 	{
-		if (is) {
-			m_state.add(eco::atomic::State::_g | eco::atomic::State::_f);
-		} else {
-			m_state.del(eco::atomic::State::_g);
+		if (is)
+		{
+			m_state.add(eco::atomic::State::_ee);
+			set_peer_live(true);
+			return;
 		}
+		m_state.del(eco::atomic::State::_ee);
 	}
 	inline bool peer_active() const
 	{
-		return m_state.has(eco::atomic::State::_g);
+		return m_state.has(eco::atomic::State::_ee);
 	}
 
 private:

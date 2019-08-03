@@ -24,6 +24,7 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
+#include <eco/Type.h>
 
 
 
@@ -78,6 +79,9 @@ public:
 
 	// get port of ip address.
 	const uint32_t get_port() const;
+
+	// get address value.
+	const eco::String Address::get_value() const;
 
 	// check the address is a ip format or hostname format.
 	bool ip_format() const;

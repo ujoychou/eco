@@ -32,6 +32,46 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+#define ECO_REQ(sev) ECO_LOG(sev)(eco::net::req) << Log(*this)
+#define ECO_SUB(sev) ECO_LOG(sev)(eco::net::sub) << Log(*this)
+#define ECO_PUB(sev, sess_or_conn, msg_type, msg_name) \
+ECO_LOG(sev)(eco::net::pub) << eco::net::Log(sess_or_conn, msg_type, msg_name)
+#define ECO_HDL(sev, hdl) ECO_LOG_1(sev)(eco::net::pub)\
+<< eco::net::MessageHandler::Log(hdl, (hdl).get_response_type());
+#define ECO_RSP_1(sev) ECO_LOG_1(sev)(eco::net::pub)\
+<< eco::net::Log(nullptr, response_type(), name());
+#define ECO_RSP_2(sev, resp) ECO_RSP_3(sev, resp, *this)
+#define ECO_RSP_3(sev, resp, hdl) \
+if (resp.has_error()){ \
+	ECO_LOG_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type()) <= resp.error(); \
+} else \
+	ECO_LOG_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type())
+#define ECO_RSP(...) ECO_MACRO(ECO_RSP_,__VA_ARGS__)
+
+
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_REQX(sev) ECO_LOGX(sev)(eco::net::req) << Log(*this)
+#define ECO_SUBX(sev) ECO_LOGX(sev)(eco::net::sub) << Log(*this)
+#define ECO_PUBX(sev, sess_or_conn, msg_type, msg_name)\
+ECO_LOGX(sev)(eco::net::pub) << eco::net::Log(sess_or_conn, msg_type, msg_name)
+#define ECO_HDLX(sev, hdl) ECO_LOGX_1(sev)(eco::net::pub)\
+<< eco::net::MessageHandler::Log(hdl, (hdl).get_response_type());
+#define ECO_RSPX_1(sev) ECO_LOGX_1(sev)(eco::net::pub) \
+<< eco::net::Log(nullptr, response_type(), name());
+#define ECO_RSPX_2(sev, resp) ECO_RSPX_3(sev, resp, *this)
+#define ECO_RSPX_3(sev, hdl, resp)\
+if (resp.has_error()){ \
+	ECO_LOGX_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type()) <= resp.error(); \
+} else \
+	ECO_LOGX_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type())
+#define ECO_RSPX(...) ECO_MACRO(ECO_RSPX_,__VA_ARGS__)
+
+
+////////////////////////////////////////////////////////////////////////////////
 class NetLog
 {
 public:

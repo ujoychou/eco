@@ -23,9 +23,11 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/meta/Stamp.h>
 #include <eco/net/protocol/Protocol.h>
 #include <eco/net/TcpSession.h>
 #include <eco/net/TcpConnection.h>
+#include <eco/thread/topic/Role.h>
 
 
 namespace eco{;
@@ -123,7 +125,12 @@ public:
 
 	inline const Snap get_snap() const
 	{
-		return m_meta.get_req1();
+		return Snap(m_meta.get_req1() & 0xFF);
+	}
+
+	inline const meta::Stamp get_stamp() const
+	{
+		return meta::Stamp(m_meta.get_req1() >> 4);
 	}
 
 	inline const bool last() const
@@ -150,7 +157,7 @@ public:
 		IN Codec& codec,
 		IN const uint32_t type,
 		IN const bool last = true,
-		IN const bool encrypted = true)
+		IN const bool encrypted = false)
 	{
 		m_meta.m_session_id = m_session.get_id();
 		m_session.response(codec, type, *this, last, encrypted);

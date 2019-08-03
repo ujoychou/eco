@@ -24,60 +24,57 @@ Now.
 #include <eco/ExportApi.h>
 #include <eco/Memory.h>
 #include <eco/date_time/Date.h>
+#include <eco/date_time/Time.h>
 
 
 namespace eco{;
 namespace date_time{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
-enum Format
+class DateTime
 {
-	// iso: "20160510230505".
-	fmt_iso			= 0x0001,
-	// iso_m: "20160510230505100200".
-	fmt_iso_m		= 0x0002,
-	// iso: "20160510 23:05:05".
-	fmt_isot		= 0x0003,
-	// iso: "20160510 23:05:05.688675".
-	fmt_isot_m		= 0x0004,
-	// std: "2016-05-10 23:05:05".
-	fmt_std			= 0x0005,
-	// std: "2016-05-10 23:05:05.688675".
-	fmt_std_m		= 0x0006,
-};
+public:
+	inline DateTime(Date& date, uint32_t time) : m_date(date), m_time(time)
+	{}
 
+	inline uint32_t seconds() const
+	{
+		return m_time;
+	}
 
-// time unit type.
-enum TimeUnitType
-{
-	ttype_second		= 1,
-	ttype_minute		= 2,
-	ttype_hour			= 3,
-	ttype_day			= 4,
-	ttype_week			= 5,
-	ttype_month			= 6,
-	ttype_season		= 7,
-	ttype_year			= 8,
+	inline uint32_t days() const
+	{
+		return m_date.days();
+	}
+
+	inline const Date& date() const
+	{
+		return m_date;
+	}
+
+	inline const Time& time() const
+	{
+		return m_time;
+	}
+
+private:
+	Time m_time;
+	Date m_date;
 };
+// get date and time of now. time second: "00:00:00" -> 0.
+ECO_API DateTime now();
 
 
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Timestamp
 {
 public:
-	// get date and time of now.
-	// time second: "00:00:00" -> 0.
-	static void get_time(OUT Date& date, OUT uint32_t& time);
-
-public:
 	/*
 	time_format: time text format.
 	second_clock: get time from a second clock precision.
 	*/
-	inline explicit Timestamp(
-		IN Format time_format = fmt_iso_m)
+	inline explicit Timestamp(IN Fmt time_format = fmt_isot)
 	{
+		m_millsecs = 0;
 		m_time_format = time_format;
 		m_timestamp[0] = '\0';
 		if (time_format == fmt_iso_m || 
@@ -115,7 +112,7 @@ public:
 		return m_timestamp;
 	}
 
-	inline const char* Timestamp::get_value() const
+	inline const char* get_value() const
 	{
 		return m_timestamp;
 	}
@@ -153,124 +150,35 @@ public:
 			&& strcmp(ts.m_timestamp, m_timestamp) < 0;
 	}
 
+	inline static Date today()
+	{
+		eco::date_time::Timestamp ts(fmt_isot);
+		return eco::date_time::Date(ts.get_date());
+	}
+
+	// total seconds and milliseconds.
+	inline uint64_t seconds() const
+	{
+		return m_millsecs / 1000;
+	}
+	inline uint64_t millsec() const
+	{
+		return m_millsecs;
+	}
+
 private:
 	void set_clock(IN bool second_clock);
 	
+	uint64_t m_millsecs;
 	char m_timestamp[32];
-	Format m_time_format;
+	Fmt m_time_format;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline std::string today(IN const Format fmt = fmt_std)
+class ECO_API Format
 {
-	return Timestamp(fmt).get_date();
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-inline void to_iso_date(
-	IN OUT std::string& date,
-	IN const Format fmt_from = fmt_std)
-{
-	switch (fmt_from)
-	{
-	case eco::date_time::fmt_iso:
-		break;
-	case eco::date_time::fmt_std:
-		date.erase(7, 1);
-		date.erase(4, 1);
-		break;
-	}
-}
-
-inline void iso_date_to(
-	IN OUT std::string& date,
-	IN const Format fmt_to = fmt_std)
-{
-	switch (fmt_to)
-	{
-	case eco::date_time::fmt_iso:
-		break;
-	case eco::date_time::fmt_std:
-		date.insert(4, 1, '-');
-		date.insert(7, 1, '-');
-		break;
-	}
-}
-
-inline void iso_date_to(
-	IN OUT char* date,
-	IN const Format fmt_to = fmt_std)
-{
-	switch (fmt_to)
-	{
-	case eco::date_time::fmt_iso:
-		break;
-	case eco::date_time::fmt_std:
-		eco::insert(date, 4, 1, '-');
-		eco::insert(date, 7, 1, '-');
-		break;
-	}
-}
-
-inline std::string format_date(
-	IN OUT std::string& date,
-	IN const Format fmt_from,
-	IN const Format fmt_to)
-{
-	to_iso_date(date, fmt_from);
-	iso_date_to(date, fmt_to);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-inline void to_std_time(
-	IN OUT std::string& time,
-	IN const Format fmt_from = fmt_iso)
-{
-	switch (fmt_from)
-	{
-	case eco::date_time::fmt_iso:
-	case eco::date_time::fmt_iso_m:
-		time.insert(2, 1, ':');
-		time.insert(5, 1, ':');
-		time.resize(8);
-		break;
-	case eco::date_time::fmt_std:
-		break;
-	}
-}
-inline void std_time_to(
-	IN OUT std::string& time,
-	IN const Format fmt_to = fmt_iso)
-{
-	switch (fmt_to)
-	{
-	case eco::date_time::fmt_iso:
-	case eco::date_time::fmt_iso_m:
-		time.erase(5, 1);
-		time.erase(2, 1);
-		time.resize(6);
-		break;
-	case eco::date_time::fmt_std:
-		break;
-	}
-}
-inline std::string format_time(
-	IN OUT std::string& time,
-	IN const Format fmt_from,
-	IN const Format fmt_to)
-{
-	to_std_time(time, fmt_from);
-	std_time_to(time, fmt_to);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-class ECO_API DateTime
-{
-	ECO_VALUE_API(DateTime);
+	ECO_VALUE_API(Format);
 public:
 	// constructor, parse date and time from string.
 	bool set(IN const char* str);
@@ -280,6 +188,88 @@ public:
 
 	// get time.
 	const char* get_time() const;
+
+public:
+	static inline void to_iso_date(OUT std::string& date, Fmt from = fmt_std)
+	{
+		switch (from)
+		{
+		case eco::date_time::fmt_iso:
+			break;
+		case eco::date_time::fmt_std:
+			date.erase(7, 1);
+			date.erase(4, 1);
+			break;
+		}
+	}
+
+	static inline void iso_date_to(OUT std::string& date, Fmt to = fmt_std)
+	{
+		switch (to)
+		{
+		case eco::date_time::fmt_iso:
+			break;
+		case eco::date_time::fmt_std:
+			date.insert(4, 1, '-');
+			date.insert(7, 1, '-');
+			break;
+		}
+	}
+
+	static inline void iso_date_to(OUT char* date, Fmt fmt_to = fmt_std)
+	{
+		switch (fmt_to)
+		{
+		case eco::date_time::fmt_iso:
+			break;
+		case eco::date_time::fmt_std:
+			eco::insert(date, 4, 1, '-');
+			eco::insert(date, 7, 1, '-');
+			break;
+		}
+	}
+
+	static inline void format_date(OUT std::string& date, Fmt from, Fmt to)
+	{
+		to_iso_date(date, from);
+		iso_date_to(date, to);
+	}
+
+	static inline void to_std_time(OUT std::string& time, Fmt from = fmt_iso)
+	{
+		switch (from)
+		{
+		case eco::date_time::fmt_iso:
+		case eco::date_time::fmt_iso_m:
+			time.insert(2, 1, ':');
+			time.insert(5, 1, ':');
+			time.resize(8);
+			break;
+		case eco::date_time::fmt_std:
+			break;
+		}
+	}
+
+	static inline void std_time_to(OUT std::string& time, Fmt fmt_to = fmt_iso)
+	{
+		switch (fmt_to)
+		{
+		case eco::date_time::fmt_iso:
+		case eco::date_time::fmt_iso_m:
+			time.erase(5, 1);
+			time.erase(2, 1);
+			time.resize(6);
+			break;
+		case eco::date_time::fmt_std:
+			break;
+		}
+	}
+
+	static inline void format_time(OUT std::string& time, Fmt from, Fmt to)
+	{
+		to_std_time(time, from);
+		std_time_to(time, to);
+	}
 };
 
 
@@ -337,7 +327,13 @@ ECO_API void format_date_time_unit(
 	OUT std::string& dt,
 	IN const TimeUnitType t_type);
 
-
+// is history date time: date2 & time2.
+inline bool history(
+	IN uint32_t time1, IN const std::string& date1,
+	IN uint32_t time2, IN const std::string& date2)
+{
+	return date1 > date2 || date1 == date2 && time1 > time2;
+}
 ////////////////////////////////////////////////////////////////////////////////
 }}
 #endif
