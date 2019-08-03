@@ -1,52 +1,48 @@
 #include "PrecHeader.h"
-#include "Eco.h"
+#include "Eco.ipp"
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Being.h>
-#include <eco/Btask.h>
 
 
 ECO_NS_BEGIN(eco);
+ECO_OBJECT_IMPL(Eco);
 ////////////////////////////////////////////////////////////////////////////////
-Eco::Eco()
+Eco::Impl::Impl()
 {
 	m_tick_count = 0;
-	m_unit_live_tick_sec = 5;		// 默认每5秒1次，检测与修复系统。
-	m_task_server_thread_size = 0;
 	reset_current_being();
 }
+// 默认每5秒1次，检测与修复系统。
+uint32_t Eco::Impl::s_unit_live_tick_sec = 5;
+uint32_t Eco::Impl::s_task_server_thread_size = 0;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Eco::~Eco()
-{}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void Eco::start()
+void Eco::Impl::start()
 {
-	if (m_unit_live_tick_sec == 0)
+	if (s_unit_live_tick_sec == 0)
 	{
-		m_unit_live_tick_sec = 1;
+		s_unit_live_tick_sec = 1;
 	}
 
 	// 启动生命活动线程
 	m_timer.start();
-	if (m_task_server_thread_size > 0)
+	if (s_task_server_thread_size > 0)
 	{
-		m_task_server.run(m_task_server_thread_size, "eco_task");
+		m_task_server.run("eco", s_task_server_thread_size);
 	}
 
 	// 启动生命节奏：定时执行系统维护工作。
-	uint32_t millsecs = m_unit_live_tick_sec * 1000;
-	m_timer.add_timer(millsecs, true, std::bind(&Eco::on_live_timer, this));
+	uint32_t millsecs = s_unit_live_tick_sec * 1000;
+	m_timer.add(millsecs, true, std::bind(&Impl::on_live_timer, this));
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::stop()
+void Eco::Impl::stop()
 {
 	m_timer.stop();
-	if (m_task_server_thread_size > 0)
+	if (s_task_server_thread_size > 0)
 	{
 		m_task_server.stop();
 	}
@@ -54,7 +50,7 @@ void Eco::stop()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::on_live_timer()
+void Eco::Impl::on_live_timer()
 {
 	// 生命对象的周期活动，每个生命节奏时间运行一次。
 	++m_tick_count;
@@ -69,11 +65,11 @@ void Eco::on_live_timer()
 			}
 			catch (eco::Error& e)
 			{
-				EcoError << be->get_name() << "live : " << e;
+				ECO_LOG(error, "live") << be->get_name() <= e;
 			}
 			catch (std::exception& e)
 			{
-				EcoLog(error) << be->get_name() << "live : " << e.what();
+				ECO_LOGX(error, "live") << be->get_name() <= e.what();
 			}
 			
 			m_running.none();			// 3.生命对象运行结束
@@ -84,7 +80,7 @@ void Eco::on_live_timer()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Being* Eco::get_next_being()
+Being* Eco::Impl::get_next_being()
 {
 	eco::Mutex::ScopeLock lock(m_cond_var.mutex());
 	if (m_cur_it == m_be_list.end())
@@ -101,7 +97,7 @@ Being* Eco::get_next_being()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::add_being(IN Being* be)
+void Eco::Impl::add_being(IN Being* be)
 {
 	eco::Mutex::ScopeLock lock(m_cond_var.mutex());
 	if (be != nullptr)
@@ -112,7 +108,7 @@ void Eco::add_being(IN Being* be)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool Eco::is_time_to_live(IN const uint32_t interval_tick) const
+bool Eco::Impl::is_time_to_live(IN const uint32_t interval_tick) const
 {
 	//int interval = secs / m_unit_live_tick_sec;
 	return (m_tick_count == 0 || m_tick_count % interval_tick == 0);
@@ -120,7 +116,7 @@ bool Eco::is_time_to_live(IN const uint32_t interval_tick) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::reset_current_being()
+void Eco::Impl::reset_current_being()
 {
 	eco::Mutex::ScopeLock lock(m_cond_var.mutex());
 	m_cur_it = m_be_list.end();
@@ -128,14 +124,14 @@ void Eco::reset_current_being()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Being* Eco::get_current_being() const
+Being* Eco::Impl::get_current_being() const
 {
 	return m_cur_it != m_be_list.end() ? *m_cur_it : nullptr;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::remove_being(IN Being* be)
+void Eco::Impl::remove_being(IN Being* be)
 {
 	// 支持在on_live方法中释放除自己意外的其他生命对象。
 	eco::Mutex::ScopeLock lock(m_cond_var.mutex());
@@ -158,25 +154,27 @@ void Eco::remove_being(IN Being* be)
 		}
 	}
 }
-void Eco::post_task(IN const Btask& task)
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Eco::Impl::post_task(IN Task::ptr& task)
 {
-	std::auto_ptr<Btask> ap(task.copy());
-	m_task_server.post(std::move(ap));
+	m_task_server.post(std::move(task));
 }
-void Eco::post_wait(IN const Btask& task)
+void Eco::Impl::post_wait(IN Task::ptr& task)
 {
-	std::auto_ptr<Btask> ap(task.copy());
 	eco::Mutex::ScopeLock lock(m_wait_task_list_mutex);
-	m_wait_task_list.push_back(std::move(ap));
+	m_wait_task_list.push_back(std::move(task));
 }
-void Eco::move_wait()
+void Eco::Impl::move_wait()
 {
 	// 重新检查等待任务是否可执行。
 	eco::Mutex::ScopeLock lock(m_wait_task_list_mutex);
 	auto it = m_wait_task_list.begin();
 	while (it != m_wait_task_list.end())
 	{
-		eco::TaskState state = it->get()->occupy();
+		Btask* btask = (Btask*)it->get();
+		eco::TaskState state = btask->occupy();
 		if (state == task_no_ready || state == task_working_other)
 		{
 			++it;
@@ -192,72 +190,102 @@ void Eco::move_wait()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-const uint32_t Eco::get_unit_live_tick_seconds() const
+void Eco::post_task(IN Task::ptr& task)
 {
-	return m_unit_live_tick_sec;
+	impl().post_task(task);
 }
-void Eco::set_unit_live_tick_seconds(IN const uint32_t unit_live_tick_secs)
+void Eco::post_wait(IN Task::ptr& task)
 {
-	m_unit_live_tick_sec = unit_live_tick_secs;
-	if (m_unit_live_tick_sec == 0)
-	{
-		m_unit_live_tick_sec = 1;
-	}
+	impl().post_wait(task);
 }
-const uint32_t Eco::get_task_server_thread_size() const
+void Eco::move_wait()
 {
-	return m_task_server_thread_size;
-}
-void Eco::set_task_server_thread_size(IN const uint32_t thread_size)
-{
-	m_task_server_thread_size = thread_size;
-	if (m_task_server_thread_size == 0)
-	{
-		m_task_server_thread_size = 1;
-	}
+	impl().move_wait();
 }
 Timer& Eco::timer()
+{
+	return impl().m_timer;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+uint32_t Eco::post_async(IN std::shared_ptr<net::MessageHandler>& hdl)
+{
+	// note: request != 0.
+	if (++impl().m_request_id == 0)	++impl().m_request_id;
+	uint32_t req_id = impl().m_request_id;
+	impl().m_async_map.set(req_id, hdl);
+	return req_id;
+}
+bool Eco::has_async(IN uint32_t req_id)
+{
+	return impl().m_async_map.has(req_id);
+}
+void Eco::erase_async(IN uint32_t req_id)
+{
+	impl().m_async_map.erase(req_id);
+}
+std::shared_ptr<net::MessageHandler> Eco::pop_async(
+	IN uint32_t req_id, IN bool last)
+{
+	std::shared_ptr<net::MessageHandler> handler;
+	if (last)
+	{
+		int eid = 0;
+		handler = impl().m_async_map.pop(req_id, eid);
+	}
+	else
+	{
+		impl().m_async_map.find(handler, req_id);
+	}
+	return handler;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+uint32_t Eco::Impl::get_unit_live_tick_seconds()
+{
+	return s_unit_live_tick_sec;
+}
+void Eco::Impl::set_unit_live_tick_seconds(IN uint32_t v)
+{
+	s_unit_live_tick_sec = v;
+	if (s_unit_live_tick_sec == 0)
+	{
+		s_unit_live_tick_sec = 1;
+	}
+}
+uint32_t Eco::Impl::get_task_server_thread_size()
+{
+	return s_task_server_thread_size;
+}
+void Eco::Impl::set_task_server_thread_size(IN uint32_t v)
+{
+	s_task_server_thread_size = v;
+}
+Timer& Eco::Impl::timer()
 {
 	return m_timer;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
+static eco::Mutex s_eco_mutex;
 static std::auto_ptr<Eco> s_eco;
-void create_eco()
+bool has_eco()
 {
-	s_eco.reset(new Eco);
+	return s_eco.get() != nullptr;
 }
-Eco* get_eco()
+Eco& eco()
 {
-	return s_eco.get();
+	eco::Mutex::ScopeLock lock(s_eco_mutex);
+	if (s_eco.get() == nullptr)
+	{
+		s_eco.reset(new Eco);
+		s_eco->impl().start();
+	}
+	return *s_eco;
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-void Btask::post_task(IN const Btask& task)
-{
-	get_eco()->post_task(task);
-}
-void Btask::post_wait(IN const Btask& task)
-{
-	get_eco()->post_wait(task);
-}
-void Btask::move_wait()
-{
-	get_eco()->move_wait();
-}
-void Btask::set_timer(IN const uint32_t restart_millsecs, IN const Btask& task)
-{
-	get_eco()->timer().add_timer(restart_millsecs, false, task);
-}
-const eco::TaskState Btask::occupy()
-{
-	return bobject().occupy(get_type(), 
-		m_sour_state, m_dest_state, m_erase_state);
-}
-void Btask::prepare()
-{}
 
 
 ////////////////////////////////////////////////////////////////////////////////
