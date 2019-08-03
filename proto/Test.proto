@@ -1,0 +1,27 @@
+syntax = "proto3";
+import "Object.proto";
+package proto;
+
+
+/////////////////////////////////////////////////////////////////////// 对象管理
+message TestReq
+{
+	uint64 int1 = 10;
+	uint64 int2 = 11;
+	uint64 int3 = 12;
+	uint64 int4 = 13;
+	string str1 = 14;
+	string str2 = 15;
+	string str3 = 16;
+	string str4 = 17;
+	double dbl1 = 18;
+	double dbl2 = 19;
+	double dbl3 = 20;
+	double dbl4 = 21;
+}
+
+message TestRsp
+{
+	Error error = 1;
+	TestReq data = 2;
+}

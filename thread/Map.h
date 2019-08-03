@@ -132,7 +132,7 @@ public:
 		value val;
 		if (!find(val, id))
 		{
-			EcoThrow << "get object from eco map fail.";
+			ECO_THROW(0) << "get object from eco map fail.";
 		}
 		return val;
 	}
@@ -165,7 +165,7 @@ public:
 		value v = pop(id, eid);
 		if (eid != 0)
 		{
-			EcoThrow(eid) << "map pop fail.";
+			ECO_THROW(eid) << "map pop fail.";
 		}
 		return v;
 	}

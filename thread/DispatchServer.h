@@ -71,18 +71,18 @@ public:
 		}
 		else
 		{
-			EcoError << "dispatch unknown message type: " << type;
+			ECO_ERROR << "dispatch unknown message type: " << type;
 		}
 	}
 	
 	/*@ add message and handler map.*/
-	void set_dispatch(IN const MessageType& type, IN HandlerFunc& handler)
+	void set_dispatch(IN const MessageType& type, IN HandlerFunc handler)
 	{
 		m_handler_map[type] = handler;
 	}
 
 	/*@ set message default handler.*/
-	void set_default(IN HandlerFunc& handler)
+	void set_default(IN HandlerFunc handler)
 	{
 		m_default_handler = handler;
 	}

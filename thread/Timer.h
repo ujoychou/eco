@@ -18,12 +18,11 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/Btask.h>
+#include <eco/Thread/Task.h>
+#include <eco/Type.h>
 
 
 ECO_NS_BEGIN(eco);
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TimerObject
 {
@@ -40,7 +39,6 @@ public:
 };
 
 
-typedef std::function<void(IN bool is_cancel)> OnTimerFunc;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Timer
 {
@@ -53,49 +51,30 @@ public:
 	// stop timer and it's worker.
 	void stop();
 
-	/*@ add timer for dedicated duration.
-	*/
-	TimerObject add_timer(
-		IN const uint32_t millsecs,
-		IN const bool repeated,
-		IN const Btask& task);
-	TimerObject add_timer(
-		IN const uint32_t millsecs,
-		IN const bool repeated,
-		IN std::auto_ptr<Btask>& task);
-	TimerObject add_timer(
-		IN const uint32_t millsecs,
-		IN const bool repeated,
-		IN OnTimerFunc task);
+	// add timer for dedicated duration.
+	TimerObject add(IN uint32_t millsecs, IN bool repeated, IN Task::ptr& task);
+	inline TimerObject add(uint32_t millsecs, bool repeated, Closure task)
+	{
+		return add(millsecs, repeated, Task::ptr(new FuncTask(task)));
+	}
 
 	/*@ add timer for dedicated date time.
 	* @ para.date_time: format as "2015-03-02 12:12:12".
 	*/
-	void add_timer(
-		IN const char* date_time,
-		IN const Btask& task);
-	void add_timer(
-		IN const char* date_time,
-		IN std::auto_ptr<Btask>& task);
-	void add_timer(
-		IN const char* date_time,
-		IN OnTimerFunc task);
+	void add(IN const char* date_time, IN Task::ptr& task);
+	inline void add(IN const char* date_time, IN Closure task)
+	{
+		add(date_time, Task::ptr(new FuncTask(task)));
+	}
 
 	/*@ add daily timer, and it can repeat.
 	* @ para.time: format as "12:12:12".
 	*/
-	void add_daily_timer(
-		IN const char* time,
-		IN const bool  repeated,
-		IN const Btask& task);
-	void add_daily_timer(
-		IN const char* time,
-		IN const bool  repeated,
-		IN std::auto_ptr<Btask>& task);
-	void add_daily_timer(
-		IN const char* time,
-		IN const bool  repeated,
-		IN OnTimerFunc task);
+	void add_daily(IN const char* time, IN bool repeated, IN Task::ptr& task);
+	inline void add_daily(const char* time, IN bool repeated, IN Closure task)
+	{
+		add_daily(time, repeated, Task::ptr(new FuncTask(task)));
+	}
 };
 
 

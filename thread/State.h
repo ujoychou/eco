@@ -94,6 +94,8 @@ public:
 
 	// delete state.
 	inline void del(IN const uint32_t v);
+	inline void del_low();
+	inline void del_high();
 
 	// asign value to state.
 	inline void set(IN bool is, IN const uint32_t v);
@@ -159,6 +161,14 @@ void State::add(IN const uint32_t v)
 void State::del(IN const uint32_t v)
 {
 	m_value &= ~v;
+}
+void State::del_low()
+{
+	m_value &= 0xFFFF0000;
+}
+void State::del_high()
+{
+	m_value &= 0x0000FFFF;
 }
 void State::set_v(IN const uint32_t add_v, IN const uint32_t del_v)
 {

@@ -19,14 +19,11 @@ it shared the data in the program, and it manage data's life cycle.
 
 *******************************************************************************/
 #include <eco/Object.h>
-#include <eco/thread/CallOnce.h>
+#include <eco/thread/Mutex.h>
 #include <vector>
 
 
-
 namespace eco{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 template<typename value_t>
 class IndexArray : public eco::Object<IndexArray<value_t> >

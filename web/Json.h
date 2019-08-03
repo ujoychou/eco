@@ -16,8 +16,7 @@
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Typex.h>
-
+#include <eco/Type.h>
 
 
 namespace eco{;
@@ -86,7 +85,7 @@ public:
 	JsonClass GetClass() const;
 
 	// make html text.
-	void MakeText(OUT eco::StringAny& text) const;
+	void MakeText(OUT std::string& text) const;
 };
 
 

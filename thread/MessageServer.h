@@ -78,12 +78,13 @@ public:
 	server will run in a synchronous mode, else it will start number of threads 
 	(decicated by "thread_size")and message server run in a asynchronous mode.
 	*/
-	inline void run(IN uint32_t thread_size = 1, IN const char* name = nullptr)
+	inline void run(IN const char* name, IN uint32_t thread_size = 1)
 	{
 		if (thread_size == 0)
 		{
 			thread_size = 1;
 		}
+		m_message_queue.set_name(name);
 		m_message_queue.open();
 		m_thread_pool.run(std::bind(&T::work, this), thread_size, name);
 	}
@@ -131,12 +132,11 @@ public:
 	/*@ post message to message server, using template is for parameter of 
 	message and const message.
 	*/
-	template<typename Message>
 	inline void post(IN Message& msg)
 	{
 		m_message_queue.post(msg);
 	}
-	template<typename Message, typename UniqueChecker>
+	template<typename UniqueChecker>
 	inline void post_unique(IN Message& msg, IN UniqueChecker& unique_check)
 	{
 		m_message_queue.post_unique(msg, unique_check);
@@ -162,7 +162,6 @@ protected:
 }// ns.detail
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Message, typename Handler = std::function<void(Message&)> >
 class MessageServer : public detail::MessageServer<Message, Handler>
@@ -182,23 +181,26 @@ protected:
 		{
 			// don't declare message before while.
 			Message msg;
-			if (!m_message_queue.pop(msg))
+			size_t queue_size = m_message_queue.pop(msg);
+			if (-1 == queue_size)
 			{
 				break;	// message queue has been closed.
 			}
+			m_flow.count(queue_size, m_message_queue.name(), "o");
 
 			// handler message.
-			try {
+			try
+			{
 				m_message_handler(msg);
 			}
-			catch (eco::Error& e) {
-				EcoError << "message server: " << e;
-			}
-			catch (std::exception& e) {
-				EcoLog(error) << "message server: " << e.what();
+			catch (std::exception& e)
+			{
+				ECO_LOGX(error, "message server") << e.what();
 			}
 		}// end while
 	}
+
+	MessageQueueFlow m_flow;
 };
 
 
@@ -273,14 +275,18 @@ public:
 		return m_message_handler;
 	}
 
-	inline void run(IN uint32_t thread_size, IN const char* name = nullptr)
+	inline void run(IN const char* name, IN uint32_t thread_size)
 	{
 		m_pool.resize(thread_size);
-		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		std::string queue_name;
+		for (auto i = 0; i != m_pool.size(); ++i)
 		{
+			auto* it = &m_pool[i];
 			it->init();
 			it->server->set_message_handler(HandlerPtr(&m_message_handler));
-			it->server->run(1, name);
+			queue_name = name;
+			queue_name += eco::cast<std::string>(i);
+			it->server->run(queue_name.c_str(), 1);
 		}
 	}
 

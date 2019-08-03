@@ -51,12 +51,12 @@
     <port>50000</port>
     <tick_time value="15"/>
     <max_connection_size value="2000"/>
-    <max_session_size value="100000"/>
-    <io_heartbeat value="false"/>
-    <response_heartbeat value="false"/>
-    <rhythm_heartbeat value="true"/>
+    <max_session_size value="10000"/>
+    <!--<io_heartbeat value="false"/>-->
+    <!--<response_heartbeat value="false"/>-->
+    <!--<rhythm_heartbeat value="false"/>-->
     <heartbeat_recv_tick value="3"/>
-    <heartbeat_send_tick value="2"/>
+    <heartbeat_send_tick value="1"/>
     <no_delay value="true"/>
     <websocket value="false"/>
     <io_thread_size value="2"/>
@@ -75,8 +75,8 @@
       <tick_time value="5"/>
       <websocket value="false"/>
       <auto_reconnect_tick value="1"/>
-      <heartbeat_recv_tick value="0"/>
-      <heartbeat_send_tick value="0"/>
+      <heartbeat_recv_tick value="9"/>
+      <heartbeat_send_tick value="1"/>
     </team>
   </consumer>
 

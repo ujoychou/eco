@@ -18,14 +18,16 @@
 * copyright(c) 2018 - 2020, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/Any.h>
 #include <eco/thread/Timer.h>
 #include <eco/thread/AutoRef.h>
 
 
 ECO_NS_BEGIN(eco);
 template<typename Task> class TimerWheel;
+typedef std::function<void(eco::Any&)> TimerWheelTaskFunc;
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Task = eco::Closure>
+template<typename Task = TimerWheelTaskFunc>
 class TimerWheelTask
 {
 private:
@@ -75,7 +77,7 @@ public:
 	}
 	inline static bool expired(IN uint32_t count)
 	{
-		return count == -1;
+		return count == 0;
 	}
 
 	inline void pause(bool is_v)
@@ -107,7 +109,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Task = eco::Closure>
+template<typename Task = TimerWheelTaskFunc>
 class TimerWheel
 {
 	ECO_OBJECT(TimerWheel);
@@ -187,25 +189,25 @@ public:
 
 public:
 	// turn the wheel in duration time.
-	inline void step(IN const uint32_t tick)
+	inline void step(IN const uint32_t tick, eco::Any& param = eco::Any())
 	{
 		for (uint32_t i = 0; i < tick; ++i)
 		{
-			on_tick();
+			on_tick(param);
 		}
 	}
 
 	// turn the wheel in duration time.
-	inline void step_time(IN const uint32_t duration)
+	inline void step_time(IN const uint32_t duration, eco::Any& param = eco::Any())
 	{
 		uint32_t left = m_clock % m_precision;
 		m_clock += duration;
 		uint32_t tick = (left + duration) / m_precision;
-		step(tick);
+		step(tick, param);
 	}
 
 	// turn the wheel to the time.
-	inline void step_time_to(IN const uint64_t now)
+	inline void step_time_to(IN const uint64_t now, eco::Any& param = eco::Any())
 	{
 		// init clock.
 		if (m_clock == 0)
@@ -221,7 +223,7 @@ public:
 			uint32_t tick = uint32_t(now - m_clock + left);
 			m_clock = now;
 			tick /= m_precision;
-			step(tick);
+			step(tick, param);
 		}
 	}
 
@@ -229,6 +231,22 @@ public:
 	inline void reset_clock()
 	{
 		m_clock = 0;
+	}
+
+	inline void log_wheel()
+	{
+		for (size_t i = 0; i < m_wheel.size(); i++)
+		{
+			if (m_wheel[i].size() > 0)
+			{
+				eco::FixStream fstream;
+				for (auto it = m_wheel[i].begin(); it != m_wheel[i].end(); ++it)
+				{
+					fstream <= m_wheel_curr <= (**it).m_count;
+				}
+				std::cout << i << fstream.c_str() << std::endl;
+			}
+		}
 	}
 
 protected:
@@ -242,7 +260,7 @@ protected:
 	}
 
 	// trigger tick event.
-	inline void on_tick()
+	inline void on_tick(eco::Any& param)
 	{
 		// step to next wheel slot.
 		m_wheel_curr = (m_wheel_curr + 1) % m_wheel.size();
@@ -263,7 +281,7 @@ protected:
 			}
 
 			// if timer has reached, call timer.
-			timer.m_task();
+			timer.m_task(param);
 
 			// remove once timer.
 			if (!timer.m_repeated)
@@ -272,7 +290,7 @@ protected:
 				continue;
 			}
 			// move repeated timer to new wheel pos.
-			restart(timer.m_timeout, true, timer_list, it++);
+			restart(timer.m_timeout, 1, timer_list, it++);
 		}
 	}
 
@@ -287,7 +305,7 @@ protected:
 		auto pos = get_wheel_pos(timeout);
 		auto& timer_list_new = m_wheel[pos.wheel];
 		timer.m_count = pos.count;
-		timer.m_repeated = repeated ? 1 : 0;
+		timer.m_repeated = repeated;
 		timer.m_paused = false;
 		if (&timer_list != &timer_list_new)	// slots changed.
 		{
@@ -310,7 +328,7 @@ protected:
 		auto tick = (timeout / m_precision);
 		auto left = (timeout - tick * m_precision);
 		if (left > 0) ++tick;
-		pos.count = (tick / m_wheel.size());
+		pos.count = (tick - 1) / m_wheel.size() + 1;
 		pos.wheel = (tick + m_wheel_curr) % m_wheel.size();
 		return pos;
 	}

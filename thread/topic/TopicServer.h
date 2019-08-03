@@ -4,10 +4,11 @@
 #include <eco/Any.h>
 #include <eco/MemoryPool.h>
 #include <eco/thread/topic/Topic.h>
-#include <eco/thread/TaskServer.h>
+#include <eco/thread/MessageServer.h>
 
 
 ECO_NS_BEGIN(eco);
+class TopicInner { public: inline TopicUid& id(Topic& t) { return t.m_id;}};
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Impl>
 class TopicServerT
@@ -22,9 +23,9 @@ public:
 		m_impl.stop();
 	}
 
-	inline void start()
+	inline void start(const char* name)
 	{
-		m_impl.start();
+		m_impl.start(name);
 	}
 
 	inline void stop()
@@ -58,7 +59,7 @@ public:
 		IN const object_t& obj,
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
-		Topic::ptr topic = get_topic(topic_id, topic_t::make);
+		Topic::ptr topic = get_topic(topic_id, topic_t::create);
 		if (topic != nullptr)
 		{
 			publish_to(topic, obj, stamp);
@@ -123,33 +124,44 @@ public:
 
 public:
 	// subscribe topic.
-	template<typename topic_id_t>
 	inline bool subscribe(
-		IN const topic_id_t& topic_id,
+		IN Topic::ptr& topic,
 		IN Subscriber* subscriber,
-		IN TopicEvent::ptr& event = TopicEvent::ptr(),
-		IN eco::MakeTopic make = nullptr)
+		IN TopicEvent::ptr event = nullptr)
 	{
-		Topic::ptr topic = get_topic(topic_id, make, event);
-		if (topic != nullptr)
+		auto supscription = topic->reserve_subscribe(subscriber);
+		if (!supscription.null())
 		{
-			auto supscription = topic->reserve_subscribe(subscriber);
-			if (!supscription.null())
-			{
-				m_impl.publish_snap(topic, supscription, event);
-				return true;
-			}
+			m_impl.publish_snap(topic, supscription, event);
+			return true;
 		}
 		return false;
 	}
 
+	// subscribe topic.
+	template<typename topic_id_t>
+	inline bool subscribe(
+		IN const topic_id_t& topic_id,
+		IN Subscriber* subscriber,
+		IN eco::CreateTopic create = nullptr,
+		IN TopicEvent::ptr event = nullptr)
+	{
+		Topic::ptr topic = get_topic(topic_id, create, event);
+		if (topic != nullptr)
+		{
+			return subscribe(topic, subscriber, event);
+		}
+		return false;
+	}
+
+	// subscribe topic id.
 	template<typename topic_t, typename topic_id_t>
 	inline bool subscribe(
 		IN const topic_id_t& topic_id,
 		IN Subscriber* subscriber,
-		IN TopicEvent::ptr& event = TopicEvent::ptr())
+		IN TopicEvent::ptr event = nullptr)
 	{
-		return subscribe(topic_id, subscriber, event, topic_t::make);
+		return subscribe(topic_id, subscriber, topic_t::create, event);
 	}
 
 	// unsubscribe topic, and remove topic when there is no subscriber.
@@ -157,7 +169,7 @@ public:
 	inline int unsubscribe(
 		IN const topic_id_t& topic_id,
 		IN Subscriber* subscriber,
-		IN TopicEvent::ptr& event = TopicEvent::ptr())
+		IN TopicEvent::ptr event = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		auto& topic_map = __get_topic_map(topic_id);
@@ -188,35 +200,39 @@ public:
 	}
 
 public:
-	// create topic.
+	// get and create derived topic.
 	template<typename topic_t, typename topic_id_t>
-	inline void create_topic(IN const topic_id_t& topic_id)
-	{
-		eco::Mutex::ScopeLock lock(m_topics_mutex);
-		auto it = __get_topic_map(topic_id).find(topic_id);
-		if (it == __get_topic_map(topic_id).end())
-		{
-			__get_topic_map(topic_id)[topic_id].reset(topic_t::make(topic_id));
-		}
-	}
-
-	// get derived topic.
-	template<typename topic_t, typename topic_id_t>
-	inline std::shared_ptr<topic_t> cast_topic(
+	inline typename topic_t::ptr get_topic(
 		IN const topic_id_t& topic_id,
-		IN TopicEvent::ptr& event = TopicEvent::ptr())
+		IN TopicEvent::ptr event = nullptr)
 	{
-		Topic::ptr topic = get_topic(topic_id, topic_t::make, event);
+		auto topic = get_topic(topic_id, topic_t::create, event);
 		return std::dynamic_pointer_cast<topic_t>(topic);
 	}
 
+	// get and create topic.
 	template<typename topic_id_t>
 	inline Topic::ptr get_topic(
 		IN const topic_id_t& topic_id,
-		IN eco::MakeTopic make = nullptr,
-		IN TopicEvent::ptr& event = TopicEvent::ptr())
+		IN CreateTopic create = nullptr,
+		IN TopicEvent::ptr event = nullptr)
 	{
-		return __get_topic(topic_id, __get_topic_map(topic_id), make, event);
+		eco::Mutex::ScopeLock lock(m_topics_mutex);
+		auto& topic_map = __get_topic_map(topic_id);
+		auto it = topic_map.find(topic_id);
+		if (it != topic_map.end())
+		{
+			return it->second;
+		}
+
+		if (create != nullptr)
+		{
+			Topic::ptr topic = std::dynamic_pointer_cast<Topic>(create());
+			TopicInner().id(*topic).set(topic_id, this);
+			topic->on_init(event.get());
+			return topic_map[topic_id] = topic;
+		}
+		return nullptr;
 	}
 
 	// find topic.
@@ -228,20 +244,34 @@ public:
 		return (it != __get_topic_map(topic_id).end())
 			? it->second : Topic::ptr();
 	}
+	// find derived topic.
+	template<typename topic_t, typename topic_id_t>
+	inline typename topic_t::ptr find_topic(IN const topic_id_t& topic_id) const
+	{
+		return std::dynamic_pointer_cast<topic_t>(find_topic(topic_id));
+	}
 
-	// find topic.
+	// pop topic.
 	template<typename topic_id_t>
 	inline Topic::ptr pop_topic(IN const topic_id_t& topic_id)
 	{
 		Topic::ptr topic;
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
-		auto it = __get_topic_map(topic_id).find(topic_id);
-		if (it != __get_topic_map(topic_id).end())
+		auto& topic_map = __get_topic_map(topic_id);
+		auto it = topic_map.find(topic_id);
+		if (it != topic_map.end())
 		{
 			topic = std::move(it->second);
-			__get_topic_map(topic_id).erase(it);
+			topic_map.erase(it);
 		}
 		return topic;
+	}
+	// pop derived topic.
+	template<typename topic_t, typename topic_id_t>
+	inline typename topic_t::ptr pop_topic(
+		IN const topic_id_t& topic_id) const
+	{
+		return std::dynamic_pointer_cast<topic_t>(pop_topic(topic_id));
 	}
 
 	// remove topic.
@@ -255,14 +285,6 @@ public:
 		}
 	}
 
-	// find derived topic.
-	template<typename topic_t, typename topic_id_t>
-	inline std::shared_ptr<topic_t> find_topic(IN const topic_id_t& topic_id) const
-	{
-		Topic::ptr topic = find_topic(topic_id);
-		return std::dynamic_pointer_cast<topic_t>(topic);
-	}
-
 	// clear all topic
 	inline void clear_topic()
 	{
@@ -270,7 +292,6 @@ public:
 		__clear_topic(m_str_topics);
 		__clear_topic(m_tid_topics);
 	}
-
 
 public:
 	// get seq topic last content.
@@ -367,33 +388,6 @@ private:
 		return m_tid_topics;
 	}
 
-	// get and create topic.
-	template<typename topic_id_t, typename topic_map_t>
-	inline Topic::ptr __get_topic(
-		IN const topic_id_t& topic_id,
-		IN topic_map_t& topic_map,
-		IN eco::MakeTopic make,
-		IN TopicEvent::ptr& event = TopicEvent::ptr())
-	{
-		{
-			eco::Mutex::ScopeLock lock(m_topics_mutex);
-			auto it = topic_map.find(topic_id);
-			if (it != topic_map.end())
-			{
-				return it->second;
-			}
-		}
-
-		if (make != nullptr)
-		{
-			Topic::ptr topic(make(&topic_id));
-			topic->on_init(event.get());
-			eco::Mutex::ScopeLock lock(m_topics_mutex);
-			return topic_map[topic_id] = topic;
-		}
-		return nullptr;
-	}
-
 	// clear all topic
 	template<typename TopicMap>
 	inline void __clear_topic(IN TopicMap& topic_map)
@@ -420,7 +414,7 @@ private:
 class QueueImpl
 {
 public:
-	inline void start()
+	inline void start(const char* name)
 	{}
 
 	inline void stop()
@@ -463,9 +457,9 @@ typedef TopicServerT<QueueImpl> TopicQueue;
 class ServerImpl
 {
 public:
-	inline void start()
+	inline void start(const char* name)
 	{
-		m_publish_server.run();
+		m_publish_server.run(name, 1);
 	}
 
 	inline void stop()
@@ -507,7 +501,7 @@ public:
 
 private:
 	// publish topic message thread.
-	eco::TaskServer<Publisher> m_publish_server;
+	eco::MessageServer<Publisher, PublisherHandler> m_publish_server;
 };
 typedef TopicServerT<ServerImpl> TopicServer;
 

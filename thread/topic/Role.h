@@ -2,18 +2,13 @@
 #define ECO_TOPIC_ROLE_H
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Any.h>
-#include <eco/Object.h>
+#include <eco/RtObject.h>
 #include <eco/log/Log.h>
 #include <eco/meta/Stamp.h>
 #include <eco/thread/topic/Subscription.h>
 
 
 ECO_NS_BEGIN(eco);
-class Topic;
-typedef eco::Topic* (*MakeTopic)(const void* id);
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // topic content snap type.
 enum
@@ -23,7 +18,6 @@ enum
 	snap_none = 4,
 };
 typedef uint8_t Snap;
-
 
 // whether it is a snap.
 inline bool is_newc(IN const Snap v)
@@ -44,81 +38,40 @@ inline bool is_snap_head(IN const Snap v)
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-class TopicClass
-{
-public:
-	inline TopicClass(
-		IN const uint32_t type_id,
-		IN const char* class_name,
-		IN const MakeTopic make_topic,
-		IN const TopicClass* parent)
-	{
-		m_type_id = type_id;
-		m_make_topic = make_topic;
-		m_class_name = class_name;
-		m_parent = parent;
-	}
-
-public:
-	uint32_t m_type_id;
-	MakeTopic m_make_topic;
-	const char* m_class_name;
-	const TopicClass* m_parent;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-// define customer topic.
-#define ECO_TOPIC(topic_t, parent_t) \
-ECO_OBJECT(topic_t) \
-public:\
-	inline topic_t() {} \
-	static const eco::TopicClass* topic_class()\
-	{\
-		static eco::TopicClass s_clss(eco::TypeId<topic_t>::value, \
-			#topic_t, &topic_t::make, parent_t::topic_class());\
-		return &s_clss; \
-	}\
-	static const eco::TopicClass* parent()\
-	{\
-		return topic_class()->m_parent;\
-	}\
-	virtual const eco::TopicClass* get_topic_class() const\
-	{\
-		return topic_class();\
-	}\
-	inline static eco::Topic* make(const void* id)\
-	{\
-		topic_t* topic = new topic_t();\
-		topic->m_id = *(const TopicId*)id;\
-		return topic; \
-	}
 
 //##############################################################################
 //##############################################################################
 class TopicId
 {
-private:
-	uint32_t m_type;
-	uint64_t m_value;
-
 public:
 	inline explicit TopicId(
 		IN const uint16_t type  = 0,
 		IN const uint16_t prop	= 0,
 		IN const uint64_t value = 0)
-		: m_type((type << 16) + prop)
-		, m_value(value)
-	{}
+	{
+		set(type, prop, value);
+	}
+
+	inline TopicId(IN const TopicId& d)
+	{
+		m_type = d.m_type;
+		m_value = d.m_value;
+	}
 
 	inline void set(
 		IN const uint16_t type  = 0,
 		IN const uint16_t prop  = 0,
 		IN const uint64_t value = 0)
 	{
-		m_type = (type << 16) + prop;
+		m_type = bind_type(type, prop);
 		m_value = value;
+	}
+
+	inline static uint32_t bind_type(
+		IN const uint16_t type,
+		IN const uint16_t prop)
+	{
+		return (type << 16) + prop;
 	}
 
 public:
@@ -130,6 +83,11 @@ public:
 	inline uint16_t get_prop() const
 	{
 		return uint16_t(m_type & 0xFFFF);
+	}
+
+	inline uint32_t get_type_value() const
+	{
+		return m_type;
 	}
 
 	inline uint64_t get_value() const
@@ -166,6 +124,12 @@ public:
 	{
 		return m_value == tid.m_value && m_type == tid.m_type;
 	}
+	// for std::map.
+	inline bool operator<(IN const TopicId& tid) const
+	{
+		return (m_type != tid.m_type)
+			? m_type < tid.m_type : m_value < tid.m_value;
+	}
 
 	inline bool equal(
 		IN const uint32_t type,
@@ -185,12 +149,9 @@ public:
 		}
 	};
 
-	// for std::map.
-	inline bool operator<(IN const TopicId& tid) const
-	{
-		return (m_type != tid.m_type) 
-			? m_type < tid.m_type : m_value < tid.m_value;
-	}
+private:
+	uint32_t m_type;
+	uint64_t m_value;
 };
 
 
@@ -207,7 +168,7 @@ public:
 	{}
 
 	// set topic content object_t.
-	virtual void* get_set_topic_object() = 0;
+	virtual void* get_object() = 0;
 
 	// set topic content value_t. 
 	virtual void* get_value() = 0;
@@ -264,7 +225,7 @@ public:
 		return &m_value;
 	}
 
-	virtual void* get_set_topic_object() override
+	virtual void* get_object() override
 	{
 		return get_object(m_value);
 	}
@@ -299,6 +260,7 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+class Topic;
 class TopicEvent
 {
 public:
@@ -317,10 +279,11 @@ class Content
 {
 public:
 	inline Content(
-		IN eco::ContentData::ptr& content,
+		IN eco::ContentData::ptr& new_c,
+		IN eco::ContentData::ptr& old_c,
 		IN eco::Snap snap,
 		IN eco::TopicEvent* event = nullptr)
-		: m_event(event), m_snap(snap), m_content(&content)
+		: m_event(event), m_snap(snap), m_new_c(&new_c), m_old_c(&old_c)
 	{}
 
 	// data context.
@@ -337,35 +300,58 @@ public:
 	template<typename value_t>
 	inline value_t& cast()
 	{
-		return *static_cast<value_t*>((**m_content).get_value());
+		return *static_cast<value_t*>((**m_new_c).get_value());
 	}
 	template<typename value_t>
 	inline value_t* cast_ptr()
 	{
 		return type_id() == eco::TypeId<value_t>::value
-			? static_cast<value_t*>((**m_content).get_value()) : nullptr;
+			? static_cast<value_t*>((**m_new_c).get_value()) : nullptr;
+	}
+
+	// cast content old object.
+	template<typename value_t>
+	inline value_t& cast_old()
+	{
+		return *static_cast<value_t*>((**m_old_c).get_value());
+	}
+	template<typename value_t>
+	inline value_t* cast_old_ptr()
+	{
+		return type_id() == eco::TypeId<value_t>::value
+			? static_cast<value_t*>((**m_old_c).get_value()) : nullptr;
+	}
+	inline bool has_old() const
+	{
+		return m_old_c == nullptr;
 	}
 
 	// content type.
 	inline const uint32_t type_id() const
 	{
-		return (**m_content).get_type_id();
+		return (**m_new_c).get_type_id();
 	}
 
 	// content data.
 	inline eco::ContentData& data()
 	{
-		return **m_content;
+		return **m_new_c;
 	}
 	inline const eco::ContentData::ptr& data_ptr() const
 	{
-		return *m_content;
+		return *m_new_c;
 	}
 
 	// content snap.
 	inline eco::Snap snap() const
 	{
 		return m_snap;
+	}
+
+	// publish meta data: snap + stamp.
+	inline uint8_t meta() const
+	{
+		return uint8_t((get_stamp() << 4) + m_snap);
 	}
 
 	// get snap type.
@@ -389,17 +375,18 @@ public:
 	// content stamp.
 	inline eco::meta::Stamp& stamp()
 	{
-		return (**m_content).stamp();
+		return (**m_new_c).stamp();
 	}
 	inline const eco::meta::Stamp get_stamp() const
 	{
-		return (**m_content).get_stamp();
+		return (**m_new_c).get_stamp();
 	}
 
 private:
-	eco::TopicEvent* m_event;
 	eco::Snap m_snap;
-	eco::ContentData::ptr* m_content;
+	eco::TopicEvent* m_event;
+	eco::ContentData::ptr* m_new_c;
+	eco::ContentData::ptr* m_old_c;
 };
 
 
@@ -426,22 +413,186 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Topic : public detail::Topic
+class TopicUid
 {
-	ECO_OBJECT(Topic);
 public:
-	// topic class.
-	static const TopicClass* topic_class()
+	inline TopicUid()
 	{
-		static eco::TopicClass s_clss(0, 0, 0, 0);
-		return &s_clss;
+		memset(this, 0, sizeof(*this));
 	}
-	// get topic class.
-	virtual const TopicClass* get_topic_class() const
+	inline ~TopicUid()
 	{
-		return topic_class();
+		release();
 	}
 
+	// constructor.
+	inline explicit TopicUid(uint64_t v, void* server)
+		: m_type(type_iid), m_server(server)
+	{
+		m_data.iid = v;
+	}
+	inline explicit TopicUid(const eco::TopicId& v, void* server)
+		: m_type(type_tid), m_server(server)
+	{
+		m_data.tid = v;
+	}
+	inline explicit TopicUid(const char* v, void* server) : m_server(server)
+	{
+		asign(v);
+	}
+	inline explicit TopicUid(const std::string& v, void* server)
+		: m_server(server)
+	{
+		asign(v.c_str(), v.size());
+	}
+	inline explicit TopicUid(const TopicUid& v)
+	{
+		set(v);
+	}
+
+	// set topic id value.
+	inline void set(uint64_t v, void* server)
+	{
+		release();
+		m_data.iid = v;
+		m_type = type_iid;
+		m_server = server;
+	}
+	inline void set(const eco::TopicId& v, void* server)
+	{
+		release();
+		m_data.tid = v;
+		m_type = type_tid;
+		m_server = server;
+	}
+	inline void set(const char* v, void* server)
+	{
+		release();
+		asign(v);
+		m_server = server;
+	}
+	inline void set(const std::string& v, void* server)
+	{
+		release();
+		asign(v.c_str(), v.size());
+		m_server = server;
+	}
+
+	inline void set(const TopicUid& id)
+	{
+		if (id.m_type == type_iid) set(id.iid(), id.m_server);
+		if (id.m_type == type_tid) set(id.tid(), id.m_server);
+		if (id.m_type == type_sid) set(id.sid(), id.m_server);
+	}
+
+	inline void release()
+	{
+		if (m_type == type_sid)
+		{
+			delete m_data.sid;
+			m_data.sid = nullptr;
+		}
+	}
+
+	inline TopicUid& operator=(const TopicUid& v)
+	{
+		set(v);
+		return *this;
+	}
+	inline bool operator<(const TopicUid& v) const
+	{
+		if (m_type < v.m_type) return true;
+		if (m_type > v.m_type) return false;
+		if (m_server < v.m_server) return true;
+		if (m_server > v.m_server) return false;
+		if (m_type == TopicUid::type_iid)
+			return m_data.iid < v.m_data.iid;
+		if (m_type == TopicUid::type_tid)
+			return m_data.tid < v.m_data.tid;
+		if (m_type == TopicUid::type_sid)
+			return strcmp(m_data.sid, m_data.sid) < 0;
+		return false;
+	}
+	inline bool operator==(const TopicUid& v) const
+	{
+		if (m_type != v.m_type) return false;
+		if (m_type == TopicUid::type_iid)
+			return m_data.iid == v.m_data.iid && m_server == v.m_server;
+		if (m_type == TopicUid::type_tid)
+			return m_data.tid == v.m_data.tid && m_server == v.m_server;
+		if (m_type == TopicUid::type_sid)
+			return eco::equal(m_data.sid, m_data.sid) && m_server == v.m_server;
+		return false;
+	}
+
+public:
+	template<typename topid_id_t>
+	inline topid_id_t cast() const
+	{
+		return *(topid_id_t*)&m_data;
+	}
+	template<> inline uint64_t cast() const { return iid();	}
+	template<> inline eco::TopicId cast() const	{ return tid();	}
+	template<> inline const char* const cast() const { return sid(); }
+
+	inline uint64_t iid() const
+	{
+		if (m_type != type_iid) ECO_THROW("invalid type iid");
+		return m_data.iid;
+	}
+	inline const eco::TopicId& tid() const
+	{ 
+		if (m_type != type_tid) ECO_THROW("invalid type tid");
+		return (TopicId&)m_data.tid;
+	}
+	inline const char* const sid() const
+	{
+		if (m_type != type_sid) ECO_THROW("invalid type sid");
+		return m_data.sid;
+	}
+
+private:
+	enum Type
+	{
+		type_iid,
+		type_tid,
+		type_sid,
+	};
+	union Data
+	{
+		uint64_t iid;
+		TopicId  tid;
+		char*    sid;
+
+		inline Data()
+		{
+			memset(this, 0, sizeof(*this));
+		}
+		inline ~Data() {}
+	};
+	Data	m_data;
+	void*	m_server;
+	Type	m_type;
+
+	inline void asign(const char* v, size_t siz = -1)
+	{
+		if (siz == -1) siz = strlen(v);
+		m_data.sid = new char[siz + 1];
+		memcpy(m_data.sid, v, siz + 1);
+		m_type = type_sid;
+	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+typedef eco::CreateRtObject CreateTopic;
+#define ECO_TOPIC(topic_t, parent_t) ECO_RTX(topic_t, parent_t)
+
+////////////////////////////////////////////////////////////////////////////////
+class Topic : public detail::Topic, public RtObject
+{
+	ECO_TOPIC(Topic, RtObject);
+public:
 	// init topic event.
 	virtual void on_init(IN eco::TopicEvent* event) {}
 
@@ -456,7 +607,8 @@ protected:
 
 	// move new content to snap content.
 	virtual bool do_move(
-		OUT eco::ContentData::ptr& new_c) 
+		OUT eco::ContentData::ptr& new_c,
+		OUT eco::ContentData::ptr& old)
 	{
 		return true;
 	}
@@ -468,17 +620,32 @@ public:
 	inline Topic() {}
 	virtual ~Topic() {}
 
-	// check the topic is a type of Topic.
-	template<typename Topic>
-	inline bool is_a() const
+	// topic identity.
+	inline const TopicUid& get_uid() const
 	{
-		auto* tc = get_topic_class();
-		while (tc && tc != Topic::topic_class())
-		{
-			tc = tc->m_parent;
-		}
-		return tc != 0;
+		return m_id;
 	}
+	template<typename topid_id_t>
+	inline const topid_id_t get_id() const
+	{
+		return m_id.cast<topid_id_t>();
+	}
+
+	template<typename topid_server_t>
+	inline topid_server_t& topic_server()
+	{
+		return *(topid_server_t*)m_id.m_server;
+	}
+	template<typename topid_server_t>
+	inline const topid_server_t& get_topic_server() const
+	{
+		return *(topid_server_t*)m_id.m_server;
+	}
+
+	// get tid/iid/sid
+	inline uint64_t iid() { return m_id.iid(); }
+	inline const char* sid() { return m_id.sid(); }
+	inline const eco::TopicId& tid() { return m_id.tid(); }
 
 	// add "object set/object/shared_object" to topic by "load".
 	template<typename object_set_t>
@@ -519,7 +686,8 @@ public:
 	{
 		// publish new content to all subscriber.
 		eco::Mutex::ScopeLock lock(mutex());
-		if (!do_move(new_c)) return;
+		eco::ContentData::ptr old_c;
+		if (!do_move(new_c, old_c)) return;
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
@@ -527,7 +695,7 @@ public:
 			if (node->m_working)
 			{
 				auto* suber = (Subscriber*)node->m_subscriber;
-				suber->on_publish(*this, Content(new_c, snap_none));
+				suber->on_publish(*this, Content(new_c, old_c, snap_none));
 			}
 			node = next;
 		}
@@ -578,7 +746,7 @@ protected:
 	{
 		ContentData::ptr newc(new ContentDataT<
 			object_t, object_t>(obj, eco::meta::stamp_insert));
-		do_move(newc);
+		do_move(newc, ContentData::ptr());
 	}
 	template<typename object_t>
 	inline void push_back_raw(IN const std::shared_ptr<object_t>& obj)
@@ -586,27 +754,12 @@ protected:
 		typedef std::shared_ptr<object_t> value_t;
 		ContentData::ptr newc(new ContentDataT<
 			object_t, value_t>(obj, eco::meta::stamp_insert));
-		do_move(newc);
+		do_move(newc, ContentData::ptr());
 	}
-};
 
-
-////////////////////////////////////////////////////////////////////////////////
-// note that PopTopic is base topic of "One/Seq/Set" topic.
-template<typename TopicId = eco::TopicId>
-class PopTopic : public Topic
-{
-	ECO_TOPIC(PopTopic, Topic);
-protected:
-	typedef TopicId TopicId;
-	TopicId m_id;
-
-public:
-	// topic identity.
-	inline const TopicId& get_id() const
-	{
-		return m_id;
-	}
+private:
+	friend class TopicInner;
+	TopicUid m_id;
 };
 
 
@@ -700,7 +853,14 @@ private:
 	ContentData::ptr m_new_content;
 	AutoRefPtr<Subscription> m_node;
 };
-
+class PublisherHandler
+{
+public:
+	inline void operator()(Publisher& task)
+	{
+		task();
+	}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);

@@ -17,7 +17,7 @@ thread safe object state.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
+#include <eco/Object.h>
 #include <windows.h>
 
 

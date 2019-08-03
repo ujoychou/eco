@@ -34,9 +34,9 @@ public:
 	// start thread.
 	typedef eco::Thread::thread_func thread_func;
 	inline void run(
-		thread_func func,
+		IN thread_func func,
 		IN uint32_t thread_size,
-		IN const char* name = nullptr)
+		IN const char* name = "")
 	{
 		for (uint32_t i=0; i<thread_size; ++i)
 		{

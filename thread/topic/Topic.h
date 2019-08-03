@@ -10,26 +10,29 @@
 ECO_NS_BEGIN(eco);
 //##############################################################################
 //##############################################################################
-template<typename TopicId = eco::TopicId>
-class OneTopic : public PopTopic<TopicId>
+class OneTopic : public Topic
 {
-	ECO_TOPIC(OneTopic, PopTopic<TopicId>);
+	ECO_TOPIC(OneTopic, Topic);
 protected:
 	virtual void do_snap(
 		IN eco::Subscription& node,
 		IN eco::TopicEvent* event) override
 	{
-		if (m_snap.get() != nullptr)
+		if (m_snap != nullptr)
 		{
+			eco::ContentData::ptr old;
 			auto* suber = (Subscriber*)node.m_subscriber;
 			Snap type = snap_head | snap_last;
 			m_snap->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(m_snap, type, event));
+			suber->on_publish(*this, Content(m_snap, old, type, event));
 		}
 	}
 
-	virtual bool do_move(OUT eco::ContentData::ptr& newc) override
+	virtual bool do_move(
+		OUT eco::ContentData::ptr& newc,
+		OUT eco::ContentData::ptr& old) override
 	{
+		old = m_snap;
 		m_snap = newc;		// update snap with new data.
 		return true;
 	}
@@ -52,10 +55,9 @@ protected:
 
 //##############################################################################
 //##############################################################################
-template<typename TopicId = eco::TopicId>
-class SeqTopic : public PopTopic<TopicId>
+class SeqTopic : public Topic
 {
-	ECO_TOPIC(SeqTopic, PopTopic<TopicId>);
+	ECO_TOPIC(SeqTopic, Topic);
 public:
 	/* exp"market kline", last content can be updated as follow:
 	1) get seq topic last content, check it's id equal with new item?
@@ -81,6 +83,12 @@ public:
 	inline const std::deque<eco::ContentData::ptr>& snap_set_raw() const
 	{
 		return m_snap_set;
+	}
+	template<typename object_t>
+	inline object_t at(IN uint32_t i)
+	{
+		eco::Mutex::ScopeLock lock(mutex());
+		return m_snap_set[i]->cast<object_t>();
 	}
 
 	// add "object set/object/shared_object" to topic by "load".
@@ -138,7 +146,7 @@ protected:
 		if (seq > m_snap_set.size())
 		{
 			seq = 0;
-			EcoError << "seq topic hasn't enough content to publish snap "
+			ECO_ERROR << "seq topic hasn't enough content to publish snap "
 				<< "seq > size()" << seq <= m_snap_set.size();
 		}
 		size_t seq_init = seq + 1;
@@ -146,6 +154,7 @@ protected:
 
 		// *node subscriber may be destruct in "on_publish";
 		// publish the snap, and set a content type.
+		eco::ContentData::ptr empty;
 		auto* suber = (eco::Subscriber*)node.m_subscriber;
 		for (; seq < m_snap_set.size() && node.m_working; ++seq)
 		{
@@ -154,19 +163,25 @@ protected:
 			if (seq == m_snap_set.size() - 1)
 				eco::add(type, eco::snap_last);
 
-			auto& content = m_snap_set[seq];
-			content->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(content, type, event));
+			auto& cur = m_snap_set[seq];
+			auto& old = (seq > 0) ? m_snap_set[seq - 1] : empty;
+			cur->stamp() = eco::meta::stamp_insert;
+			suber->on_publish(*this, Content(cur, old, type, event));
 		}
 	}
 
-	virtual bool do_move(OUT eco::ContentData::ptr& newc) override
+	virtual bool do_move(
+		OUT eco::ContentData::ptr& newc,
+		OUT eco::ContentData::ptr& old) override
 	{
 		// update last content.
 		if (eco::meta::is_update(newc->get_stamp()) && m_snap_set.size() > 0)
+		{
+			old = m_snap_set.back();
 			m_snap_set.back() = newc;
-		else
-			m_snap_set.push_back(newc);
+			return true;
+		}
+		m_snap_set.push_back(newc);
 		return true;
 	}
 
@@ -185,8 +200,8 @@ protected:
 class IdAdapter
 {
 public:
-	template<typename ObjectId, typename Object, typename TopicId>
-	inline void get_id(ObjectId& id, const Object& obj, const TopicId& tid)
+	template<typename ObjectId, typename Object>
+	inline void get_id(ObjectId& id, const Object& obj)
 	{
 		id = obj.id();
 	}
@@ -194,8 +209,8 @@ public:
 class GetIdAdapter
 {
 public:
-	template<typename ObjectId, typename Object, typename TopicId>
-	inline void get_id(ObjectId& id, const Object& obj, const TopicId& tid)
+	template<typename ObjectId, typename Object>
+	inline void get_id(ObjectId& id, const Object& obj)
 	{
 		id = obj.get_id();
 	}
@@ -205,12 +220,13 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 template<typename ObjectId, typename Object, 
 	typename ObjectIdAdapter = GetIdAdapter,
-	typename TopicId = eco::TopicId,
 	typename ObjectMap = std::unordered_map<ObjectId, eco::ContentData::ptr> >
-class SetTopic : public PopTopic<TopicId>
+class SetTopic : public Topic
 {
-	ECO_TOPIC(SetTopic, PopTopic<TopicId>);
+	ECO_TOPIC(SetTopic, Topic);
 public:
+	typedef Object object;
+
 	// find object by identity.
 	template<typename value_t>
 	inline bool find(OUT value_t& v, IN  const ObjectId& id) const
@@ -254,6 +270,7 @@ protected:
 		// *node subscriber may be destruct in "on_publish";
 		// publish the snap, and set a content type.
 		uint32_t index = 0;
+		eco::ContentData::ptr old;
 		auto* suber = (Subscriber*)node.m_subscriber;
 		Snap snap = snap_head;
 		auto it = m_snap_set.begin();
@@ -264,24 +281,32 @@ protected:
 			if (index == m_snap_set.size() - 1)
 				eco::add(snap, snap_last);
 			it->second->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(it->second, snap, event));
+			suber->on_publish(*this, Content(it->second, old, snap, event));
 		}
 	}
 
-	virtual bool do_move(OUT eco::ContentData::ptr& newc) override
+	virtual bool do_move(
+		OUT eco::ContentData::ptr& newc,
+		OUT eco::ContentData::ptr& old) override
 	{
 		// get object id.
 		ObjectId obj_id;
 		ObjectIdAdapter adapt;
-		adapt.get_id(obj_id, *(Object*)newc->get_set_topic_object(), m_id);
+		adapt.get_id(obj_id, *(Object*)newc->get_value());
 		if (eco::meta::is_remove(newc->get_stamp()))
 		{
 			newc->stamp() = eco::meta::stamp_remove;
-			m_snap_set.erase(obj_id);
+			auto it = m_snap_set.find(obj_id);
+			if (it != m_snap_set.end())
+			{
+				old = it->second;
+				m_snap_set.erase(it);
+			}
 		}
 		else
 		{
 			auto& oldc = m_snap_set[obj_id];
+			old = oldc;
 			newc->stamp() = (oldc != nullptr)
 				? eco::meta::stamp_update
 				: eco::meta::stamp_insert;

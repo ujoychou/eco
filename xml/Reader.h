@@ -22,16 +22,11 @@ xml key value reader.
 * copyright(c) 2016 - 2018, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
-#include <eco/Typex.h>
-#include <string>
-
+#include <eco/Type.h>
 
 
 namespace eco{;
 namespace xml{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Reader
 {

@@ -19,11 +19,37 @@
 *******************************************************************************/
 #include <eco/thread/State.h>
 #include <eco/thread/ConditionVariable.h>
+#include <eco/date_time/Time.h>
+#include <eco/log/Log.h>
 #include <deque>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
+////////////////////////////////////////////////////////////////////////////////
+class MessageQueueFlow : public eco::date_time::SizeFlow
+{
+public:
+	typedef eco::date_time::SizeFlow SizeFlow;
+	inline MessageQueueFlow() : SizeFlow()
+	{}
 
+	inline void count(
+		IN const size_t queue,
+		IN const std::string& name,
+		IN const char* flag)
+	{
+		if (!SizeFlow::count())
+		{
+			return;
+		}
+		if (queue >= 50)
+		{
+			ECO_WARN << flag <= name <= queue <= m_size_flow < "/s" <= m_size;
+			return;
+		}
+		//ECO_DEBUG << flag <= name <= queue <= m_size_flow < "/s" <= m_size;
+	}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Message>
@@ -43,6 +69,20 @@ public:
 	{
 		set_capacity(capacity);
 		open();
+	}
+
+	// set name of this message queue.
+	inline void set_name(const char* name)
+	{
+		m_name = name;
+	}
+	inline void set_name(const std::string& name)
+	{
+		m_name = name;
+	}
+	inline const std::string& name() const
+	{
+		return m_name;
 	}
 
 	/*@ set message queue capacity.*/
@@ -109,14 +149,14 @@ public:
 	}
 
 	/*@ pop message from this message queue.*/
-	inline const bool pop(OUT Message& msg)
+	inline size_t pop(OUT Message& msg)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
 		while (is_empty())
 		{
 			if (is_close())
 			{
-				return false;
+				return -1;
 			}
 			m_empty_cond_var.wait();
 		}
@@ -124,7 +164,7 @@ public:
 		msg = std::move(m_deque.front());
 		m_deque.pop_front();
 		m_full_cond_var.notify_one();
-		return true;
+		return m_deque.size();
 	}
 
 	// is message queue empty.
@@ -160,11 +200,14 @@ private:
 	{
 		while (is_full())
 		{
+			ECO_FUNC(error) << "message queue is full: " << m_capacity
+				<= typeid(Message).name();
 			m_full_cond_var.wait();
 		}
 
 		//m_deque.push_back(message());
 		//m_deque.back().swap(msg);
+		m_flow.count(m_deque.size(), m_name, "i");
 		m_deque.push_back(std::move(msg));
 		m_empty_cond_var.notify_one();
 	}
@@ -178,6 +221,10 @@ private:
 	{
 		return (m_deque.size() == m_capacity);
 	}
+
+	// name of this message queue.
+	std::string m_name;
+	MessageQueueFlow m_flow;
 
 	//  message queue max size.
 	uint32_t m_capacity;
