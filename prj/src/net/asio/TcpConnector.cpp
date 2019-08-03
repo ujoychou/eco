@@ -60,7 +60,7 @@ public:
 		tcp::resolver::iterator it_endpoint = resolver.resolve(query, ec);
 		if (ec)		// parse addr error.
 		{
-			EcoThrow(ec.value()) << ec.message();
+			ECO_THROW(ec.value()) << ec.message();
 		}
 
 		// connect to server.
@@ -82,6 +82,7 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
+			ECO_FUNC(info) << "peer is empty.";
 			return;
 		}
 
@@ -119,6 +120,8 @@ public:
 	{
 		uint32_t size = data.size() - start_pos;
 		char* buff = &data[start_pos];
+		// note: follow sentence is wrong, data will be null by eco::move.
+		// boost::asio::buffer(&data[start_pos], size)
 		m_socket.async_read_some(
 			boost::asio::buffer(buff, size),
 			boost::bind(&Impl::on_read_until, this,
@@ -138,6 +141,7 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
+			ECO_FUNC(info) << "peer is empty.";
 			return;
 		}
 
@@ -163,19 +167,21 @@ public:
 	}
 
 public:
-	inline void async_read_head(
-		IN char* data,
-		IN const uint32_t size)
+	inline void async_read_head(IN const uint32_t size)
 	{
+		eco::String data(size);
+		char* buff = &data[0];		
+		// note: follow sentence is wrong, data will be null by eco::move.
+		// boost::asio::buffer(&data[0], size)
 		boost::asio::async_read(m_socket,
-			boost::asio::buffer(data, size),
-			boost::bind(&Impl::on_read_head, this, data, size,
+			boost::asio::buffer(buff, size),
+			boost::bind(&Impl::on_read_head, this, eco::move(data), size,
 			m_peer_observer, boost::asio::placeholders::error,
 			boost::asio::placeholders::bytes_transferred));
 	}
 
 	inline void on_read_head(
-		IN char* data,
+		IN eco::String& data,
 		IN const uint32_t size,
 		IN std::weak_ptr<TcpPeer>& peer_wptr,
 		IN const boost::system::error_code& ec,
@@ -184,16 +190,17 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
+			ECO_FUNC(info) << "peer is empty.";
 			return;
 		}
 
 		if (ec)
 		{
 			eco::Error e(ec.message(), ec.value());
-			m_handler->on_read_head(data, size, &e);
+			m_handler->on_read_head(data, &e);
 			return;
 		}
-		m_handler->on_read_head(data, size, nullptr);
+		m_handler->on_read_head(data, nullptr);
 	}
 
 	inline void async_read_data(
@@ -220,6 +227,7 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
+			ECO_FUNC(info) << "peer is empty.";
 			return;
 		}
 
@@ -259,6 +267,7 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
+			ECO_FUNC(info) << "peer is empty.";
 			return;
 		}
 
@@ -302,6 +311,7 @@ public:
 		std::shared_ptr<TcpPeer> peer(peer_wptr.lock());
 		if (peer == nullptr)
 		{
+			ECO_FUNC(info) << "peer is empty.";
 			return;
 		}
 
@@ -374,10 +384,9 @@ void TcpConnector::close()
 	m_impl->close();
 }
 
-void TcpConnector::async_read_head(
-	IN char* data, IN const uint32_t head_size)
+void TcpConnector::async_read_head(IN const uint32_t head_size)
 {
-	m_impl->async_read_head(data, head_size);
+	m_impl->async_read_head(head_size);
 }
 
 void TcpConnector::async_read_data(

@@ -2,7 +2,7 @@
 #include <eco/date_time/DateTime.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Type.h>
-#include <vector>
+#include <eco/date_time/Time.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -12,12 +12,10 @@
 
 namespace eco{;
 namespace date_time{;
-
-
 //##############################################################################
 //##############################################################################
 ////////////////////////////////////////////////////////////////////////////////
-void Timestamp::get_time(IN Date& date, IN uint32_t& time)
+DateTime now()
 {
 	using namespace boost::posix_time;
 	ptime pt = second_clock::local_time();
@@ -26,8 +24,7 @@ void Timestamp::get_time(IN Date& date, IN uint32_t& time)
 	uint32_t y = dt.year();
 	uint32_t m = dt.month();
 	uint32_t d = dt.day();
-	date = eco::date_time::Date(y, m, d);
-	time = (uint32_t)pt.time_of_day().total_seconds();
+	return DateTime(Date(y, m, d), (uint32_t)ti.total_seconds());
 }
 
 
@@ -49,6 +46,7 @@ void Timestamp::set_clock(IN bool second_clock)
 	uint32_t mi = static_cast<uint32_t>(ti.minutes());
 	uint32_t s  = static_cast<uint32_t>(ti.seconds());
 	uint32_t ms = static_cast<uint32_t>(ti.total_microseconds() % 1000000);
+	m_millsecs = ti.total_milliseconds();
 
 	switch (m_time_format)
 	{
@@ -89,9 +87,9 @@ void Timestamp::set_clock(IN bool second_clock)
 
 //##############################################################################
 //##############################################################################
-class DateTime::Impl
+class Format::Impl
 {
-	ECO_IMPL_INIT(DateTime);
+	ECO_IMPL_INIT(Format);
 public:
 	std::string m_date;
 	std::string m_time;
@@ -196,16 +194,16 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_VALUE_IMPL(DateTime);
-bool DateTime::set(IN const char* str)
+ECO_VALUE_IMPL(Format);
+bool Format::set(IN const char* str)
 {
 	return m_impl->set_date_time(str);
 }
-const char* DateTime::get_date() const
+const char* Format::get_date() const
 {
 	return m_impl->m_date.c_str();
 }
-const char* DateTime::get_time() const
+const char* Format::get_time() const
 {
 	return m_impl->m_time.c_str();
 }
@@ -268,10 +266,10 @@ double get_duration_size(
 	catch (std::exception& e) 
 	{
 		e.what();
-		EcoThrow << "get_duration_size error time: "
+		ECO_THROW(0) << "get_duration_size error time: "
 			<< s_dt << " " << e_dt;
 	}
-	EcoThrow << "get_duration_size error type:" << t_type;
+	ECO_THROW(0) << "get_duration_size error type:" << t_type;
 	return v;
 }
 
@@ -345,10 +343,10 @@ int get_duration_unit(
 	catch (std::exception& e)
 	{
 		e.what();
-		EcoThrow << "get_duration_unit error time: "
+		ECO_THROW(0) << "get_duration_unit error time: "
 			<< s_dt << " " << e_dt;
 	}
-	EcoThrow << "get_duration_unit error type:" << t_type;
+	ECO_THROW(0) << "get_duration_unit error type:" << t_type;
 	return v;
 }
 
@@ -410,11 +408,10 @@ std::string get_unit_time(
 	}
 	catch (std::exception& e)
 	{
-		e.what();
-		EcoThrow << "get_unit_time error time: " << start_dt;
+		ECO_THROW(0) << "get_unit_time error time: " << start_dt
+			<= e.what();
 	}
-	assert(false);
-	return "";
+	return eco::empty_str;
 }
 
 
@@ -451,6 +448,15 @@ ECO_API void format_date_time_unit(
 		break;
 	}
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+uint32_t Time::today_seconds()
+{
+	using namespace boost::posix_time;
+	return (uint32_t)second_clock::local_time().time_of_day().total_seconds();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

@@ -29,6 +29,9 @@ public:
 		OUT std::string& field_sql,
 		IN  const uint32_t field_type,
 		IN  const uint32_t field_size) = 0;
+
+	// get config database name.
+	virtual const char* get_database() = 0;
 };
 
 

@@ -1,6 +1,7 @@
 #include "PrecHeader.h"
 #include <eco/persist/Persist.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/Being.h>
 #include <eco/meta/Meta.h>
 #include <eco/DllObject.h>
 #include <eco/persist/Database.h>
@@ -18,13 +19,13 @@ eco::Database* create_database(IN const persist::SourceType type)
 	if (type == persist::source_mysql)
 	{
 		static eco::DllObject mysql;
-		mysql.set_dll("", "eco_mysql.dll");
+		mysql.load("eco_mysql.dll");
 		create_func = mysql.cast_function<CreateFunc>("create");
 	}
 	else if (type == persist::source_sqlite)
 	{
 		static eco::DllObject sqlite;
-		sqlite.set_dll("", "eco_sqlite.dll");
+		sqlite.load("eco_sqlite.dll");
 		create_func = sqlite.cast_function<CreateFunc>("create");
 	}
 	return (create_func != nullptr) ? create_func() : nullptr;
@@ -59,21 +60,30 @@ public:
 		state_load	= eco::atomic::State::_b,
 	};
 
+	class Loading
+	{
+	public:
+		inline Loading(uint64_t& id) : m_load_thread_id(id) {}
+		inline ~Loading() { m_load_thread_id = 0; }
+		uint64_t& m_load_thread_id;
+	};
+
 	PersistHandler*			m_handler;
 	eco::Database::ptr		m_master;
 	std::vector<Upgrade>	m_upgrade_seq;
 	eco::ObjectMapping		m_orm_version;
 	eco::atomic::State		m_state;
 	persist::Address		m_address;
+	uint64_t				m_load_thread_id;
 
-	inline Impl() : m_handler(nullptr)
+	inline Impl() : m_handler(nullptr), m_load_thread_id(0)
 	{
 		eco::Being::set_name("persist");
 	}
 
 	inline void init(IN Persist& parent)
 	{
-		set_live_ticks(1);	// 30 second.
+		set_live_seconds(5);
 		m_orm_version.id("version").table("_version");
 		m_orm_version.add().property("value").field("version").pk(true).int_type();
 		m_orm_version.add().property("module").field("module").pk(true).vchar_small();
@@ -99,7 +109,7 @@ bool Persist::Impl::on_born()
 		std::sort(m_upgrade_seq.begin(), m_upgrade_seq.end());
 	}
 
-	// 3.create database config in "sys.xml".
+	// 4.create database config in "sys.xml".
 	eco::persist::Address& addr = m_address;
 	m_master.reset(create_database(addr.get_type()));
 	return (m_master != nullptr);
@@ -121,7 +131,7 @@ void Persist::Impl::on_live()
 			addr.get_type_name(), addr.get_name(),
 			addr.get_database(), addr.get_user(), addr.get_password(),
 			addr.get_host(), addr.get_port());
-		EcoInfo << log;
+		ECO_INFO << log;
 	}
 
 	// 5.upgrade database according to it's current version.
@@ -161,6 +171,7 @@ void Persist::Impl::on_live()
 	{
 		if (m_handler != nullptr)
 		{
+			Loading load(m_load_thread_id = eco::this_thread::id());
 			m_handler->on_load();
 		}
 		m_state.add(state_load);
@@ -200,17 +211,24 @@ void Persist::set_upgrade(IN const uint32_t ver, IN UpgradeFunc func)
 {
 	impl().m_upgrade_seq.push_back(Upgrade(ver, func));
 }
-void Persist::check_state()
-{
-	if (!impl().m_state.has(Impl::state_load))
-		EcoThrow(eco::error) << "persist is unready, it must has loaded data.";
-}
 eco::Database& Persist::master()
 {
+	if (impl().m_state.has(Impl::state_init) && 
+		!impl().m_state.has(Impl::state_load) &&
+		eco::this_thread::id() != impl().m_load_thread_id)
+	{
+		// only persist is unready and not in "on_load".
+		// "on_load": load_thread_id == current thread id.
+		ECO_THROW(eco::error) << "persist is unready, unload data.";
+	}
 	return *impl().m_master;
 }
 void Persist::close()
 {
+	if (impl().m_handler != nullptr)
+	{
+		impl().m_handler->to_exit();
+	}
 	if (impl().m_master != nullptr)
 	{
 		impl().m_master->close();
@@ -219,7 +237,6 @@ void Persist::close()
 	if (impl().m_handler != nullptr)
 	{
 		impl().m_handler->on_exit();
-		impl().m_handler = nullptr;
 	}
 }
 

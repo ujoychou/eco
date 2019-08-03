@@ -17,7 +17,7 @@ enum
 	stamp_remove	= 2,		// remove object.
 	stamp_clean		= 3,		// clean  object.(not update)
 };
-typedef uint16_t Stamp;
+typedef uint8_t Stamp;
 
 
 ////////////////////////////////////////////////////////////////////////////////

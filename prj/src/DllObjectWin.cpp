@@ -17,7 +17,7 @@ void* load_dll(IN const char* dll_name)
 	if (handler == nullptr)
 	{
 		uint32_t eid = ::GetLastError();
-		EcoThrow(eid) << "load windows library fail: " << dll_name;
+		ECO_THROW(eid) << "load windows library fail: " << dll_name;
 	}
 	return handler;
 }
@@ -39,7 +39,7 @@ DllFunc get_function(IN void* dll_handle, IN const char* func_name)
 	if (func == nullptr)
 	{
 		uint32_t eid = ::GetLastError();
-		EcoThrow(eid) << "load windows library fail: " << func_name;
+		ECO_THROW(eid) << "load windows library fail: " << func_name;
 	}
 	return func;
 }

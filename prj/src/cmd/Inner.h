@@ -50,8 +50,7 @@ class CdCommand : public eco::cmd::Command
 {
 	ECO_COMMAND(CdCommand, "cd", "cd");
 public:
-	virtual void execute(
-		IN const eco::cmd::Context& context);
+	virtual void execute(eco::cmd::Context& context);
 	virtual void revoke();
 	virtual void resume();
 
@@ -65,8 +64,7 @@ class PwdCommand : public eco::cmd::Command
 {
 	ECO_COMMAND(PwdCommand, "pwd", "pwd");
 public:
-	virtual void execute(
-		IN const eco::cmd::Context& context);
+	virtual void execute(eco::cmd::Context& context);
 	virtual void revoke();
 	virtual void resume();
 	std::string pwd(IN Group& group);
@@ -78,8 +76,7 @@ class HelpCommand : public eco::cmd::Command
 {
 	ECO_COMMAND(HelpCommand, "help", "?");
 public:
-	virtual void execute(
-		IN const eco::cmd::Context& context);
+	virtual void execute(eco::cmd::Context& context);
 	virtual void revoke();
 	virtual void resume();
 };
@@ -90,8 +87,7 @@ class ListCommand : public eco::cmd::Command
 {
 	ECO_COMMAND(ListCommand, "list", "ll");
 public:
-	virtual void execute(
-		IN const eco::cmd::Context& context);
+	virtual void execute(eco::cmd::Context& context);
 	virtual void revoke();
 	virtual void resume();
 };

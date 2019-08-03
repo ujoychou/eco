@@ -44,6 +44,7 @@ public:
 	TcpPeer::wptr m_peer_observer;
 	TcpPeerHandler* m_handler;
 	TcpConnector m_connector;
+	eco::atomic::State m_data_state;
 	std::auto_ptr<ConnectionData> m_data;
 	MessageWorker* m_server;
 	// the session of tcp peer.
@@ -135,6 +136,17 @@ public:
 		m_state.set_peer_live(true);
 	}
 
+	// set tcp peer state to connected.
+	inline bool check_peer_live()
+	{
+		if (!m_state.peer_live())
+		{
+			return false;
+		}
+		m_state.set_peer_live(false);
+		return true;
+	}
+
 	// ready for receiving data.
 	inline void async_recv_by_client()
 	{
@@ -183,7 +195,8 @@ public:
 		uint32_t start = 0;
 		if (!prot.encode(data, start, meta, e))
 		{
-			EcoError << NetLog(get_id(), ECO_FUNC, meta.m_session_id) <= e;
+			ECO_ERROR << NetLog(get_id(), __func__,
+				meta.m_session_id) <= e;
 			return;
 		}
 		async_send(data, start);
@@ -192,8 +205,7 @@ public:
 	// send heartbeat.
 	inline void async_send_heartbeat(IN ProtocolHead& prot_head)
 	{
-		if (!m_state.ready())
-			return;
+		if (!m_state.ready()) return;
 		eco::String data;
 		prot_head.encode_heartbeat(data);
 		async_send(data, 0);
@@ -201,8 +213,7 @@ public:
 	// send live heartbeat.
 	inline void async_send_live_heartbeat(IN ProtocolHead& prot_head)
 	{
-		if (!m_state.ready())
-			return;
+		if (!m_state.ready()) return;
 		// during send tick, if connection itself send a message.
 		// indicated it is alive, and no need to send heartbeat.
 		if (get_state().self_live())
@@ -212,7 +223,7 @@ public:
 	}
 
 	// close peer.
-	inline void close()
+	inline bool close()
 	{
 		if (!m_state.closed())
 		{
@@ -221,14 +232,16 @@ public:
 
 			// 2.close socket.
 			m_connector.close();
+			return true;
 		}
+		return false;
 	}
 
 	// close peer and notify peer handler.
-	inline void close_and_notify(IN const eco::Error* e)
+	inline void close_and_notify()
 	{
-		close();
-		m_handler->on_close(get_id());
+		if (close())
+			m_handler->on_close(get_id());
 	}
 
 	// get data context that to be handled by dispatch server.
@@ -262,8 +275,7 @@ public:
 
 	// when the peer has received data head.
 	virtual void on_read_head(
-		IN char* data,
-		IN const uint32_t head_size,
+		IN eco::String& data,
 		IN const eco::Error* error) override;
 
 	// when the peer has received data.

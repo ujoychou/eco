@@ -60,7 +60,7 @@ ECO_PROPERTY_SET_IMPL(GroupSet, Group);
 ECO_SHARED_IMPL(Group);
 
 ////////////////////////////////////////////////////////////////////////////////
-void ListCommand::execute(IN const eco::cmd::Context& context)
+void ListCommand::execute(IN eco::cmd::Context& context)
 {
 	Group::Impl& data = get_engine().current().impl();
 
@@ -107,7 +107,7 @@ Group& GroupSet::add_group()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void run_command(IN const Context& context, OUT Group::Impl& data)
+void run_command(IN Context& context, OUT Group::Impl& data)
 {
 	std::vector<int>::iterator its;
 	// find command class.
@@ -127,19 +127,25 @@ void run_command(IN const Context& context, OUT Group::Impl& data)
 	}
 	catch (eco::Error& e)
 	{
-		EcoError << "execute command error: " << e;
+		ECO_ERROR << "execute command error: " << e;
 	}
 	catch (std::exception& e)
 	{
-		EcoError << "execute command error: " << e.what();
+		ECO_ERROR << "execute command error: " << e.what();
 	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Group::run_command(IN const Context& param)
+void Group::run_command(IN Context& param)
 {
 	eco::cmd::run_command(param, impl());
+}
+void Group::run_command(IN const char* cmd)
+{
+	Context context;
+	context.set_command_line(cmd);
+	eco::cmd::run_command(context, impl());
 }
 bool Group::is_exit_command(IN const char* cmd_name) const
 {

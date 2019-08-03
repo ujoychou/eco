@@ -1,9 +1,9 @@
 #include "PrecHeader.h"
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/filesystem/Operations.h>
-#include <eco/filesystem/File.h>
+#include <map>
 #include <eco/web/Html.h>
-#include <eco/Typex.ipp>
+#include <eco/filesystem/File.h>
+#include <eco/filesystem/Operations.h>
 #include <boost/algorithm/string/replace.hpp>
 #include "HtmlClassFinder.ipp"
 
@@ -155,9 +155,9 @@ public:
 };
 ECO_SHARED_IMPL(HtmlObject);
 ////////////////////////////////////////////////////////////////////////////////
-void HtmlObject::MakeText(OUT eco::StringAny& text) const
+void HtmlObject::MakeText(OUT std::string& text) const
 {
-	impl().MakeText(text.impl().m_value);
+	impl().MakeText(text);
 }
 HtmlClass HtmlObject::GetClass() const
 {
@@ -187,7 +187,7 @@ HtmlObject HtmlObject::AddChild(
 	HtmlClass child_class = impl().m_class.FindChild(class_name);
 	if (child_class.null())
 	{
-		EcoThrow << "find child class fail:" << class_name;
+		ECO_THROW(0) << "find child class fail:" << class_name;
 	}
 	HtmlObject child;
 	child.impl().m_pos_mode = pos_mode;

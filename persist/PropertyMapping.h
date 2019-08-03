@@ -25,17 +25,17 @@ namespace eco{;
 ////////////////////////////////////////////////////////////////////////////////
 enum DataType
 {
-	type_int,
-	type_bigint,
-	type_char,
-	type_char_array,
-	type_varchar,
-	type_double,
-	type_text,
-	type_blob,
+	dtype_int,
+	dtype_bigint,
+	dtype_char,
+	dtype_char_array,
+	dtype_varchar,
+	dtype_double,
+	dtype_text,
+	dtype_blob,
 
 	// database relative datatype.
-	type_date_time,		// 2017-08-29 09:56:30
+	dtype_date_time,		// 2017-08-29 09:56:30
 };
 
 
@@ -74,13 +74,13 @@ public:
 		return *this;
 	}
 
-	inline PropertyMapping& pk(IN const bool is)
+	inline PropertyMapping& pk(IN bool is = true)
 	{
 		eco::set(m_constraint, constraint_pk, is);
 		return *this;
 	}
 
-	inline PropertyMapping& fk(IN const bool is)
+	inline PropertyMapping& fk(IN bool is = true)
 	{
 		eco::set(m_constraint, constraint_fk, is);
 		return *this;
@@ -88,21 +88,29 @@ public:
 
 	inline PropertyMapping& int_type()
 	{
-		m_field_type = type_int;
+		m_field_type = dtype_int;
 		m_field_size = 0;
 		return *this;
+	}
+	inline PropertyMapping& int32()
+	{
+		return int_type();
 	}
 
 	inline PropertyMapping& big_int()
 	{
-		m_field_type = type_bigint;
+		m_field_type = dtype_bigint;
 		m_field_size = 0;
 		return *this;
+	}
+	inline PropertyMapping& int64()
+	{
+		return big_int();
 	}
 
 	inline PropertyMapping& double_type()
 	{
-		m_field_type = type_double;
+		m_field_type = dtype_double;
 		m_field_size = 0;
 		return *this;
 	}
@@ -111,42 +119,42 @@ public:
 		IN const uint32_t field_size = 0)
 	{
 		m_field_size = field_size;
-		m_field_type = field_size == 0 ? type_char : type_char_array;
+		m_field_type = field_size == 0 ? dtype_char : dtype_char_array;
 		return *this;
 	}
 
 	inline PropertyMapping& varchar(
 		IN const uint32_t field_size)
 	{
-		m_field_type = type_varchar;
+		m_field_type = dtype_varchar;
 		m_field_size = field_size;
 		return *this;
 	}
 
 	inline PropertyMapping& vchar_small()
 	{
-		m_field_type = type_varchar;
+		m_field_type = dtype_varchar;
 		m_field_size = 255;
 		return *this;
 	}
 
 	inline PropertyMapping& vchar_middle()
 	{
-		m_field_type = type_varchar;
+		m_field_type = dtype_varchar;
 		m_field_size = 8192;	// detail in mysql limited.
 		return *this;
 	}
 
 	inline PropertyMapping& text()
 	{
-		m_field_type = type_text;
+		m_field_type = dtype_text;
 		m_field_size = 65535;		// sqlite/mysql defined.
 		return *this;
 	}
 
 	inline PropertyMapping& blob()
 	{
-		m_field_type = type_blob;
+		m_field_type = dtype_blob;
 		m_field_size = 65535;		// sqlite/mysql defined.
 		return *this;
 	}
@@ -168,7 +176,7 @@ public:
 
 	inline PropertyMapping& date_time_t()
 	{
-		m_field_type = type_date_time;
+		m_field_type = dtype_date_time;
 		m_field_size = 0;
 		return *this;
 	}
@@ -225,32 +233,32 @@ public:
 	{
 		switch (field_type)
 		{
-		case type_int:
+		case dtype_int:
 			field_sql = "INT";
 			break;
-		case type_bigint:
+		case dtype_bigint:
 			field_sql = "BIGINT";
 			break;
-		case type_char:
+		case dtype_char:
 			field_sql = "CHAR";
 			break;
-		case type_char_array:
+		case dtype_char_array:
 			field_sql = "CHAR(";
 			field_sql += eco::cast<std::string>(field_size);
 			field_sql += ")";
 			break;
-		case type_varchar:
+		case dtype_varchar:
 			field_sql = "VARCHAR(";
 			field_sql += eco::cast<std::string>(field_size);
 			field_sql += ")";
 			break;
-		case type_text:
+		case dtype_text:
 			field_sql = "TEXT";
 			break;
-		case type_blob:
+		case dtype_blob:
 			field_sql = "BLOB";
 			break;
-		case type_double:
+		case dtype_double:
 			field_sql = "DOUBLE";
 			break;
 		}
@@ -266,7 +274,7 @@ public:
 		}
 		if (temp.empty())
 		{
-			EcoThrow << "invalid database field type: " << m_field_type;
+			ECO_THROW(0, "invalid database field type") << m_field_type;
 		}
 		return temp;
 	}
@@ -276,7 +284,7 @@ private:
 	const char*		m_prop_name;	// data object property.
 	const char*		m_field_name;	// db field name.
 	uint32_t		m_field_index;	// db field index.
-	uint32_t		m_field_type;	// field type.
+	DataType		m_field_type;	// field type.
 	uint32_t		m_field_size;	// field size.
 	Constraint		m_constraint;	// field constraint.
 };

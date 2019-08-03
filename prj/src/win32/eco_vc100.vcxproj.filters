@@ -314,140 +314,8 @@
     <ClInclude Include="..\log\FileSink.h">
       <Filter>src\log</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Core.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Pusher.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Type.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Cast.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Config.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\ExportApi.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Object.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h">
-      <Filter>lib\filesystem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\SourceFile.h">
-      <Filter>lib\filesystem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Net.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\process\Process.h">
-      <Filter>lib\process</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CallOnce.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageQueue.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageServer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Mutex.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\State.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Thread.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ThreadPool.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\xml\Reader.h">
-      <Filter>lib\xml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Log.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Class.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Command.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Context.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Engine.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Group.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
     <ClInclude Include="..\cmd\Inner.h">
       <Filter>src\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Implement.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\App.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\RxApp.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Json.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\CsvSource.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\MutexWin.h">
-      <Filter>lib\thread\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Being.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\DllObject.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Memory.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\MemoryPool.h">
-      <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\service\Impl.h">
       <Filter>src\service</Filter>
@@ -482,44 +350,11 @@
     <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h">
       <Filter>lib\codec</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Bobject.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\Btask.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\filesystem\Operations.h">
-      <Filter>lib\filesystem</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\meta\Meta.h">
       <Filter>lib\meta</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\media\Media.h">
       <Filter>lib\media</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Address.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Database.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\DatabaseConfig.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\JoinMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\MySql.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Persist.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Recordset.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Sqlite.h">
-      <Filter>lib\persist</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\net\Address.h">
       <Filter>lib\net</Filter>
@@ -647,33 +482,6 @@
     <ClInclude Include="..\..\..\service\dev\Horizontal.h">
       <Filter>lib\service\dev</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\thread\Atomic.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\AtomicImpl.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\AutoRef.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\ConditionVariable.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\Index.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\Map.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\Monitor.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\ThreadState.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\Timer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\thread\detail\ConditionVariableWin.h">
       <Filter>lib\thread\detail</Filter>
     </ClInclude>
@@ -758,6 +566,216 @@
     <ClInclude Include="..\..\..\date_time\Time.h">
       <Filter>lib\date_time</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\Any.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\App.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Being.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Bobject.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Btask.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Cast.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Config.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\DllObject.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Export.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ExportApi.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\HeapOperators.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Implement.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Memory.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\MemoryPool.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Object.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Project.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\RxApp.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Type.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Typex.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Class.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Command.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Context.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Engine.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Group.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\filesystem\File.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\filesystem\Operations.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\filesystem\SourceFile.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Core.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Log.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Pusher.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Type.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Net.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Address.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\CsvSource.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Database.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\DatabaseConfig.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\JoinMapping.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Json.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Model.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\MySql.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\ObjectMapping.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Persist.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\PropertyMapping.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Recordset.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Sqlite.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\process\Process.h">
+      <Filter>lib\process</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\detail\MutexWin.h">
+      <Filter>lib\thread\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Atomic.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\AtomicImpl.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\AutoRef.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\CallOnce.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ConditionVariable.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\DispatchServer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ExclusiveData.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ExclusiveMonitor.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ExclusiveWorker.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Index.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Map.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\MessageQueue.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\MessageServer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Monitor.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Mutex.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\State.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\TaskServer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Thread.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ThreadPool.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ThreadState.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Timer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\TimerWheel.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xml\Reader.h">
+      <Filter>lib\xml</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cmd\Engine.ipp">
@@ -784,12 +802,6 @@
     <None Include="..\web\JsonClassFinder.ipp">
       <Filter>src\web</Filter>
     </None>
-    <None Include="..\..\..\Typex.ipp">
-      <Filter>lib\app</Filter>
-    </None>
-    <None Include="..\..\..\log\Pusher.inl">
-      <Filter>lib\log</Filter>
-    </None>
     <None Include="..\..\..\net\TcpSession.inl">
       <Filter>lib\net</Filter>
     </None>
@@ -804,6 +816,12 @@
     </None>
     <None Include="..\..\..\eco.sys.xml">
       <Filter>lib\app</Filter>
+    </None>
+    <None Include="..\..\..\Typex.ipp">
+      <Filter>lib\app</Filter>
+    </None>
+    <None Include="..\..\..\log\Pusher.inl">
+      <Filter>lib\log</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

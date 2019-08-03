@@ -3,14 +3,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <eco/Typex.h>
 
 
 
 namespace eco{;
 namespace xml{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class Reader::Impl
 {
@@ -36,7 +33,7 @@ void read_node(
 			{
 				if (itc->first == "value")
 				{
-					vals.add().key(xml_node_name.c_str())
+					vals.add().name(xml_node_name.c_str())
 						.value(itc->second.data().c_str());
 					break;
 				}
@@ -47,7 +44,7 @@ void read_node(
 			temp = xml_node_name;
 			sub_path(temp, it->first.c_str());
 			auto& para = vals.add();
-			para.set_key(temp.c_str());
+			para.set_name(temp.c_str());
 			para.set_value(it->second.data().c_str());
 		}
 		else								// parent node.
@@ -117,7 +114,7 @@ bool get_node(
 			else if (itc->first != "note")
 			{
 				auto& param = node.property_set().add();
-				param.set_key(itc->first.c_str());
+				param.set_name(itc->first.c_str());
 				param.set_value(itc->second.data().c_str());
 			}
 		}
@@ -125,7 +122,7 @@ bool get_node(
 	// it->first = key. (node name)
 	else if (xml_it->second.size() == 0)	// leaf children.
 	{
-		node.property_set().add().key(xml_it->first.c_str()).
+		node.property_set().add().name(xml_it->first.c_str()).
 			value(xml_it->second.data().c_str());
 	}
 	else									// node children.
@@ -138,7 +135,7 @@ bool get_node(
 			if (!child.has_children() && child.get_property_set().empty())
 			{
 				auto& param = node.property_set().add();
-				param.set_key(child.get_name());
+				param.set_name(child.get_name());
 				param.set_value(child.get_value());
 			}
 			else

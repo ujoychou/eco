@@ -16,52 +16,17 @@
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-class AddressLoad
-{
-public:
-	inline AddressLoad()
-	{
-		clear();
-	}
-
-	inline AddressLoad(IN const Address& addr)
-		: m_address(addr)
-		, m_flag(0)
-		, m_workload(0)
-	{}
-
-	inline void clear()
-	{
-		m_address.set();
-		m_workload = 0;
-		m_flag = 0;
-	}
-
-	inline bool operator==(IN const Address& addr) const
-	{
-		return (m_address == addr);
-	}
-
-	inline bool operator==(IN const AddressLoad& load) const
-	{
-		return (m_address == load.m_address);
-	}
-
-	Address		m_address;
-	uint16_t	m_workload;
-	uint16_t    m_flag;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 class LoadBalancer
 {
 public:
-	TcpPeer::ptr				m_peer;
-	AddressLoad					m_address_cur;
-	std::vector<AddressLoad>	m_address_set;
+	TcpPeer::ptr	m_peer;
+	AddressSet		m_address_set;
+	int				m_address_cur;
 
 public:
+	inline LoadBalancer() : m_address_cur(-1)
+	{}
+
 	inline void release()
 	{
 		m_peer->close();
@@ -88,17 +53,16 @@ public:
 
 public:
 	inline SessionDataPack(IN bool auto_login = false)
-		: m_request_data(0), m_auto_login(auto_login)
-		, m_request_start(0)
+		: m_request_data(0), m_auto_login(auto_login), m_request_start(0)
 	{}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class AsyncRequest : public eco::Object<AsyncRequest>
+class SyncRequest : public eco::Object<SyncRequest>
 {
 public:
-	inline AsyncRequest(
+	inline SyncRequest(
 		IN Codec& rsp_codec,
 		IN std::vector<void*>* rsp_set = nullptr)
 		: m_rsp_codec(&rsp_codec), m_rsp_set(rsp_set)
@@ -107,6 +71,15 @@ public:
 	Codec* m_rsp_codec;
 	std::vector<void*>* m_rsp_set;
 	eco::Monitor m_monitor;
+};
+////////////////////////////////////////////////////////////////////////////////
+class AsyncRequest : public eco::Object<AsyncRequest>
+{
+public:
+	inline AsyncRequest(std::function<void(eco::net::Context& c)>& f)
+		: m_func(f) {}
+
+	std::function<void(eco::net::Context&)> m_func;
 };
 
 
@@ -125,7 +98,6 @@ public:
 	eco::net::Worker		m_worker;		// io thread.
 	eco::net::IoTimer		m_timer;		// run in io thread.
 	DispatchServer			m_dispatch;		// dispatcher thread.
-	eco::atomic::State		m_init;			// server init state.
 
 	// connection data factory.
 	OpenFunc m_on_open;
@@ -143,6 +115,7 @@ public:
 	// async management.
 	eco::Atomic<uint32_t> m_request_id;
 	uint32_t m_timeout_millsec;
+	std::unordered_map<uint32_t, SyncRequest::ptr> m_sync_manager;
 	std::unordered_map<uint32_t, AsyncRequest::ptr> m_async_manager;
 
 public:
@@ -207,28 +180,62 @@ public:
 	}
 
 	// async management post item.
-	inline AsyncRequest::ptr post_async(
+	inline SyncRequest::ptr post_sync(
 		IN const uint32_t req_id,
 		IN Codec& rsp_codec,
 		IN std::vector<void*>* rsp_set = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		auto& ptr = m_async_manager[req_id];
+		auto& ptr = m_sync_manager[req_id];
 		if (ptr == nullptr)
-			ptr.reset(new AsyncRequest(rsp_codec, rsp_set));
+			ptr.reset(new SyncRequest(rsp_codec, rsp_set));
 		return ptr;
 	}
 
 	// async management pop item.
-	inline AsyncRequest::ptr pop_async(IN const uint32_t req_id)
+	inline SyncRequest::ptr pop_sync(IN uint32_t req_id, IN bool last)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
+		SyncRequest::ptr sync;
+		auto it = m_sync_manager.find(req_id);
+		if (it != m_sync_manager.end())
+		{
+			sync = it->second;
+			if (last) m_sync_manager.erase(it);
+		}
+		return sync;
+	}
+	inline void erase_sync(IN const uint32_t req_id)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		m_sync_manager.erase(req_id);
+	}
+
+public:
+	// async management post item.
+	inline AsyncRequest::ptr post_async(
+		IN const uint32_t req_id,
+		IN std::function<void(eco::net::Context&)>& rsp_func)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		auto& ptr = m_async_manager[req_id];
+		if (ptr == nullptr)
+			ptr.reset(new AsyncRequest(rsp_func));
+		return ptr;
+	}
+
+	// async management pop item.
+	inline AsyncRequest::ptr pop_async(IN uint32_t req_id, IN bool last)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		AsyncRequest::ptr async;
 		auto it = m_async_manager.find(req_id);
 		if (it != m_async_manager.end())
 		{
-			return it->second;
+			async = it->second;
+			if (last) m_async_manager.erase(it);
 		}
-		return AsyncRequest::ptr();
+		return async;
 	}
 	inline void erase_async(IN const uint32_t req_id)
 	{
@@ -315,6 +322,10 @@ public:
 		IN MessageMeta& req,
 		IN Codec& rsp,
 		IN std::vector<void*>* rsp_set);
+
+	inline void async(
+		IN MessageMeta& req,
+		IN ResponseFunc& rsp_func);
 
 public:
 	// when peer has connected to server.

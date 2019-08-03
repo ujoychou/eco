@@ -30,8 +30,7 @@ log queue.
 
 namespace eco{;
 namespace log{;
-
-
+typedef eco::FixBuffer<pack_size> Pack;
 ////////////////////////////////////////////////////////////////////////////////
 class Queue
 {
@@ -53,6 +52,9 @@ public:
 	{
 		open();
 	}
+
+	inline void set_name(IN const char* name)
+	{}
 
 	// set logging sync max interval.
 	inline void set_sync_interval(IN const uint32_t millsecs)

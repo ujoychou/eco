@@ -83,6 +83,13 @@ const uint32_t Address::get_port() const
 {
 	return eco::cast<uint32_t>(impl().m_service_name);
 }
+const eco::String Address::get_value() const
+{
+	eco::String temp(impl().m_host_name);
+	temp.append(':');
+	temp.append(impl().m_host_name);
+	return temp;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

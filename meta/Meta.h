@@ -79,7 +79,7 @@ public:
 	{
 		return *m_object;
 	}
-	inline const object_t& get_object()
+	inline const object_t& get_object() const
 	{
 		return *m_object;
 	}

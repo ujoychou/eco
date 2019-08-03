@@ -11,7 +11,7 @@ namespace cmd{;
 
 //##############################################################################
 //##############################################################################
-void CdCommand::execute(IN const eco::cmd::Context& context)
+void CdCommand::execute(IN eco::cmd::Context& context)
 {
 	Engine::Impl* impl = &get_engine().impl();
 
@@ -67,7 +67,7 @@ void CdCommand::resume()
 
 //##############################################################################
 //##############################################################################
-void PwdCommand::execute(IN const eco::cmd::Context& context)
+void PwdCommand::execute(IN eco::cmd::Context& context)
 {
 	// app group: default home group.
 	if (context.size() == 0)
@@ -111,7 +111,7 @@ std::string PwdCommand::pwd(IN Group& group)
 
 //##############################################################################
 //##############################################################################
-void HelpCommand::execute(IN const eco::cmd::Context& context)
+void HelpCommand::execute(IN eco::cmd::Context& context)
 {
 	std::vector<Class>& inner_cmds = get_engine().impl().m_inner_cmds;
 

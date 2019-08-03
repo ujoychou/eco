@@ -16,9 +16,6 @@
     <Filter Include="bin\release_win32">
       <UniqueIdentifier>{d04e5327-6997-4e85-9f18-f445e582f301}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lib\persist">
-      <UniqueIdentifier>{0ec90bdc-79c7-4988-a986-66549783f442}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\persist">
       <UniqueIdentifier>{82864439-74b4-43a9-a788-ad364a9885e1}</UniqueIdentifier>
     </Filter>
@@ -30,9 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\contrib\sqlite\sqlite3.c">
-      <Filter>contrib\sqlite</Filter>
-    </ClCompile>
     <ClCompile Include="..\persist\Recordset.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
@@ -45,47 +39,19 @@
     <ClCompile Include="..\persist\PersistAddress.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3.c">
+      <Filter>contrib\sqlite</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\contrib\sqlite\sqlite3.h">
-      <Filter>contrib\sqlite</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\sqlite\sqlite3ext.h">
-      <Filter>contrib\sqlite</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Database.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Recordset.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Sqlite.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
     <ClInclude Include="..\PrecHeader.h">
       <Filter>src</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco_sqlite.dll">
-      <Filter>bin\debug_win32</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc100\release\eco_sqlite.dll">
-      <Filter>bin\release_win32</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco_sqlite.lib">
-      <Filter>bin\debug_win32</Filter>
-    </Library>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc100\release\eco_sqlite.lib">
-      <Filter>bin\release_win32</Filter>
-    </Library>
+    <ClInclude Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3.h">
+      <Filter>contrib\sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3ext.h">
+      <Filter>contrib\sqlite</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

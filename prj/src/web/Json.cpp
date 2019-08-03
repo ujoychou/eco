@@ -1,7 +1,8 @@
 #include "PrecHeader.h"
 #include <eco/web/Json.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Typex.ipp>
+#include <map>
+#include <eco/Type.h>
 #include <eco/filesystem/Operations.h>
 #include <boost/algorithm/string/replace.hpp>
 #include "JsonClassFinder.ipp"
@@ -151,9 +152,9 @@ public:
 };
 ECO_SHARED_IMPL(JsonObject);
 ////////////////////////////////////////////////////////////////////////////////
-void JsonObject::MakeText(OUT eco::StringAny& text) const
+void JsonObject::MakeText(OUT std::string& text) const
 {
-	impl().MakeText(text.impl().m_value);
+	impl().MakeText(text);
 }
 JsonClass JsonObject::GetClass() const
 {
@@ -194,7 +195,7 @@ JsonObject JsonObject::AddChild(
 	JsonClass child_class = impl().m_class.FindChild(class_name);
 	if (child_class.null())
 	{
-		EcoThrow << "find child class fail:" << class_name;
+		ECO_THROW(0) << "find child class fail:" << class_name;
 	}
 	JsonObject child;
 	child.impl().m_class = child_class;

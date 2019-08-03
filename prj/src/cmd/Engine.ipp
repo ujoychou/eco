@@ -27,12 +27,8 @@ cmd engine ipp.
 #include <vector>
 
 
-
-
 namespace eco{;
 namespace cmd{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class Engine::Impl
 {
@@ -47,7 +43,7 @@ public:
 	void init(Engine&);
 	void work();
 	void run();
-	bool run_inner_command(IN const Context& context);
+	bool run_inner_command(IN Context& context);
 
 	inline Group home()
 	{

@@ -28,9 +28,6 @@
     <Filter Include="src\log">
       <UniqueIdentifier>{06d2c01d-551a-4091-854a-8adf6fe018b4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\atomic">
-      <UniqueIdentifier>{1f89e5bb-1a73-4dce-9ae8-094043828572}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\process">
       <UniqueIdentifier>{b3094940-8cf0-4045-bd2a-727d7ecba965}</UniqueIdentifier>
     </Filter>
@@ -180,9 +177,6 @@
     <ClCompile Include="..\cmd\Inner.cpp">
       <Filter>src\cmd</Filter>
     </ClCompile>
-    <ClCompile Include="..\Typex.cpp">
-      <Filter>src\app</Filter>
-    </ClCompile>
     <ClCompile Include="..\DllObject.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
@@ -312,6 +306,15 @@
     <ClCompile Include="..\log\Core.cpp">
       <Filter>src\log</Filter>
     </ClCompile>
+    <ClCompile Include="..\proxy\WinConsoleEvent.cpp">
+      <Filter>src\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Type.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net\Subscriber.cpp">
+      <Filter>src\net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\log\Queue.h">
@@ -323,356 +326,14 @@
     <ClInclude Include="..\log\FileSink.h">
       <Filter>src\log</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Core.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Pusher.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Type.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Cast.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Config.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Object.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h">
-      <Filter>lib\filesystem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\SourceFile.h">
-      <Filter>lib\filesystem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Net.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\process\Process.h">
-      <Filter>lib\process</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CallOnce.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageQueue.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageServer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Mutex.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\State.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Thread.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ThreadPool.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\xml\Reader.h">
-      <Filter>lib\xml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Log.h">
-      <Filter>lib\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Class.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Command.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Context.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Engine.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Group.h">
-      <Filter>lib\cmd</Filter>
-    </ClInclude>
     <ClInclude Include="..\cmd\Inner.h">
       <Filter>src\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Implement.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\App.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\RxApp.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Json.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\CsvSource.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\DllObject.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\Horizontal.h">
-      <Filter>lib\service\dev</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\ExportApi.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\MutexWin.h">
-      <Filter>lib\thread\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Address.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Ecode.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpAcceptor.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpClient.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpClientOption.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpConnector.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpServer.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpServerOption.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpState.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Worker.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\Protocol.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\ProtocolHead.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\TcpProtocol.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\Codec.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\Check.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\Crypt.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\StringHandler.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\Cluster.h">
-      <Filter>lib\service\dev</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\dev\Ecode.h">
-      <Filter>lib\service\dev</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\DidProtocol.h">
-      <Filter>lib\service</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\Service.h">
-      <Filter>lib\service</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\Cluster.h">
-      <Filter>lib\service</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\Deployment.h">
-      <Filter>lib\service</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\Machine.h">
-      <Filter>lib\service</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\service\ServiceRuntime.h">
-      <Filter>lib\service</Filter>
     </ClInclude>
     <ClInclude Include="..\service\Impl.h">
       <Filter>src\service</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\protocol\ProtobufCodec.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\ProtobufHandler.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Memory.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestHandler.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ConditionVariable.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Monitor.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\ConditionVariableWin.h">
-      <Filter>lib\thread\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpPeer.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Context.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Atomic.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\AtomicImpl.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ThreadState.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\AutoRef.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\topic\Subscription.h">
-      <Filter>lib\thread\topic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\topic\Topic.h">
-      <Filter>lib\thread\topic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\topic\TopicServer.h">
-      <Filter>lib\thread\topic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\topic\Role.h">
-      <Filter>lib\thread\topic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\MemoryPool.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Being.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Bobject.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Timer.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\asio\Worker.h">
-      <Filter>lib\net\asio</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\asio\WorkerPool.h">
-      <Filter>lib\net\asio</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\asio\IoTimer.h">
-      <Filter>lib\net\asio</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\IoTimer.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Btask.h">
-      <Filter>lib\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\media\Media.h">
-      <Filter>lib\media</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\web\Html.h">
-      <Filter>lib\web</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\web\Json.h">
-      <Filter>lib\web</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Case.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Check.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Context.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Object.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Result.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Runner.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Scene.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Suite.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Testing.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Timing.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\test\Trace.h">
-      <Filter>lib\test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\proxy\Proxy.h">
-      <Filter>lib\proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\proxy\WinAutoHandler.h">
-      <Filter>lib\proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\Operations.h">
-      <Filter>lib\filesystem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\proxy\Win.h">
-      <Filter>lib\proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\meta\Meta.h">
-      <Filter>lib\meta</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\JoinMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
     <ClInclude Include="..\PrecHeader.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpSession.h">
-      <Filter>lib\net</Filter>
     </ClInclude>
     <ClInclude Include="..\net\TcpPeerSet.h">
       <Filter>src\net</Filter>
@@ -695,39 +356,6 @@
     <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h">
       <Filter>lib\codec</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\net\protocol\StringCodec.h">
-      <Filter>lib\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\net\TcpConnection.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Database.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Persist.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\persist\Address.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\net\AsyncHandlerMap.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\net\Log.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\Map.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\Index.h">
-      <Filter>lib\thread</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\proto\Object.pb.h">
       <Filter>lib\proto</Filter>
     </ClInclude>
@@ -737,17 +365,8 @@
     <ClInclude Include="..\..\..\codec\md5.h">
       <Filter>lib\codec</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\meta\Stamp.h">
-      <Filter>lib\meta</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\net\TcpDispatch.h">
-      <Filter>lib\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\net\DispatchServer.h">
       <Filter>src\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\thread\TimerWheel.h">
-      <Filter>lib\thread</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\date_time\Date.h">
       <Filter>lib\date_time</Filter>
@@ -761,11 +380,434 @@
     <ClInclude Include="..\..\..\Any.h">
       <Filter>lib\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\proxy\WinDump.h">
-      <Filter>lib\proxy</Filter>
+    <ClInclude Include="..\..\..\App.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Being.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Cast.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Config.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\DllObject.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Export.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ExportApi.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\HeapOperators.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Implement.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Memory.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\MemoryPool.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Object.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Project.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\RxApp.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Type.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Class.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Command.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Context.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Engine.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\cmd\Group.h">
+      <Filter>lib\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\filesystem\File.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\filesystem\Operations.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\filesystem\SourceFile.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Core.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Log.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Pusher.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\log\Type.h">
+      <Filter>lib\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\media\Media.h">
+      <Filter>lib\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\meta\Meta.h">
+      <Filter>lib\meta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\meta\Stamp.h">
+      <Filter>lib\meta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\asio\IoTimer.h">
+      <Filter>lib\net\asio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\asio\Worker.h">
+      <Filter>lib\net\asio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\asio\WorkerPool.h">
+      <Filter>lib\net\asio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\Check.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\Codec.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\Crypt.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\ProtobufCodec.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\Protocol.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\ProtocolHead.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\StringCodec.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\TcpProtocol.h">
+      <Filter>lib\net\protocol</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\net\protocol\TcpProtocolX.h">
       <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h">
+      <Filter>lib\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Address.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Context.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Ecode.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\IoTimer.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Log.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Net.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\ProtobufHandler.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\RequestHandler.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\StringHandler.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpAcceptor.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpClient.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpClientOption.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpConnection.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpConnector.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpDispatch.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpPeer.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpServer.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpServerOption.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpSession.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\TcpState.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Worker.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Address.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\CsvSource.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Database.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\DatabaseConfig.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\JoinMapping.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Json.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Model.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\MySql.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\ObjectMapping.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Persist.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\PropertyMapping.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Recordset.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\persist\Sqlite.h">
+      <Filter>lib\persist</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\process\Process.h">
+      <Filter>lib\process</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\proxy\Proxy.h">
+      <Filter>lib\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\proxy\Win.h">
+      <Filter>lib\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\proxy\WinAutoHandler.h">
+      <Filter>lib\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\proxy\WinDump.h">
+      <Filter>lib\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\dev\Cluster.h">
+      <Filter>lib\service\dev</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\dev\Ecode.h">
+      <Filter>lib\service\dev</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\dev\Horizontal.h">
+      <Filter>lib\service\dev</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\Cluster.h">
+      <Filter>lib\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\Deployment.h">
+      <Filter>lib\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\DidProtocol.h">
+      <Filter>lib\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\Machine.h">
+      <Filter>lib\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\Service.h">
+      <Filter>lib\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\service\ServiceRuntime.h">
+      <Filter>lib\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Case.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Check.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Context.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Object.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Result.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Runner.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Scene.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Suite.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Testing.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Timing.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\test\Trace.h">
+      <Filter>lib\test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\detail\ConditionVariableWin.h">
+      <Filter>lib\thread\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\detail\MutexWin.h">
+      <Filter>lib\thread\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\topic\Role.h">
+      <Filter>lib\thread\topic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\topic\Subscription.h">
+      <Filter>lib\thread\topic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\topic\Topic.h">
+      <Filter>lib\thread\topic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\topic\TopicServer.h">
+      <Filter>lib\thread\topic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Atomic.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\AtomicImpl.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\AutoRef.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\CallOnce.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ConditionVariable.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\DispatchServer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ExclusiveData.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ExclusiveMonitor.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ExclusiveWorker.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Index.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Map.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\MessageQueue.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\MessageServer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Monitor.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Mutex.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\State.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\TaskServer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Thread.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ThreadPool.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\ThreadState.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Timer.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\TimerWheel.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\web\Html.h">
+      <Filter>lib\web</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\web\Json.h">
+      <Filter>lib\web</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xml\Reader.h">
+      <Filter>lib\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\RtObject.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\Ip.h">
+      <Filter>lib\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\proxy\WinConsoleEvent.h">
+      <Filter>lib\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Task.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Eco.h">
+      <Filter>lib\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Bobject.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Btask.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\net\Subscriber.h">
+      <Filter>lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Type.inl">
+      <Filter>lib\app</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -778,41 +820,17 @@
     <None Include="..\net\TcpPeer.ipp">
       <Filter>src\net</Filter>
     </None>
-    <None Include="..\Eco.h">
-      <Filter>src\app</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\web\html.ut.html">
-      <Filter>lib\web</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\web\json.ut.json">
-      <Filter>lib\web</Filter>
-    </None>
     <None Include="..\web\JsonClassFinder.ipp">
       <Filter>src\web</Filter>
     </None>
     <None Include="..\web\HtmlClassFinder.ipp">
       <Filter>src\web</Filter>
     </None>
-    <None Include="..\..\..\..\..\contrib\eco\Typex.ipp">
-      <Filter>lib\app</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc141\debug\eco.dll">
-      <Filter>bin\debug_win32</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc141\release\eco.dll">
-      <Filter>bin\release_win32</Filter>
-    </None>
     <None Include="..\net\TcpClient.ipp">
       <Filter>src\net</Filter>
     </None>
-    <None Include="..\..\..\net\TcpSession.inl">
-      <Filter>lib\net</Filter>
-    </None>
     <None Include="..\net\TcpOuter.h">
       <Filter>src\net</Filter>
-    </None>
-    <None Include="..\..\..\log\Pusher.inl">
-      <Filter>lib\log</Filter>
     </None>
     <None Include="..\..\..\proto\Service.proto">
       <Filter>lib\proto</Filter>
@@ -823,21 +841,31 @@
     <None Include="..\..\..\proto\proto.bat">
       <Filter>lib\proto</Filter>
     </None>
+    <None Include="..\..\..\log\Pusher.inl">
+      <Filter>lib\log</Filter>
+    </None>
+    <None Include="..\..\..\net\TcpSession.inl">
+      <Filter>lib\net</Filter>
+    </None>
+    <None Include="..\..\..\web\html.ut.html">
+      <Filter>lib\web</Filter>
+    </None>
+    <None Include="..\..\..\web\json.ut.json">
+      <Filter>lib\web</Filter>
+    </None>
+    <None Include="..\Eco.ipp">
+      <Filter>src\app</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\..\..\eco.sys.xml">
-      <Filter>lib\app</Filter>
-    </Xml>
     <Xml Include="..\..\..\eco.app.xml">
       <Filter>lib\app</Filter>
     </Xml>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc141\debug\eco.lib">
-      <Filter>bin\debug_win32</Filter>
-    </Library>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc141\release\eco.lib">
-      <Filter>bin\release_win32</Filter>
-    </Library>
+    <Xml Include="..\..\..\eco.sys.xml">
+      <Filter>lib\app</Filter>
+    </Xml>
+    <Xml Include="..\..\..\proxy\compatibility.xml">
+      <Filter>lib\proxy</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

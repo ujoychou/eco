@@ -34,7 +34,7 @@ Timing& Timing::timeup()
 }
 int64_t Timing::seconds() const
 {
-	return impl().m_td.seconds();
+	return impl().m_td.total_seconds();
 }
 int64_t Timing::milliseconds() const
 {

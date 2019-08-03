@@ -65,10 +65,6 @@ public:
 		{
 			fprintf(stderr, "logging server caught exception: %s\n", e.what());
 		}
-		catch (eco::Error& e)
-		{
-			fprintf(stderr, "logging server caught exception: %s\n", e.what());
-		}
 	}
 };
 

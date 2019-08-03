@@ -4,7 +4,7 @@
 #include <eco/log/Log.h>
 #include <eco/thread/State.h>
 #include <eco/Implement.h>
-#include "Eco.h"
+#include <Eco.ipp>
 
 
 namespace eco{;
@@ -14,23 +14,53 @@ class Being::Impl
 	ECO_IMPL_INIT(Being);
 public:
 	// 生命活动的频率。（心跳频率）
-	uint32_t m_live_ticks;
-	eco::atomic::State m_born;
 	std::string m_name;
+	uint32_t m_live_ticks;
+	uint32_t m_live_seconds;
+	eco::atomic::State m_born;
+	
+	inline Impl() : m_live_ticks(0), m_live_seconds(0)
+	{}
+
+	inline void set_live_seconds(IN const uint32_t secs)
+	{
+		if (secs > 0)
+		{
+			m_live_ticks = secs / get_unit_live_tick_seconds();
+			if (secs - m_live_ticks * get_unit_live_tick_seconds() > 0)
+			{
+				++m_live_ticks;
+			}
+			return;
+		}
+		m_live_ticks = 0;
+	}
+
+	inline bool on_born(Being& be)
+	{
+		if (m_live_seconds > 0)
+		{
+			set_live_seconds(m_live_seconds);	// 设置心跳频率
+		}
+		return be.on_born();	// 生命初始化
+	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_IMPL(Being);
 ECO_PROPERTY_STR_IMPL(Being, name);
-Being::Being(IN const uint32_t live_ticks)
+Being::Being(IN uint32_t live_sec, IN const char* name)
 {
 	m_impl = new Impl();
-	impl().m_live_ticks = live_ticks > 0 ? live_ticks : 1;
+	set_live_seconds(live_sec);
+	m_impl->m_name = name;
 }
 Being::~Being()
 {
 	kill();
+	delete m_impl;
+	m_impl = nullptr;
 }
 
 
@@ -39,13 +69,26 @@ bool Being::is_born() const
 {
 	return impl().m_born.is_ok();
 }
-const uint32_t Being::get_live_ticks() const
+uint32_t Being::get_live_ticks() const
 {
 	return impl().m_live_ticks;
 }
-void Being::set_live_ticks(IN const uint32_t ticks)
+void Being::set_live_ticks(IN uint32_t ticks)
 {
 	impl().m_live_ticks = ticks;
+}
+void Being::set_live_seconds(IN uint32_t secs)
+{
+	impl().m_live_seconds = secs;
+	impl().set_live_seconds(secs);
+}
+uint32_t Being::get_live_seconds() const
+{
+	return impl().m_live_seconds;
+}
+uint32_t Being::get_living_seconds() const
+{
+	return impl().m_live_ticks * Eco::Impl::get_unit_live_tick_seconds();
 }
 
 
@@ -55,15 +98,9 @@ void Being::born()
 	// 生命降生（非线程安全性）
 	if (!impl().m_born.is_ok())
 	{
-		if (get_eco() == nullptr)
+		if (impl().on_born(*this))
 		{
-			EcoThrow << "there is no eco life when live " << impl().m_name;
-			return;
-		}
-
-		if (on_born())	// 生命初始化
-		{
-			get_eco()->add_being(this);
+			eco().impl().add_being(this);
 			impl().m_born.ok();
 		}
 	}
@@ -76,13 +113,7 @@ void Being::live()
 	// 开启生命活动（非线程安全性）
 	if (!impl().m_born.is_ok())
 	{
-		if (get_eco() == nullptr)
-		{
-			EcoThrow << "there is no eco life when live " << impl().m_name;
-			return;
-		}
-
-		if (on_born())
+		if (impl().on_born(*this))
 		{
 			try
 			{
@@ -90,14 +121,14 @@ void Being::live()
 			}
 			catch (eco::Error& e)
 			{
-				EcoError << get_name() << " live: " << e;
+				ECO_ERROR << get_name() << " live : " << e;
 			}
 			catch (std::exception& e) 
 			{
-				EcoError << get_name() << " live: " << e.what();
+				ECO_ERROR << get_name() << " live : " << e.what();
 			}
 			
-			get_eco()->add_being(this);
+			eco().impl().add_being(this);
 			impl().m_born.ok();
 		}
 	}
@@ -109,7 +140,7 @@ void Being::kill()
 {
 	if (impl().m_born.is_ok())
 	{
-		get_eco()->remove_being(this);
+		eco().impl().remove_being(this);
 		impl().m_born.none();
 	}
 }
@@ -118,12 +149,9 @@ void Being::kill()
 ////////////////////////////////////////////////////////////////////////////////
 const uint32_t Being::get_unit_live_tick_seconds()
 {
-	return get_eco()->get_unit_live_tick_seconds();
+	return Eco::Impl::get_unit_live_tick_seconds();
 }
-void Being::post_task(IN Btask& task)
-{
-	get_eco()->post_task(task);
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }

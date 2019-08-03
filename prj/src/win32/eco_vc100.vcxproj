@@ -41,12 +41,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(ProjectDir)..\..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(ProjectDir)..\..\..\lib_vc100\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\..\..\..\lib_vc100\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(ProjectDir)..\..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(ProjectDir)..\..\..\lib_vc100\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\..\..\..\lib_vc100\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -54,7 +54,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;ECO_NO_PROTOBUF;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -64,7 +64,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\contrib\boost\lib_vc100;$(ProjectDir)..\..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\..\..\contrib\boost\lib_vc100;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -83,7 +83,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ECO_EXPORT;ECO_VC100;ECO_NO_PROTOBUF;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -93,7 +93,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\contrib\boost\lib_vc100;$(ProjectDir)..\..\..\..\..\contrib\google\protobuf\lib_vc100\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\..\..\contrib\boost\lib_vc100;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -175,52 +175,17 @@
     <ClCompile Include="..\xml\Reader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\App.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Being.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Cast.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Class.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Command.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Context.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Engine.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\cmd\Group.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Config.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\DllObject.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Memory.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\MemoryPool.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\MutexWin.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Typex.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Export.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\ExportApi.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\SourceFile.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Implement.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Core.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Log.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Pusher.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\log\Type.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Net.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Object.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\CsvSource.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Json.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\process\Process.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Project.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\RxApp.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\CallOnce.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageQueue.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\MessageServer.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Mutex.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\State.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Thread.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ThreadPool.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\Type.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\xml\Reader.h" />
+    <ClInclude Include="..\..\..\Any.h" />
+    <ClInclude Include="..\..\..\App.h" />
+    <ClInclude Include="..\..\..\Being.h" />
     <ClInclude Include="..\..\..\Bobject.h" />
     <ClInclude Include="..\..\..\Btask.h" />
+    <ClInclude Include="..\..\..\Cast.h" />
+    <ClInclude Include="..\..\..\cmd\Class.h" />
+    <ClInclude Include="..\..\..\cmd\Command.h" />
+    <ClInclude Include="..\..\..\cmd\Context.h" />
+    <ClInclude Include="..\..\..\cmd\Engine.h" />
+    <ClInclude Include="..\..\..\cmd\Group.h" />
     <ClInclude Include="..\..\..\codec\base64.h" />
     <ClInclude Include="..\..\..\codec\md5.h" />
     <ClInclude Include="..\..\..\codec\NullByteCoder.h" />
@@ -228,11 +193,25 @@
     <ClInclude Include="..\..\..\codec\Zlib.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
     <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
+    <ClInclude Include="..\..\..\Config.h" />
     <ClInclude Include="..\..\..\date_time\Date.h" />
     <ClInclude Include="..\..\..\date_time\DateTime.h" />
     <ClInclude Include="..\..\..\date_time\Time.h" />
+    <ClInclude Include="..\..\..\DllObject.h" />
+    <ClInclude Include="..\..\..\Export.h" />
+    <ClInclude Include="..\..\..\ExportApi.h" />
+    <ClInclude Include="..\..\..\filesystem\File.h" />
     <ClInclude Include="..\..\..\filesystem\Operations.h" />
+    <ClInclude Include="..\..\..\filesystem\SourceFile.h" />
+    <ClInclude Include="..\..\..\HeapOperators.h" />
+    <ClInclude Include="..\..\..\Implement.h" />
+    <ClInclude Include="..\..\..\log\Core.h" />
+    <ClInclude Include="..\..\..\log\Log.h" />
+    <ClInclude Include="..\..\..\log\Pusher.h" />
+    <ClInclude Include="..\..\..\log\Type.h" />
     <ClInclude Include="..\..\..\media\Media.h" />
+    <ClInclude Include="..\..\..\Memory.h" />
+    <ClInclude Include="..\..\..\MemoryPool.h" />
     <ClInclude Include="..\..\..\meta\Meta.h" />
     <ClInclude Include="..\..\..\meta\Stamp.h" />
     <ClInclude Include="..\..\..\net\Address.h" />
@@ -244,6 +223,7 @@
     <ClInclude Include="..\..\..\net\Ecode.h" />
     <ClInclude Include="..\..\..\net\IoTimer.h" />
     <ClInclude Include="..\..\..\net\Log.h" />
+    <ClInclude Include="..\..\..\net\Net.h" />
     <ClInclude Include="..\..\..\net\ProtobufHandler.h" />
     <ClInclude Include="..\..\..\net\protocol\Check.h" />
     <ClInclude Include="..\..\..\net\protocol\Codec.h" />
@@ -269,17 +249,26 @@
     <ClInclude Include="..\..\..\net\TcpSession.h" />
     <ClInclude Include="..\..\..\net\TcpState.h" />
     <ClInclude Include="..\..\..\net\Worker.h" />
+    <ClInclude Include="..\..\..\Object.h" />
     <ClInclude Include="..\..\..\persist\Address.h" />
+    <ClInclude Include="..\..\..\persist\CsvSource.h" />
     <ClInclude Include="..\..\..\persist\Database.h" />
     <ClInclude Include="..\..\..\persist\DatabaseConfig.h" />
     <ClInclude Include="..\..\..\persist\JoinMapping.h" />
+    <ClInclude Include="..\..\..\persist\Json.h" />
+    <ClInclude Include="..\..\..\persist\Model.h" />
     <ClInclude Include="..\..\..\persist\MySql.h" />
+    <ClInclude Include="..\..\..\persist\ObjectMapping.h" />
     <ClInclude Include="..\..\..\persist\Persist.h" />
+    <ClInclude Include="..\..\..\persist\PropertyMapping.h" />
     <ClInclude Include="..\..\..\persist\Recordset.h" />
     <ClInclude Include="..\..\..\persist\Sqlite.h" />
+    <ClInclude Include="..\..\..\process\Process.h" />
+    <ClInclude Include="..\..\..\Project.h" />
     <ClInclude Include="..\..\..\proxy\Proxy.h" />
     <ClInclude Include="..\..\..\proxy\Win.h" />
     <ClInclude Include="..\..\..\proxy\WinAutoHandler.h" />
+    <ClInclude Include="..\..\..\RxApp.h" />
     <ClInclude Include="..\..\..\service\Cluster.h" />
     <ClInclude Include="..\..\..\service\Deployment.h" />
     <ClInclude Include="..\..\..\service\dev\Cluster.h" />
@@ -303,19 +292,36 @@
     <ClInclude Include="..\..\..\thread\Atomic.h" />
     <ClInclude Include="..\..\..\thread\AtomicImpl.h" />
     <ClInclude Include="..\..\..\thread\AutoRef.h" />
+    <ClInclude Include="..\..\..\thread\CallOnce.h" />
     <ClInclude Include="..\..\..\thread\ConditionVariable.h" />
     <ClInclude Include="..\..\..\thread\detail\ConditionVariableWin.h" />
+    <ClInclude Include="..\..\..\thread\detail\MutexWin.h" />
+    <ClInclude Include="..\..\..\thread\DispatchServer.h" />
+    <ClInclude Include="..\..\..\thread\ExclusiveData.h" />
+    <ClInclude Include="..\..\..\thread\ExclusiveMonitor.h" />
+    <ClInclude Include="..\..\..\thread\ExclusiveWorker.h" />
     <ClInclude Include="..\..\..\thread\Index.h" />
     <ClInclude Include="..\..\..\thread\Map.h" />
+    <ClInclude Include="..\..\..\thread\MessageQueue.h" />
+    <ClInclude Include="..\..\..\thread\MessageServer.h" />
     <ClInclude Include="..\..\..\thread\Monitor.h" />
+    <ClInclude Include="..\..\..\thread\Mutex.h" />
+    <ClInclude Include="..\..\..\thread\State.h" />
+    <ClInclude Include="..\..\..\thread\TaskServer.h" />
+    <ClInclude Include="..\..\..\thread\Thread.h" />
+    <ClInclude Include="..\..\..\thread\ThreadPool.h" />
     <ClInclude Include="..\..\..\thread\ThreadState.h" />
     <ClInclude Include="..\..\..\thread\Timer.h" />
+    <ClInclude Include="..\..\..\thread\TimerWheel.h" />
     <ClInclude Include="..\..\..\thread\topic\Role.h" />
     <ClInclude Include="..\..\..\thread\topic\Subscription.h" />
     <ClInclude Include="..\..\..\thread\topic\Topic.h" />
     <ClInclude Include="..\..\..\thread\topic\TopicServer.h" />
+    <ClInclude Include="..\..\..\Type.h" />
+    <ClInclude Include="..\..\..\Typex.h" />
     <ClInclude Include="..\..\..\web\Html.h" />
     <ClInclude Include="..\..\..\web\Json.h" />
+    <ClInclude Include="..\..\..\xml\Reader.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\Eco.h" />
     <ClInclude Include="..\log\Queue.h" />

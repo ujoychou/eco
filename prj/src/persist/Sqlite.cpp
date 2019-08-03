@@ -6,6 +6,7 @@
 #include <eco/thread/Mutex.h>
 #include <vector>
 #include <sqlite/sqlite3.h>
+#include <boost/filesystem/operations.hpp>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,10 +38,44 @@ public:
 		{
 		case type_date_time:
 			PropertyMapping::get_field_type_sql(
-				field_sql, type_char_array, 19);
+				field_sql, dtype_char_array, 19);
 			break;
 		}
 	}
+
+	// get config info.
+	virtual const char* get_database() override
+	{
+		return m_db_name.c_str();
+	}
+
+	inline void set_charset(IN const persist::Charset v)
+	{
+		switch (v)
+		{
+		case persist::charset_gbk:
+			m_charset = "gbk";
+			return;
+		case persist::charset_gb2312:
+			m_charset = "gb2312";
+			return;
+		case persist::charset_utf8:
+			m_charset = "utf8";
+			return;
+		case persist::charset_utf16:
+			m_charset = "utf16";
+			return;
+		case persist::charset_utf32:
+			m_charset = "utf32";
+			return;
+		}
+		m_charset = "gbk";	// default is gbk.
+	}
+
+public:
+	// connection info.
+	std::string m_db_name;
+	std::string m_charset;
 };
 
 
@@ -49,9 +84,6 @@ class Sqlite::Impl
 {
 	ECO_IMPL_INIT(Sqlite);
 public:
-	// connection info.
-	std::string m_db_name;
-	std::string m_charset;
 	// mysql instance.
 	sqlite3* m_sqlite;
 	eco::Mutex m_sqlite_mutex;
@@ -66,35 +98,23 @@ public:
 	{
 		close();
 	}
-	
-	inline void set_charset(IN const persist::Charset v)
-	{
-		switch (v)
-		{
-		case persist::charset_gbk :
-			m_charset = "gbk";
-			return ;
-		case persist::charset_gb2312 :
-			m_charset = "gb2312";
-			return ;
-		case persist::charset_utf8 :
-			m_charset = "utf8";
-			return ;
-		case persist::charset_utf16 :
-			m_charset = "utf16";
-			return ;
-		case persist::charset_utf32 :
-			m_charset = "utf32";
-			return ;
-		}
-		m_charset = "gbk";	// default is gbk.
-	}
 
 	inline void open()
 	{
+		boost::system::error_code ec;
+		boost::filesystem::path path(m_config.m_db_name);
+		path = path.parent_path();
+		if (!boost::filesystem::exists(path, ec) &&
+			!boost::filesystem::create_directory(path, ec))
+		{
+			eco::FixStream err;
+			err << "create directory fail" << m_config.m_db_name;
+			throw std::logic_error(err.c_str());
+		}
+
 		// create sqlite instance.
 		sqlite3* sqlite = nullptr;
-		if (sqlite3_open(m_db_name.c_str(), &sqlite))
+		if (sqlite3_open(m_config.m_db_name.c_str(), &sqlite))
 		{
 			throw_error();
 		}
@@ -168,8 +188,8 @@ void Sqlite::open(
 	IN const persist::Charset charset)
 {
 	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex);
-	impl().m_db_name = db_name;
-	impl().set_charset(charset);
+	impl().m_config.m_db_name = db_name;
+	impl().m_config.set_charset(charset);
 	impl().open();
 }
 
@@ -272,8 +292,18 @@ uint64_t Sqlite::get_system_time()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool Sqlite::has_table(IN const char* table_name)
+void Sqlite::get_tables(OUT Recordset& tables, IN  const char* db_name)
 {
+	std::string cond_sql("select name from sqlite_master"
+		" where type='table' order by name;");
+	return select(tables, cond_sql.c_str());
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool Sqlite::has_table(IN const char* table_name, IN const char* db_name)
+{
+	if (db_name == 0) db_name = config().get_database();
 	std::string cond_sql("where type='table' and name='");
 	cond_sql += table_name;
 	cond_sql += "'";
@@ -282,11 +312,45 @@ bool Sqlite::has_table(IN const char* table_name)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Sqlite::get_tables(OUT Recordset& tables, IN  const char* db_name)
+bool Sqlite::has_field(const char* table, const char* field, const char* db)
 {
-	std::string cond_sql("select name from sqlite_master"
-		" where type='table' order by name;");
-	return select(tables, cond_sql.c_str());
+	Recordset rec_set;
+	std::string sql("PRAGMA TABLE_INFO(");
+	sql += table;
+	sql += ")";
+	select(rec_set, sql.c_str());
+	for (auto i = rec_set.size() - 1; i != -1; --i)
+	{
+		auto& rec = rec_set.at(i);
+		if (eco::equal(rec.at(1), field))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Sqlite::set_field(
+	IN const char* table,
+	IN const PropertyMapping& prop,
+	IN const char* db_name)
+{
+	char sql[128] = { 0 };
+	if (db_name == 0) db_name = config().get_database();
+	if (!has_field(table, prop.get_field(), db_name))
+	{
+		sprintf(sql, "alter table %s.%s add %s %s", db_name, table,
+			prop.get_field(), prop.get_field_type_sql(&config()).c_str());
+		execute_sql(sql);
+	}
+	else
+	{
+		eco_cpyc(sql, "sqlite don't support modify table column(field): ");
+		eco_catc(sql, prop.get_field());
+		throw std::logic_error(sql);
+	}
 }
 
 

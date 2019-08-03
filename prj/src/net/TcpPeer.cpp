@@ -14,7 +14,11 @@
 namespace eco{;
 namespace net{;
 ECO_OBJECT_IMPL(TcpPeer);
-EcoThreadLocal char s_data_head[32] = {0};
+/* this thread local data has two serious error:
+1.now is: acceptor thread recv data, but not io thread.
+2.each connection should has a data_head instead of each thread.
+*/
+//EcoThreadLocal char s_data_head[32] = { 0 };
 ////////////////////////////////////////////////////////////////////////////////
 void TcpPeer::Impl::make_connection_data(
 	IN MakeConnectionDataFunc make_func, IN Protocol* prot)
@@ -33,7 +37,7 @@ void TcpPeer::Impl::make_connection_data(
 ////////////////////////////////////////////////////////////////////////////////
 inline void TcpPeer::Impl::async_recv()
 {
-	m_connector.async_read_head(s_data_head, head_size());
+	m_connector.async_read_head(head_size());
 }
 void TcpPeer::Impl::async_recv_shakehand()
 {
@@ -59,7 +63,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	assert(m_state.websocket());
 	if (eco::find(data_head, head_size, "GET ") != data_head)
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC)
+		ECO_INFO << NetLog(get_id(), __func__)
 			<= "web socket shakehand invalid 'Get '.";
 		return;
 	}
@@ -67,9 +71,9 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	WebSocketShakeHand shake_hand;
 	if (!shake_hand.parse_req(data_head, head_size))
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC)
+		ECO_INFO << NetLog(get_id(), __func__)
 			<= "web socket shakehand invalid.";
-		close_and_notify(nullptr);
+		close_and_notify();
 		return;
 	}
 	async_send(shake_hand.response(), 0);
@@ -84,16 +88,16 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
 	assert(m_state.websocket());
 	if (eco::find(data_head, head_size, "HTTP") != data_head)
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC)
+		ECO_INFO << NetLog(get_id(), __func__)
 			<= "web socket shakehand invalid 'HTTP '.";
 		return;
 	}
 
 	if (!WebSocketShakeHand().parse_rsp(data_head, m_handler->websocket_key()))
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC)
+		ECO_INFO << NetLog(get_id(), __func__)
 			<= "web socket shakehand invalid.";
-		close_and_notify(nullptr);
+		close_and_notify();
 		return;
 	}
 	async_recv_by_client();
@@ -108,7 +112,6 @@ void TcpPeer::Impl::on_connect(
 	// "client on_connect" called only by client peer.
 	if (!is_connected)
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *e;
 		m_handler->on_connect(e);
 		return;
 	}
@@ -128,25 +131,24 @@ void TcpPeer::Impl::on_connect(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpPeer::Impl::on_read_head(
-	IN char* data_head,
-	IN const uint32_t head_size,
-	IN const eco::Error* err)
+void TcpPeer::Impl::on_read_head(IN eco::String& data, IN const eco::Error* err)
 {
 	if (err != nullptr)	// if peerection occur error, close it.
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *err;
-		close_and_notify(err);
+		ECO_DEBUG << NetLog(get_id(), __func__) <= *err;
+		close_and_notify();
 		return; 
 	}
 
 	// parse message body length from protocol head.
 	eco::Error e;
 	uint32_t data_size = 0;
-	if (!protocol_head().decode_data_size(data_size, data_head, head_size, e))
+	uint32_t head_size = data.size();
+	if (!protocol_head().decode_data_size(
+		data_size, data.c_str(), head_size, e))
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC) <= e;
-		close_and_notify(&e);
+		ECO_DEBUG << NetLog(get_id(), __func__) <= e;
+		close_and_notify();
 		return;
 	}
 
@@ -154,9 +156,6 @@ void TcpPeer::Impl::on_read_head(
 	m_state.set_peer_live(true);
 
 	// allocate memory for store coming data.
-	eco::String data;
-	data.resize(head_size + data_size);
-	strncpy(&data[0], data_head, head_size);
 	if (data_size == 0)		// empty message.
 	{
 		m_handler->on_read(this, data);
@@ -165,19 +164,18 @@ void TcpPeer::Impl::on_read_head(
 	}
 
 	// recv data from peer.
+	data.resize(head_size + data_size);
 	m_connector.async_read_data(data, head_size);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpPeer::Impl::on_read_data(
-	IN eco::String& data,
-	IN const eco::Error* e)
+void TcpPeer::Impl::on_read_data(IN eco::String& data, IN const eco::Error* e)
 {
 	if (e != nullptr)	// if peer occur error, release it.
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *e;
-		close_and_notify(e);
+		ECO_DEBUG << NetLog(get_id(), __func__) <= *e;
+		close_and_notify();
 		return;
 	}
 
@@ -207,8 +205,8 @@ void TcpPeer::Impl::on_write(IN const uint32_t size, IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
-		EcoInfo << NetLog(get_id(), ECO_FUNC) <= *e;
-		close_and_notify(e);
+		ECO_DEBUG << NetLog(get_id(), __func__) <= *e;
+		close_and_notify();
 		return;
 	}
 
@@ -260,6 +258,14 @@ const TcpState& TcpPeer::get_state() const
 {
 	return impl().get_state();
 }
+eco::atomic::State& TcpPeer::data_state()
+{
+	return impl().m_data_state;
+}
+const eco::atomic::State& TcpPeer::get_data_state() const
+{
+	return impl().m_data_state;
+}
 void TcpPeer::set_connected()
 {
 	impl().set_connected();
@@ -296,9 +302,9 @@ void TcpPeer::close()
 {
 	impl().close();
 }
-void TcpPeer::close_and_notify(IN const eco::Error* e)
+void TcpPeer::close_and_notify()
 {
-	impl().close_and_notify(e);
+	impl().close_and_notify();
 }
 void TcpPeer::async_response(
 	IN Codec& codec,

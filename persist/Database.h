@@ -96,6 +96,9 @@ class ECO_API Database
 public:
 	inline Database() {}
 
+	// get mysql server config.
+	virtual DatabaseConfig& config() = 0;
+
 	// create database
 	virtual void create_database(
 		IN const char* db_name) = 0;
@@ -146,15 +149,25 @@ public:
 
 	// is exist table in this datasource.
 	virtual bool has_table(
-		IN const char* table_name) = 0;
+		IN const char* table_name,
+		IN const char* db_name = nullptr) = 0;
 
 	// get exist tables in this datasource.
 	virtual void get_tables(
 		OUT Recordset& tables,
-		IN  const char* db_name = "") = 0;
+		IN  const char* db_name = nullptr) = 0;
 
-	// get mysql server config.
-	virtual DatabaseConfig& config() = 0;
+	// is exist field in this table.
+	virtual bool has_field(
+		IN const char* table_name,
+		IN const char* field_name,
+		IN const char* db_name = nullptr) = 0;
+
+	// set field in table, add field if the field is not exist else modify it.
+	virtual void set_field(
+		IN const char* table,
+		IN const PropertyMapping& prop,
+		IN const char* db_name = nullptr) = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
@@ -174,6 +187,9 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
+	// get database name.
+	const char* get_database() const;
+
 	// create talbe.
 	inline void create_table(
 		IN const ObjectMapping& map,
@@ -262,7 +278,7 @@ public:
 		}
 		else
 		{
-			EcoThrow << "save object failed, stamp is invalid.";
+			ECO_THROW(0) << "save object failed, stamp is invalid.";
 		}
 
 		// execute sql to save data.
@@ -282,7 +298,7 @@ public:
 		auto* p = mapping.find_property(prop);
 		if (p == nullptr)
 		{
-			EcoThrow << "property isn't exist: " << prop;
+			ECO_THROW << "property isn't exist: " << prop;
 		}
 
 		meta_t meta;
@@ -424,7 +440,7 @@ public:
 		auto* pk = mapping.find_pk();
 		if (pk == nullptr)
 		{
-			EcoThrow << "get max id fail, pk isn't exist.";
+			ECO_THROW(0) << "get max id fail, pk isn't exist.";
 		}
 		eco::Stream sql;
 		sql.buffer().reserve(64);

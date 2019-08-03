@@ -81,12 +81,12 @@ public:
 		// connection set is full.
 		if (m_peer_map.size() > m_max_conn_size)
 		{
-			EcoError << "connections has reached max size: " << m_max_conn_size;
+			ECO_ERROR << "connections has reached max size: " << m_max_conn_size;
 			return false;
 		}
 		// add to connection set.
 		m_peer_map[p->get_id()] = p;
-		EcoInfo << "connections size: " << m_peer_map.size();
+		ECO_INFO << "connections size: " << m_peer_map.size();
 		return true;
 	}
 
@@ -100,7 +100,7 @@ public:
 		auto it = m_peer_map.find(conn_id);
 		if (it != m_peer_map.end())
 		{
-			EcoDebug << NetLog(conn_id, ECO_FUNC) <= it->second.use_count();
+			ECO_DEBUG << NetLog(conn_id, __func__) <= it->second.use_count();
 			m_peer_map.erase(it);
 		}
 	}
@@ -128,45 +128,30 @@ public:
 	/*@ clean the dead peer who has not been send heartbeat to me.*/
 	inline void clean_dead_peer()
 	{
-		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
-		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); )
+		std::vector<TcpPeer::ptr> dead_set;
 		{
-			if (it->second->get_state().peer_live())
+			eco::Mutex::ScopeLock lock(m_peer_map_mutex);
+			for (auto it = m_peer_map.begin(); it != m_peer_map.end(); )
 			{
-				it->second->state().set_peer_live(false);
+				if (!it->second->impl().check_peer_live())
+				{
+					// auto it_erase = it++;
+					dead_set.push_back(it->second);
+					it = m_peer_map.erase(it);
+					continue;
+				}
 				++it;
 			}
-			else
-			{
-				// 1.close state;2.close socket.3.remove.
-				EcoDebug << NetLog(it->first, ECO_FUNC)
-					<= it->second.use_count();
-				it->second->close();
-				it = m_peer_map.erase(it);
-			}
-		}// end for
-	}
+		}
 
-	/*@ clean the inactive peer who has not been send request to me.*/
-	inline void clean_inactive_peer()
-	{
-		eco::Mutex::ScopeLock lock(m_peer_map_mutex);
-		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); )
+		// close dead peer.
+		for (size_t i = 0; i < dead_set.size(); ++i)
 		{
-			if (it->second->get_state().peer_active())
-			{
-				it->second->state().set_peer_active(false);
-				++it;
-			}
-			else
-			{
-				// 1.close state;2.close socket.3.remove.
-				EcoInfo << NetLog(it->first, ECO_FUNC)
-					<= it->second.use_count();
-				it->second->close();
-				it = m_peer_map.erase(it);
-			}
-		}// end for
+			auto& it = dead_set[i];
+			ECO_WARN << NetLog(it->get_id(), __func__)
+				<= it.use_count();
+			it->close_and_notify();
+		}
 	}
 };
 

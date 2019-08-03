@@ -55,12 +55,10 @@ public:
 		m_heartbeat_recv_tick = 0;
 
 		// send heartbeat mode.
-		m_rhythm_heartbeat = true;
+		m_rhythm_heartbeat = false;
 		m_response_heartbeat = false;
 
-		// peer management tick.
-		m_clean_inactive_peer_tick = 0;
-
+		// server thread mode.
 		m_io_thread_size = 0;
 		m_business_thread_size = 0;
 
@@ -95,7 +93,6 @@ ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, max_session_size);
 ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, max_connection_size);
 ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, heartbeat_send_tick);
 ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, heartbeat_recv_tick);
-ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, clean_inactive_peer_tick);
 ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint16_t, io_thread_size);
 ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint16_t, business_thread_size);
 

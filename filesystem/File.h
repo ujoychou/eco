@@ -22,6 +22,7 @@ file.
 
 *******************************************************************************/
 #include <eco/Export.h>
+#include <eco/Object.h>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -66,7 +67,7 @@ public:
 		m_fp = ::fopen(file_path, open_mode);
 		if (null())
 		{
-			EcoThrow << "open file fail: " << file_path;
+			ECO_THROW(0, "open file fail: ") << file_path;
 		}
 	}
 
@@ -116,7 +117,7 @@ public:
 		int result = ::stat(file_path, &buf);
 		if (result != 0)
 		{
-			EcoThrow << "get file size by ::stat() fail.";
+			ECO_THROW(0) << "get file size by ::stat() fail.";
 		}
 		return buf.st_size;
 	}

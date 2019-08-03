@@ -7,6 +7,14 @@
 #include <vector>
 #include <mysql/mysql.h>
 
+// import eco/log.
+#undef ECO_API
+#define ECO_API __declspec(dllimport)
+#include <eco/log/Log.h>
+#pragma comment(lib, "eco.lib")
+#undef ECO_API
+#define ECO_API __declspec(dllexport)
+
 
 ////////////////////////////////////////////////////////////////////////////////
 eco::Database* create()
@@ -40,13 +48,40 @@ public:
 			break;
 		}
 	}
-};
 
+	// get config info.
+	virtual const char* get_database() override
+	{
+		return m_db_name.c_str();
+	}
 
-////////////////////////////////////////////////////////////////////////////////
-class MySql::Impl
-{
-	ECO_IMPL_INIT(MySql);
+public:
+	inline MySqlConfig() : m_port(0)
+	{}
+
+	inline void set_charset(IN const persist::Charset v)
+	{
+		switch (v)
+		{
+		case persist::charset_gbk:
+			m_charset = "gbk";
+			return;
+		case persist::charset_gb2312:
+			m_charset = "gb2312";
+			return;
+		case persist::charset_utf8:
+			m_charset = "utf8";
+			return;
+		case persist::charset_utf16:
+			m_charset = "utf16";
+			return;
+		case persist::charset_utf32:
+			m_charset = "utf32";
+			return;
+		}
+		m_charset = "gbk";	// default is gbk.
+	}
+
 public:
 	// connection info.
 	int m_port;
@@ -55,6 +90,14 @@ public:
 	std::string m_user_id;
 	std::string m_password;
 	std::string m_charset;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class MySql::Impl
+{
+	ECO_IMPL_INIT(MySql);
+public:
 	// mysql instance.
 	MYSQL* m_mysql;
 	eco::Mutex m_mysql_mutex;
@@ -63,35 +106,12 @@ public:
 	MySqlConfig m_config;
 
 public:
-	inline Impl() : m_mysql(nullptr), m_port(0)
+	inline Impl() : m_mysql(nullptr)
 	{}
 
 	inline ~Impl()
 	{
 		close();
-	}
-
-	void set_charset(IN const persist::Charset v)
-	{
-		switch (v)
-		{
-		case persist::charset_gbk :
-			m_charset = "gbk";
-			return ;
-		case persist::charset_gb2312 :
-			m_charset = "gb2312";
-			return ;
-		case persist::charset_utf8 :
-			m_charset = "utf8";
-			return ;
-		case persist::charset_utf16 :
-			m_charset = "utf16";
-			return ;
-		case persist::charset_utf32 :
-			m_charset = "utf32";
-			return ;
-		}
-		m_charset = "gbk";	// default is gbk.
 	}
 
 	void open()
@@ -107,11 +127,10 @@ public:
 
 		// connect to mysql server fail.
 		if (nullptr == mysql_real_connect(m_mysql,
-			m_server_ip.c_str(), 
-			m_user_id.c_str(),
-			m_password.c_str(),
-			nullptr,
-			m_port, nullptr, 0))
+			m_config.m_server_ip.c_str(),
+			m_config.m_user_id.c_str(),
+			m_config.m_password.c_str(),
+			nullptr, m_config.m_port, nullptr, 0))
 		{
 			close_throw_open_error("connect");
 		}
@@ -124,17 +143,17 @@ public:
 
 		// set mysql client options.
 		// set mysql client character set.
-		if (mysql_set_character_set(m_mysql, m_charset.c_str()) != 0)
+		if (mysql_set_character_set(m_mysql, m_config.m_charset.c_str()) != 0)
 		{
 			close_throw_open_error("charset");
 		}
 
 		// create database.
-		create_database(m_db_name.c_str());
+		create_database(m_config.m_db_name.c_str());
 
 		// connect to mysql server success.
 		// connect to dedicated server.
-		if (0 != mysql_select_db(m_mysql, m_db_name.c_str()))
+		if (0 != mysql_select_db(m_mysql, m_config.m_db_name.c_str()))
 		{
 			close_throw_open_error("select db");
 		}
@@ -196,7 +215,7 @@ public:
 	}
 
 	// throw detail error.
-	inline void throw_error(
+	inline std::string get_error_msg(
 		IN const char* title,
 		IN const char* sql,
 		IN const char* err,
@@ -219,14 +238,22 @@ public:
 			msg += " sql: ";
 			msg += sql;
 		}
-		throw std::logic_error(msg.c_str());
+		return msg;
+	}
+	inline void throw_error(
+		IN const char* title,
+		IN const char* sql,
+		IN const char* err,
+		IN int eno)
+	{
+		throw std::logic_error(get_error_msg(title, sql, err, eno).c_str());
 	}
 	
 	// reconnect mysql.
 	inline void reconnect()
 	{
 		// reconnect 3 times.
-		for (int i=0; i<3; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			try
 			{
@@ -236,7 +263,8 @@ public:
 			}
 			catch (std::exception& e)
 			{
-				e.what();
+				close();
+				ECO_ERROR << e.what();
 			}
 		}// end for.
 	}
@@ -244,26 +272,36 @@ public:
 	// query sql.
 	inline void query_sql(IN const char* sql)
 	{
+		open_once();
 		if (0 != mysql_query(m_mysql, sql))
 		{
+			/* if mysql fail, reconnect 3 times.
+			e2013: lost connetion during query.
+			e2006: mysql server has gone away.
+			e1064: sql syntax error.
+			e1146: table doesn't exist.
+			e2008: mysql client ran out of memory.
+			*/
+
+			// auto reconnect when mysql connect has gone.
 			uint32_t eno = mysql_errno(m_mysql);
-			// 2013: lost connetion during query.
-			// 2006
 			if (eno == 2013 || eno == 2006)
 			{
 				const char* err = mysql_error(m_mysql);
-				close();
-				throw_error("mysql query", sql, err, eno);
+				ECO_ERROR << get_error_msg("mysql query", sql, err, eno);
 			}
-			if (eno != 0)
+			else if (eno != 0)
 			{
 				throw_query_error(sql, eno);
 			}
 
-			// 1064: sql syntax error.
-			// 1146: table doesn't exist.
+			// restart execute sql.
 			reconnect();
-			if (0 != mysql_query(m_mysql, sql))
+			if (m_mysql == nullptr)
+			{
+				throw_error("mysql reconnect", sql, nullptr, 0);
+			}
+			if (mysql_query(m_mysql, sql) != 0)
 			{
 				throw_query_error(sql, 0);
 			}
@@ -277,20 +315,20 @@ public:
 		return mysql_affected_rows(m_mysql);
 	}
 
-	inline void create_database(IN const char* db_name)
+	inline void create_database(IN const char* db)
 	{
 		std::string sql("create database if not exists ");
-		sql += db_name;
+		sql += db;
 		sql += " character set = utf8";
 		execute_sql(sql.c_str());
 	}
 };
 ECO_SHARED_IMPL(MySql);
 ////////////////////////////////////////////////////////////////////////////////
-void MySql::create_database(IN const char* db_name)
+void MySql::create_database(IN const char* db)
 {
 	std::string sql("create database if not exists ");
-	sql += db_name;
+	sql += db;
 	sql += " character set = utf8";
 	execute_sql(sql.c_str());
 }
@@ -314,12 +352,12 @@ void MySql::open(
 	IN const persist::Charset charset)
 {
 	eco::Mutex::ScopeLock lock(impl().m_mysql_mutex);
-	impl().m_port = port;
-	impl().m_db_name = db_name;
-	impl().m_user_id = user_id;
-	impl().m_password = password;
-	impl().m_server_ip = server_ip;
-	impl().set_charset(charset);
+	impl().m_config.m_port = port;
+	impl().m_config.m_db_name = db_name;
+	impl().m_config.m_user_id = user_id;
+	impl().m_config.m_password = password;
+	impl().m_config.m_server_ip = server_ip;
+	impl().m_config.set_charset(charset);
 	impl().open();
 }
 
@@ -358,7 +396,6 @@ void MySql::select(
 	IN  const char* sql)
 {
 	eco::Mutex::ScopeLock lock(impl().m_mysql_mutex, !has_transaction());
-	impl().open_once();
 
 	// query sql fail, reconnect it.
 	impl().query_sql(sql);
@@ -401,11 +438,9 @@ void MySql::select(
 uint64_t MySql::execute_sql(IN const char* sql)
 {
 	eco::Mutex::ScopeLock lock(impl().m_mysql_mutex, !has_transaction());
-	impl().open_once();
 
 	// query sql fail, reconnect it.
-	impl().query_sql(sql);
-	return mysql_affected_rows(impl().m_mysql);
+	return impl().execute_sql(sql);
 }
 
 
@@ -441,14 +476,12 @@ uint64_t MySql::get_system_time()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool MySql::has_table(IN const char* table_name)
+bool MySql::has_table(IN const char* table, IN const char* db)
 {
-	std::string cond_sql("where table_name='"); 
-	cond_sql += table_name;
-	cond_sql += "' and TABLE_SCHEMA='";
-	cond_sql += impl().m_db_name;
-	cond_sql += "'";
-	return has_record("information_schema.TABLES", cond_sql.c_str()) > 0;
+	char cond_sql[128] = { 0 };
+	if (db == nullptr) db = impl().m_config.m_db_name.c_str();
+	sprintf(cond_sql, "where TABLE_SCHEMA='%s' and TABLE_NAME='%s'", db, table);
+	return has_record("information_schema.TABLES", cond_sql) > 0;
 }
 
 
@@ -456,10 +489,43 @@ bool MySql::has_table(IN const char* table_name)
 void MySql::get_tables(OUT Recordset& tables, IN  const char* db)
 {
 	char cond_sql[128] = { 0 };
-	const char* name = eco::empty(db) ? impl().m_db_name.c_str() : db;
+	if (db == nullptr) db = impl().m_config.m_db_name.c_str();
 	sprintf(cond_sql, "select TABLE_NAME from information_schema.TABLES"
-		" where TABLE_SCHEMA='%s'", name);
+		" where TABLE_SCHEMA='%s'", db);
 	return select(tables, cond_sql);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool MySql::has_field(const char* table, const char* field, const char* db)
+{
+	char cond_sql[256] = { 0 };
+	if (db == nullptr) db = impl().m_config.m_db_name.c_str();
+	sprintf(cond_sql, "where TABLE_SCHEMA='%s' and TABLE_NAME='%s' and "
+		"COLUMN_NAME='%s'", db, table, field);
+	return has_record("information_schema.COLUMNS", cond_sql) > 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void MySql::set_field(
+	IN const char* table,
+	IN const PropertyMapping& prop,
+	IN const char* db)
+{
+	char sql[128] = { 0 };
+	if (db == 0) db = config().get_database();
+	if (!has_field(table, prop.get_field(), db))
+	{
+		sprintf(sql, "alter table %s.%s add %s %s", db, table,
+			prop.get_field(), prop.get_field_type_sql(&config()).c_str());
+	}
+	else
+	{
+		sprintf(sql, "alter table %s.%s modify %s %s", db, table,
+			prop.get_field(), prop.get_field_type_sql(&config()).c_str());
+	}
+	execute_sql(sql);
 }
 
 

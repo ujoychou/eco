@@ -41,12 +41,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(ProjectDir)..\..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(ProjectDir)..\..\..\lib_vc100\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\..\..\..\lib_vc100\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(ProjectDir)..\..\obj\vc100\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(ProjectDir)..\..\..\lib_vc100\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\..\..\..\lib_vc100\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -54,7 +54,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ECO_EXPORT;WIN32;ECO_NO_VARIADIC_TEMPLATE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -82,7 +82,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ECO_EXPORT;WIN32;ECO_NO_VARIADIC_TEMPLATE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
@@ -103,7 +103,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\contrib\sqlite\sqlite3.c">
+    <ClCompile Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -116,34 +116,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Database.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Recordset.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Sqlite.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\sqlite\sqlite3.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\sqlite\sqlite3ext.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3ext.h" />
     <ClInclude Include="..\PrecHeader.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco_sqlite.dll">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc100\release\eco_sqlite.dll">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc100\debug\eco_sqlite.lib">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </Library>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc100\release\eco_sqlite.lib">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </Library>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

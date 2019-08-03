@@ -29,6 +29,14 @@
 namespace eco{;
 namespace filesystem{;
 ////////////////////////////////////////////////////////////////////////////////
+enum
+{
+	remove_root			= 0x01,		// remove root directory
+	remove_recursive	= 0x02,		// remove directory recursively.
+};
+typedef int Option;
+
+////////////////////////////////////////////////////////////////////////////////
 // shim class for read file
 class ReadFile : public boost::noncopyable
 {
@@ -103,31 +111,50 @@ inline void copy_files(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/*@ recursively copy all file in the directory.*/
-inline void remove_files_inner(
+/*@ recursively remove all file in the directory.*/
+inline bool remove_files_if_impl(
 	IN  const boost::filesystem::path& sour_dir,
-	IN  const bool remove_sour_dir)
+	IN  const Option option,
+	IN  std::function<bool(const boost::filesystem::path& file)>& remove_if)
 {
 	using namespace boost::filesystem;
 
 	// recursively remove files.
-	for (directory_iterator it(sour_dir); it!=directory_iterator(); ++it)
+	bool remove_root_sour = true;
+	for (directory_iterator it(sour_dir); it != directory_iterator(); ++it)
 	{
-		const path& it_sour = it->path();
-		if (boost::filesystem::is_directory(it_sour))
+		const path& sour = it->path();
+		if (boost::filesystem::is_directory(sour) && 
+			eco::has(option, remove_recursive))
 		{
-			eco::filesystem::remove_files_inner(it_sour, true);
+			if (!remove_files_if_impl(sour, remove_root | option, remove_if))
+			{
+				remove_root_sour = false;
+			}
 		}
-		else if (boost::filesystem::is_regular_file(it_sour))
+		else if (boost::filesystem::is_regular_file(sour))
 		{
-			boost::filesystem::remove(it_sour);
+			if (!remove_if || remove_if(sour))
+			{
+				boost::filesystem::remove(sour);
+				continue;
+			}
+			remove_root_sour = false;
 		}
 	}// end for.
 
-	if (remove_sour_dir)
+	if (remove_root_sour && eco::has(option, remove_root))
 	{
 		boost::filesystem::remove(sour_dir);
 	}
+	return remove_root_sour;
+}
+inline bool remove_files_if(
+	IN  const boost::filesystem::path& sour_dir,
+	IN  const Option option,
+	IN  std::function<bool(const boost::filesystem::path& file)> remove_if)
+{
+	return remove_files_if_impl(sour_dir, option, remove_if);
 }
 
 
@@ -139,7 +166,24 @@ inline void remove_files(
 {
 	if (exists(sour_dir))
 	{
-		eco::filesystem::remove_files_inner(sour_dir, remove_sour_dir);
+		eco::filesystem::remove_files_if(sour_dir, remove_recursive, nullptr);
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*@ recursively remove all file in the directory.
+suffix: .log|.txt|.doc
+*/
+inline void remove_files_by_suffix(
+	IN  const boost::filesystem::path& sour_dir,
+	IN  const std::string& suffix)
+{
+	if (exists(sour_dir))
+	{
+		eco::filesystem::remove_files_if(sour_dir, 0,
+			[&](const boost::filesystem::path& file)-> bool {
+			return suffix.find(file.extension().string()) != -1;
+		});
 	}
 }
 

@@ -3,6 +3,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/log/Log.h>
 #include <eco/service/dev/Cluster.h>
+#include <eco/codec/Zlib.h>
+#include <eco/codec/ZlibFlate.h>
+#include <eco/codec/ZlibFlateUnk.h>
+#include <eco/net/protocol/Check.h>
+#include <eco/net/protocol/Crypt.h>
 #include <eco/net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
 #include "TcpOuter.h"
@@ -15,7 +20,7 @@ void TcpServer::Impl::start()
 {
 	// verify data.
 	if (m_option.get_port() == 0)
-		EcoThrow(e_server_no_port) << "server must dedicated server port.";
+		ECO_THROW(e_server_no_port) << "server must dedicated server port.";
 
 	// set protocol.
 	if (m_option.websocket())
@@ -26,7 +31,7 @@ void TcpServer::Impl::start()
 	else if (!m_prot_head.get() || m_protocol_set.empty())
 	{
 		set_protocol_head(new TcpProtocolHead());
-		set_protocol(new TcpProtocol());
+		set_protocol(new TcpProtocol(new CheckAdler32(), new CryptFlate()));
 	}
 
 	// set default value.
@@ -41,8 +46,7 @@ void TcpServer::Impl::start()
 		m_option.set_business_thread_size(4);
 
 	// start to receive request.
-	const char* name = "eco_dispatch_s";
-	m_dispatch_pool.run(m_option.get_business_thread_size(), name);
+	m_dispatch_pool.run("disp_dc", m_option.get_business_thread_size());
 
 	// acceptor: start accept client tcp_connection.
 	m_peer_set.set_max_connection_size(m_option.get_max_connection_size());
@@ -62,7 +66,7 @@ void TcpServer::Impl::start()
 	// logging.
 	char log[1024] = { 0 };
 	sprintf(log, "\n+[tcp server %s %d]\n"
-		"-[mode] io delay(%c), websocket(%c)\n"
+		"-[mode] no_delay(%c), websocket(%c)\n"
 		"-[tick] unit %ds, lost client %ds, heartbeat %ds\n"
 		"-[beat] io(%c), rhythm(%c), response(%c)\n"
 		"-[capacity] %d connections, %d sessions\n"
@@ -79,7 +83,7 @@ void TcpServer::Impl::start()
 		m_option.get_max_session_size(),
 		m_option.get_io_thread_size(), 
 		m_option.get_business_thread_size());
-	EcoLog(info) << log;
+	ECO_LOGX(info) << log;
 }
 
 
@@ -90,14 +94,14 @@ SessionData::ptr TcpServer::Impl::add_session(
 {
 	if (m_make_session == nullptr)
 	{
-		EcoWarn << NetLog(conn.get_id(), ECO_FUNC)
+		ECO_WARN << NetLog(conn.get_id(), __func__)
 			<= "this is connection mode, don't support session.";
 		return SessionData::ptr();
 	}
 	// session overloaded.
 	if (m_session_map.size() >= m_option.get_max_session_size())
 	{
-		EcoError << NetLog(conn.get_id(), ECO_FUNC)
+		ECO_ERROR << NetLog(conn.get_id(), __func__)
 			<= "session has reached max size: "
 			< m_option.get_max_session_size();
 		return SessionData::ptr();
@@ -108,7 +112,7 @@ SessionData::ptr TcpServer::Impl::add_session(
 	SessionData::ptr new_sess(m_make_session(sess_id, conn));
 	m_session_map.set(sess_id, new_sess);
 	add_conn_session(conn.get_id(), sess_id);
-	EcoInfo << NetLog(conn.get_id(), ECO_FUNC, sess_id);
+	ECO_INFO << NetLog(conn.get_id(), __func__, sess_id);
 	return new_sess;
 }
 
@@ -118,7 +122,7 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 {
 	if (e)	// error
 	{
-		EcoError << "tcp server on timer error: " << *e;
+		ECO_ERROR << "tcp server on timer error: " << *e;
 		return;
 	}
 	m_option.step_tick();
@@ -127,23 +131,16 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 	if (m_option.get_heartbeat_send_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_send_tick() == 0)
 	{
-		//async_send_heartbeat();
+		async_send_heartbeat();
 	}
 
 	// clean dead peer.
 	if (m_option.get_heartbeat_recv_tick() > 0 &&
 		m_option.tick_count() % m_option.get_heartbeat_recv_tick() == 0)
 	{
-		//m_peer_set.clean_dead_peer();
+		m_peer_set.clean_dead_peer();
 	}
 
-	// clean inactive connection.
-	if (m_option.get_clean_inactive_peer_tick() > 0 &&
-		m_option.tick_count() %
-		m_option.get_clean_inactive_peer_tick() == 0)
-	{
-		m_peer_set.clean_inactive_peer();
-	}
 	// set next tick on.
 	set_tick_timer();
 }
@@ -154,12 +151,12 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& p, IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
-		EcoWarn << "accept: " << e->what();
+		ECO_WARN << "accept: " << e->what();
 		return;
 	}
 	p->set_connected();
 	p->state().set_server();
-	EcoInfo << NetLog(p->get_id(), ECO_FUNC);
+	ECO_INFO << NetLog(p->get_id(), __func__);
 	
 	// hub verify the most tcp_connection num.
 	if (m_peer_set.add(p))
@@ -190,7 +187,7 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 	MessageHead head;
 	if (!m_prot_head->decode(head, data, e))
 	{
-		EcoInfo << NetLog(peer->get_id(), ECO_FUNC) <= e;
+		ECO_INFO << NetLog(peer->get_id(), __func__) <= e;
 		return;
 	}
 
@@ -203,7 +200,7 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 		{
 			e.id(e_message_unknown) << "tcp server have no protocol: "
 				<< head.m_version;
-			EcoWarn << NetLog(peer->get_id(), ECO_FUNC) <= e;
+			ECO_WARN << NetLog(peer->get_id(), __func__) <= e;
 			return;
 		}
 		// this is thread safe:
@@ -213,12 +210,13 @@ void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
 	}
 	
 	// #.send heartbeat.
-	if (eco::has(head.m_category, category_heartbeat) &&
-		m_option.io_heartbeat())
+	if (m_option.io_heartbeat() &&
+		eco::has(head.m_category, category_heartbeat))
 	{
 		peer->state().set_peer_live(true);
 		if (m_option.response_heartbeat())
-			peer->async_send_heartbeat(*m_prot_head);		
+			peer->async_send_heartbeat(*m_prot_head);
+		ECO_INFO << NetLog(peer->get_id(), __func__) <= "heartbeat";
 		return;
 	}
 
@@ -233,7 +231,7 @@ void TcpServer::Impl::on_close(IN const ConnectionId conn_id)
 {
 	m_peer_set.erase(conn_id);
 	clear_conn_session(conn_id);
-	EcoInfo << NetLog(conn_id, ECO_FUNC);
+	ECO_DEBUG << NetLog(conn_id, __func__);
 }
 
 

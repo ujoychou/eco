@@ -9,8 +9,8 @@ class DllObject::Impl
 {
 public:
 public:
-	std::string m_dll_name;
-	std::string m_dll_path;
+	std::string m_name;
+	std::string m_path;
 	void* m_dll_handle;
 
 public:
@@ -28,15 +28,15 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_OBJECT_IMPL(DllObject);
-ECO_PROPERTY_STR_IMPL(DllObject, dll_name);
-const char* DllObject::get_dll_path() const
+ECO_PROPERTY_STR_IMPL(DllObject, name);
+const char* DllObject::get_path() const
 {
-	return impl().m_dll_path.c_str();
+	return impl().m_path.c_str();
 }
-void DllObject::set_dll(IN const char* dll_name, IN const char* dll_path)
+void DllObject::load(IN const char* dll_path, IN const char* dll_name)
 {
-	impl().m_dll_name = dll_name;
-	impl().m_dll_path = dll_path;
+	impl().m_name = dll_name;
+	impl().m_path = dll_path;
 	impl().m_dll_handle = eco::load_dll(dll_path);
 }
 DllFunc DllObject::get_function(IN const char* func_name)

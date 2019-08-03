@@ -36,7 +36,12 @@ public:
 	{}
 
 	// sync logging.
-	inline void operator()(IN const eco::Bytes& buf, IN const SeverityLevel level);
+	inline void operator()(
+		IN const eco::Bytes& buf,
+		IN const SeverityLevel level);
+	inline void cout(
+		IN const eco::Bytes& buf,
+		IN const SeverityLevel level);
 
 	// async logging.
 	inline void operator()(IN const Pack& buf);
@@ -97,37 +102,37 @@ Core::Impl::Impl()
 	, m_file_roll_size(eco::log::file_roll_size)
 	, m_file_path("./log/")
 	, m_on_create(nullptr)
-	, m_sink_option(eco::value_none)
+	, m_sink_option(eco::log::console_sink | eco::log::file_sink)
 	, m_file_sev(eco::log::info)
 	, m_console_sev(eco::log::info)
+	, m_async_flush(3000)
 {}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Handler::operator()(IN const eco::Bytes& buf, IN const SeverityLevel level)
+void Handler::cout(const eco::Bytes& buf, const SeverityLevel level)
 {
-	if (m_core->m_file_sink.get() != nullptr && level >= m_core->m_file_sev)
-	{
-		(*m_core->m_file_sink).append(buf.c_str(), buf.size());
-	}
-	if (m_core->m_console_sink.get() != nullptr &&
-		level >= m_core->m_console_sev)
+	if (m_core->m_console_sink.get() && level >= m_core->m_console_sev)
 	{
 		(*m_core->m_console_sink) << buf.c_str();
 	}
+}
+void Handler::operator()(IN const eco::Bytes& buf, IN const SeverityLevel level)
+{
+	if (m_core->m_file_sink.get() && level >= m_core->m_file_sev)
+	{
+		(*m_core->m_file_sink).append(buf.c_str(), buf.size());
+	}
+	Handler::cout(buf, level);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void Handler::operator()(IN const Pack& buf)
 {
-	if (m_core->m_file_sink.get() != nullptr)
+	if (m_core->m_file_sink.get())
 	{
 		(*m_core->m_file_sink).append(buf.c_str(), buf.size());
-	}
-	if (m_core->m_console_sink.get() != nullptr)
-	{
-		(*m_core->m_console_sink) << buf.c_str();
 	}
 }
 
@@ -141,7 +146,7 @@ void Core::run()
 	{
 		if (!boost::filesystem::create_directories(path_v, e))
 		{
-			EcoThrow(e.value()) << e.message();
+			ECO_THROW(e.value()) << e.message();
 		}
 	}
 
@@ -153,7 +158,7 @@ void Core::run()
 			impl().m_capacity = min_queue_size;
 		if (impl().m_async_flush < min_sync_interval)
 			impl().m_async_flush = min_sync_interval;
-		impl().m_server->run(1, "log");
+		impl().m_server->run("eco_log", 1);
 		impl().m_server->set_capacity(impl().m_capacity);
 		impl().m_server->set_sync_interval(impl().m_async_flush);
 	}
@@ -239,17 +244,30 @@ void Core::set_file_on_create(IN eco::log::OnChangedLogFile& func)
 {
 	impl().m_on_create = func;
 }
-void Core::append(IN const eco::Bytes& buf, IN const SeverityLevel level)
+void Core::append(IN eco::Bytes& buf, IN const SeverityLevel level)
 {
-	if (impl().m_server != nullptr)		// async
-	{
-		impl().m_server->post(buf);
-	}
-	else
+	if (impl().m_server == nullptr)
 	{
 		eco::Mutex::ScopeLock lock(impl().m_sync_mutex);
-		Handler hdl(impl());			// sync
-		hdl(buf, level);
+		Handler(impl()).operator()(buf, level);
+		return;
+	}
+	
+	try
+	{
+		// async write file.
+		if (impl().m_file_sink.get() && level >= impl().m_file_sev)
+		{
+			impl().m_server->post(buf);
+		}
+		Handler(impl()).cout(buf, level);
+	}
+	catch (std::exception& e)
+	{
+		// buffer size is larger than logging pack.
+		EcoCout << e.what();
+		impl().m_server->post(eco::Bytes(e.what()));
+		impl().m_server->post(eco::Bytes(buf.c_str(), 1000));
 	}
 }
 

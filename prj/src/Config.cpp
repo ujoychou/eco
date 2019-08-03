@@ -43,9 +43,10 @@ public:
 		}
 		catch (const std::exception& e)
 		{
-			EcoThrow << "init config fail, " << e.what();
+			ECO_THROW(0, "init config fail:") << e.what();
 		}
 	}
+
 
 	////////////////////////////////////////////////////////////////////////////
 	inline void get_property_set(
@@ -53,14 +54,9 @@ public:
 		IN  const char* node_key) const
 	{
 		eco::Mutex::ScopeLock lock(m_data.mutex());
-		if (m_root.has_children())
-		{
-			if (node_key == nullptr)
-				result = m_root.get_property_set();
-			else
-				m_root.get_children().get_property_set(result, node_key);
-		}
+		m_root.get_property_set(result, node_key);
 	}
+
 
 	////////////////////////////////////////////////////////////////////////////
 	inline eco::ContextNodeSet get_children(IN  const char* parent_key) const
@@ -94,7 +90,7 @@ public:
 		for (; att != node.get_property_set().end(); ++att)
 		{
 			std::string attr_name(node_name);
-			eco::xml::sub_path(attr_name, att->get_key());
+			eco::xml::sub_path(attr_name, att->get_name());
 			m_data.set(attr_name, att->get_value());
 		}
 
@@ -112,7 +108,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_OBJECT_IMPL(Config);
+ECO_SHARED_IMPL(Config);
 void Config::init(IN const char* file)
 {
 	impl().init(file);
@@ -131,8 +127,14 @@ const eco::StringAny Config::at(IN const char* key) const
 	eco::StringAny v;
 	if (!impl().m_data.find(v, key))
 	{
-		EcoThrow << "config can't find key: " << key;
+		ECO_THROW(0, "config can't find key:") << key;
 	}
+	return v;
+}
+const eco::StringAny Config::get(IN const char* key) const
+{
+	eco::StringAny v;
+	impl().m_data.find(v, key);
 	return v;
 }
 void Config::add(IN const char* key, IN const char* value)
@@ -152,7 +154,7 @@ eco::ContextNodeSet Config::get_children(
 	if (result.null())
 	{
 		if (parent_key == nullptr) parent_key = "root";
-		EcoThrow << "get config node children fail " << parent_key;
+		ECO_THROW(0, "get config node children fail ") << parent_key;
 	}
 	return result;
 }

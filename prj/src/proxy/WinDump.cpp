@@ -23,7 +23,7 @@ std::string get_dump_file_name()
 	if (!boost::filesystem::exists(path, ec) &&
 		!boost::filesystem::create_directory(path, ec))
 	{
-		EcoThrow(ec.value()) << ec.message();
+		ECO_THROW(ec.value()) << ec.message();
 	}
 
 	// file name: \dump\eco.20180708121212.dump

@@ -33,7 +33,7 @@ void get_command_line(
 //##############################################################################
 //##############################################################################
 ECO_TYPE_IMPL(Engine);
-bool Engine::Impl::run_inner_command(IN const Context& context)
+bool Engine::Impl::run_inner_command(IN Context& context)
 {
 	std::vector<Class>::iterator it = std::find_if(
 		m_inner_cmds.begin(), m_inner_cmds.end(),

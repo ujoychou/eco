@@ -16,9 +16,6 @@
     <Filter Include="bin\release_win32">
       <UniqueIdentifier>{d04e5327-6997-4e85-9f18-f445e582f301}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lib\persist">
-      <UniqueIdentifier>{0ec90bdc-79c7-4988-a986-66549783f442}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\persist">
       <UniqueIdentifier>{bbed05e7-727b-4d0b-bfe3-1e0cbd4cf390}</UniqueIdentifier>
     </Filter>
@@ -38,42 +35,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\ObjectMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\PropertyMapping.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Database.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\MySql.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\Recordset.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\persist\DatabaseConfig.h">
-      <Filter>lib\persist</Filter>
-    </ClInclude>
     <ClInclude Include="..\PrecHeader.h">
       <Filter>src</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc141\debug\eco_mysql.dll">
-      <Filter>bin\debug_win32</Filter>
-    </None>
-    <None Include="..\..\..\..\..\contrib\eco\lib_vc141\release\eco_mysql.dll">
-      <Filter>bin\release_win32</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc141\debug\eco_mysql.lib">
-      <Filter>bin\debug_win32</Filter>
-    </Library>
-    <Library Include="..\..\..\..\..\contrib\eco\lib_vc141\release\eco_mysql.lib">
-      <Filter>bin\release_win32</Filter>
-    </Library>
   </ItemGroup>
 </Project>

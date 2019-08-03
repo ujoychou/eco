@@ -34,6 +34,9 @@ class ECO_API MySql : public eco::Database
 	ECO_SHARED_API(MySql);
 ////////////////////////////////////////////////////////////////////////////////
 public:
+	// get mysql server config.
+	virtual DatabaseConfig& config() override;
+
 	// create database
 	virtual void create_database(
 		IN const char* db_name) override;
@@ -80,15 +83,25 @@ public:
 
 	// is exist table in this datasource.
 	virtual bool has_table(
-		IN const char* table_name) override;
+		IN const char* table_name,
+		IN  const char* db_name = nullptr) override;
 
 	// get exist tables in this datasource.
 	virtual void get_tables(
 		OUT Recordset& tables,
-		IN  const char* db_name = "") override;
+		IN  const char* db_name = nullptr) override;
 
-	// get mysql server config.
-	virtual DatabaseConfig& config() override;
+	// is exist field in this table.
+	virtual bool has_field(
+		IN const char* table_name,
+		IN const char* field_name,
+		IN const char* db_name = nullptr) override;
+
+	// set field in table, add field if the field is not exist else modify it.
+	virtual void set_field(
+		IN const char* table,
+		IN const PropertyMapping& prop,
+		IN const char* db_name = nullptr) override;
 
 public:
 	// begin a transaction.

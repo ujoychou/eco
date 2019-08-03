@@ -20,8 +20,7 @@ public:
 	~FuncCommand();
 
 	// execute func.
-	virtual void execute(
-		IN const eco::cmd::Context& context) override
+	virtual void execute(IN eco::cmd::Context& context) override
 	{
 		m_execute(context, execute_mode);
 	}

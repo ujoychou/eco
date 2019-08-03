@@ -21,7 +21,6 @@ using persist in two way:
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/Being.h>
 #include <eco/meta/Meta.h>
 #include <eco/persist/Address.h>
 #include <eco/persist/Database.h>
@@ -127,11 +126,8 @@ public:
 	// close and release persist resource. just like database.
 	void close();
 
-	// get persist master.
+	// get persist master. when persis is unloaded it will throw error.
 	eco::Database& master();
-
-	// validate persist state.
-	void check_state();
 
 	// register persist upgrade, it will throw exception when has error.
 	typedef std::function<void(void)> UpgradeFunc;
@@ -146,7 +142,17 @@ public:
 class PersistHandler
 {
 public:
-	PersistHandler() : m_persist(eco::null) {}
+	inline PersistHandler() : m_persist(eco::null)
+	{}
+
+	// init persist object.
+	inline void start(IN const persist::Address& addr)
+	{
+		m_persist = eco::heap;
+		m_persist.set_handler(*this);
+		m_persist.set_address(addr);
+		m_persist.start();
+	}
 
 	// event: init object relation mapping.
 	virtual void on_mapping() {}
@@ -161,13 +167,16 @@ public:
 	// it will throw exception when has error.
 	virtual void on_load() {}
 
+	// event: clear business data before master close.
+	virtual void to_exit() {}
+
 	// event: release business data when persist exit.
 	virtual void on_exit() {}
 
 	// get persist.
 	inline Persist& persist();
 
-	// get persist master.
+	// get persist master. when persis is unloaded it will throw error.
 	inline eco::Database& master();
 
 private:

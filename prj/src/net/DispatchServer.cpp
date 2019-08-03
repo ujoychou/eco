@@ -29,7 +29,7 @@ bool handle_server_context(OUT Context& c, IN TcpPeer& peer)
 		// open the exist session.
 		if (!sess.open(c.m_meta.m_session_id))
 		{
-			EcoWarn << "session has expired: sid=" << c.m_meta.m_session_id;
+			ECO_WARN << "session has expired: sid=" << c.m_meta.m_session_id;
 			return false;
 		}
 	}
@@ -54,13 +54,13 @@ bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 		auto* key = reinterpret_cast<TcpSession*>(c.m_meta.m_request_data);
 		if (key == nullptr)
 		{
-			EcoWarn << "authority request id invalid.";
+			ECO_WARN << "authority request id invalid.";
 			return false;
 		}
 		SessionDataPack::ptr pack = client->find_authority(key);
 		if (pack == nullptr)
 		{
-			EcoWarn << "authority pack has expired: req_id="
+			ECO_WARN << "authority pack has expired: req_id="
 				<< c.m_meta.m_request_data;
 			return false;
 		}
@@ -69,7 +69,7 @@ bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 		sess.impl().m_user = pack->m_user_observer.lock();
 		if (sess.impl().m_user == nullptr)
 		{
-			EcoWarn << "authority user has expired: sid="
+			ECO_WARN << "authority user has expired: sid="
 				<< c.m_meta.m_request_data;
 			return false;
 		}
@@ -92,7 +92,7 @@ bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 			// can't find the session id.
 			if (!sess.open(c.m_meta.m_session_id))
 			{
-				EcoWarn << "session has expired: sid=" << c.m_meta.m_session_id;
+				ECO_WARN << "session has expired: sid=" << c.m_meta.m_session_id;
 				return false;
 			}
 		}
@@ -101,28 +101,36 @@ bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 	// #.handle sync request.
 	if (eco::has(c.m_meta.m_category, category_sync))
 	{
-		auto async = client->pop_async(c.m_meta.get_req4());
-		if (async != nullptr)
+		// "sync call" isn't need to handle by "dispatcher";
+		// 1.sync decode rsp message.
+		auto sync = client->pop_sync(c.m_meta.get_req4(), c.m_meta.last());
+		if (sync != nullptr)
 		{
-			if (!async->m_rsp_codec->decode(
+			if (!sync->m_rsp_codec->decode(
 				c.m_message.m_data, c.m_message.m_size))
 			{
-				EcoError(eco::net::rsp) << Log(c.m_session,
+				ECO_ERROR(eco::net::rsp) << Log(c.m_session,
 					c.m_meta.m_message_type, nullptr) <= "decode fail.";
 			}
 
 			// push the object to set.
-			if (async->m_rsp_set != nullptr)
+			if (sync->m_rsp_set != nullptr)
 			{
-				async->m_rsp_set->push_back(async->m_rsp_codec->get_message());
+				sync->m_rsp_set->push_back(sync->m_rsp_codec->get_message());
 			}
-
 			if (c.last())
 			{
-				async->m_monitor.finish_one();		// only one.
+				sync->m_monitor.finish_one();		// only one.
 			}
+			return false;
 		}
-		return false;		// "sync call" isn't need to handle by "dispatcher";
+		// 2.async callback func.
+		auto async = client->pop_async(c.m_meta.get_req4(), c.m_meta.last());
+		if (async != nullptr)
+		{
+			async->m_func(c);
+		}
+		return false;
 	}
 
 	// #.handle request.
@@ -133,10 +141,12 @@ bool handle_client_context(OUT Context& c, IN  TcpPeer& peer)
 ////////////////////////////////////////////////////////////////////////////////
 void DispatchHandler::operator()(IN DataContext& dc) const
 {
+	const char* func = "handle_dc";
 	// check whether peer is expired.
 	TcpPeer::ptr peer = dc.m_peer_wptr.lock();
 	if (peer == nullptr)
 	{
+		ECO_DEBUG << func <= "peer is empty.";
 		return;
 	}
 	
@@ -149,17 +159,18 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 		{
 			peer->impl().async_send_heartbeat(*owner.protocol_head());
 		}
+		ECO_DEBUG << NetLog(peer->get_id(), "heartbeat recv");
 		return ;
 	}
 
 	// parse message meta.
 	eco::Error e;
 	Context c;
+	auto sess_id = c.m_meta.m_session_id;
 	c.m_meta.m_category = dc.m_category;
 	if (!dc.m_prot->decode(c.m_meta, c.m_message, dc.m_data, e))
 	{
-		EcoError << NetLog(peer->get_id(), ECO_FUNC,
-			c.m_meta.m_session_id) <= e;
+		ECO_ERROR << NetLog(peer->get_id(), func, sess_id) <= e;
 		return;
 	}
 
@@ -171,11 +182,30 @@ void DispatchHandler::operator()(IN DataContext& dc) const
 	conn.set_protocol(*dc.m_prot);
 	conn.set_id(peer->get_id());
 	c.m_data = std::move(dc.m_data);
-	if (dc.m_session_owner.m_server && handle_server_context(c, *peer) ||
-		!dc.m_session_owner.m_server && handle_client_context(c, *peer))
+
+	// receive by server
+	if (dc.m_session_owner.m_server)
 	{
-		peer->impl().state().set_peer_active(true);
-		dispatch(c.m_meta.m_message_type, c);
+		if (handle_server_context(c, *peer))
+		{
+			peer->impl().state().set_peer_active(true);
+			dispatch(c.m_meta.m_message_type, c);
+		}
+		else
+		{
+			ECO_WARN << NetLog(peer->get_id(), func, sess_id)
+				<= "discard" <= c.m_meta.m_category 
+				<= c.m_meta.m_message_type;
+		}
+	}
+	// receive by client
+	else
+	{
+		if (handle_client_context(c, *peer))
+		{
+			peer->impl().state().set_peer_active(true);
+			dispatch(c.m_meta.m_message_type, c);
+		}
 	}
 }
 
