@@ -43,8 +43,8 @@ public:
 	/*@ run command with dedicated parameter.
 	* @ params.context: command name and parameter.
 	*/
-	void run_command(
-		IN const Context& context);
+	void run_command(IN Context& context);
+	void run_command(IN const char* cmd_line);
 
 	/*@ is exit.*/
 	bool is_exit_command(IN const char* cmd_name) const;

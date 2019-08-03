@@ -25,13 +25,8 @@ command that input by user on service console.
 #include <eco/cmd/Command.h>
 
 
-
-
 namespace eco{;
 namespace cmd{;
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Class
 {

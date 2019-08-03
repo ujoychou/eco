@@ -23,15 +23,10 @@ command context.
 
 *******************************************************************************/
 #include <eco/Type.h>
-#include <eco/Typex.h>
-
-
 
 
 namespace eco{;
 namespace cmd{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Context : public eco::Context
 {

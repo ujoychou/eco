@@ -36,8 +36,7 @@ namespace cmd{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Engine
 {
-	ECO_IMPL_API();
-	ECO_SINGLETON_UNINIT(Engine);
+	ECO_SINGLETON_API(Engine);
 public:
 	/*@ run command engine.*/
 	void run();

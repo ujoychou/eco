@@ -26,6 +26,7 @@ command that input by user on service console.
 #include <eco/HeapOperators.h>
 
 
+////////////////////////////////////////////////////////////////////////////////
 #define ECO_COMMAND(cmd_class, cmd_name, cmd_alias)\
 public:\
 inline static Command* create()\
@@ -42,15 +43,21 @@ inline static const char* get_alias()\
 }\
 private:
 
+
+////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
 namespace cmd{;
-
-
+////////////////////////////////////////////////////////////////////////////////
 enum ExecuteMode
 {
 	execute_mode,
 	revoke_mode,
 	resume_mode,
+};
+enum ConsoleEvent
+{
+	ctrl_c			= 0x1,		// ctrl c break 
+	ctrl_close		= 0x2,		// close window
 };
 
 
@@ -60,12 +67,12 @@ typedef Command* (*CreateCommandFunc)(void);
 
 // command execute function.
 typedef void (*ExecuteFunc)(
-	IN const eco::cmd::Context&,
+	IN eco::cmd::Context&,
 	IN eco::cmd::ExecuteMode);
 
 // command execute functor.
 typedef std::function<void(
-	IN const eco::cmd::Context&,
+	IN eco::cmd::Context&,
 	IN eco::cmd::ExecuteMode)> CommandExecute;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,8 +85,7 @@ public:
 	/*@ run this command with parameters.
 	* @ params.context: command context that contain parameters.
 	*/
-	virtual void execute(
-		IN const eco::cmd::Context& context) = 0;
+	virtual void execute(IN eco::cmd::Context& context) = 0;
 
 	// cancel execute command.
 	virtual void revoke() {};
