@@ -25,10 +25,8 @@ as
 #include "windows.h"
 
 
-namespace eco{;
-namespace win{;
-
-
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(win);
 ////////////////////////////////////////////////////////////////////////////////
 inline void cast(OUT std::string& dest, IN  const wchar_t* sour)
 {
@@ -102,5 +100,6 @@ inline void gbk_to_utf8(OUT std::string& val)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
+ECO_NS_END(win);
+ECO_NS_END(eco);
 #endif

@@ -1,5 +1,5 @@
-#ifndef ECO_WIN_CONSOLE_EVENT_H
-#define ECO_WIN_CONSOLE_EVENT_H
+#ifndef ECO_WIN_DUMP_H
+#define ECO_WIN_DUMP_H
 #ifdef WIN32
 ////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************
@@ -20,20 +20,20 @@ as
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
+#include <eco/ExportApi.h>
+#include <string>
 #include "windows.h"
+#include <DbgHelp.h>
 
 
-////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(win);
-
-
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API ConsoleEvent
+class ECO_API Dump
 {
 public:
-	static bool init();
+	// init dump info so that it can produce dump file when app crash.
+	static void init(IN bool auto_restart = false);
 };
 
 
