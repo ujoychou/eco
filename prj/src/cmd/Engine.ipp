@@ -42,7 +42,7 @@ public:
 	Impl();
 	void init(Engine&);
 	void work();
-	void run();
+	void start();
 	bool run_inner_command(IN Context& context);
 
 	inline Group home()

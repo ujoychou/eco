@@ -71,7 +71,7 @@ void ListCommand::execute(IN eco::cmd::Context& context)
 		auto it = data.m_group_set.begin();
 		for (; it!=data.m_group_set.end(); ++it)
 		{
-			snprintf(fmt, sizeof(fmt), "{g} %-8s %-15s: %s",
+			snprintf(fmt, sizeof(fmt), "{g} %-10s %-20s: %s",
 				it->get_alias(), it->get_name(), it->get_help_info());
 			EcoCout << fmt;
 		}
@@ -83,7 +83,7 @@ void ListCommand::execute(IN eco::cmd::Context& context)
 		auto it = data.m_command_set.begin();
 		for (; it != data.m_command_set.end(); ++it)
 		{
-			snprintf(fmt, sizeof(fmt), "(c) %-8s %-15s: %s",
+			snprintf(fmt, sizeof(fmt), "(c) %-10s %-20s: %s",
 				it->get_alias(), it->get_name(), it->get_help_info());
 			EcoCout << fmt;
 		}

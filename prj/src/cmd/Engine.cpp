@@ -32,7 +32,6 @@ void get_command_line(
 
 //##############################################################################
 //##############################################################################
-ECO_TYPE_IMPL(Engine);
 bool Engine::Impl::run_inner_command(IN Context& context)
 {
 	std::vector<Class>::iterator it = std::find_if(
@@ -51,7 +50,12 @@ bool Engine::Impl::run_inner_command(IN Context& context)
 
 ////////////////////////////////////////////////////////////////////////////////
 void Engine::Impl::work()
-{	
+{
+	if (eco::empty(home().get_name()))
+	{
+		home().name("app");
+	}
+
 	while (true)
 	{
 		// get user input.
@@ -86,12 +90,8 @@ void Engine::Impl::work()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Engine::Impl::run()
+void Engine::Impl::start()
 {
-	if (eco::empty(home().get_name()))
-	{
-		home().name("app");
-	}
 	m_thread.run(std::bind(&Engine::Impl::work, this), "cmd");
 }
 
@@ -137,9 +137,13 @@ const Group Engine::get_current() const
 {
 	return m_impl->m_curr_group;
 }
-void Engine::run()
+void Engine::start()
 {
-	m_impl->run();
+	m_impl->start();
+}
+void Engine::work()
+{
+	m_impl->work();
 }
 void Engine::join()
 {
@@ -150,9 +154,8 @@ Group Engine::home()
 	return impl().home();
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-Engine& get_engine()
+ECO_SINGLETON_IMPL(Engine);
+ECO_API Engine& get_engine()
 {
 	return eco::Singleton<Engine>::instance();
 }

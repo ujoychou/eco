@@ -74,8 +74,8 @@ public:
 
 private:
 	Class& bind(
-		IN const char* name,
 		IN const char* alias,
+		IN const char* name,
 		IN const char* help_info,
 		IN CreateCommandFunc func);
 };

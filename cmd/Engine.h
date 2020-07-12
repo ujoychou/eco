@@ -39,7 +39,8 @@ class ECO_API Engine
 	ECO_SINGLETON_API(Engine);
 public:
 	/*@ run command engine.*/
-	void run();
+	void work();
+	void start();
 
 	void join();
 
