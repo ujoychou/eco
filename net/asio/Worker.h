@@ -24,10 +24,11 @@
 
 *******************************************************************************/
 #include <eco/Export.h>
+#include <eco/log/Log.h>
 #include <eco/thread/Thread.h>
 #include <boost/asio/io_service.hpp>
+#include <eco/thread/State.h>
 #include <map>
-
 
 
 namespace eco{;
@@ -49,19 +50,44 @@ private:
 
 	// thread to run the io_service.
 	eco::Thread m_thread;
+	eco::atomic::State m_state;
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
-	// io service run.
-	inline void run()
+	inline Worker()
 	{
-		using namespace boost::asio;
-		typedef void (io_service::*RunFunc)();
+		m_state.add(eco::atomic::State::_a);
+	}
 	
+	// get work stopped state.
+	inline bool stopped() const
+	{
+		return m_state.is_none();
+	}
+	inline bool running() const
+	{
+		return m_state.has(eco::atomic::State::_b);
+	}
+	inline bool initing() const
+	{
+		return m_state.has(eco::atomic::State::_a);
+	}
+
+	// io service run.
+	inline void run(const char* name)
+	{
 		m_io_service.reset(new boost::asio::io_service());
-		m_work.reset(new io_service::work(*m_io_service));
-		std::size_t(io_service::*func)() = &io_service::run;
-		m_thread.run(std::bind((RunFunc)func, m_io_service.get()));
+		m_work.reset(new boost::asio::io_service::work(*m_io_service));
+		m_thread.run([=]() {
+			boost::system::error_code ec;
+			m_io_service->run(ec);
+			m_state.none();
+			if (ec)		// log error.
+			{
+				ECO_ERROR << name <= ec.value() <= ec.message();
+			}
+		}, name);
+		m_state.add(eco::atomic::State::_b);
 	}
 
 	inline void join()

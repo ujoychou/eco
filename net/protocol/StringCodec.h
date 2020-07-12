@@ -34,66 +34,38 @@ namespace net{;
 class StringCodec : public eco::net::Codec
 {
 public:
-	explicit inline StringCodec(IN const uint32_t capacity = 0)
-	{
-		m_msg.reserve(capacity);
-	}
-
-	explicit inline StringCodec(IN const char* msg)
-	{
-		m_msg.asign(msg);
-	}
-
-	inline StringCodec(IN eco::String&& msg) : m_msg((eco::String&&)msg)
+	inline StringCodec() : m_msg(nullptr)
 	{}
 
-	inline void reserve(IN const uint32_t capacity)
+	inline explicit StringCodec(IN const std::string& msg)
 	{
-		m_msg.reserve(capacity);
+		m_msg = const_cast<std::string*>(&msg);
 	}
 
-	inline void append(IN const char* msg, IN const uint32_t siz)
-	{
-		m_msg.append(msg, siz);
-	}
-
-public:
-	// implement the Codec interface.
 	virtual void set_message(void* message) override
 	{
-		m_msg.asign(static_cast<const char*>(message));
+		m_msg = static_cast<std::string*>(message);
 	}
 
-	virtual void* get_message() override
+	virtual uint32_t byte_size() const override
 	{
-		return &m_msg;
+		return (uint32_t)m_msg->size();
 	}
 
-	virtual uint32_t get_byte_size() const override
+	virtual void encode(OUT char* bytes, IN uint32_t size) const override
 	{
-		return m_msg.size();
+		memcpy(bytes, m_msg->c_str(), size);
 	}
 
-	virtual void encode(
-		OUT char* bytes,
-		IN  const uint32_t size) const override
+	virtual void* decode(IN const char* bytes, IN uint32_t size) override
 	{
-		uint32_t siz = size > m_msg.size() ? m_msg.size() : size;
-		memcpy(bytes, m_msg.c_str(), siz);
+		m_msg->assign(bytes, size);
+		return m_msg;
 	}
 
-	virtual bool decode(
-		IN  const char* bytes,
-		IN  const uint32_t size) override
-	{
-		m_msg.asign(bytes, size);
-		return true;
-	}
-
-private:
-	eco::String m_msg;
+protected:
+	std::string* m_msg;
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

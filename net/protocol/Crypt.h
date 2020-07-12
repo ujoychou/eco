@@ -35,7 +35,7 @@ class Crypt
 {
 public:
 	/*@ message bytes size after encode.*/
-	virtual uint32_t get_byte_size(IN uint32_t size)
+	virtual uint32_t byte_size(IN uint32_t size)
 	{
 		return size;
 	}

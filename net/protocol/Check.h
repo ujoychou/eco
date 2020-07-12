@@ -30,7 +30,7 @@ namespace net{;
 class Check
 {
 public:
-	virtual uint32_t get_byte_size()
+	virtual uint32_t byte_size()
 	{
 		return 0;
 	}
@@ -92,7 +92,7 @@ class CheckT : public Check
 {
 public:
 	/*@ get sync protocol byte size.*/
-	virtual uint32_t get_byte_size() override
+	virtual uint32_t byte_size() override
 	{
 		return sizeof(CheckSumType);
 	}
@@ -122,7 +122,7 @@ public:
 		IN const size_t size,
 		IN const uint32_t start) override
 	{
-		int32_t checksum_bytes_size = size - start - get_byte_size();
+		int32_t checksum_bytes_size = int32_t(size - start - byte_size());
 		if (checksum_bytes_size < 1)
 		{
 			return false;

@@ -10,21 +10,16 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class Worker::Impl
 {
+	ECO_IMPL_INIT(Worker);
 public:
 	asio::Worker m_worker;
-
-	void init(Worker&){}
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////
-
-
-ECO_MOVABLE_IMPL(Worker);
-////////////////////////////////////////////////////////////////////////////////
-void Worker::run()
+ECO_OBJECT_IMPL(Worker);
+void Worker::run(const char* name)
 {
-	m_impl->m_worker.run();
+	m_impl->m_worker.run(name);
 }
 
 void Worker::join()
@@ -37,9 +32,27 @@ void Worker::stop()
 	m_impl->m_worker.stop();
 }
 
+bool Worker::stopped() const
+{
+	return m_impl->m_worker.stopped();
+}
+bool Worker::running() const
+{
+	return m_impl->m_worker.running();
+}
+bool Worker::initing() const
+{
+	return m_impl->m_worker.initing();
+}
+
 void Worker::async_stop()
 {
 	m_impl->m_worker.async_stop();
+}
+
+IoWorker* Worker::get_io_worker()
+{
+	return (IoWorker*)&m_impl->m_worker;
 }
 
 IoService* Worker::get_io_service()

@@ -57,16 +57,19 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 public:
 	// io service run.
-	inline void run(IN size_t io_thread_size)
+	inline void run(IN size_t io_thread_size, const char* name)
 	{
+		std::string xname;
 		m_balancer.reserve(io_thread_size);
 		m_tcp_workers.reserve(io_thread_size);
 		for (size_t i = 0; i < io_thread_size; ++i)
 		{
 			TcpWorkerPtr tcp_worker(new Worker);
 			m_tcp_workers.push_back(tcp_worker);
+			xname = name;
+			xname += eco::cast<std::string>(i);
 			m_balancer.push_back(WorkLoad(tcp_worker.get(), 0));
-			tcp_worker->run();
+			tcp_worker->run(xname.c_str());
 		}
 	}
 
@@ -90,23 +93,35 @@ public:
 		join();
 	}
 
-	inline boost::asio::io_service* get_io_service()
+	inline void stop_test(size_t i, bool stop_io_service)
+	{
+		if (i < m_tcp_workers.size())
+		{
+			m_tcp_workers[i]->async_stop();
+			m_tcp_workers[i]->join();
+		}
+	}
+
+	inline Worker* get_io_worker()
 	{
 		// get the io service that has less connections and less workload.
-		size_t max_size = 0;
-		auto it_get = m_balancer.begin();
-		for (auto it = it_get; it != m_balancer.end(); ++it)
+		WorkLoad* get = nullptr;
+		for (WorkLoad& it : m_balancer)
 		{
-			if (it->m_work_load > max_size)
+			if (!it.m_worker->stopped() &&
+				(!get || get->m_work_load > it.m_work_load))
 			{
-				max_size = it->m_work_load;
-				it_get = it;
+				get = &it;
 			}
+		}
+		if (!get)
+		{
+			ECO_FUNC(error) << "all io workers is stopped.";
 		}
 
 		// connect on the io_service increase
-		++it_get->m_work_load;
-		return it_get->m_worker->get_io_service();
+		++get->m_work_load;
+		return get->m_worker;
 	}
 };
 

@@ -3,14 +3,103 @@
 #include <boost/bind.hpp>
 #include <eco/net/TcpAcceptor.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <mutex>
 #include <eco/net/asio/WorkerPool.h>
-#include "../TcpPeer.ipp"
 #include "../TcpServer.ipp"
-
 
 
 namespace eco{;
 namespace net{;
+////////////////////////////////////////////////////////////////////////////////
+class TcpPeerPool : public eco::Object<TcpPeerPool>
+{
+public:
+	inline TcpPeerPool() : m_server(0)
+	{}
+
+	inline void start(TcpServer::Impl* server)
+	{
+		m_server = server;
+		m_recycle = std::bind(&TcpPeerPool::recycle, 
+			this, std::placeholders::_1);
+		m_queue.run("peer_pool", 1);
+		m_queue.set_message_handler(std::bind(
+			&TcpPeerPool::release, this, std::placeholders::_1));
+	}
+
+	inline void clear()
+	{
+		std::lock_guard<std::mutex> lock(m_queue.mutex());
+		m_buffer.clear();
+	}
+
+	TcpPeer::ptr make(asio::Worker* io_srv, void* msg_srv)
+	{
+		std::lock_guard<std::mutex> lock(m_queue.mutex());
+		// release io stopped peer.
+		while (!m_buffer.empty() && m_buffer.back()->stopped())
+		{
+			m_buffer.pop_back();
+		}
+
+		// create new peer.
+		if (m_buffer.empty())
+		{
+			auto* io = (IoWorker*)io_srv;
+			std::auto_ptr<TcpPeer> ptr(new TcpPeer(
+				io, msg_srv, &m_server->m_peer_handler));
+			m_buffer.push_back(std::move(ptr));
+		}
+		TcpPeer::ptr peer(m_buffer.back().release(), m_recycle);
+		peer->impl().restart((MessageWorker*)msg_srv, peer);
+		m_buffer.pop_back();
+		return peer;
+	}
+
+	inline void recycle(IN TcpPeer* peer)
+	{
+		m_queue.post(peer);
+	}
+
+	inline void release(IN TcpPeer* peer)
+	{
+		// release peer user defined data.
+		std::auto_ptr<TcpPeer> ptr(peer);
+		try
+		{
+			eco::this_thread::lock().set_object(ptr->impl().get_id());
+			ptr->impl().release();
+		}
+		catch (std::exception& e)
+		{
+			ECO_ERROR << NetLog(ptr->get_id(), __func__)
+				<= ptr->get_ip() <= e.what();
+		}
+		
+		// release buffer peer algorithm.
+		// b_size = max(c_size / 10, 5);
+		if (!ptr->stopped())
+		{
+			auto size = m_server->get_peer_size() / 10;
+			if (size < 5) size = 5;
+			std::lock_guard<std::mutex> lock(m_queue.mutex());
+			m_buffer.push_back(std::move(ptr));
+			while (m_buffer.size() > size)
+			{
+				m_buffer.pop_back();
+			}
+		}
+	}
+
+public:
+	// connecntion pool.
+	TcpServer::Impl* m_server;
+	std::vector<std::auto_ptr<TcpPeer> > m_buffer;
+	eco::MessageServer<TcpPeer*> m_queue;
+	std::function<void(TcpPeer*)> m_recycle;
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 class TcpAcceptor::Impl
 {
@@ -21,6 +110,7 @@ public:
 	// aiso io service.
 	eco::net::asio::Worker m_worker;
 	eco::net::asio::WorkerPool m_worker_pool;
+	eco::net::TcpPeerPool m_peer_pool;
 
 	// tcp handler
 	TcpOnAccept m_on_accept;
@@ -37,9 +127,9 @@ public:
 	/*@ async accept peer.*/
 	inline void async_accept()
 	{
-		TcpPeer::ptr pr(TcpPeer::make(
-			(IoService*)m_worker_pool.get_io_service(),
-			m_server->m_dispatch_pool.attach(), m_server));
+		TcpPeer::ptr pr(m_peer_pool.make(
+			m_worker_pool.get_io_worker(),
+			m_server->m_dispatch_pool.attach()));
 		m_acceptor->async_accept(
 			*(boost::asio::ip::tcp::socket*)(pr->impl().socket()),
 			boost::bind(&Impl::on_accept, this,
@@ -53,8 +143,9 @@ public:
 		using namespace boost::asio::ip;
 
 		// start service thread.
-		m_worker.run();
+		m_worker.run("listen");
 		m_acceptor.reset(new tcp::acceptor(*m_worker.get_io_service()));
+		m_peer_pool.start(m_server);
 		// bind the acceptor address.
 		tcp::endpoint endpoint(tcp::v4(), port);
 		m_acceptor->open(endpoint.protocol());
@@ -63,7 +154,7 @@ public:
 		m_acceptor->listen();
 
 		// start io services for connections.
-		m_worker_pool.run(io_server_size);
+		m_worker_pool.run(io_server_size, "worker");
 
 		// accept client peer.
 		async_accept();
@@ -78,6 +169,7 @@ public:
 			m_acceptor.reset();
 		}
 		// stop worker.
+		m_peer_pool.clear();
 		m_worker.stop();
 		m_worker_pool.stop();
 	}
@@ -100,50 +192,59 @@ public:
 		}
 		else
 		{
-			pr->set_option(m_server->m_option.no_delay());
 			m_on_accept(pr, nullptr);
+			async_accept();		// accept next tcp_connection.
 		}
 	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_MOVABLE_IMPL(TcpAcceptor);
+ECO_OBJECT_IMPL(TcpAcceptor);
 void TcpAcceptor::listen(
 	IN  const uint16_t port,
 	IN  const uint16_t io_server_size)
 {
 	impl().listen(port, io_server_size);
 }
-
 void TcpAcceptor::async_accept()
 {
 	impl().async_accept();
 }
-
 void TcpAcceptor::stop()
 {
 	impl().stop();
 }
-
+bool TcpAcceptor::stopped() const
+{
+	return impl().m_worker.stopped();
+}
+bool TcpAcceptor::running() const
+{
+	return impl().m_worker.running();
+}
 void TcpAcceptor::join()
 {
 	impl().join();
 }
-
 void TcpAcceptor::set_server(TcpServer& server)
 {
 	impl().m_server = &server.impl();
 }
-
 void TcpAcceptor::register_on_accept(IN TcpOnAccept v)
 {
 	impl().m_on_accept = v;
 }
-
 IoService* TcpAcceptor::get_io_service()
 {
 	return (IoService*)impl().m_worker.get_io_service();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void test_close_io_service(TcpAcceptor::Impl* impl)
+{
+	impl->m_worker_pool.stop_test(0, false);
 }
 
 

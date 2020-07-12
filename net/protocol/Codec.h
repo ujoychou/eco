@@ -37,16 +37,13 @@ class Codec
 {
 public:
 	/*@ set message data to be encoded or to be decoded.*/
-	virtual void* get_message() = 0;
 	virtual void set_message(void* message) = 0;
 
 	/*@ get bytes size of encoded message.*/
-	virtual uint32_t get_byte_size() const = 0;
+	virtual uint32_t byte_size() const = 0;
 
 	/*@ append encode data string.*/
-	virtual void encode_append(
-		OUT eco::String& bytes,
-		IN  const uint32_t size) const
+	virtual void encode_append(OUT eco::String& bytes, IN uint32_t size) const
 	{
 		uint32_t init_size = bytes.size();
 		bytes.resize(init_size + size);
@@ -57,22 +54,20 @@ public:
 	* @ para.bytes: encoded message bytes.
 	* @ para.size: bytes size of encoded message, return by "get_byte_size".
 	*/
-	virtual void encode(
-		OUT char* bytes,
-		IN  const uint32_t size) const = 0;
+	virtual void encode(OUT char* bytes, IN uint32_t size) const = 0;
 
-	// decode message from bytes string.
-	virtual bool decode(
-		IN const char* bytes,
-		IN const uint32_t size)
+	/*@decode message from bytes string.
+	* @return: message ptr if success, nullptr if fail.
+	*/
+	virtual void* decode(IN const char* bytes, IN uint32_t size)
 	{
-		return false;
+		return nullptr;
 	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class TypeCodec : public eco::net::Codec
+class WrapCodec : public eco::net::Codec
 {
 public:
 	typedef void* (*MakeFunc)();
@@ -84,7 +79,7 @@ public:
 	}
 
 public:
-	inline explicit TypeCodec(IN Codec& codec, IN MakeFunc func)
+	inline explicit WrapCodec(IN Codec& codec, IN MakeFunc func)
 		: m_make(func), m_codec(codec)
 	{}
 
@@ -93,33 +88,24 @@ public:
 		m_codec.set_message(message);
 	}
 
-	virtual void* get_message() override
+	virtual uint32_t byte_size() const override
 	{
-		return m_codec.get_message();
+		return m_codec.byte_size();
 	}
 
-	virtual uint32_t get_byte_size() const override
-	{
-		return m_codec.get_byte_size();
-	}
-
-	virtual void encode(
-		OUT char* bytes,
-		IN  const uint32_t size) const override
+	virtual void encode(OUT char* bytes, IN uint32_t size) const override
 	{
 		m_codec.encode(bytes, size);
 	}
 
-	virtual bool decode(
-		IN  const char* bytes,
-		IN  const uint32_t size) override
+	virtual void* decode(IN const char* bytes, IN uint32_t size) override
 	{
 		m_codec.set_message(m_make());
 		return m_codec.decode(bytes, size);
 	}
 
 private:
-	Codec & m_codec;
+	Codec& m_codec;
 	MakeFunc m_make;
 };
 
