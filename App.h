@@ -60,7 +60,6 @@ protected:
 	// app exit.
 	virtual void on_exit() {}
 
-public:
 	// console mode: consle event.
 	virtual bool on_console(int event) 
 	{
@@ -71,13 +70,13 @@ public:
 	virtual ~App();
 
 	/*@ get app instance.*/
-	static App* app();
+	static App* get();
 
 	/*@ get app instance template.*/
 	template<typename app_t>
-	static inline app_t* get()
+	static inline app_t* cast()
 	{
-		return static_cast<app_t*>(app());
+		return static_cast<app_t*>(get());
 	}
 
 	/*@ get command param size. it's parse from argc and argv.*/
@@ -85,6 +84,18 @@ public:
 
 	/*@ get command param string.*/
 	static const char* get_param(IN const int i);
+	static const char* get_init_path();
+	static const char* get_exe_path();
+	static const char* get_exe_file();
+	const char* get_module_path() const;
+	const char* get_module_file() const;
+
+	/*@ whether current module is a exe.*/
+	inline bool module_exe() const
+	{
+		return strcmp(get_exe_file(), get_module_file()) == 0;
+	}
+	
 
 	/*@ get app config.*/
 	void set_name(IN const char*);
@@ -94,12 +105,6 @@ public:
 	/*@ system config file path, default: "eco.sys.xml"; */
 	void set_sys_config_file(IN const char*);
 	const char* get_sys_config_file() const;
-
-	/*@ config file path, default: "eco.app.xml"; */
-	const char* get_config_file() const;
-
-	/*@ get system config.*/
-	const Config& get_sys_config() const;
 
 	/*@ get app config.*/
 	const Config& get_config() const;
@@ -112,24 +117,32 @@ public:
 
 	// get consumer.
 	uint32_t consumer_size();
-	net::TcpClient get_consumer(IN const char* name);
-	net::TcpClient find_consumer(IN const char* name);
-	net::TcpClient get_consumer(IN uint32_t index = 0);
+	eco::net::TcpClient get_consumer(IN const char* name);
+	eco::net::TcpClient find_consumer(IN const char* name);
+	eco::net::TcpClient get_consumer(IN uint32_t index = 0);
+	eco::net::TcpClient add_consumer(IN eco::net::Address&);
+	eco::net::TcpClient add_consumer(IN eco::net::AddressSet&);
 
 	// get persist.
 	eco::Persist persist(IN const char* name = nullptr);
+	eco::Persist find_persist(IN const char* name = nullptr);
+	eco::Persist add_persist(IN eco::persist::Address& addr);
 
 	// service provider.
 	net::TcpServer& provider();
 
 	// eco timer.
-	Timer& timer();
+	TimerServer& timer();
 
 	// eco erx
 	std::shared_ptr<RxDll> get_erx(IN const char* name);
 
+	// restart current app.
+	void restart();
+
 private:
 	friend class Startup;
+	friend class AppInner;
 	// set initiatiate
 	static void set_app(IN App& app);
 
@@ -137,7 +150,8 @@ private:
 	static int  main(IN App& app, IN int argc, IN char* argv[]);
 
 	// app life cycle managed by other app.
-	static void init(IN App& app, bool command);
+	static void init(App& app, void* module_func_addr, bool command);
+	static bool init_once(App& app, void* mfa, const char* cfg, bool cmd);
 	static void exit(IN App& app);
 };
 
@@ -146,30 +160,47 @@ private:
 class Startup
 {
 public:
-	// app main mode
+	// app mode: main function.
 	typedef int (*CMainFunc)(int argc, char* argv[]);
-	inline Startup(IN App& app, IN CMainFunc main_func)
+	inline Startup(IN App* app, IN CMainFunc main_func)
 	{
-		App::set_app(app);
+		App::set_app(*app);
 		main_func = nullptr;
 	}
 
 	inline static int main(IN int argc, IN char* argv[])
 	{
-		return App::main(*eco::App::app(), argc, argv);
+		return App::main(*eco::App::get(), argc, argv);
 	}
 
 public:
-	// dll mode
-	inline Startup(IN App& app)
+	// dll mode: but not erx mode.
+	// sys_cfg also can be set in derived app constructor.
+	inline Startup(
+		IN App& app,
+		IN void* module_func_addr,
+		IN const char* sys_cfg = nullptr)
 	{
-		init(app);
+		init(app, module_func_addr, sys_cfg);
 	}
 
-	inline static void init(IN App& app)
+	// init app thread unsafe.
+	inline static void init(
+		IN App& app,
+		IN void* module_func_addr,
+		IN const char* sys_cfg = nullptr)
 	{
-		App::set_app(app);
-		eco::App::init(app, false);
+		if (sys_cfg) app.set_sys_config_file(sys_cfg);
+		eco::App::init(app, module_func_addr, false);
+	}
+
+	// init_once can using "static Startup startup(get_app())"
+	inline static bool init_once(
+		IN App& app,
+		IN void* module_func_addr,
+		IN const char* sys_cfg = nullptr)
+	{
+		return eco::App::init_once(app, module_func_addr, sys_cfg, false);
 	}
 
 	inline static void exit(IN App& app)
@@ -189,7 +220,7 @@ int main(int argc, char* argv[])
 /*@ eco app declare: implement a app instance.*/
 #define ECO_APP(AppClass, AppGet)\
 ECO_NAME(AppClass, AppGet)\
-const eco::Startup eco_startup(AppGet(), &main<eco::Startup>)
+const eco::Startup eco_startup(&AppGet(), &main<eco::Startup>)
 
 
 ////////////////////////////////////////////////////////////////////////////////

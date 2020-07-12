@@ -1,19 +1,14 @@
-<?xml version="1.0" encoding="GB2312"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--#.ÅäÖÃÎÄ¼þ-->
-  <config>
-    <file_path>eco.xml</file_path>
-  </config>
-
-  <!--#.ÈÕÖ¾Ñ¡Ïî-->
+  <!--#.æ—¥å¿—é€‰é¡¹-->
   <logging>
-    <async value="false"/>
-    <async_flush value="1000"/>
+    <async value="true"/>
+    <async_flush value="3000"/>
     <memcache value="5M"/>
     <file_sink enable="true">
       <level value="debug"/>
-      <file_path>./log/</file_path>
-      <roll_size>100M</roll_size>
+      <file_path>log</file_path>
+      <roll_size>50M</roll_size>
       <full_path>20170104-160222.ujoychou-PC.00051124.log</full_path>
     </file_sink>
     <console_sink enable="true">
@@ -21,19 +16,19 @@
     </console_sink>
   </logging>
 
-  <!--#.ÉúÃü»úÖÆ-->
+  <!--#.ç”Ÿå‘½æœºåˆ¶-->
   <eco enable="true">
     <being enable="true">
-      <unit_live_tick>5</unit_live_tick>
+      <unit_live_tick>1</unit_live_tick>
     </being>
     <task_server_thread_size value="2"/>
   </eco>
 
-  <!--#.²å¼þ¹ÜÀí-->
+  <!--#.æ’ä»¶ç®¡ç†-->
   <erx enable="false">
   </erx>
 
-  <!--#.Â·ÓÉÖÐÐÄ-->
+  <!--#.è·¯ç”±ä¸­å¿ƒ-->
   <router enable="true">
     <front_router>
       <addr_shdx>127.0.0.1:40001</addr_shdx>
@@ -45,42 +40,54 @@
     </trade_router>
   </router>
 
-  <!--#.·þÎñÕß-->
-  <provider enable="true" router="front_router">
+  <!--#.æœåŠ¡è€…-->
+  <provider router="front_router" enable="true">
     <service>hornet</service>
     <port>50000</port>
-    <tick_time value="15"/>
-    <max_connection_size value="2000"/>
-    <max_session_size value="10000"/>
-    <!--<io_heartbeat value="false"/>-->
-    <!--<response_heartbeat value="false"/>-->
-    <!--<rhythm_heartbeat value="false"/>-->
-    <heartbeat_recv_tick value="3"/>
-    <heartbeat_send_tick value="1"/>
-    <no_delay value="true"/>
-    <websocket value="false"/>
     <io_thread_size value="2"/>
     <business_thread_size value="4"/>
+    <send_capacity value="5000"/>
+    <context_capacity value="5000"/>
+    <max_byte_size value="15M"/>
+    <max_session_size value="50000"/>
+    <max_connection_size value="5000"/>
+    <no_delay value="true"/>
+    <websocket value="false"/>
+    <send_buffer_size value="0"/>
+    <recv_buffer_size value="0"/>
+    <send_low_watermark value="0"/>
+    <recv_low_watermark value="0"/>
+    <tick_time value="5"/>
+    <io_heartbeat value="false"/>
+    <rhythm_heartbeat value="true"/>
+    <response_heartbeat value="false"/>
+    <heartbeat_recv_tick value="12"/>
+    <heartbeat_send_tick value="3"/>
   </provider>
 
-  <!--#.Ïû·ÑÕß-->
+  <!--#.æ¶ˆè´¹è€…-->
   <consumer enable="true">
-    <!--ÍÅ¶Ó·þÎñ-->
-    <team enable="true">
+    <!--å›¢é˜ŸæœåŠ¡-->
+    <team router="" enable="true">
       <address>
         <dev_env>39.104.67.41:40001</dev_env>
         <test_env>39.104.67.41:50001</test_env>
       </address>
-      <no_delay  value="true"/>
+      <no_delay value="true"/>
       <tick_time value="5"/>
       <websocket value="false"/>
+      <max_byte_size value="15M"/>
+      <send_buffer_size value="0"/>
+      <recv_buffer_size value="0"/>
+      <send_low_watermark value="0"/>
+      <recv_low_watermark value="0"/>
       <auto_reconnect_tick value="1"/>
       <heartbeat_recv_tick value="9"/>
       <heartbeat_send_tick value="1"/>
     </team>
   </consumer>
 
-  <!--#.Êý¾Ý¿â-->
+  <!--#.æ•°æ®åº“-->
   <persist enable="true">
     <test_env type="mysql">
       <user value="root"/>
@@ -89,4 +96,6 @@
       <address  value="127.0.0.1:3306"/>
     </test_env>
   </persist>
+
+  <import>eco.xml</import>
 </root>

@@ -217,6 +217,26 @@ private:
 	char m_buf[64];
 	int m_size;
 };
+////////////////////////////////////////////////////////////////////////////////
+inline int64_t atoi64(IN const char* sv)
+{
+#ifdef ECO_WIN
+	return _atoi64(sv);
+#else
+	char* end = nullptr;
+	return strtoll(sv, &end, 10);
+#endif
+}
+inline uint64_t atoui64(IN const char* sv)
+{
+#ifdef ECO_WIN
+	char* end = nullptr;
+	return _strtoui64(sv, &end, 10);
+#else
+	char* end = nullptr;
+	return strtoull(sv, &end, 10);
+#endif
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 inline void cast(OUT bool& v, IN const char* sv)
@@ -245,26 +265,15 @@ inline void cast(OUT int32_t& v, IN const char* sv)
 }
 inline void cast(OUT uint32_t& v, IN const char* sv)
 {
-	v = atoi(sv);
+	v = static_cast<uint32_t>(eco::atoui64(sv));
 }
 inline void cast(OUT int64_t& v, IN const char* sv)
 {
-#ifdef ECO_WIN
-	v = _atoi64(sv);
-#else
-	char* end = nullptr;
-	v = strtoll(sv, &end, 10);
-#endif
+	v = eco::atoi64(sv);
 }
 inline void cast(OUT uint64_t& v, IN const char* sv)
 {
-#ifdef ECO_WIN
-	char* end = nullptr;
-	v = _strtoui64(sv, &end, 10);
-#else
-	char* end = nullptr;
-	v = strtoull(sv, &end, 10);
-#endif
+	v = eco::atoui64(sv);
 }
 inline void cast(OUT double& v, IN const char* sv)
 {

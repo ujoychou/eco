@@ -221,7 +221,7 @@ public:
 		const value_t* v = cast<value_t>(&any);
 		if (v == nullptr)
 		{
-			eco::FixFormat fmt("cast eco::any fail, % to %");
+			eco::Format<> fmt("cast eco::any fail, % to %");
 			fmt % any.get_type_id() % typeid(value_t).name();
 			throw std::logic_error(fmt);
 		}

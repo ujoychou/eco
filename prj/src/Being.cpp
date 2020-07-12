@@ -48,7 +48,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_IMPL(Being);
+ECO_IMPL_impl(Being);
 ECO_PROPERTY_STR_IMPL(Being, name);
 Being::Being(IN uint32_t live_sec, IN const char* name)
 {
@@ -100,7 +100,7 @@ void Being::born()
 	{
 		if (impl().on_born(*this))
 		{
-			eco().impl().add_being(this);
+			Eco::get().impl().add_being(this);
 			impl().m_born.ok();
 		}
 	}
@@ -121,14 +121,14 @@ void Being::live()
 			}
 			catch (eco::Error& e)
 			{
-				ECO_ERROR << get_name() << " live : " << e;
+				ECO_FUNCX(error) << get_name() <= e;
 			}
-			catch (std::exception& e) 
+			catch (std::exception& e)
 			{
-				ECO_ERROR << get_name() << " live : " << e.what();
+				ECO_FUNCX(error) << get_name() <= e.what();
 			}
 			
-			eco().impl().add_being(this);
+			Eco::get().impl().add_being(this);
 			impl().m_born.ok();
 		}
 	}
@@ -140,7 +140,7 @@ void Being::kill()
 {
 	if (impl().m_born.is_ok())
 	{
-		eco().impl().remove_being(this);
+		Eco::get().impl().remove_being(this);
 		impl().m_born.none();
 	}
 }
