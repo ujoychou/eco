@@ -9,33 +9,37 @@ namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class IoTimer::Impl
 {
+	ECO_IMPL_INIT(IoTimer);
 public:
 	asio::IoTimer m_timer;
-
-	void init(IoTimer&) {}
 };
 
 
-ECO_MOVABLE_IMPL(IoTimer);
+ECO_OBJECT_IMPL(IoTimer);
 ////////////////////////////////////////////////////////////////////////////////
 void IoTimer::register_on_timer(IN OnTimer handler)
 {
-	m_impl->m_timer.register_on_timer(handler);
+	impl().m_timer.register_on_timer(handler);
 }
 
 void IoTimer::set_io_service(IN IoService& srv)
 {
-	m_impl->m_timer.set_io_service(srv);
+	impl().m_timer.set_io_service(srv);
 }
 
 void IoTimer::set_timer(IN uint32_t tick_secs)
 {
-	m_impl->m_timer.set_timer(tick_secs);
+	impl().m_timer.set_timer(tick_secs);
 }
 
 size_t IoTimer::cancel()
 {
-	return m_impl->m_timer.cancel();
+	return impl().m_timer.cancel();
+}
+
+void IoTimer::close()
+{
+	return impl().m_timer.close();
 }
 
 

@@ -28,6 +28,7 @@
 #include <boost/bind.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/deadline_timer.hpp>
+#include <mutex>
 
 
 
@@ -40,9 +41,6 @@ namespace asio{;
 class IoTimer
 {
 public:
-	IoTimer() : m_io_service(nullptr)
-	{}
-
 	// register "on_timer" event handler.
 	inline void register_on_timer(IN OnTimer v)
 	{
@@ -52,23 +50,29 @@ public:
 	// set io service that running timer depends on.
 	inline void set_io_service(IN IoService& srv)
 	{
-		m_io_service = (boost::asio::io_service*)&srv;
+		std::lock_guard<std::mutex> lock(m_mutex);
+		boost::asio::io_service* service = (boost::asio::io_service*)&srv;
+		m_tick_timer.reset(new boost::asio::deadline_timer(*service));
 	}
 
 	// start timer.
-	inline void set_timer(IN uint32_t tick_secs)
+	inline void set_timer(IN uint32_t secs)
 	{
-		m_tick_timer.reset(new boost::asio::deadline_timer(
-			*m_io_service, boost::posix_time::seconds(tick_secs)));
-		m_tick_timer->async_wait(
-			boost::bind(&IoTimer::on_timer, this,
-			boost::asio::placeholders::error));
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (m_tick_timer.get())
+		{
+			m_tick_timer->expires_from_now(boost::posix_time::seconds(secs));
+			m_tick_timer->async_wait(
+				boost::bind(&IoTimer::on_timer, this,
+					boost::asio::placeholders::error));
+		}
 	}
 
 	// cancel timer.
 	inline size_t cancel()
 	{
-		if (m_tick_timer != nullptr)
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (m_tick_timer.get())
 		{
 			boost::system::error_code ec;
 			return m_tick_timer->cancel(ec);
@@ -76,23 +80,31 @@ public:
 		return 0;
 	}
 
+	// cancel timer.
+	inline void close()
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_tick_timer.reset();
+	}
+
 private:
 	/*@ when there is a tick timer event.*/
-	inline void on_timer(
-		IN const boost::system::error_code& e)
+	inline void on_timer(IN const boost::system::error_code& e)
 	{
-		if (e) {
+		if (e)
+		{
 			eco::Error error(e.message(), e.value());
 			m_on_timer(&error);
 		}
-		else {
+		else
+		{
 			m_on_timer(nullptr);
 		}
 	}
 
 	eco::net::OnTimer m_on_timer;
-	boost::asio::io_service* m_io_service;
-	std::shared_ptr<boost::asio::deadline_timer> m_tick_timer;
+	std::auto_ptr<boost::asio::deadline_timer> m_tick_timer;
+	std::mutex m_mutex;
 };
 
 
