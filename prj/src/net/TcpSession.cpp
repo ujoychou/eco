@@ -65,24 +65,19 @@ void TcpSessionInner::authorize(IN const MessageMeta& meta_v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSessionInner::response(
-	IN Codec& codec,
-	IN const uint32_t type,
-	IN const Context& c,
-	IN const bool last,
-	IN const bool encrypted)
+void TcpSessionInner::response(Codec* d, MessageOption& opt, const Context& c)
 {
 	if (impl().m_session_id != none_session)
 	{
 		SessionData::ptr sess = impl().m_session_wptr.lock();
 		if (sess != nullptr)
 		{
-			return impl().m_conn.response(codec, type, c, last, encrypted);
+			return impl().m_conn.response(d, opt, c);
 		}
 	}
 	else
 	{
-		impl().m_conn.response(codec, type, c, last, encrypted);
+		impl().m_conn.response(d, opt, c);
 	}
 }
 

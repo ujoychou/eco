@@ -24,9 +24,9 @@
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
+#include <eco/net/TcpOption.h>
 #include <eco/net/TcpDispatch.h>
 #include <eco/net/TcpConnection.h>
-#include <eco/net/TcpServerOption.h>
 #include <eco/net/protocol/Protocol.h>
 
 
@@ -52,43 +52,50 @@ public:
 	const TcpServerOption& get_option() const;
 	TcpServer& option(IN const TcpServerOption&);
 
-	/*@ set protocol head.*/
-	template<typename ProtocolHeadT>
-	inline void set_protocol_head()
+	// protocol
+	template<typename protocol_t>
+	inline void add_protocol()
 	{
-		set_protocol_head(new ProtocolHeadT());
+		add_protocol(new protocol_t());
 	}
-	void set_protocol_head(IN ProtocolHead* heap);
-	ProtocolHead& protocol_head() const;
+	void add_protocol(IN Protocol*);
 
-	/*@ register protocol.*/
-	template<typename ProtocolT>
-	inline void set_protocol()
-	{
-		set_protocol(new ProtocolT());
-	}
-	void set_protocol(IN Protocol*);
-	Protocol* protocol(IN const uint32_t version) const;
+	// get latest protocol.
+	Protocol* protocol_latest() const;
+	Protocol* protocol(int ver) const;
 
 	// set connection data type.
-	template<typename ConnectionDataT>
+	template<typename connection_data_t>
 	inline void set_connection_data()
 	{
-		set_connection_data(&make_connection_data<ConnectionDataT>);
+		set_connection_data(&make_connection_data<connection_data_t>);
 	}
 	void set_connection_data(IN MakeConnectionDataFunc make);
 
 	// set session data class and tcp session mode.
-	template<typename SessionDataT>
+	template<typename session_data_t>
 	inline void set_session_data()
 	{
-		set_session_data(&make_session_data<SessionDataT>);
+		set_session_data(&make_session_data<session_data_t>);
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
 
 	// register dispatch handler.
 	virtual void register_default_handler(IN HandlerFunc hf) override;
 	virtual void register_handler(IN uint64_t id, IN HandlerFunc hf) override;
+
+public:
+	// set connection open close event
+	void set_event(ServerCloseFunc on_open, ServerAcceptFunc on_close);
+
+	// set receive callback event.
+	void set_recv_event(OnRecvDataFunc on_recv, OnDecodeHeadFunc on_decode);
+
+	// is receive mode: using recv callback event to handle message.
+	bool receive_mode() const;
+
+	// is dispatch mode: using eco dispatch mechanism to handle message.
+	bool dispatch_mode() const;
 };
 
 

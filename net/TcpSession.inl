@@ -49,15 +49,13 @@ private:
 		return *m_impl;
 	}
 
-	bool authorize();
 	void close();
+
+	bool authorize();
+
 	void authorize(IN const MessageMeta& meta);
-	void response(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const Context& c,
-		IN const bool last,
-		IN const bool encrypted);
+
+	void response(Codec* codec, MessageOption& opt, const Context& c);
 
 	friend class TcpSession;
 	TcpSessionImpl* m_impl;
@@ -117,15 +115,10 @@ const SessionId TcpSession::get_id() const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSession::response(
-	IN Codec& codec,
-	IN const uint32_t type,
-	IN const Context& context,
-	IN const bool last,
-	IN const bool encrypted)
+void TcpSession::response(Codec* codec, MessageOption& opt, const Context& c)
 {
 	TcpSessionInner inner(m_impl);
-	return inner.response(codec, type, context, last, encrypted);
+	return inner.response(codec, opt, c);
 }
 void TcpSession::authorize(IN const MessageMeta& meta)
 {
@@ -143,7 +136,7 @@ void TcpSession::send(IN const MessageMeta& meta)
 		if (lock != nullptr)
 		{
 			MessageMeta& m = const_cast<MessageMeta&>(meta);
-			m.set_session_id(m_impl.m_session_id);
+			m.session_id(m_impl.m_session_id);
 			m_impl.m_conn.send(meta);
 		}
 	}

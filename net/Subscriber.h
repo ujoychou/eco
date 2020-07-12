@@ -35,19 +35,11 @@ namespace net{;
 class Publisher : public eco::Object<Publisher>
 {
 public:
-	// publish option.
-	enum
-	{
-		logging				= 1,	// logging message when publish.
-	};
 	typedef uint32_t Option;
 	typedef std::function<void(eco::Content&, eco::net::TcpConnection&)> Func;
 
-	inline Publisher() : m_type(0), m_option(0), m_name(0)
-	{}
-	inline Publisher(uint32_t type, const char* name, Option opt)
-		: m_type(type), m_option(opt), m_name(name)
-	{}
+	inline Publisher() : m_type(0), m_name(0) {}
+	inline Publisher(uint32_t t, const char* log) : m_type(t), m_name(log) {}
 
 	template<typename object_pointer>
 	inline Publisher& register_func()
@@ -62,7 +54,7 @@ public:
 	{
 		auto& v = *(object_pointer)(c.data().get_object());
 		conn.publish(v, m_type, c.meta());
-		if (eco::has(m_option, logging))
+		if (m_name != nullptr)
 		{
 			ECO_PUB(info, conn, m_type, m_name);
 		}
@@ -70,7 +62,6 @@ public:
 
 public:
 	Func m_func;
-	Option m_option;
 	uint32_t m_type;
 	const char* m_name;
 };
@@ -94,7 +85,7 @@ private:
 	static void set(IN uint32_t type_id, IN Publisher::ptr& pub);
 	static void set(IN const TopicUid& id, IN Publisher::ptr& pub);
 };
-	
+
 
 ////////////////////////////////////////////////////////////////////////////////
 class Subscriber : public eco::net::ConnectionData, public eco::Subscriber
@@ -111,10 +102,9 @@ public:
 		IN const topic_id_t& topic_id,
 		IN uint32_t pub_type,
 		IN TopicEvent::ptr event = nullptr,
-		IN const char* pub_name = "",
-		IN Publisher::Option pub_opt = 0)
+		IN const char* log_name = nullptr)
 	{
-		Publisher::ptr pub(new Publisher(pub_type, pub_name, pub_opt));
+		Publisher::ptr pub(new Publisher(pub_type, log_name));
 		pub->register_func<eco::Raw<object_t>::pointer>();
 		TopicUidMap::sub(TopicUid(topic_id, &server), pub);
 		server.subscribe<topic_t>(topic_id, this, event);
@@ -158,10 +148,9 @@ public:
 		IN topic_server_t& server,
 		IN const topic_id_t& topic_id,
 		IN uint32_t pub_type,
-		IN const char* pub_name = "",
-		IN Publisher::Option pub_opt = 0)
+		IN const char* log_name = nullptr)
 	{
-		Publisher::ptr pub(new Publisher(pub_type, pub_name, pub_opt));
+		Publisher::ptr pub(new Publisher(pub_type, log_name));
 		pub->register_func<eco::Raw<object_t>::pointer>();
 		TopicUidMap::set(TopicUid(topic_id, &server), pub);
 	}
@@ -170,12 +159,25 @@ public:
 	template<typename object_t>
 	inline static void publish(
 		IN uint32_t pub_type,
-		IN const char* pub_name = "",
-		IN Publisher::Option pub_opt = 0)
+		IN const char* log_name = nullptr)
 	{
-		Publisher::ptr pub(new Publisher(pub_type, pub_name, pub_opt));
+		Publisher::ptr pub(new Publisher(pub_type, log_name));
 		pub->register_func<eco::Raw<object_t>::pointer>();
 		TopicUidMap::set(eco::TypeId<object_t>(), pub);
+	}
+
+	// subscribe mode: topic and register map. thread-safe.
+	template<
+		typename topic_t,
+		typename object_t = topic_t::object,
+		typename topic_server_t,
+		typename topic_id_t>
+		inline void subscribe(
+			IN topic_server_t& server,
+			IN const topic_id_t& topic_id,
+			IN TopicEvent::ptr event = nullptr)
+	{
+		server.subscribe<topic_t>(topic_id, this, event);
 	}
 
 protected:

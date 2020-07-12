@@ -102,32 +102,6 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class TcpSessionOwnerOuter
-{
-public:
-	inline TcpSessionOwnerOuter(IN TcpSessionOwner& owner) : m_owner(owner) {}
-
-	inline bool response_heartbeat() const
-	{
-		assert(m_owner.m_owner != nullptr);
-		auto* owner = m_owner.m_owner;
-		return m_owner.m_server 
-			&& ((TcpServer::Impl*)owner)->m_option.response_heartbeat();
-	}
-
-	inline ProtocolHead* protocol_head() const
-	{
-		assert(m_owner.m_owner != nullptr);
-		return (m_owner.m_server)
-			? ((TcpServer::Impl*)(m_owner.m_owner))->m_prot_head.get()
-			: ((TcpClient::Impl*)(m_owner.m_owner))->m_prot_head.get();
-	}
-
-	TcpSessionOwner& m_owner;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 bool TcpSessionOuter::open(IN const SessionId session_id)
 {
 	// get the exist session.

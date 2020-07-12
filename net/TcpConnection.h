@@ -30,6 +30,7 @@
 
 namespace eco{;
 namespace net{;
+class DataContext;
 ////////////////////////////////////////////////////////////////////////////////
 // noncopyable conn data, only can be used in local.
 template<typename ConnectionDataT>
@@ -65,10 +66,7 @@ public:
 	inline TcpConnection() : m_prot(nullptr), m_id(0)
 	{}
 
-	inline TcpConnection(
-		IN TcpPeer::wptr& wptr, 
-		IN Protocol& prot,
-		IN const size_t id)
+	inline TcpConnection(TcpPeer::wptr& wptr, Protocol& prot, size_t id)
 		: m_peer(wptr), m_prot(&prot), m_id(id)
 	{}
 
@@ -89,7 +87,8 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			peer->close_and_notify();
+			eco::Error e(e_peer_server_close, "server close this peer.");
+			peer->close_and_notify(e);
 		}
 	}
 
@@ -140,96 +139,112 @@ public:
 	}
 
 public:
-	// async send message.
+	// send string message.
+	inline void send(IN eco::String& data, IN uint32_t start)
+	{
+		TcpPeer::ptr peer = m_peer.lock();
+		if (peer != nullptr)
+		{
+			peer->send(data, start);
+		}
+	}
+
+	// send message.
 	inline void send(IN const MessageMeta& meta)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			return peer->async_send(meta, *m_prot);
+			peer->send(meta, *m_prot);
 		}
 	}
 
-	// async send.
-	inline void send(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const bool last = true,
-		IN const bool encrypted = false,
-		IN const SessionId sess_id = none_session)
+	inline void send(IN Codec* codec, IN MessageOption& opt)
 	{
-		MessageMeta meta(codec, sess_id, type, encrypted);
-		meta.set_last(last);
-		send(meta);
+		send(MessageMeta(codec, opt));
 	}
 
-	// async response message.
-	inline void response(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const Context& context,
-		IN const bool last = true,
-		IN const bool encrypted = false)
+	inline void send(IN Codec* codec, IN uint32_t type, IN bool is_last)
+	{
+		send(codec, MessageOption(type, 0, is_last));
+	}
+
+	// response message.
+	inline void response(IN Codec* codec, MessageOption& opt, const Context& c)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			return peer->async_response(
-				codec, type, context, *m_prot, last, encrypted);
+			peer->response(MessageMeta(codec, opt), *m_prot, c);
 		}
 	}
 
-	// async publish.
-	inline void publish(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const uint8_t pub,
-		IN const bool encrypted = false,
-		IN const SessionId sess_id = none_session)
+	// async response message.
+	inline void response(
+		IN Codec* codec,
+		IN uint32_t msg_type,
+		IN uint32_t error_id,
+		IN bool	is_last,
+		IN const Context& context)
 	{
-		MessageMeta meta(codec, sess_id, type, encrypted);
-		meta.set_request_data(pub);
-		send(meta);
+		response(codec, MessageOption(msg_type, error_id, is_last), context);
 	}
-
 
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void send(
 		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const bool last = true,
-		IN const bool encrypted = false,
-		IN const SessionId sess_id = none_session)
+		IN MessageOption& opt)
 	{
-		send(ProtobufCodec(msg), type, last, encrypted, sess_id);
+		send(&ProtobufCodec(msg), opt);
+	}
+
+	// async send protobuf.
+	inline void send(
+		IN const google::protobuf::Message& msg,
+		IN uint32_t msg_type,
+		IN bool is_last)
+	{
+		send(&ProtobufCodec(msg), msg_type, is_last);
 	}
 
 	// async send response by context.
 	inline void response(
 		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const Context& context,
-		IN const bool last = true,
-		IN const bool encrypted = false)
+		IN MessageOption& opt,
+		IN const Context& context)
 	{
-		ProtobufCodec codec(msg);
-		response(codec, type, context, last, encrypted);
+		response(&ProtobufCodec(msg), opt, context);
+	}
+
+	// async send response by context.
+	inline void response(
+		IN const google::protobuf::Message& msg,
+		IN uint32_t msg_type,
+		IN uint32_t error_id,
+		IN bool is_last,
+		IN const Context& context)
+	{
+		response(&ProtobufCodec(msg), msg_type, error_id, is_last, context);
 	}
 
 	// async publish protobuf.
 	inline void publish(
 		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const uint8_t pub,
-		IN const bool encrypted = false,
-		IN const SessionId sess_id = none_session)
+		IN MessageOption& opt)
 	{
-		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, sess_id, type, encrypted);
-		meta.set_request_data(pub);
-		send(meta);
+		send(&ProtobufCodec(msg), opt);
 	}
+
+	// async publish protobuf.
+	inline void publish(
+		IN const google::protobuf::Message& msg,
+		IN uint32_t msg_type,
+		IN uint8_t  snap_meta)
+	{
+		send(&ProtobufCodec(msg), MessageOption(msg_type).snap(snap_meta));
+	}
+	
 #endif
 
 private:
@@ -307,10 +322,17 @@ inline static ConnectionData* make_connection_data()
 typedef ConnectionData* (*MakeConnectionDataFunc)();
 
 
-////////////////////////////////////////////////////////////////////// TcpClient
+////////////////////////////////////////////////////////////////////////////////
 // tcp client on connect/close event.
-typedef std::function<void(IN const eco::Error* e)> OpenFunc;
-typedef std::function<void(void)> CloseFunc;
+typedef std::function<void(const eco::Error* e)> ClientOpenFunc;
+typedef std::function<void(const eco::Error& e)> ClientCloseFunc;
+
+// tcp server on accept/close tcp connection(tcp peer) event.
+typedef std::function<void(ConnectionId id)> ServerAcceptFunc;
+typedef std::function<void(ConnectionId id)> ServerCloseFunc;
+typedef std::function<void(TcpPeer::ptr&, DataContext&)> OnRecvDataFunc;
+typedef std::function<bool(MessageHead&, const char*, uint32_t)>
+OnDecodeHeadFunc;
 
 
 ////////////////////////////////////////////////////////////////////////////////

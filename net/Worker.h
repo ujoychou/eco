@@ -29,21 +29,26 @@
 
 namespace eco{;
 namespace net{;
-
+class IoWorker;
 class IoService;
 ////////////////////////////////////////////////////////////////////////////////
 class Worker
 {
-	ECO_MOVABLE_API(Worker);
+	ECO_OBJECT_API(Worker);
 public:
-	void run();
+	void run(const char* name);
 
 	void join();
 
 	void stop();
 
+	bool stopped() const;
+	bool running() const;
+	bool initing() const;
+
 	void async_stop();
 
+	IoWorker* get_io_worker();
 	IoService* get_io_service();
 };
 

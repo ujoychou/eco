@@ -26,17 +26,14 @@
 #include <eco/net/TcpPeer.h>
 
 
-
 namespace eco{;
 namespace net{;
-
-
 class TcpServer;
 class IoService;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpAcceptor
 {
-	ECO_MOVABLE_API(TcpAcceptor);
+	ECO_OBJECT_API(TcpAcceptor);
 public:
 	// network server.
 	void set_server(TcpServer& server);
@@ -53,15 +50,17 @@ public:
 	/*@ start accept.
 	* @ para.port: listen port which to accept new client connection.
 	*/
-	virtual void listen(
+	void listen(
 		IN  const uint16_t port,
 		IN  const uint16_t io_server_size);
 
 	/*@ async accept peer.*/
-	virtual void async_accept();
+	void async_accept();
 
 	/*@ stop accept tcp server peer.*/
 	void stop();
+	bool stopped() const;
+	bool running() const;
 
 	/*@ join this server threads.*/
 	void join();

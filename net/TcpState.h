@@ -86,7 +86,7 @@ public:
 		return !connected();
 	}
 
-	// set ready state: use in websocket.
+	// set ready state: use in websocket, and websocket connected.
 	inline void set_ready()
 	{
 		m_state.add(eco::atomic::State::_bb);
@@ -97,15 +97,26 @@ public:
 		return m_state.has(eco::atomic::State::_bb);
 	}
 
+	// set valid state, which mean it isn't a dos peer.
+	inline void set_valid(bool is = true)
+	{
+		m_state.set(is, eco::atomic::State::_cc);
+	}
+	// whether it is valid state.
+	inline bool valid() const
+	{
+		return m_state.has(eco::atomic::State::_cc);
+	}
+
 	// whether this connection is alive, this is help to avoid to send heartbeat
 	// to a live connection, that will improve performance.
 	inline void set_self_live(IN bool is)
 	{
-		m_state.set(is, eco::atomic::State::_cc);
+		m_state.set(is, eco::atomic::State::_dd);
 	}
 	inline bool self_live() const
 	{
-		return m_state.has(eco::atomic::State::_cc);
+		return m_state.has(eco::atomic::State::_dd);
 	}
 
 	// whether peer of this connection is alive, is help to clean dead peer.
@@ -113,15 +124,15 @@ public:
 	{
 		if (!is)
 		{
-			m_state.del(eco::atomic::State::_dd);
+			m_state.del(eco::atomic::State::_ee);
 			set_peer_active(false);
 			return;
 		}
-		m_state.add(eco::atomic::State::_dd);
+		m_state.add(eco::atomic::State::_ee);
 	}
 	inline bool peer_live() const
 	{
-		return m_state.has(eco::atomic::State::_dd);
+		return m_state.has(eco::atomic::State::_ee);
 	}
 
 	// whether peer of this connection is active, is help to clean unactive
@@ -130,15 +141,15 @@ public:
 	{
 		if (is)
 		{
-			m_state.add(eco::atomic::State::_ee);
+			m_state.add(eco::atomic::State::_ff);
 			set_peer_live(true);
 			return;
 		}
-		m_state.del(eco::atomic::State::_ee);
+		m_state.del(eco::atomic::State::_ff);
 	}
 	inline bool peer_active() const
 	{
-		return m_state.has(eco::atomic::State::_ee);
+		return m_state.has(eco::atomic::State::_ff);
 	}
 
 private:

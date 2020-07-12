@@ -29,7 +29,6 @@
 #include <eco/net/IoTimer.h>
 #include <eco/net/TcpServer.h>
 #include <eco/net/TcpAcceptor.h>
-#include <eco/net/protocol/ProtocolHead.h>
 #include "TcpPeerSet.h"
 #include "DispatchServer.h"
 
@@ -37,7 +36,7 @@
 namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
-class TcpServer::Impl : public TcpPeerHandler
+class TcpServer::Impl
 {
 public:
 	enum
@@ -50,20 +49,21 @@ public:
 
 	// server option.
 	TcpServerOption m_option;
-	// protocol.
-	typedef std::shared_ptr<Protocol> ProtocolPtr;
-	std::auto_ptr<ProtocolHead> m_prot_head;
-	std::map<uint32_t, ProtocolPtr> m_protocol_set;
+	ProtocolFamily m_protocol;
 
 	// tcp acceptor.
 	TcpAcceptor m_acceptor;
 	TcpPeerSet m_peer_set;
 	IoTimer m_timer;
 	MakeConnectionDataFunc m_make_connection;
-
+	TcpPeerHandler m_peer_handler;
 	// dispatch server.
 	DispatchServerPool m_dispatch_pool;
 
+	// close event.
+	ServerAcceptFunc m_on_accept;
+	ServerCloseFunc  m_on_close;
+	
 	// session data management.
 	MakeSessionDataFunc m_make_session;
 	eco::Atomic<SessionId> m_next_session_id;
@@ -82,7 +82,9 @@ public:
 	}
 
 	inline ~Impl()
-	{}
+	{
+		stop();
+	}
 
 	// eco implment object init by api object(parent).
 	inline void init(TcpServer& server)
@@ -99,36 +101,30 @@ public:
 				std::placeholders::_1, std::placeholders::_2));
 	}
 
-	// protocol head.
-	inline void set_protocol_head(IN ProtocolHead* v)
+	inline bool receive_mode() const
 	{
-		return m_prot_head.reset(v);
-	}
-	
-	// read only and thread safe.
-	inline void set_protocol(IN Protocol* p)
-	{
-		m_protocol_set.clear();
-		m_protocol_set[p->version()] = ProtocolPtr(p);
-	}
-	inline void register_protocol(IN Protocol* p)
-	{
-		m_protocol_set[p->version()] = ProtocolPtr(p);
+		return m_dispatch_pool.get_message_handler().receive_mode();
 	}
 
-	// get protocol.
-	inline Protocol* protocol(IN const uint32_t version) const
+	inline const char* websocket_key() const
 	{
-		auto it = m_protocol_set.find(version);
-		if (it != m_protocol_set.end())
-		{
-			return it->second.get();
-		}
-		return nullptr;
+		return "";
+	}
+
+	// whether dispatch mode, else recv mode.
+	inline bool dispatch_mode() const
+	{
+		return m_dispatch_pool.get_message_handler().dispatch_mode();
 	}
 	
 //////////////////////////////////////////////////////////////////////// SESSION
 public:
+	// produce a new session id.
+	inline uint32_t get_peer_size() const
+	{
+		return (uint32_t)m_peer_set.get_connection_size();
+	}
+
 	// produce a new session id.
 	inline uint32_t next_session_id()
 	{
@@ -142,6 +138,23 @@ public:
 		}
 		// session will not reach the "uint32_t" max value.
 		return ++m_next_session_id;
+	}
+
+	// add new connection.
+	inline void set_valid_peer(IN TcpPeer& peer, IN Protocol* prot)
+	{
+		// create connection data.
+		if (m_make_connection && !peer.impl().m_data.get())
+		{
+			peer.impl().make_connection_data(m_make_connection, prot);
+		}
+
+		// set valid state which peer is a dos peer.
+		if (!peer.impl().get_state().valid())
+		{
+			m_peer_set.set_valid_peer(peer.impl().get_id());
+			peer.impl().state().set_valid(true);
+		}
 	}
 
 	// add new session.
@@ -205,8 +218,7 @@ public:
 	}
 
 	// erase conn session
-	inline void clear_conn_session(
-		IN const ConnectionId conn_id)
+	inline void clear_conn_session(IN ConnectionId conn_id)
 	{
 		eco::Mutex::ScopeLock lock(m_conn_session_mutex);
 		auto itc = m_conn_session.find(conn_id);
@@ -226,19 +238,23 @@ public:
 ////////////////////////////////////////////////////////////////////// IO SERVER
 public:
 	// run server.
-	void start();
+	inline void start();
 
 	// stop server.
 	inline void stop()
 	{
-		m_timer.cancel();
-		// destroy all io resource(should call constructor) before io server.
-		// close peer set before server stop.
-		m_peer_set.clear();
-		// close acceptor and stop io server.
-		m_acceptor.stop();
-		// stop business server.
-		m_dispatch_pool.close();
+		if (m_acceptor.running())
+		{
+			m_timer.close();
+			// destroy all io resource(should call constructor) before io server.
+			// close peer set before server stop.
+			m_session_map.clear();
+			m_peer_set.clear();
+			// close acceptor and stop io server.
+			m_acceptor.stop();
+			// stop business server.
+			m_dispatch_pool.close();
+		}
 	}
 
 	// wait server thread end.
@@ -259,9 +275,9 @@ public:
 	inline void async_send_heartbeat()
 	{
 		if (m_option.rhythm_heartbeat())
-			m_peer_set.send_rhythm_heartbeat(*m_prot_head);
+			m_peer_set.send_rhythm_heartbeat(*m_protocol.protocol_latest());
 		else
-			m_peer_set.send_live_heartbeat(*m_prot_head);
+			m_peer_set.send_live_heartbeat(*m_protocol.protocol_latest());
 	}
 
 	// on call.
@@ -271,29 +287,13 @@ public:
 /////////////////////////////////////////////////////////////// TCP PEER HANDLER
 public:
 	// when peer has received a message data bytes.
-	virtual void on_read(
-		IN void* peer,
-		IN eco::String& data) override;
+	void on_read(IN void* peer, IN MessageHead& head, IN eco::String& data);
 
 	// when peer has sended a data, async notify sended data size.
-	virtual void on_send(
-		IN void* peer,
-		IN const uint32_t size) override;
+	void on_send(IN void* peer, IN uint32_t size);
 
 	// when peer has been closed.
-	virtual void on_close(IN const ConnectionId peer_id) override;
-
-	// get protocol head.
-	virtual ProtocolHead& protocol_head() const override
-	{
-		return *m_prot_head;
-	}
-
-	// whether is a websocket.
-	virtual bool websocket() const override
-	{
-		return m_option.websocket();
-	}
+	void on_close(IN ConnectionId id, IN bool erase_peer);
 };
 
 

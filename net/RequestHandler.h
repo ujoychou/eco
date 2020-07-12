@@ -70,9 +70,15 @@ public:
 			IN const char* name,
 			IN const std::string& user_name,
 			IN const uint32_t type = 0)
-			: eco::net::Log(c.connection().get_id(), c.session().get_id(),
+			: eco::net::Log(c.connection().get_id(), c.m_session.get_id(),
 				(type == 0 ? c.get_type() : type), name, user_name.c_str())
 		{}
+
+		inline Log& operator()(uint8_t mode)
+		{
+			m_mode = mode;
+			return *this;
+		}
 	};
 
 	enum AuthMode
@@ -123,32 +129,32 @@ public:
 	// post this handler to aysnc map.
 	inline uint32_t post_async()
 	{
-		return eco().post_async(shared_from_this());
+		return Eco::get().post_async(shared_from_this());
 	}
 
 	// async management post item.
 	static inline uint32_t post_async(IN MessageHandler::ptr& hdl)
 	{
-		return eco().post_async(hdl);
+		return Eco::get().post_async(hdl);
 	}
 
 	// has async message handler.
 	static inline bool has_async(IN uint32_t req_id)
 	{
-		return eco().has_async(req_id);
+		return Eco::get().has_async(req_id);
 	}
 
 	// erase async handler.
 	static inline void erase_async(IN uint32_t req_id)
 	{
-		return eco().erase_async(req_id);
+		return Eco::get().erase_async(req_id);
 	}
 
 	// pop async message handler.
 	static inline MessageHandler::ptr pop_async(
 		IN uint32_t req_id,	IN bool last = true)
 	{
-		return eco().pop_async(req_id, last);
+		return Eco::get().pop_async(req_id, last);
 	}
 
 protected:
@@ -164,9 +170,7 @@ public:
 	typedef RequestHandler<request_t, handler_t> Handler;
 
 	// decode message from bytes string.
-	virtual bool on_decode(
-		IN const char* bytes,
-		IN const uint32_t size) = 0;
+	virtual bool on_decode(IN const char* bytes, IN uint32_t size) = 0;
 
 	// receiving request notify, and handle request object.
 	virtual void on_request()
@@ -193,57 +197,36 @@ public:
 	}
 
 	// request value type.
-	inline request_t& value()
+	inline request_t& request_value()
 	{
 		return m_request;
 	}
-	inline const request_t& get_value()
+	inline const request_t& get_request_value()
 	{
 		return m_request;
 	}
 
 	// response message to the request.
-	inline void response(
-		IN Codec& codec, 
-		IN const uint32_t type,
-		IN const bool last = true,
-		IN const bool encrypted = false)
+	inline void response(IN Codec& codec, IN MessageOption& opt)
 	{
-		context().response(codec, type, last, encrypted);
+		context().response(codec, opt);
+	}
+
+	// response message to the request.
+	inline void response(IN Codec& codec, IN uint32_t error_id, IN bool last)
+	{
+		response(get_response_type(), codec, error_id, last);
 	}
 
 	// response message to the request.
 	inline void response(
+		IN uint32_t msg_type,
 		IN Codec& codec,
-		IN const bool last = true,
-		IN const bool encrypted = false)
+		IN uint32_t error_id,
+		IN bool last)
 	{
-		auto type = get_response_type();
-		context().response(codec, type, last, encrypted);
-	}
-
-	// response message auto the request.
-	template<typename rsp_t>
-	inline static void async_response(
-		IN rsp_t& rsp,
-		IN uint32_t req_id,
-		IN bool last = true,
-		IN const bool encrypted = false,
-		IN const bool logging = true)
-	{
-		if (rsp.has_error())
-		{
-			eco::win::gbk_to_utf8(*rsp.mutable_error()->mutable_message());
-		}
-		auto h = pop_async(req_id, last);
-		if (h == 0 && logging)
-		{
-			ECO_LOG(warn)(eco::net::rsp) << eco::net::Log(nullptr, 
-				handler_t::response_type(), handler_t::name());
-			return;
-		}
-		h->response(rsp, last, encrypted);
-		if (logging) ECO_RSP(debug, rsp, *h);
+		MessageOption opt(msg_type, error_id, last);
+		context().response(codec, opt);
 	}
 
 public:
@@ -261,8 +244,8 @@ public:
 		auto hdl = eco::net::MessageHandler::pop_async(req_id, last);
 		if (hdl == 0 && logging)
 		{
-			ECO_LOG(warn)(eco::net::rsp) << eco::net::Log(
-				nullptr, handler_t::response_type(), handler_t::name());
+			ECO_LOG(warn) << eco::net::Log(nullptr, 
+				handler_t::response_type(), handler_t::name())(eco::net::rsp);
 		}
 		return std::dynamic_pointer_cast<handler_t>(hdl);
 	}

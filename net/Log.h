@@ -32,42 +32,47 @@ namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_REQ(sev) ECO_LOG(sev)(eco::net::req) << Log(*this)
-#define ECO_SUB(sev) ECO_LOG(sev)(eco::net::sub) << Log(*this)
+#define ECO_REQ(sev) ECO_LOG(sev) << Log(*this)(eco::net::req)
+#define ECO_SUB(sev) ECO_LOG(sev) << Log(*this)(eco::net::sub)
 #define ECO_PUB(sev, sess_or_conn, msg_type, msg_name) \
-ECO_LOG(sev)(eco::net::pub) << eco::net::Log(sess_or_conn, msg_type, msg_name)
-#define ECO_HDL(sev, hdl) ECO_LOG_1(sev)(eco::net::pub)\
-<< eco::net::MessageHandler::Log(hdl, (hdl).get_response_type());
-#define ECO_RSP_1(sev) ECO_LOG_1(sev)(eco::net::pub)\
-<< eco::net::Log(nullptr, response_type(), name());
+ECO_LOG(sev) << eco::net::Log(sess_or_conn, msg_type, msg_name)(eco::net::pub)
+
+#define ECO_HDL(sev, hdl) ECO_LOG_1(sev)\
+<< eco::net::MessageHandler::Log(hdl, (hdl).get_response_type())(eco::net::pub)
+
+#define ECO_RSP_1(sev) ECO_LOG_1(sev)\
+<< eco::net::Log(nullptr, response_type(), name())(eco::net::pub)
 #define ECO_RSP_2(sev, resp) ECO_RSP_3(sev, resp, *this)
-#define ECO_RSP_3(sev, resp, hdl) \
+#define ECO_RSP_3(sev, resp, hdl)\
 if (resp.has_error()){ \
-	ECO_LOG_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
-	hdl, (hdl).get_response_type()) <= resp.error(); \
+	ECO_LOG_1(sev) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type())(eco::net::rsp) <= resp.error(); \
 } else \
-	ECO_LOG_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
-	hdl, (hdl).get_response_type())
+	ECO_LOG_1(sev) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type())(eco::net::rsp)
 #define ECO_RSP(...) ECO_MACRO(ECO_RSP_,__VA_ARGS__)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_REQX(sev) ECO_LOGX(sev)(eco::net::req) << Log(*this)
-#define ECO_SUBX(sev) ECO_LOGX(sev)(eco::net::sub) << Log(*this)
-#define ECO_PUBX(sev, sess_or_conn, msg_type, msg_name)\
-ECO_LOGX(sev)(eco::net::pub) << eco::net::Log(sess_or_conn, msg_type, msg_name)
-#define ECO_HDLX(sev, hdl) ECO_LOGX_1(sev)(eco::net::pub)\
-<< eco::net::MessageHandler::Log(hdl, (hdl).get_response_type());
-#define ECO_RSPX_1(sev) ECO_LOGX_1(sev)(eco::net::pub) \
-<< eco::net::Log(nullptr, response_type(), name());
+#define ECO_REQX(sev) ECO_LOGX(sev) << Log(*this)(eco::net::req)
+#define ECO_SUBX(sev) ECO_LOGX(sev) << Log(*this)(eco::net::sub)
+
+#define ECO_PUBX(sev, sess_or_conn, msg_type, msg_name) ECO_LOGX(sev) << \
+eco::net::Log(sess_or_conn, msg_type, msg_name)(eco::net::pub)
+
+#define ECO_HDLX(sev, hdl) ECO_LOGX_1(sev) << \
+eco::net::MessageHandler::Log(hdl, (hdl).get_response_type())(eco::net::pub);
+
+#define ECO_RSPX_1(sev) ECO_LOGX_1(sev) \
+<< eco::net::Log(nullptr, response_type(), name())(eco::net::pub);
 #define ECO_RSPX_2(sev, resp) ECO_RSPX_3(sev, resp, *this)
 #define ECO_RSPX_3(sev, hdl, resp)\
 if (resp.has_error()){ \
-	ECO_LOGX_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
-	hdl, (hdl).get_response_type()) <= resp.error(); \
+	ECO_LOGX_1(sev) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type())(eco::net::rsp) <= resp.error(); \
 } else \
-	ECO_LOGX_1(sev)(eco::net::rsp) << eco::net::MessageHandler::Log(\
-	hdl, (hdl).get_response_type())
+	ECO_LOGX_1(sev) << eco::net::MessageHandler::Log(\
+	hdl, (hdl).get_response_type())(eco::net::rsp)
 #define ECO_RSPX(...) ECO_MACRO(ECO_RSPX_,__VA_ARGS__)
 
 
@@ -93,12 +98,14 @@ public:
 	{}
 
 
-	template<typename LogStream>
-	inline LogStream& operator>>(OUT LogStream& log) const
+	template<typename stream_t>
+	inline stream_t& operator>>(OUT stream_t& log) const
 	{
-		log << eco::square(m_conn_id);
-		if (m_sess_id != none_session) log <= eco::square(m_sess_id);
-		if (!m_func.null()) log <= eco::brace() < m_func;
+		log << '(' << m_conn_id;
+		if (m_sess_id != none_session) log <= m_sess_id;
+		log < ')';
+		if (!m_func.null()) log <= m_func;
+		log < " = ";
 		return log;
 	}
 
@@ -135,9 +142,7 @@ public:
 		IN const uint32_t type,
 		IN const char* func)
 		: NetLog(0, func)
-		, m_type(type)
-		, m_user_name(nullptr)
-		, m_user_id(0)
+		, m_type(type), m_user_name(nullptr), m_user_id(0), m_mode(0)
 	{
 		if (data != nullptr)
 		{
@@ -152,7 +157,7 @@ public:
 		IN const uint32_t type,
 		IN const char* func)
 		: NetLog(conn.get_id(), func, none_session)
-		, m_type(type), m_user_id(0), m_user_name(nullptr)
+		, m_type(type), m_user_id(0), m_user_name(nullptr), m_mode(0)
 	{
 		auto data = conn.cast<ConnectionData>();
 		if (!data.null())
@@ -167,7 +172,7 @@ public:
 		IN const uint32_t type,
 		IN const char* func)
 		: NetLog(sess.get_connection().get_id(), func, sess.get_id())
-		, m_type(type)
+		, m_type(type), m_mode(0)
 		, m_user_id(sess.get_user_id())
 		, m_user_name(sess.get_user_name())
 	{}
@@ -177,7 +182,7 @@ public:
 		IN const uint32_t type,
 		IN const char* func)
 		: NetLog(sess.get_connection().get_id(), func, sess.get_id())
-		, m_type(type), m_user_id(0), m_user_name(nullptr)
+		, m_type(type), m_user_id(0), m_user_name(nullptr), m_mode(0)
 	{
 		if (sess.get_id() == none_session)
 		{
@@ -203,10 +208,10 @@ public:
 		IN const Context& c,
 		IN const uint32_t type,
 		IN const char* func)
-		: NetLog(c.get_connection().get_id(), func, c.get_session().get_id())
-		, m_type(type), m_user_id(0), m_user_name(nullptr)
+		: NetLog(c.get_connection().get_id(), func, c.m_session.get_id())
+		, m_type(type), m_user_id(0), m_user_name(nullptr), m_mode(0)
 	{
-		if (c.get_session().get_id() == none_session)
+		if (c.m_session.get_id() == none_session)
 		{
 			auto data = c.get_connection().cast<ConnectionData>();
 			if (!data.null())
@@ -217,7 +222,7 @@ public:
 		}
 		else
 		{
-			auto sess_d = c.get_session().data();
+			auto sess_d = c.m_session.data();
 			if (sess_d != nullptr)
 			{
 				m_user_id = sess_d->get_user_id();
@@ -233,10 +238,8 @@ public:
 		IN const uint32_t type,
 		IN const char* func,
 		IN const char* user_name)
-		: NetLog(conn_id, func, sess_id)
-		, m_type(type)
-		, m_user_name(user_name)
-		, m_user_id(0)
+		: NetLog(conn_id, func, sess_id), m_mode(0)
+		, m_type(type), m_user_name(user_name), m_user_id(0)
 	{}
 
 	// scene: message handler logging.
@@ -244,27 +247,34 @@ public:
 		IN const uint64_t conn_id,
 		IN const uint32_t type,
 		IN const char* func)
-		: NetLog(conn_id, func, 0)
-		, m_type(type)
-		, m_user_name(0)
-		, m_user_id(0)
+		: NetLog(conn_id, func, 0), m_mode(0)
+		, m_type(type), m_user_name(0), m_user_id(0)
 	{}
 
-	// logging this handler.
-	template<typename LogStream>
-	inline LogStream& operator>>(OUT LogStream& log) const
+	// set mode.
+	inline Log& operator()(uint8_t mode)
 	{
-		log << eco::square(m_conn_id);
-		if (m_sess_id != none_session) log <= eco::square(m_sess_id);
-		log <= get_log(log.flag());
+		m_mode = mode;
+		return *this;
+	}
+
+	// logging this handler.
+	template<typename stream_t>
+	inline stream_t& operator>>(OUT stream_t& log) const
+	{
+		log << '(' << m_conn_id;
+		if (m_sess_id != none_session) log <= m_sess_id;
+		log < ')' <= get_log(m_mode);
 		if (m_type) log <= m_type;
-		if (m_user_name) log <= m_user_name;
-		if (m_user_id) log < eco::group(m_user_id);
-		if (!m_func.null()) log <= eco::brace() < m_func;
+		if (m_user_name) log <= '@' < m_user_name;
+		if (m_user_id) log <= '@' < m_user_id;
+		if (!m_func.null()) log <= m_func;
+		log < " = ";
 		return log;
 	}
 
-private:
+protected:
+	uint8_t		m_mode;
 	uint32_t	m_type;
 	const char* m_user_name;
 	uint64_t	m_user_id;
@@ -272,13 +282,13 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Stream>
-Stream& operator<<(OUT Stream& stream, IN const eco::net::Log& log)
+template<typename stream_t>
+stream_t& operator<<(OUT stream_t& stream, IN const eco::net::Log& log)
 {
 	return log >> stream;
 }
-template<typename Stream>
-Stream& operator<<(OUT Stream& stream, IN const eco::net::NetLog& log)
+template<typename stream_t>
+stream_t& operator<<(OUT stream_t& stream, IN const eco::net::NetLog& log)
 {
 	return log >> stream;
 }

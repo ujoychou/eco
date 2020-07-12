@@ -59,8 +59,8 @@ inline void handle_context(IN Context& c)
 	
 	if (e != nullptr)
 	{
-		ECO_ERROR(eco::net::req) << Log(c.m_session,
-			c.m_meta.m_message_type, Handler::name()) <= e;
+		ECO_ERROR << Log(c.m_session, c.m_meta.m_message_type,
+			Handler::name())(eco::net::req) <= e;
 		return;
 	}
 	
@@ -71,8 +71,8 @@ inline void handle_context(IN Context& c)
 		std::shared_ptr<Handler> hdl(new Handler);
 		if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
 		{
-			ECO_ERROR(eco::net::req) << Log(c.m_session, c.m_meta.m_message_type,
-				Handler::name()) <= "decode message fail";
+			ECO_ERROR << Log(c.m_session, c.m_meta.m_message_type,
+				Handler::name())(eco::net::req) <= "decode message fail";
 			return;
 		}
 		// release io raw data to save memory.
@@ -92,6 +92,12 @@ inline void handle_context(IN Context& c)
 ////////////////////////////////////////////////////////////////////////////////
 // message handled by "functor", suguest using in client.
 template<typename Message>
+inline void* handle_context_make(std::auto_ptr<Message>& obj)
+{
+	obj.reset(new Message());
+	return obj.get();
+}
+template<typename Message>
 inline void* handle_context_make(std::shared_ptr<Message>& obj)
 {
 	obj.reset(new Message());
@@ -103,6 +109,8 @@ inline void* handle_context_make(Message& obj)
 	return &obj;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
 template<typename Message, typename Codec>
 inline void handle_context(
 	IN std::function<void(IN Message&, IN Context&)>& func,
@@ -114,6 +122,12 @@ inline void handle_context(
 	codec.decode(c.m_message.m_data, c.m_message.m_size);
 	func(object, c);
 }
+inline void handle_context(
+	IN std::function<void(IN eco::Bytes&, IN Context&)>& func,
+	IN Context& c)
+{
+	func(c.m_message, c);
+}
 inline void handle_context_default(
 	IN std::function<void(IN eco::Bytes&, IN Context&)>& func,
 	IN Context& c)
@@ -124,33 +138,40 @@ inline void handle_context_default(
 
 ////////////////////////////////////////////////////////////////////////////////
 // message array handled by "functor", suguest using in client.
-#define ECO_HANDLE_CONTEXT_ARRAY_FUNC(Message) \
-std::function<void(std::vector<std::shared_ptr<Message>>&, Context&)>
-
-template<typename Message, typename Codec>
-inline void handle_context_array(
-	IN ECO_HANDLE_CONTEXT_ARRAY_FUNC(Message)& func,
-	IN Context& c)
+template<typename Array>
+struct ArrayHandler
 {
-	static std::vector<Message*> s_message_set;
+	typedef std::function<void(Array&, Context&)> Func;
+	Array m_array;
+	Func  m_func;
 
+	inline ArrayHandler() {}
+	inline ArrayHandler(Func&& func) : m_func(func) {}
+	inline ArrayHandler(ArrayHandler&& h)
+		: m_array(std::move(h.m_array))
+		, m_func(std::move(h.m_func)) {}
+	inline ArrayHandler(const ArrayHandler& h)
+		: m_array((h.m_array))
+		, m_func(h.m_func) {}
+};
+template<typename Message, typename Array, typename Codec>
+inline void handle_context_array(ArrayHandler<Array>& handler, Context& c)
+{
 	// 1.deccode message.
+	typedef typename Array::value_type value_type;
+
 	Codec codec;
 	Message* msg(new Message);
 	codec.set_message(msg);
-	codec.decode(&c.m_message);
-	s_message_set.push_back(msg);
+	codec.decode(c.m_message.c_str(), c.m_message.size());
+	handler.m_array.push_back(value_type(msg));
 
 	// 2.handle message.
-	if (eco::has(c.m_option, opt_last))
+	if (c.is_last())
 	{
-		// 3.release message object.
-		func(s_message_set, c);
-		auto it = s_message_set.begin();
-		for (; it != s_message_set.end(); ++it){
-			delete *it;
-		}
-		s_message_set.clear();
+		// 3.call functor.
+		handler.m_func(handler.m_array, c);
+		handler.m_array.clear();
 	}
 }
 
@@ -191,8 +212,15 @@ public:
 			std::bind(&handle_context<Handler>, std::placeholders::_1));
 	}
 
+	/*@ dispatch message without message object.*/
+	inline void dispatch(IN uint64_t id, IN HandlerFunc hdl)
+	{
+		register_handler(id, std::move(hdl));
+	}
+
 	/*@ register message and message handler function.*/
 #ifndef ECO_NO_FUNCTION_TEMPLATE_DEFAULT
+	// dispatch message with message object.
 	template<typename Message, typename Codec = net::ProtobufCodec>
 	inline void dispatch(
 		IN uint64_t id,
@@ -220,6 +248,15 @@ public:
 #endif
 
 	/*@ register message default handler func.*/
+	inline void dispatch(
+		IN uint64_t id,
+		IN std::function<void(IN eco::Bytes&, IN Context&)> func)
+	{
+		register_handler(id, std::bind(&handle_context,
+			func, std::placeholders::_1));
+	}
+
+	/*@ register message default handler func.*/
 	inline void dispatch_default(
 		IN std::function<void(IN eco::Bytes&, IN Context&)> func)
 	{
@@ -227,15 +264,35 @@ public:
 			func, std::placeholders::_1));
 	}
 
+	
+
+#ifndef ECO_NO_FUNCTION_TEMPLATE_DEFAULT
 	/*@ register message and message handler function.*/
-	template<typename Message, typename Codec>
+	template<typename Message, 
+		typename Array = std::vector<std::auto_ptr<Message>>,
+		typename Codec = net::ProtobufCodec>
 	inline void dispatch_array(
 		IN uint64_t id,
-		IN ECO_HANDLE_CONTEXT_ARRAY_FUNC(Message) func)
+		IN typename ArrayHandler<Array>::Func f)
 	{
-		register_handler(id, std::bind(&handle_context_array<Message, Codec>,
-			func, std::placeholders::_1));
+		ArrayHandler<Array> handler(std::move(f));
+		register_handler(id, std::bind(
+			&handle_context_array<Message, Array, Codec>,
+			std::move(handler), std::placeholders::_1));
 	}
+#else
+	/*@ register message and message handler function.*/
+	template<typename Message, typename Array, typename Codec>
+	inline void dispatch_array(
+		IN uint64_t id,
+		IN typename ArrayHandler<Array>::Func f)
+	{
+		ArrayHandler<Array> handler(std::move(f));
+		register_handler(id,
+			std::bind(&handle_context_array<Message, Array, Codec>,
+				handler, std::placeholders::_1));
+	}
+#endif
 };
 
 

@@ -1,13 +1,8 @@
 #include "PrecHeader.h"
 #include "TcpServer.ipp"
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/log/Log.h>
 #include <eco/service/dev/Cluster.h>
-#include <eco/codec/Zlib.h>
-#include <eco/codec/ZlibFlate.h>
-#include <eco/codec/ZlibFlateUnk.h>
-#include <eco/net/protocol/Check.h>
-#include <eco/net/protocol/Crypt.h>
+#include <eco/net/protocol/TcpProtocol2.h>
 #include <eco/net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
 #include "TcpOuter.h"
@@ -15,6 +10,7 @@
 
 namespace eco{;
 namespace net{;
+void test_close_io_service(TcpAcceptor::Impl* impl);
 ////////////////////////////////////////////////////////////////////////////////
 void TcpServer::Impl::start()
 {
@@ -22,17 +18,32 @@ void TcpServer::Impl::start()
 	if (m_option.get_port() == 0)
 		ECO_THROW(e_server_no_port) << "server must dedicated server port.";
 
-	// set protocol.
-	if (m_option.websocket())
+	// set default protocol.
+	if (m_protocol.protocol_latest() == 0)
 	{
-		set_protocol_head(new WebSocketProtocolHeadEx());
-		set_protocol(new WebSocketProtocol(false));	 // server must not mask.
+		if (!m_option.websocket())
+		{
+			m_protocol.add_protocol(new TcpProtocol());
+			//m_protocol.add_protocol(new TcpProtocol2());
+		}
+		else
+		{
+			// server must not mask.
+			m_protocol.add_protocol(new WebSocketProtocol(false));
+		}
 	}
-	else if (!m_prot_head.get() || m_protocol_set.empty())
-	{
-		set_protocol_head(new TcpProtocolHead());
-		set_protocol(new TcpProtocol(new CheckAdler32(), new CryptFlate()));
-	}
+
+	// set tcp peer handler.
+	m_peer_handler.m_owner = this;
+	m_peer_handler.m_option = &m_option;
+	m_peer_handler.m_protocol = &m_protocol;
+	m_peer_handler.m_websocket_key = websocket_key();
+	m_peer_handler.m_on_close = std::bind(&TcpServer::Impl::on_close, this,
+		std::placeholders::_1, std::placeholders::_2);
+	m_peer_handler.m_on_read = std::bind(&TcpServer::Impl::on_read, this,
+		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	m_peer_handler.m_on_send = std::bind(&TcpServer::Impl::on_send, this,
+		std::placeholders::_1, std::placeholders::_2);
 
 	// set default value.
 	if (m_option.get_max_connection_size() == 0)
@@ -46,6 +57,7 @@ void TcpServer::Impl::start()
 		m_option.set_business_thread_size(4);
 
 	// start to receive request.
+	m_dispatch_pool.set_capacity(m_option.context_capacity());
 	m_dispatch_pool.run("disp_dc", m_option.get_business_thread_size());
 
 	// acceptor: start accept client tcp_connection.
@@ -66,13 +78,14 @@ void TcpServer::Impl::start()
 	// logging.
 	char log[1024] = { 0 };
 	sprintf(log, "\n+[tcp server %s %d]\n"
-		"-[mode] no_delay(%c), websocket(%c)\n"
+		"-[mode] no_delay(%c), websocket(%c), send_buff(%d), recv_buff(%d)\n"
 		"-[tick] unit %ds, lost client %ds, heartbeat %ds\n"
 		"-[beat] io(%c), rhythm(%c), response(%c)\n"
 		"-[capacity] %d connections, %d sessions\n"
 		"-[parallel] %d io thread, %d business thread\n",
 		m_option.get_name(), m_option.get_port(),
 		eco::yn(m_option.no_delay()), eco::yn(m_option.websocket()),
+		m_option.get_send_buffer_size(), m_option.get_recv_buffer_size(),
 		m_option.get_tick_time(),
 		m_option.get_heartbeat_recv_tick() * m_option.get_tick_time(),
 		m_option.get_heartbeat_send_tick() * m_option.get_tick_time(),
@@ -126,20 +139,32 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 		return;
 	}
 	m_option.step_tick();
+	ThreadCheck::me().set_time();
 
 	// send rhythm heartbeat.
-	if (m_option.get_heartbeat_send_tick() > 0 &&
-		m_option.tick_count() % m_option.get_heartbeat_send_tick() == 0)
+	if (m_option.is_time_to_heartbeat_send_tick())
 	{
 		async_send_heartbeat();
 	}
 
 	// clean dead peer.
-	if (m_option.get_heartbeat_recv_tick() > 0 &&
-		m_option.tick_count() % m_option.get_heartbeat_recv_tick() == 0)
+	if (m_option.is_time_to_heartbeat_recv_tick())
 	{
 		m_peer_set.clean_dead_peer();
 	}
+
+	if (m_option.get_clean_dos_peer_tick() > 0)
+	{
+		m_peer_set.clean_dos_peer(
+			ThreadCheck::me().get_time(),
+			m_option.get_clean_dos_peer_tick());
+	}
+
+	/* for testing.
+	if (m_option.tick_count() == 2)
+	{
+		test_close_io_service(&m_acceptor.impl());
+	}*/
 
 	// set next tick on.
 	set_tick_timer();
@@ -147,100 +172,73 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpServer::Impl::on_accept(IN TcpPeer::ptr& p, IN const eco::Error* e)
+void TcpServer::Impl::on_accept(IN TcpPeer::ptr& peer, IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
-		ECO_WARN << "accept: " << e->what();
+		ECO_FUNC(error) << e->what();
 		return;
 	}
-	p->set_connected();
-	p->state().set_server();
-	ECO_INFO << NetLog(p->get_id(), __func__);
-	
+
 	// hub verify the most tcp_connection num.
-	if (m_peer_set.add(p))
+	peer->impl().on_accept_state();
+	if (m_peer_set.accept(peer, ThreadCheck::me().get_time()))
 	{
-		// tcp_connection start work and recv request.
-		if (m_option.websocket())
-			p->async_recv_shakehand();
-		else
-			p->async_recv_by_server();
+		peer->impl().on_accept(m_option);
+		if (m_on_accept)
+		{
+			m_on_accept(peer->get_id());
+		}
 	}
 	else
 	{
-		p->close();
+		peer->impl().close();
 	}
-
-	// accept next tcp_connection.
-	m_acceptor.async_accept();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpServer::Impl::on_read(IN void* impl, IN eco::String& data)
+void TcpServer::Impl::on_read(
+	IN void* impl, IN MessageHead& head, IN eco::String& data)
 {
 	auto* peer = static_cast<TcpPeer::Impl*>(impl);
 
-	// #.parse message head.
-	eco::Error e;
-	MessageHead head;
-	if (!m_prot_head->decode(head, data, e))
-	{
-		ECO_INFO << NetLog(peer->get_id(), __func__) <= e;
-		return;
-	}
-
-	// #.get related protocol and make connection data.
-	Protocol* prot = nullptr;
-	if (!eco::has(head.m_category, category_heartbeat))
-	{
-		prot = protocol(head.m_version);
-		if (prot == nullptr)
-		{
-			e.id(e_message_unknown) << "tcp server have no protocol: "
-				<< head.m_version;
-			ECO_WARN << NetLog(peer->get_id(), __func__) <= e;
-			return;
-		}
-		// this is thread safe:
-		// 1)one peer in one thread; 
-		// 2)all connection data access after this sentense(create data).
-		peer->make_connection_data(m_make_connection, prot);
-	}
-	
 	// #.send heartbeat.
-	if (m_option.io_heartbeat() &&
-		eco::has(head.m_category, category_heartbeat))
+	if (is_heartbeat(head.m_category))
 	{
 		peer->state().set_peer_live(true);
 		if (m_option.response_heartbeat())
-			peer->async_send_heartbeat(*m_prot_head);
-		ECO_INFO << NetLog(peer->get_id(), __func__) <= "heartbeat";
+		{
+			peer->send_heartbeat(*head.m_protocol);
+		}
+		ECO_DEBUG << NetLog(peer->get_id(), __func__) <= "heartbeat";
 		return;
 	}
 
 	// #.dispatch data context.
-	TcpSessionOwner owner(*(TcpServerImpl*)this);
-	peer->post(owner, head.m_category, data, prot);
+	peer->post(head, data);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpServer::Impl::on_close(IN const ConnectionId conn_id)
+void TcpServer::Impl::on_close(IN ConnectionId id, IN bool erase_peer)
 {
-	m_peer_set.erase(conn_id);
-	clear_conn_session(conn_id);
-	ECO_DEBUG << NetLog(conn_id, __func__);
-}
+	// when "erase_peer=false" that because of close_and_notify called in
+	// peerset, for avoid repeated peer.
+	if (erase_peer)
+	{
+		m_peer_set.erase(id);
+	}
+	clear_conn_session(id);
+	ECO_DEBUG << NetLog(id, __func__);
 
-
-////////////////////////////////////////////////////////////////////////////////
-void TcpServer::Impl::on_send(
-	OUT void* peer,
-	IN  const uint32_t send_size)
-{
+	if (m_on_close)
+	{
+		m_on_close(id);
+	}
 }
+void TcpServer::Impl::on_send(IN void* impl, IN uint32_t send_size)
+{}
 
 
 //##############################################################################
@@ -251,56 +249,66 @@ void TcpServer::set_connection_data(IN MakeConnectionDataFunc make)
 {
 	impl().m_make_connection = make;
 }
-
 void TcpServer::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;
 }
-
 void TcpServer::start()
 {
 	impl().start();
 }
-
 void TcpServer::stop()
 {
 	impl().stop();
 }
-
 void TcpServer::join()
 {
 	impl().join();
 }
 
-void TcpServer::set_protocol_head(IN ProtocolHead* heap)
+////////////////////////////////////////////////////////////////////////////////
+void TcpServer::add_protocol(IN Protocol* p)
 {
-	impl().set_protocol_head(heap);
+	impl().m_protocol.add_protocol(p);
+}
+Protocol* TcpServer::protocol(IN int version) const
+{
+	return impl().m_protocol.protocol(version);
+}
+Protocol* TcpServer::protocol_latest() const
+{
+	return impl().m_protocol.protocol_latest();
 }
 
-ProtocolHead& TcpServer::protocol_head() const
-{
-	return *impl().m_prot_head;
-}
-
-void TcpServer::set_protocol(IN Protocol* p)
-{
-	impl().register_protocol(p);
-}
-
-Protocol* TcpServer::protocol(IN const uint32_t version) const
-{
-	return impl().protocol(version);
-}
-
+////////////////////////////////////////////////////////////////////////////////
 void TcpServer::register_handler(IN uint64_t id, IN HandlerFunc hf)
 {
-	impl().m_dispatch_pool.register_handler(id, hf);
+	impl().m_dispatch_pool.register_handler(id, std::move(hf));
 }
-
 void TcpServer::register_default_handler(IN HandlerFunc hf)
 {
-	impl().m_dispatch_pool.register_default_handler(hf);
+	impl().m_dispatch_pool.register_default_handler(std::move(hf));
 }
+void TcpServer::set_event(ServerAcceptFunc on_accept, ServerCloseFunc on_close)
+{
+	impl().m_on_accept = on_accept;
+	impl().m_on_close = on_close;
+}
+void TcpServer::set_recv_event(
+	OnRecvDataFunc on_recv, OnDecodeHeadFunc on_decode)
+{
+	impl().m_peer_handler.m_on_decode_head = on_decode;
+	impl().m_dispatch_pool.message_handler().set_event(on_recv);
+}
+bool TcpServer::receive_mode() const
+{
+	return impl().receive_mode();
+}
+bool TcpServer::dispatch_mode() const
+{
+	return impl().dispatch_mode();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

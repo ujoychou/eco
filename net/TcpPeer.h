@@ -25,47 +25,82 @@
 *******************************************************************************/
 #include <eco/net/Address.h>
 #include <eco/net/TcpState.h>
-#include <eco/net/protocol/Protocol.h>
+#include <eco/net/TcpOption.h>
 #include <eco/net/protocol/TcpProtocol.h>
 
 
 namespace eco{;
 namespace net{;
+class IoWorker;
+class TcpPeer;
+class Context;
+class ProtocolFamily;
+////////////////////////////////////////////////////////////////////////////////
+// tcp owner: tcp client or tcp server.
+class TcpOwner
+{
+public:
+	inline TcpOwner() : m_server(false), m_owner(0)
+	{}
+
+	inline TcpOwner(void* owner, bool server)
+	{
+		set(owner, server);
+	}
+
+	inline void set(void* owner, bool server)
+	{
+		m_owner = owner;
+		m_server = server;
+	}
+
+	inline void clear()
+	{
+		m_owner = 0;
+		m_server = 0;
+	}
+
+	void*		m_owner;
+	uint32_t	m_server;
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class IoService;
-class TcpPeer;
-class Context;
 class TcpPeerHandler
 {
 public:
-	// when peer has connected to server.
-	virtual void on_connect(IN const eco::Error* e)
-	{}
+	void* m_owner;
 
-	// when peer has received a message data bytes.
-	virtual void on_read(IN void* peer, IN eco::String& data) = 0;
-
-	// when peer has sended a data, async notify sended data size.
-	virtual void on_send(IN void* peer, IN const uint32_t size)
-	{}
-
-	// when peer has been closed.
-	virtual void on_close(IN const ConnectionId peer_id)
-	{}
-
-	// get protocol head.
-	virtual ProtocolHead& protocol_head() const = 0;
-
-	// whether is a websocket.
-	virtual bool websocket() const = 0;
+	// protocol.
+	const ProtocolFamily* m_protocol;
 
 	// websocket server key.
-	virtual const char* websocket_key() const
-	{
-		return "";
-	}
+	const char* m_websocket_key;
+
+	// get protocol head.
+	const TcpOption* m_option;
+
+	// when peer has connected to server.
+	// m_on_connect(error)
+	std::function<void(IN const Error*)> m_on_connect;
+
+	// when peer has sended a data, async notify sended data size.
+	// m_on_send(peer, size)
+	std::function<void(IN void*, IN uint32_t)> m_on_send;
+
+	// when peer has read a completed message.
+	// m_on_read(peer, head, data)
+	std::function<void(IN void*, IN MessageHead&, IN String&)> m_on_read;
+
+	// when recv data size, check the bytes tcp size edge.
+	// m_on_decode_head(head, byte, size, error)
+	std::function<bool(IN MessageHead&, IN const char*, IN uint32_t)>
+		m_on_decode_head;
+
+	// when peer has been closed.
+	// m_on_close(peer_id, erase_peer)
+	std::function<void(IN ConnectionId, IN const eco::Error& e, 
+		IN bool erase_peer)> m_on_close;
 };
 
 
@@ -75,40 +110,32 @@ class ECO_API TcpPeer
 {
 	ECO_OBJECT_API(TcpPeer);
 public:
-	/*@ factory method to create a new peer.
+	/*@ used by tcp client to create a new peer.
 	* @ para.service: io service of peer.
 	*/
-	static TcpPeer::ptr make(
-		IN IoService* io_server,
-		IN void* msg_server,
-		IN TcpPeerHandler* handler);
-
-	// constructor
-	TcpPeer(
-		IN IoService* io_server,
-		IN void* msg_server,
-		IN TcpPeerHandler* hdl);
-
+	static TcpPeer::ptr make(IoWorker* io, void* msg, TcpPeerHandler* hdl);
+	TcpPeer(IoWorker* io_server, void* msg_server, TcpPeerHandler* hdl);
 	TcpPeerHandler& handler();
+
+	// init socket option.
+	void init_option(const TcpOption& opt);
 
 	// tcp peer identity which is the address of connector.
 	ConnectionId get_id() const;
 
 	// tcp remote client peer ip.
 	eco::String get_ip() const;
+	uint32_t get_port() const;
+
+	// io stopped.
+	bool stopped() const;
 
 	// tcp peer connection state.
-	TcpState& state();
 	const TcpState& get_state() const;
-	// set tcp peer state to connected.
-	void set_connected();
 
 	// tcp peer connection state.
 	eco::atomic::State& data_state();
 	const eco::atomic::State& get_data_state() const;
-
-	// set tcp peer option
-	void set_option(IN bool no_delay);
 
 	// get peer data.
 	ConnectionData* data();
@@ -116,31 +143,20 @@ public:
 	// async connect to server address.
 	void async_connect(IN const Address& addr);
 
-	// async recv message from peer.
-	void async_recv();
-	void async_recv_shakehand();
-	void async_recv_by_server();
-
 	// close peer.
 	void close();
 
 	// close peer and notify peer handler.
-	void close_and_notify();
+	void close_and_notify(IN const eco::Error& e);
 
-	// async send string message.
-	void async_send(IN eco::String& data, IN const uint32_t start);
+	// send string message.
+	void send(IN eco::String& data, IN uint32_t start);
 
-	// async send meta message.
-	void async_send(IN const MessageMeta& meta, IN Protocol& prot);
+	// send meta message.
+	void send(IN const MessageMeta& meta, IN Protocol& prot);
 
-	// async response message.
-	void async_response(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const Context& context,
-		IN Protocol& prot,
-		IN const bool last,
-		IN const bool encrypted);
+	// response message.
+	void response(IN MessageMeta& m, IN Protocol& p, IN const Context& c);
 };
 
 

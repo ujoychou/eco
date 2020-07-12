@@ -26,7 +26,7 @@
 #include <eco/net/Address.h>
 #include <eco/net/TcpSession.h>
 #include <eco/net/TcpDispatch.h>
-#include <eco/net/TcpClientOption.h>
+#include <eco/net/TcpOption.h>
 #include <eco/net/protocol/TcpProtocol.h>
 #ifndef ECO_NO_PROTOBUF
 #include <eco/proto/Proto.h>
@@ -37,21 +37,7 @@ namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 // async request for: ResoveFunc/RejectFunc/ResponseFunc.
-template <typename rsp_t>
-struct Resolve
-{
-	typedef std::shared_ptr<rsp_t> RspPtr;
-	typedef std::vector<std::shared_ptr<rsp_t> > RspSet;
-	typedef std::shared_ptr<RspSet> RspSetPtr;
-	typedef std::function<void(RspPtr&, eco::net::Context&)> Func;
-	typedef std::function<void(std::shared_ptr<std::vector<RspPtr>>&)> SetFunc;
-
-	inline static std::shared_ptr<std::vector<RspPtr>> create_set()
-	{
-		return std::shared_ptr<std::vector<RspPtr>>(new RspSet());
-	}
-};
-typedef std::function<void(eco::Error&, eco::net::Context&)> RejectFunc;
+typedef std::function<void(eco::net::Context&)> RejectFunc;
 typedef std::function<void(eco::net::Context&)> ResponseFunc;
 
 
@@ -75,53 +61,56 @@ public:
 	// set timeout
 	void set_timeout(IN const uint32_t millsec);
 
-	// protocol head.
-	template<typename ProtocolHeadT>
-	inline void set_protocol_head()
-	{
-		set_protocol_head(new ProtocolHeadT());
-	}
-	void set_protocol_head(IN ProtocolHead*);
-	ProtocolHead& protocol_head() const;
-
 	// protocol
-	template<typename ProtocolT>
-	inline void set_protocol()
+	template<typename protocol_t>
+	inline void add_protocol()
 	{
-		set_protocol(new ProtocolT());
+		add_protocol(new protocol_t());
 	}
-	void set_protocol(IN Protocol*);
-	Protocol& protocol() const;
+	void add_protocol(IN Protocol*);
+
+	// get latest protocol.
+	Protocol* protocol_latest() const;
+	Protocol* protocol(int version) const;
 
 	// get connection id.
 	ConnectionId get_id();
 
 	// set connection data type.
-	template<typename ConnectionDataT>
+	template<typename connection_data_t>
 	inline void set_connection_data()
 	{
-		set_connection_data(&make_connection_data<ConnectionDataT>);
+		set_connection_data(&make_connection_data<connection_data_t>);
 	}
 	void set_connection_data(IN MakeConnectionDataFunc make);
 
-	template<typename ConnectionDataT>
-	inline ConnectionDataT& cast()
+	// connection data.
+	template<typename connection_data_t>
+	inline connection_data_t& cast()
 	{
-		return *static_cast<ConnectionDataT*>(data());
+		return *static_cast<connection_data_t*>(data());
 	}
 	ConnectionData* data();
+
+	// connection data state.
 	eco::atomic::State& data_state();
 
+	// get tcp peer state. like whether connected.
+	const TcpState& get_state() const;
+
 	// set session data class and tcp session mode.
-	template<typename SessionDataT>
+	template<typename session_data_t>
 	inline void set_session_data()
 	{
-		set_session_data(&make_session_data<SessionDataT>);
+		set_session_data(&make_session_data<session_data_t>);
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
 
 	// register connection event
-	void set_event(IN OpenFunc on_open, IN CloseFunc on_close = nullptr);
+	void set_event(IN ClientOpenFunc on_open, IN ClientCloseFunc on_close);
+
+	// set receive callback event.
+	void set_recv_event(OnRecvDataFunc on_recv, OnDecodeHeadFunc on_decode);
 
 	// register dispatch handler.
 	virtual void register_default_handler(IN HandlerFunc hf) override;
@@ -148,15 +137,16 @@ public:
 	TcpSession open_session();
 
 	// service mode: set address ready to connect to service.
+	void add_address(IN eco::net::Address&);
 	void set_address(IN eco::net::AddressSet&);
 
 	// service mode: async connect to service.
-	void connect(IN eco::net::AddressSet&);
-	void connect();
+	void async_connect(IN bool reconnect = false);
+	void async_connect(IN eco::net::AddressSet&, IN bool reconnect = false);
 
 	// service mode. sync connect to service.
-	void connect_wait(IN eco::net::AddressSet&, IN uint32_t millsec);
-	void connect_wait(IN uint32_t millsec);
+	void connect(IN uint32_t millsec);
+	void connect(IN eco::net::AddressSet&, IN uint32_t millsec);
 
 	// async send request to server.
 	void authorize(IN TcpSession& session, IN MessageMeta& meta);
@@ -165,51 +155,68 @@ public:
 	void send(IN eco::String& data, IN const uint32_t start);
 
 	// async send message.
-	void send(IN MessageMeta& meta);
+	void send(IN MessageMeta&);
 
-#ifndef ECO_NO_PROTOBUF
-	// async send protobuf.
-	inline void send(
-		IN google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const uint32_t request_data = 0,
-		IN const bool encrypted = false)
+	// async send message with no message object.
+	inline void send(IN uint32_t type, IN uint32_t req_id)
 	{
-		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, none_session, type, encrypted);
-		// when request data is not send, it's value=0.
-		if (request_data != 0)
-			meta.set_request_data(request_data);
+		MessageMeta meta;
+		meta.message_type(type).set_request_data(req_id);
 		send(meta);
 	}
-#endif
 
 /////////////////////////////////////////////////////////////////// SYNC REQUEST
 public:
 	// req/rsp mode: send message and get a response.
-	template<typename codec_t, typename req_t, typename rsp_t>
-	inline eco::Result request(
-			IN uint32_t req_type,
-			IN req_t& req,
-			IN rsp_t& rsp,
-			IN bool encrypted = false)
+	inline eco::Result request(IN uint32_t req_type)
 	{
-		codec_t codec_req(req);
-		codec_t codec_rsp(rsp);
-		MessageMeta meta_req(codec_req, none_session, req_type, encrypted);
-		return request(meta_req, codec_rsp);
+		MessageMeta meta;
+		meta.message_type(req_type);
+		return request(meta, nullptr, nullptr, nullptr);
 	}
 
-	// req/rsp mode: send message and get a response in this message.
-	template<typename codec_t, typename msg_t>
+	// req/rsp mode: send message and get a response.
+	template<typename codec_t, typename req_t, typename rsp_t>
 	inline eco::Result request(
-		IN uint32_t req_type,
-		IN msg_t& msg,
-		IN bool encrypted = false)
+		IN uint32_t req_type, IN const req_t& req, IN rsp_t& rsp)
 	{
-		codec_t codec_rsp(msg);
-		MessageMeta meta_req(codec_t(msg), none_session, req_type, encrypted);
-		return request(meta_req, codec_rsp);
+		codec_t req_codec(req);
+		codec_t rsp_codec(rsp);
+		MessageMeta meta;
+		meta.codec(req_codec).message_type(req_type);
+		return request(meta, nullptr, &rsp_codec, nullptr);
+	}
+
+	// sync request data set.
+	template<typename codec_t, typename req_t, typename rsp_t>
+	inline eco::Result request_set(
+		IN uint32_t req_type,
+		IN const req_t& req,
+		IN AutoArray<rsp_t>& rsp_set)
+	{
+		codec_t rsp_codec;
+		codec_t req_codec(req);
+		MessageMeta req_meta;
+		req_meta.codec(req_codec).message_type(req_type);
+		WrapCodec rsp_wrap_codec(rsp_codec, WrapCodec::make<rsp_t>);
+		return request(req_meta, nullptr, &rsp_wrap_codec, &rsp_set.get());
+	}
+
+	// sync request data set.
+	template<typename codec_t, typename req_t, typename err_t, typename rsp_t>
+	inline eco::Result request_set(
+		IN uint32_t req_type,
+		IN const req_t& req,
+		IN const err_t& err,
+		IN AutoArray<rsp_t>& rsp_set)
+	{
+		codec_t rsp_codec;
+		codec_t req_codec(req);
+		codec_t err_codec(err);
+		MessageMeta req_meta;
+		req_meta.codec(req_codec).message_type(req_type);
+		WrapCodec rsp_wrap_codec(rsp_codec, WrapCodec::make<rsp_t>);
+		return request(req_meta, &err_codec, &rsp_wrap_codec, &rsp_set.get());
 	}
 
 	// req/rsp mode: async send message and callback.
@@ -217,59 +224,86 @@ public:
 	inline void async(
 		IN uint32_t req_type,
 		IN req_t& req,
-		IN RejectFunc reject,
-		IN typename Resolve<rsp_t>::Func resolve,
-		IN bool encrypted = false)
+		IN RejectFunc&& reject,
+		IN std::function<void(rsp_t&, eco::net::Context&)>&& resolve)
 	{
-		async_ref<codec_t, rsp_t>(req_type, req, reject, resolve, encrypted);
-	}
-
-public:
-	// sync request data set.
-	template<typename codec_t, typename req_t, typename rsp_t>
-	inline eco::Result request_set(
-		IN uint32_t req_type,
-		IN req_t& req,
-		IN AutoArray<rsp_t>& rsp_set,
-		IN bool encrypted = false)
-	{
-		codec_t rsp_codec;
-		codec_t req_codec(req);
-		TypeCodec codec(rsp_codec, TypeCodec::make<rsp_t>);
-		MessageMeta req_meta(req_codec, none_session, req_type, encrypted);
-		return request(req_meta, codec, &rsp_set.get());
+		async_ref<codec_t, rsp_t>(req_type, req, reject, resolve);
 	}
 
 #ifndef ECO_NO_PROTOBUF
-	typedef std::function<void(const ::proto::Error&,
-		eco::net::Context&)> ProtobufReject;
+	// async send protobuf.
+	inline void send(
+		IN MessageOption& opt,
+		IN const google::protobuf::Message& msg)
+	{
+		ProtobufCodec codec(msg);
+		send(MessageMeta(&codec, opt));
+	}
 
-	// sync request data set.
-	template<typename rsp_pb_t>
-	inline void request_set(
+	// async send protobuf.
+	inline void send(
+		IN uint32_t type, 
+		IN const google::protobuf::Message& msg)
+	{
+		ProtobufCodec codec(msg);
+		send(MessageMeta(&codec, MessageOption(type)));
+	}
+
+	// sync request protobuf.
+	inline eco::Result request(
+		IN uint32_t req_type,
+		IN const google::protobuf::Message& req_msg,
+		IN const google::protobuf::Message& rsp_msg)
+	{
+		return request<ProtobufCodec>(req_type, req_msg, rsp_msg);
+	}
+
+	/*@sync request data ptr set.
+	* @rsp_t: response object type.
+	* @rsp_ptr_t: std::shared_ptr<rsp_t>/ std::auto_ptr<rsp_t> /rsp_t* /void*.
+	* @rsp_ptr_set_t: std::vector/list/queue so on.
+	*/
+	template<typename rsp_t, typename rsp_ptr_set_t>
+	inline eco::Result request_set(
 		IN uint32_t req_type,
 		IN const google::protobuf::Message& req,
-		IN std::vector<std::shared_ptr<rsp_pb_t> >& rsp_set,
-		IN bool encrypted = false)
+		IN rsp_ptr_set_t& rsp_set)
 	{
-		AutoArray<rsp_pb_t> set;
-		auto result = request_set<ProtobufCodec>(req_type, req, set, encrypted);
-		if (result != eco::ok)
+		AutoArray<rsp_t> set;
+		eco::Result ec = request_set<ProtobufCodec, 
+			google::protobuf::Message>(req_type, req, set);
+		if (ec == eco::ok)
 		{
-			ECO_THROW_FUNC(result, get_name()) <= req_type;
+			rsp_set.reserve(set.size());
+			for (size_t i = 0; i < set.size(); i++)
+			{
+				rsp_set.push_back(rsp_ptr_set_t::value_type(set.release(i)));
+			}
 		}
-		else if (set.size() == 1 && set[0]->has_error())
-		{
-			auto& e = set[0]->error();
-			ECO_THROW_FUNC(e.id(), get_name()) <= req_type <= e.message();
-		}
+		return ec;
+	}
 
-		rsp_set.reserve(set.size());
-		for (size_t i = 0; i < set.size(); i++)
+	// sync request data set.
+	template<typename rsp_t, typename rsp_ptr_set_t>
+	inline eco::Result request_set(
+		IN uint32_t req_type,
+		IN const google::protobuf::Message& req,
+		IN const google::protobuf::Message& err,
+		IN rsp_ptr_set_t& rsp_set)
+	{
+		AutoArray<rsp_t> set;
+		auto result = request_set<ProtobufCodec>(req_type, req, err, set);
+		eco::Result ec = request_set<ProtobufCodec,
+			google::protobuf::Message>(req_type, req, err, set);
+		if (result == eco::ok)
 		{
-			typedef std::shared_ptr<rsp_pb_t> rsp_ptr;
-			rsp_set.push_back(rsp_ptr(set.release(i)));
+			rsp_set.reserve(set.size());
+			for (size_t i = 0; i < set.size(); i++)
+			{
+				rsp_set.push_back(rsp_ptr(set.release(i)));
+			}
 		}
+		return result;
 	}
 
 	// sync request data set.
@@ -277,131 +311,112 @@ public:
 	inline void async(
 		IN uint32_t req_type,
 		IN const google::protobuf::Message& req,
-		IN ProtobufReject reject,
-		IN typename Resolve<rsp_t>::Func resolve,
-		IN bool encrypted = false)
+		IN RejectFunc&& reject,
+		IN std::function<void(rsp_t&, eco::net::Context&)>&& resolve)
 	{
-		async_ref<ProtobufCodec, rsp_t>(
-			req_type, req, reject, resolve, encrypted);
+		typedef std::function<void(rsp_t&, eco::net::Context&)> Func;
+		async_ref<ProtobufCodec, rsp_t>(req_type, req, 
+			std::forward<RejectFunc>(reject), std::forward<Func>(resolve));
 	}
 
 	// sync request data set.
-	template<typename rsp_t>
+	template<typename rsp_t, typename rsp_ptr_set_t>
 	inline void async_set(
 		IN uint32_t req_type,
 		IN const google::protobuf::Message& req,
-		IN ProtobufReject reject,
-		IN typename Resolve<rsp_t>::SetFunc resolve,
-		IN bool encrypted = false)
+		IN RejectFunc&& reject,
+		IN std::function<void(std::shared_ptr<rsp_ptr_set_t>&)>&& resolve)
 	{
-		async_set_ref<ProtobufCodec, rsp_t>(
-			req_type, req, reject, resolve, encrypted);
-	}
-
-	// sync request protobuf.
-	inline eco::Result request(
-		IN const uint32_t req_type,
-		IN google::protobuf::Message& req_msg,
-		IN google::protobuf::Message& rsp_msg,
-		IN const bool encrypted = false)
-	{
-		return request<ProtobufCodec>(req_type, req_msg, rsp_msg, encrypted);
-	}
-
-	// sync request protobuf.
-	inline eco::Result request(
-		IN const uint32_t req_type,
-		IN google::protobuf::Message& msg,
-		IN const bool encrypted = false)
-	{
-		return request<ProtobufCodec>(req_type, msg, encrypted);
+		typedef std::function<void(std::shared_ptr<rsp_ptr_set_t>&)> Func;
+		async_set_ref<ProtobufCodec, rsp_t, rsp_ptr_set_t>(req_type, req, 
+			std::forward<RejectFunc>(reject), std::forward<Func>(resolve));
 	}
 #endif
 
 private:
-	// sync request data or data set.
+	/*@sync request data or data set. success when return eco::ok, esle fail.
+	if server reject request and response with a error object, "err_codec" will
+	decode the error object message.
+	* @err_codec: reject error message decode.
+	* @rsp_codec: resolve response message decode.
+	* @rsp_set: save object set when response object set.
+	*/
 	eco::Result request(
 		IN MessageMeta& req,
-		IN Codec& rsp_codec,
-		IN std::vector<void*>* rsp_set = nullptr);
+		IN Codec* err_codec,
+		IN Codec* rsp_codec,
+		IN std::vector<void*>* rsp_set);
 
 	// req/rsp mode: send async message.
-	void async(
-		IN MessageMeta& req,
-		IN ResponseFunc& rsp_func);
+	void async(IN MessageMeta& req, IN ResponseFunc& rsp_func);
 
 	// req/rsp mode: async send message and callback.
-	template<typename codec_t, typename rsp_t, typename req_t, typename reject_t>
+	template<typename codec_t, typename rsp_t, typename req_t>
 	inline void async_ref(
 		IN uint32_t req_type,
-		IN req_t& req,
-		IN reject_t& reject,
-		IN typename Resolve<rsp_t>::Func& resolve,
-		IN bool encrypted = false)
+		IN const req_t& req,
+		IN RejectFunc&& reject,
+		IN std::function<void(rsp_t&, eco::net::Context&)>&& resolve)
 	{
-		ResponseFunc rsp_func = [=](eco::net::Context& c)
-		{
-			// decode message.
-			std::shared_ptr<rsp_t> rsp(new rsp_t());
-			if (!codec_t(*rsp).decode(c.m_message.m_data, c.m_message.m_size))
+		ResponseFunc rsp_func = [=](eco::net::Context& c) mutable {
+			if (c.has_error())
 			{
-				::proto::Error e;
-				e.set_id(e_protobuf_parse_error);
-				e.set_message("parse pb error: ");
-				*e.mutable_message() += typeid(rsp_t).name();
-				reject(e, c);
+				reject(c);
+				return;
 			}
-			// add data to response array.
-			else if (rsp->has_error())
+			rsp_t rsp;
+			codec_t rsp_codec;
+			rsp_codec.set_message(handle_context_make(rsp));
+			if (!rsp_codec.decode(c.m_message.m_data, c.m_message.m_size))
 			{
-				reject(rsp->error(), c);
+				c.m_meta.error_id(eco::error);
+				reject(c);
+				return;
 			}
-			else
-			{
-				resolve(rsp, c);
-			}
+			resolve(rsp, c);
 		};
-		MessageMeta meta_req(codec_t(req), none_session, req_type, encrypted);
-		return async(meta_req, rsp_func);
+
+		codec_t req_codec(req);
+		MessageMeta req_meta;
+		req_meta.codec(req_codec).message_type(req_type);
+		return async(req_meta, rsp_func);
 	}
 
 	// req/rsp mode: async send message and callback.
-	template<typename codec_t, typename rsp_t, typename req_t, typename reject_t>
+	template<
+		typename codec_t, 
+		typename rsp_t, 
+		typename rsp_ptr_set_t, 
+		typename req_t>
 	inline void async_set_ref(
 		IN uint32_t req_type,
-		IN req_t& req,
-		IN reject_t& reject,
-		IN typename Resolve<rsp_t>::SetFunc& resolve,
-		IN bool encrypted = false)
+		IN const req_t& req,
+		IN RejectFunc& reject,
+		IN std::function<void(std::shared_ptr<rsp_ptr_set_t>&)>&& resolve)
 	{
-		auto set = Resolve<rsp_t>::create_set();
-		ResponseFunc rsp_func = [=](eco::net::Context& c) mutable
-		{
-			// decode message.
-			std::shared_ptr<rsp_t> rsp(new rsp_t());
-			codec_t rsp_codec(*rsp);
-			if (!rsp_codec.decode(c.m_message.m_data, c.m_message.m_size))
+		std::shared_ptr<rsp_ptr_set_t> rsp_set(new rsp_ptr_set_t());
+		ResponseFunc rsp_func = [=](eco::net::Context& c) mutable {
+			if (c.has_error())
 			{
-				::proto::Error e;
-				e.set_id(e_protobuf_parse_error);
-				e.set_message("parse pb error: ");
-				*e.mutable_message() += typeid(rsp_t).name();
-				reject(e, c);
+				reject(c);
+				return;
 			}
-			// has error and reject.
-			else if (rsp->has_error())
+			rsp_t* obj = nullptr;
+			typename rsp_ptr_set_t::value_type rsp(obj = new rsp_t());
+			if (!codec_t(*obj).decode(c.m_message.m_data, c.m_message.m_size))
 			{
-				reject(rsp->error(), c);
+				c.m_meta.error_id(eco::error);
+				reject(c);
+				return;
 			}
-			// add data to response array.
-			else
-			{
-				set->push_back(rsp);
-				if (c.last()) resolve(set);
-			}
+			rsp_set->push_back(rsp);	// add data to response array.
+			if (c.is_last()) resolve(rsp_set);
 		};
-		MessageMeta meta_req(codec_t(req), none_session, req_type, encrypted);
-		return async(meta_req, rsp_func);
+
+		codec_t req_codec(req);
+		MessageMeta req_meta;
+		req_meta.codec(req_codec).message_type(req_type);
+		return async(req_meta, rsp_func);
 	}
 };
 

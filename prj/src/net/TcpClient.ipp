@@ -34,6 +34,7 @@ public:
 		m_peer.reset();
 	}
 
+	void add_address(IN Address& addr);
 	void update_address(IN AddressSet& addr);
 	bool connect();		// connect to server by blance algorithm.
 };
@@ -63,12 +64,38 @@ class SyncRequest : public eco::Object<SyncRequest>
 {
 public:
 	inline SyncRequest(
-		IN Codec& rsp_codec,
-		IN std::vector<void*>* rsp_set = nullptr)
-		: m_rsp_codec(&rsp_codec), m_rsp_set(rsp_set)
+		IN Codec* err_codec,
+		IN Codec* rsp_codec,
+		IN std::vector<void*>* rsp_set)
+		: m_err_codec(err_codec)
+		, m_rsp_codec(rsp_codec)
+		, m_rsp_set(rsp_set)
+		, m_error_id(0)
 	{}
 
-	Codec* m_rsp_codec;
+	// if decode "error or response" message fail. return false, else true.
+	inline bool decode(const eco::Bytes& msg)
+	{
+		// 1.parse reject error object.
+		if (m_error_id != 0)
+		{
+			if (m_err_codec && !m_err_codec->decode(msg.m_data, msg.m_size))
+				return false;					// #.decode error msg fail.
+		}
+
+		// 2.parse response object or response_set.
+		if (msg.m_size > 0 && m_rsp_codec)
+		{
+			void* obj = m_rsp_codec->decode(msg.m_data, msg.m_size);
+			if (obj == nullptr) return false;	// #.decode rsp msg fail.
+			if (m_rsp_set) m_rsp_set->push_back(obj);
+		}
+		return true;
+	}
+
+	uint32_t	m_error_id;
+	Codec*		m_err_codec;
+	Codec*		m_rsp_codec;
 	std::vector<void*>* m_rsp_set;
 	eco::Monitor m_monitor;
 };
@@ -84,24 +111,23 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class TcpClient::Impl : public TcpPeerHandler
+class TcpClient::Impl
 {
 	ECO_IMPL_INIT(TcpClient);
 public:
-	typedef std::auto_ptr<ProtocolHead> ProtocolHeadPtr;
 	LoadBalancer	m_balancer;		// load balance for multi server.
 	TcpClientOption	m_option;		// client option.
-	ProtocolHeadPtr m_prot_head;	// client protocol head.
-	Protocol::ptr	m_protocol;		// client protocol.
+	ProtocolFamily  m_protocol;		// client protocol.
+	TcpPeerHandler	m_peer_handler;
 	
 	// io server, timer and business dispatcher server.
-	eco::net::Worker		m_worker;		// io thread.
-	eco::net::IoTimer		m_timer;		// run in io thread.
-	DispatchServer			m_dispatch;		// dispatcher thread.
+	eco::net::Worker	m_worker;	// io thread.
+	eco::net::IoTimer	m_timer;	// run in io thread.
+	DispatchServer		m_dispatch;	// dispatcher thread.
 
-	// connection data factory.
-	OpenFunc m_on_open;
-	CloseFunc m_on_close;
+	// connection event.
+	ClientOpenFunc  m_on_open;
+	ClientCloseFunc m_on_close;
 
 	// session data management.
 	MakeSessionDataFunc m_make_session;
@@ -127,20 +153,15 @@ public:
 		, m_timeout_millsec(5000)
 	{}
 
-	// register protocol.
-	inline void set_protocol_head(IN ProtocolHead* v)
+	inline ~Impl()
 	{
-		m_prot_head.reset(v);
-	}
-	inline void set_protocol(IN Protocol* p)
-	{
-		m_protocol.reset(p);
+		close();
 	}
 
 	// get current tcp peer connected to server.
-	inline TcpPeer& peer()
+	inline TcpPeer::ptr& peer()
 	{
-		return *m_balancer.m_peer;
+		return m_balancer.m_peer;
 	}
 
 	// open a session with no authority.
@@ -182,13 +203,14 @@ public:
 	// async management post item.
 	inline SyncRequest::ptr post_sync(
 		IN const uint32_t req_id,
-		IN Codec& rsp_codec,
+		IN Codec* err_codec,
+		IN Codec* rsp_codec,
 		IN std::vector<void*>* rsp_set = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
 		auto& ptr = m_sync_manager[req_id];
 		if (ptr == nullptr)
-			ptr.reset(new SyncRequest(rsp_codec, rsp_set));
+			ptr.reset(new SyncRequest(err_codec, rsp_codec, rsp_set));
 		return ptr;
 	}
 
@@ -244,7 +266,12 @@ public:
 	}
 
 public:
-	// async connect to server.
+	// set server address.
+	inline void add_address(IN eco::net::Address& addr)
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		m_balancer.add_address(addr);
+	}
 	inline void update_address(IN eco::net::AddressSet& addr)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
@@ -252,17 +279,15 @@ public:
 	}
 
 	// async connect to server.
-	inline void async_connect(IN eco::net::AddressSet& addr)
+	inline void async_connect(IN bool reconnect);
+	inline void async_connect(IN eco::net::AddressSet& addr, IN bool reconnect)
 	{
 		update_address(addr);
 		// reconnect to new address if cur address is removed.
-		async_connect();
+		async_connect(reconnect);
 	}
-	inline void async_connect();
 	inline String logging();
 
-	// init client data and set default thread unsafe.
-	void init();
 	// release tcp client and connection.
 	void close();
 
@@ -274,43 +299,55 @@ public:
 	}
 	void on_timer(IN const eco::Error* e);
 
-	// async send data.
-	inline void async_send(IN eco::String& data, IN const uint32_t start)
+	// check peer live.
+	inline void check_peer_live()
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		peer().impl().async_send(data, start);
+		if (peer() && !peer()->impl().check_peer_live())
+		{
+			eco::Error e(e_peer_lost, "peer lost server heartbeat.");
+			peer()->impl().close_and_notify(e, true);
+		}
 	}
 
 	// async send data.
-	inline void async_send_heartbeat()
+	inline void send(IN eco::String& data, IN const uint32_t start)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		peer().impl().async_send_heartbeat(*m_prot_head);
+		if (peer())
+			peer()->impl().send(data, start);
 	}
 
-	inline void async_send(IN MessageMeta& meta)
+	inline void send(IN MessageMeta& meta)
 	{
 		eco::Error e;
 		eco::String data;
 		uint32_t start = 0;
-		if (!m_protocol->encode(data, start, meta, e))
+		if (m_protocol.protocol_latest()->encode(data, start, meta, e))
 		{
-			return;
+			send(data, start);
 		}
-		async_send(data, start);
 	}
 
-	inline void async_send(IN SessionDataPack::ptr& pack)
+	// async send data.
+	inline void send_heartbeat()
+	{
+		eco::Mutex::ScopeLock lock(m_mutex);
+		if (peer())
+			peer()->impl().send_heartbeat(*m_protocol.protocol_latest());
+	}
+
+	inline void send(IN SessionDataPack::ptr& pack)
 	{
 		eco::String data;
-		data.asign(pack->m_request.c_str(), pack->m_request.size());
+		data.assign(pack->m_request.c_str(), pack->m_request.size());
 
 		// client isn't ready and connected when first send authority.
 		// because of before that client is async connect.
 		eco::Mutex::ScopeLock lock(m_mutex);
-		if (peer().impl().get_state().connected())
+		if (peer() && peer()->impl().get_state().connected())
 		{
-			peer().impl().async_send(data, pack->m_request_start);
+			peer()->impl().send(data, pack->m_request_start);
 		}
 	}
 
@@ -320,7 +357,8 @@ public:
 
 	inline eco::Result request(
 		IN MessageMeta& req,
-		IN Codec& rsp,
+		IN Codec* err_codec,
+		IN Codec* rsp_codec,
 		IN std::vector<void*>* rsp_set);
 
 	inline void async(
@@ -329,29 +367,26 @@ public:
 
 public:
 	// when peer has connected to server.
-	virtual void on_connect(IN const eco::Error* e) override;
+	void on_connect(IN const eco::Error* e);
 
 	// when peer has received a message data bytes.
-	virtual void on_read(IN void* peer, IN eco::String& data) override;
+	void on_read(IN void* peer, IN MessageHead& head, IN eco::String& data);
+
+	// when peer has sended a data, async notify sended data size.
+	void on_send(IN void* peer, IN uint32_t size);
 
 	// when peer has been closed.
-	virtual void on_close(IN const ConnectionId peer_id) override;
+	void on_close(ConnectionId peer_id, const Error& e, bool erase_peer);
 
-	// protocol.
-	virtual ProtocolHead& protocol_head() const override
-	{
-		return *m_prot_head;
-	}
-
-	// whether is a websocket.
-	virtual bool websocket() const override
-	{
-		return m_option.websocket();
-	}
-
-	virtual const char* websocket_key() const override
+	inline const char* websocket_key() const
 	{
 		return "bysCZJDozDYNAXgr7lCo32QsjgE=";
+	}
+
+	// whether dispatch mode, else recv mode.
+	inline bool dispatch_mode() const
+	{
+		return m_dispatch.get_message_handler().dispatch_mode();
 	}
 };
 

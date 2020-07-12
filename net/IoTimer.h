@@ -36,7 +36,7 @@ typedef std::function<void(IN const eco::Error* error)> OnTimer;
 ////////////////////////////////////////////////////////////////////////////////
 class IoTimer
 {
-	ECO_MOVABLE_API(IoTimer);
+	ECO_OBJECT_API(IoTimer);
 public:
 	// register "on_timer" event handler.
 	void register_on_timer(IN OnTimer handler);
@@ -49,6 +49,9 @@ public:
 
 	// cancel timer.
 	size_t cancel();
+
+	// cancel timer.
+	void close();
 };
 
 

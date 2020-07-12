@@ -34,46 +34,6 @@ namespace net{;
 // client access user handler, and user access client.
 typedef std::shared_ptr<int> ClientUser;
 typedef std::weak_ptr<int> ClientUserObserver;
-// tcp session owner: tcp client or tcp server.
-class TcpClientImpl;
-class TcpServerImpl;
-class TcpSessionOwner
-{
-public:
-	inline TcpSessionOwner() : m_server(false), m_owner(nullptr)
-	{}
-
-	inline TcpSessionOwner(IN TcpClientImpl& client)
-		: m_server(false), m_owner(&client)
-	{}
-
-	inline TcpSessionOwner(IN TcpServerImpl& server)
-		: m_server(true), m_owner(&server)
-	{}
-
-	inline void set(IN TcpClientImpl& client)
-	{
-		m_server = false;
-		m_owner = &client;
-	}
-
-	inline void set(IN TcpServerImpl& server)
-	{
-		m_server = true;
-		m_owner = &server;
-	}
-
-	inline void clear()
-	{
-		m_server = 0;
-		m_owner = 0;
-	}
-
-	uint32_t	m_server;
-	void*		m_owner;
-};
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // define session data holder. (using the boost::any<type> mechanism)
 class SessionData : public eco::HeapOperators
@@ -124,23 +84,15 @@ public:
 	}
 
 	// async send message.
-	inline void send(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const bool last = true,
-		IN const bool encrypted = false)
+	inline void send(IN Codec* codec, IN uint32_t type, IN bool last)
 	{
-		m_conn.send(codec, type, last, encrypted, m_id);
+		m_conn.send(codec, MessageOption(type, 0, last, m_id));
 	}
 
 	// async publish message.
-	inline void publish(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const uint8_t pub,
-		IN const bool encrypted = false)
+	inline void publish(IN Codec* codec, IN uint32_t type)
 	{
-		m_conn.publish(codec, type, pub, encrypted, m_id);
+		m_conn.send(codec, MessageOption(type, 0, false, m_id));
 	}
 
 #ifndef ECO_NO_PROTOBUF
@@ -148,20 +100,17 @@ public:
 	inline void send(
 		IN const google::protobuf::Message& msg,
 		IN const uint32_t type,
-		IN const bool last = true,
-		IN const bool encrypted = false)
+		IN const bool last)
 	{
-		m_conn.send(msg, type, last, encrypted, m_id);
+		m_conn.send(msg, MessageOption(type, 0, last, m_id));
 	}
 
 	// async publish protobuf.
 	inline void publish(
 		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const uint8_t pub,
-		IN const bool encrypted = false)
+		IN const uint32_t type)
 	{
-		m_conn.publish(msg, type, pub, encrypted, m_id);
+		m_conn.publish(msg, MessageOption(type, 0, false, m_id));
 	}
 #endif
 
@@ -201,7 +150,7 @@ public:
 	SessionData::wptr	m_session_wptr;		// session data.
 	
 	// session owner: client or server.
-	TcpSessionOwner		m_owner;
+	TcpOwner			m_owner;
 	ClientUser			m_user;
 
 	inline TcpSessionImpl() : m_session_id(none_session)
@@ -238,56 +187,48 @@ public:
 	inline std::shared_ptr<SessionDataT> cast();
 
 public:
-#ifndef ECO_NO_PROTOBUF
-	// async send protobuf.
-	inline void send(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const bool encrypted = false)
-	{
-		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, get_id(), type, encrypted);
-		send(meta);
-	}
-
-	// async send protobuf authority info.
-	inline void authorize(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const bool encrypted = false)
-	{
-		ProtobufCodec codec(msg);
-		MessageMeta meta(codec, none_session, type, encrypted);
-		authorize(meta);
-	}
-
-	// async send response to client by context.
-	inline void response(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const Context& context,
-		IN const bool last = true,
-		IN const bool encrypted = false)
-	{
-		ProtobufCodec codec(msg);
-		response(codec, type, context, last, encrypted);
-	}
-#endif
-
 	// async response message.
-	inline void response(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const Context& context,
-		IN const bool last = true,
-		IN const bool encrypted = false);
-
+	inline void response(IN Codec*, IN MessageOption&, IN const Context&);
 
 	// async send message.
 	inline void send(IN const MessageMeta& meta);
 
 	// async send authority info.
 	inline void authorize(IN const MessageMeta& meta);
+
+#ifndef ECO_NO_PROTOBUF
+	// async send protobuf.
+	inline void send(
+		IN const google::protobuf::Message& msg,
+		IN uint32_t type, IN bool is_last)
+	{
+		ProtobufCodec codec(msg);
+		MessageOption opt(type, 0, is_last, get_id());
+		send(MessageMeta(&codec, opt));
+	}
+
+	// async send protobuf authority info.
+	inline void authorize(
+		IN const google::protobuf::Message& msg,
+		IN uint32_t type, IN bool is_last)
+	{
+		ProtobufCodec codec(msg);
+		MessageOption opt(type, 0, is_last, get_id());
+		authorize(MessageMeta(&codec, opt));
+	}
+
+	// async send response to client by context.
+	inline void response(
+		IN const google::protobuf::Message& msg,
+		IN const uint32_t type,
+		IN const uint32_t error_id,
+		IN const bool is_last,
+		IN const Context& context)
+	{
+		ProtobufCodec codec(msg);
+		response(&codec, MessageOption(type, error_id, is_last), context);
+	}
+#endif
 
 private:
 	// implement.

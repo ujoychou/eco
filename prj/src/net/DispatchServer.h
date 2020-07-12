@@ -28,19 +28,46 @@
 #include <eco/thread/DispatchServer.h>
 
 
-
 namespace eco{;
 namespace net{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class DispatchHandler : public eco::DispatchHandler<uint64_t, Context>
 {
 public:
+	// set receive mode: recv event.
+	inline void set_event(std::function<void(TcpPeer::ptr&, DataContext&)>& f)
+	{
+		m_recv = f;
+	}
+
+	// is dispatch mode.
+	inline bool dispatch_mode() const
+	{
+		return !m_recv;
+	}
+
+	// is receive mode.
+	inline bool receive_mode() const
+	{
+		return (bool)m_recv;
+	}
+
+	// set thread tracer.
+	inline void dispatch(IN const uint64_t& type, IN Context& msg)
+	{
+		eco::DispatchHandler<uint64_t, Context>::dispatch(type, msg);
+	}
+
 	/*@ dispatch message to message handler.
 	* @ para.dc: message to be dispatched.
 	*/
-	void operator()(IN DataContext& dc) const;
+	void operator()(IN DataContext& dc);
+	void handle_client(OUT Context& c, IN  TcpPeer& peer);
+	void handle_server(OUT Context& c, IN  TcpPeer& peer, IN Protocol* prot);
+
+public:
+	// receive mode event. 
+	std::function<void(TcpPeer::ptr&, DataContext&)> m_recv;
 };
 
 
@@ -50,12 +77,12 @@ class DispatchServer : public eco::MessageServer<DataContext, DispatchHandler>
 {
 public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
-	inline void register_handler(IN uint64_t id, IN HandlerFunc hf)
+	inline void register_handler(IN uint64_t id, IN HandlerFunc&& hf)
 	{
 		message_handler().set_dispatch(id, hf);
 	}
 
-	inline void register_default_handler(IN HandlerFunc hf)
+	inline void register_default_handler(IN HandlerFunc&& hf)
 	{
 		message_handler().set_default(hf);
 	}
@@ -69,12 +96,12 @@ class DispatchServerPool :
 {
 public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
-	inline void register_handler(IN uint64_t id, IN HandlerFunc hf)
+	inline void register_handler(IN uint64_t id, IN HandlerFunc&& hf)
 	{
 		message_handler().set_dispatch(id, hf);
 	}
 
-	inline void register_default_handler(IN HandlerFunc hf)
+	inline void register_default_handler(IN HandlerFunc&& hf)
 	{
 		message_handler().set_default(hf);
 	}
