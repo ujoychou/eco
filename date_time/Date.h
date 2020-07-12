@@ -83,7 +83,7 @@ public:
 
 		inline int season() const
 		{
-			return month / 4 + 1;
+			return Date::season(month);
 		}
 
 		inline int months() const
@@ -93,7 +93,7 @@ public:
 
 		inline int seasons() const
 		{
-			return months() / 4 + 1;
+			return months() / 3 + 1;
 		}
 	};
 
@@ -149,6 +149,11 @@ public:
 		return get_day(1970, 1, 1);
 	}
 
+    inline static int season(IN int month)
+    {
+        return (month - 1) / 3 + 1;
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 public:
 	inline Date() : m_days(invalid_julian_day)
@@ -198,6 +203,11 @@ public:
 		m_days = get_day(y, m, d);
 	}
 
+	inline void set(int days)
+	{
+		m_days = days;
+	}
+
 	// operator +/-
 	inline Date& operator+=(int day)
 	{
@@ -220,8 +230,8 @@ public:
 		return m_days == invalid_julian_day;
 	}
 
-	// format julian day to ios string like "20170506";
-	inline std::string to_ios_string() const
+	// format julian day to iso string like "20170506";
+	inline std::string to_iso_string() const
 	{
 		char buf[32];
 		Ymd ymd = get_ymd(m_days);

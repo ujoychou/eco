@@ -36,6 +36,12 @@ public:
 	inline DateTime(Date& date, uint32_t time) : m_date(date), m_time(time)
 	{}
 
+    inline DateTime(const std::string& time)
+    {
+        m_time = Time::get_second(&time[9]);
+        m_date = eco::date_time::Date(time);
+    }
+
 	inline uint32_t seconds() const
 	{
 		return m_time;
@@ -157,11 +163,12 @@ public:
 	}
 
 	// total seconds and milliseconds.
-	inline uint64_t seconds() const
+	inline uint64_t total_seconds() const
 	{
 		return m_millsecs / 1000;
 	}
-	inline uint64_t millsec() const
+
+	inline uint64_t total_millsecs() const
 	{
 		return m_millsecs;
 	}
@@ -277,12 +284,6 @@ public:
 const uint32_t year_days = 365;
 const uint32_t month_days = 30;
 
-
-////////////////////////////////////////////////////////////////////////////////
-inline uint32_t get_season(IN const uint32_t month_num)
-{
-	return (month_num - 1) / 3 + 1;
-}
 
 /* count duration size.
 year: "2018-01-31" - "2017-12-31" = 1/12

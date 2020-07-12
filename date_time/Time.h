@@ -29,15 +29,55 @@ public:
 	// get daily total seconds.
 	static uint32_t today_seconds();
 
-	static inline uint32_t day_seconds()
+    inline static uint32_t day_seconds()
 	{
-		return 3600 * 24;	// 60 * 60 * 24
+		return 86400;	// 60 * 60 * 24
 	}
+
+    inline static uint32_t get_minute(IN const char* time)
+    {
+        uint32_t h = eco::cast<uint16_t>(time, 2);
+        uint32_t m = eco::cast<uint16_t>(&time[3], 2);
+        return h * 60 + m;
+    }
+
+    inline static uint32_t get_minute(IN const uint32_t sec)
+    {
+        return sec / 60;
+    }
+
+    inline static uint32_t get_second(IN const char* time)
+    {
+        uint32_t s = eco::cast<uint16_t>(&time[6], 2);
+        return get_minute(time) * 60 + s;
+    }
+
+	inline static uint32_t get_second(IN const std::string& time)
+	{
+		return get_second(time.c_str());
+	}
+
+    // get intacted time second.
+    inline static uint32_t get_second_miss(IN const char* time)
+    {
+        uint32_t v = 0;
+        size_t size = strlen(time);
+        if (size > 0) v = eco::cast<uint16_t>(&time[0], 2);
+        v *= 60;
+        if (size > 3) v += eco::cast<uint16_t>(&time[3], 2);
+        v *= 60;
+        if (size > 6) v += eco::cast<uint16_t>(&time[6], 2);
+        return v;
+    }
+    inline static uint32_t get_second_miss(IN const std::string& time)
+    {
+        return get_second_miss(time.c_str());
+    }
 
 public:
 	inline Time(bool set = true)
 	{
-		if (set) m_time = today_seconds();
+		m_time = set ? today_seconds() : 0;
 	}
 
 	inline operator uint32_t() const
@@ -76,7 +116,6 @@ public:
 		return timeout(Time(), last_t, timeout_sec);
 	}
 
-
 private:
 	uint32_t m_time;
 };
@@ -97,7 +136,7 @@ public:
 	Time m_last;
 
 public:
-	inline SizeFlow(IN uint32_t interval = 5) : m_curr(false), m_last(false)
+	inline SizeFlow(IN uint32_t interval = 5)
 	{
 		memset(this, 0, sizeof(*this));
 		m_interval = interval;
@@ -131,7 +170,11 @@ public:
 
 public:
 	inline ByteFlow(IN uint32_t interval = 5) : SizeFlow(interval)
-	{}
+	{
+		m_byte = 0;
+		m_byte_flow = 0;
+		m_byte_delta = 0;
+	}
 
 	inline uint32_t kbyte() const
 	{
