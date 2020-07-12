@@ -1,24 +1,15 @@
 #include "PrecHeader.h"
-#include <eco/xml/Reader.h>
+#include "Impl.h"
 ////////////////////////////////////////////////////////////////////////////////
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 
 
 namespace eco{;
 namespace xml{;
 ////////////////////////////////////////////////////////////////////////////////
-class Reader::Impl
-{
-public:
-	void init(Reader& wrap){}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 /*@ read xml node key value.*/
-void read_node(
+void Reader::Impl::read_node(
 	OUT Context& vals,
 	IN  const std::string& xml_node_name,
 	IN  const boost::property_tree::ptree& xml_node)
@@ -58,30 +49,7 @@ void read_node(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_SHARED_IMPL(Reader);
-void Reader::read(OUT eco::Context& vals, IN const char* file)
-{
-	using namespace boost::property_tree;
-	using namespace boost::property_tree::xml_parser;
-	boost::property_tree::ptree doc;
-	xml_parser::read_xml(file, doc, trim_whitespace | no_comments);
-	read_node(vals, "", doc.get_child("root"));
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-bool read_node(
-	OUT ContextNode& node,
-	IN  const std::string& node_name,
-	IN  const boost::property_tree::ptree& xml_node_set);
-bool get_node(
-	OUT ContextNode& node,
-	IN  const std::string& node_name,
-	IN  boost::property_tree::ptree::const_iterator& xml_it);
-
-
-////////////////////////////////////////////////////////////////////////////////
-bool get_node(
+bool Reader::Impl::get_node(
 	OUT ContextNode& node,
 	IN  const std::string& node_name,
 	IN  boost::property_tree::ptree::const_iterator& xml_it)
@@ -150,7 +118,7 @@ bool get_node(
 
 ////////////////////////////////////////////////////////////////////////////////
 /*@ read xml node key value.*/
-bool read_node(
+bool Reader::Impl::read_node(
 	OUT ContextNode& node,
 	IN  const std::string& node_name,
 	IN  const boost::property_tree::ptree& xml_node_data)
@@ -158,12 +126,57 @@ bool read_node(
 	node.set_name(node_name.c_str());
 	for (auto it = xml_node_data.begin(); it != xml_node_data.end(); ++it)
 	{
-		if (!get_node(node, node_name, it))
+		// import node.
+		if (is_root_import(&node) && it->first == "import")
+		{
+			m_imports.push_back(it->second.data().c_str());
+		}
+		else if (!get_node(node, node_name, it))
 		{
 			return false;
 		}
 	}
+
+	// import xml.
+	if (is_root_import(&node) && !m_imports.empty())
+	{
+		boost::filesystem::path xmlf(m_xml_file);
+		std::string dir = xmlf.parent_path().string();
+		if (!dir.empty()) dir += '\\';
+		for (auto it = m_imports.begin(); it != m_imports.end(); )
+		{
+			if (it->empty())
+			{
+				it = m_imports.erase(it);
+				continue;
+			}
+			
+			Reader reader;
+			ContextNode node_import;
+			*it = dir + *it;
+			if (boost::filesystem::exists(*it))
+			{
+				reader.read(node_import, it->c_str());
+				node.merge(node_import);
+			}
+			++it;
+		}
+	}
 	return true;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_SHARED_IMPL(Reader);
+void Reader::read(OUT eco::Context& vals, IN const char* file)
+{
+	using namespace boost::property_tree;
+	using namespace boost::property_tree::xml_parser;
+	boost::property_tree::ptree doc;
+	impl().m_xml_file = file;
+	impl().m_root_node = nullptr;
+	xml_parser::read_xml(impl().m_xml_file, doc, trim_whitespace | no_comments);
+	impl().read_node(vals, "", doc.get_child("root"));
 }
 
 
@@ -173,8 +186,10 @@ void Reader::read(OUT eco::ContextNode& node, IN const char* file)
 	using namespace boost::property_tree;
 	using namespace boost::property_tree::xml_parser;
 	boost::property_tree::ptree doc;
-	xml_parser::read_xml(file, doc, trim_whitespace | no_comments);
-	read_node(node, "root", doc.get_child("root"));
+	impl().m_xml_file = file;
+	impl().m_root_node = &node;
+	xml_parser::read_xml(impl().m_xml_file, doc, trim_whitespace | no_comments);
+	impl().read_node(node, "root", doc.get_child("root"));
 }
 
 
@@ -189,8 +204,9 @@ void Reader::read(
 	boost::property_tree::ptree doc;
 	std::stringstream in;
 	in.write(xml_text, xml_size);
+	impl().m_root_node = &node;
 	xml_parser::read_xml(in, doc, trim_whitespace | no_comments);
-	read_node(node, "root", doc.get_child("root"));
+	impl().read_node(node, "root", doc.get_child("root"));
 }
 
 

@@ -37,6 +37,10 @@ public:
 	/*@ read config data from xml text.*/
 	void init(IN const char* text, IN const uint32_t size);
 
+	/*@ get import file by index.*/
+	uint32_t get_import_file_size() const;
+	const char* get_import_file(IN uint32_t index) const;
+
 	/*@ find key return true, else false.*/
 	bool find(
 		OUT eco::StringAny& v,
@@ -59,6 +63,17 @@ public:
 	eco::ContextNodeSet get_children(
 		IN const char* parent_key = nullptr) const;
 	eco::ContextNodeSet find_children(
+		IN const char* parent_key = nullptr) const;
+
+	/*@ get child node.*/
+	eco::ContextNode get_node(
+		IN const char* node_key = nullptr) const;
+	eco::ContextNode find_node(
+		IN const char* node_key = nullptr) const;
+
+	/*@ get child node.*/
+	eco::ContextNode find_node(
+		IN const uint32_t index,
 		IN const char* parent_key = nullptr) const;
 
 	/*@ get node property.*/

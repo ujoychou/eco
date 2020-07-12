@@ -2,8 +2,7 @@
 #include <eco/Config.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/thread/Map.h>
-#include <eco/xml/Reader.h>
-
+#include "./xml/Impl.h"
 
 
 namespace eco{;
@@ -16,6 +15,9 @@ public:
 
 	// config nodes.
 	ContextNode m_root;
+
+	// config import files.
+	std::vector<std::string> m_imports;
 
 	// index of config nodes.
 	eco::HashMap<std::string, StringAny> m_data;
@@ -36,6 +38,7 @@ public:
 				const char* text = file;
 				reader.read(m_root, text, text_size);
 			}
+			m_imports = reader.impl().m_imports;
 
 			// setup index for config key.
 			m_root.set_name("");
@@ -62,12 +65,25 @@ public:
 	inline eco::ContextNodeSet get_children(IN  const char* parent_key) const
 	{
 		eco::Mutex::ScopeLock lock(m_data.mutex());
+		auto node = get_node_raw(parent_key);
+		return !node.null() ? node.get_children() : eco::null;
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////
+	inline eco::ContextNode get_node(IN  const char* node_key) const
+	{
+		eco::Mutex::ScopeLock lock(m_data.mutex());
+		return get_node_raw(node_key);
+	}
+	inline eco::ContextNode get_node_raw(IN  const char* node_key) const
+	{
 		if (m_root.has_children())
 		{
-			if (parent_key == nullptr)
-				return m_root.get_children();
+			if (node_key == nullptr)
+				return m_root;
 			else
-				return m_root.get_children().get_children(parent_key);
+				return m_root.get_child(node_key);
 		}
 		return eco::null;
 	}
@@ -142,13 +158,22 @@ void Config::add(IN const char* key, IN const char* value)
 	StringAny v;
 	impl().m_data.set(key, (v = value));
 }
-eco::ContextNodeSet Config::find_children(
-	IN const char* parent_key) const
+uint32_t Config::get_import_file_size() const
+{
+	return (uint32_t)impl().m_imports.size();
+}
+const char* Config::get_import_file(IN uint32_t index) const
+{
+	return impl().m_imports[index].c_str();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco::ContextNodeSet Config::find_children(IN const char* parent_key) const
 {
 	return impl().get_children(parent_key);
 }
-eco::ContextNodeSet Config::get_children(
-	IN const char* parent_key) const
+eco::ContextNodeSet Config::get_children(IN const char* parent_key) const
 {
 	eco::ContextNodeSet result = impl().get_children(parent_key);
 	if (result.null())
@@ -158,11 +183,41 @@ eco::ContextNodeSet Config::get_children(
 	}
 	return result;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Config::get_property_set(
 	OUT eco::Context& context_set,
 	IN  const char* node_key) const
 {
 	impl().get_property_set(context_set, node_key);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco::ContextNode Config::get_node(IN const char* node_key) const
+{
+	eco::ContextNode result = impl().get_node(node_key);
+	if (result.null())
+	{
+		if (node_key == nullptr) node_key = "root";
+		ECO_THROW(0, "get config node child fail ") << node_key;
+	}
+	return result;
+}
+eco::ContextNode Config::find_node(IN const char* node_key) const
+{
+	return impl().get_node(node_key);
+}
+eco::ContextNode Config::find_node(
+	IN const uint32_t index, IN const char* parent_key) const
+{
+	eco::ContextNodeSet set = impl().get_children(parent_key);
+	if (!set.null() && set.size() > index)
+	{
+		return set.at(index);
+	}
+	return eco::null;
 }
 
 
