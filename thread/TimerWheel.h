@@ -239,7 +239,7 @@ public:
 		{
 			if (m_wheel[i].size() > 0)
 			{
-				eco::FixStream fstream;
+				eco::Stream<> fstream;
 				for (auto it = m_wheel[i].begin(); it != m_wheel[i].end(); ++it)
 				{
 					fstream <= m_wheel_curr <= (**it).m_count;
@@ -328,8 +328,8 @@ protected:
 		auto tick = (timeout / m_precision);
 		auto left = (timeout - tick * m_precision);
 		if (left > 0) ++tick;
-		pos.count = (tick - 1) / m_wheel.size() + 1;
-		pos.wheel = (tick + m_wheel_curr) % m_wheel.size();
+		pos.count = (tick - 1) / (uint32_t)m_wheel.size() + 1;
+		pos.wheel = (tick + m_wheel_curr) % (uint32_t)m_wheel.size();
 		return pos;
 	}
 
@@ -379,7 +379,7 @@ private:
 		if (!is_cancel) TimerWheel<Task>::on_tick();
 	}
 
-	eco::Timer m_timer;
+	eco::TimerServer m_timer;
 };
 
 

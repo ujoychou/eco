@@ -24,9 +24,9 @@
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TimerObject
+class ECO_API Timer
 {
-	ECO_VALUE_API(TimerObject);
+	ECO_VALUE_API(Timer);
 public:
 	// cancel timer operation.
 	void cancel();
@@ -40,9 +40,9 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API Timer
+class ECO_API TimerServer
 {
-	ECO_OBJECT_API(Timer);
+	ECO_OBJECT_API(TimerServer);
 public:
 	// start timer and it's worker.
 	void start();
@@ -52,28 +52,28 @@ public:
 	void stop();
 
 	// add timer for dedicated duration.
-	TimerObject add(IN uint32_t millsecs, IN bool repeated, IN Task::ptr& task);
-	inline TimerObject add(uint32_t millsecs, bool repeated, Closure task)
+	Timer add(IN uint32_t millsecs, IN bool repeated, IN Task::ptr& task);
+	inline Timer add(uint32_t millsecs, bool repeated, Closure&& task)
 	{
-		return add(millsecs, repeated, Task::ptr(new FuncTask(task)));
+		return add(millsecs, repeated, Task::ptr(new FuncTask(std::move(task))));
 	}
 
 	/*@ add timer for dedicated date time.
 	* @ para.date_time: format as "2015-03-02 12:12:12".
 	*/
-	void add(IN const char* date_time, IN Task::ptr& task);
-	inline void add(IN const char* date_time, IN Closure task)
+	Timer add(IN const char* date_time, IN Task::ptr& task);
+	inline Timer add(IN const char* date_time, IN Closure&& task)
 	{
-		add(date_time, Task::ptr(new FuncTask(task)));
+		return add(date_time, Task::ptr(new FuncTask(std::move(task))));
 	}
 
 	/*@ add daily timer, and it can repeat.
 	* @ para.time: format as "12:12:12".
 	*/
-	void add_daily(IN const char* time, IN bool repeated, IN Task::ptr& task);
-	inline void add_daily(const char* time, IN bool repeated, IN Closure task)
+	Timer add_daily(IN const char* time, IN Task::ptr& task);
+	inline Timer add_daily(const char* time, IN Closure&& task)
 	{
-		add_daily(time, repeated, Task::ptr(new FuncTask(task)));
+		return add_daily(time, Task::ptr(new FuncTask(std::move(task))));
 	}
 };
 

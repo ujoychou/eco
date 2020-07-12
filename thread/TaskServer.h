@@ -43,15 +43,17 @@ public:
 
 		if (!result && m_post_func)
 		{
-			eco().timer().add(task->restart_secs() * 1000, false,
-				std::bind(m_post_func, task));
+			Eco::get().timer().add(task->restart_secs() * 1000, false,
+				[this, task] () mutable {
+				m_post_func(std::move(task));
+			});
 			return;
 		}
 	}
 
 	// set post func
-	typedef std::function<void(Task::ptr&)> PostFunc;
-	inline void set_post(PostFunc func)
+	typedef std::function<void(Task::ptr&&)> PostFunc;
+	inline void set_post(PostFunc&& func)
 	{
 		m_post_func = func;
 	}
@@ -62,24 +64,24 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class TaskServer : public MessageServer<Task::ptr, TaskHandler>
+class TaskServer : public MessagePool<Task::ptr, TaskHandler>
 {
 public:
 	inline TaskServer()
 	{
+		void(T::*func)(Task::ptr&&) = &T::post;
 		m_message_handler.set_post(
-			std::bind(&T::post, this, std::placeholders::_1));
+			std::bind(func, this, std::placeholders::_1));
 	}
 
-	typedef MessageServer<Task::ptr, TaskHandler> super;
-	inline void post(IN std::function<void(void)> task)
+	inline void post(IN std::function<void()>&& task)
 	{
-		super::post(Task::ptr(new FuncTask(task)));
+		T::post(Task::ptr(new FuncTask(std::move(task))));
 	}
 
 	inline void post(IN Task::ptr& task)
 	{
-		super::post(task);
+		T::post(task);
 	}
 };
 

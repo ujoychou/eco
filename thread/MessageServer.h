@@ -19,37 +19,61 @@ message server.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/thread/MessageQueue.h>
-#include <eco/thread/ThreadPool.h>
 #include <eco/log/Log.h>
+#include <eco/thread/Thread.h>
+#include <eco/thread/MessageQueue.h>
 
 
-namespace eco{;
-namespace detail{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename Message,
 	typename Handler = std::function<void (Message&)>,
+	typename ThreadPool = eco::ThreadPool,
 	typename Queue = MessageQueue<Message>>
-class MessageServer
+class MessageServerT
 {
-	ECO_OBJECT(MessageServer);
+	ECO_OBJECT(MessageServerT);
 protected:
 	/*@ work thread method.	*/
 	virtual void work() = 0;
 
-public:
-	typedef MessageServer<Message, Handler, Queue> T;
+	template<typename Message>
+	inline void work_impl()
+	{
+		while (true)
+		{
+			// don't declare message before while.
+			Message msg;
+			size_t queue_size = m_message_queue.pop(msg);
+			if (-1 == queue_size)
+			{
+				break;	// message queue has been closed.
+			}
 
-	inline MessageServer()
+			// handler message.
+			try
+			{
+				eco::this_thread::lock().set_object(sizeof(msg));
+				m_message_handler(msg);
+				eco::this_thread::lock().unlock();
+			}
+			catch (std::exception& e)
+			{
+				ECO_LOGX(error, "message server") << e.what();
+			}
+		}// end while
+	}
+
+public:
+	typedef MessageServerT<Message, Handler, ThreadPool, Queue> T;
+
+	inline MessageServerT() : m_thread_size(0)
 	{}
 
 	/*@ stop message server: stop message queue and thread pool. */
-	inline ~MessageServer()
+	inline ~MessageServerT()
 	{
 		stop();
 	}
@@ -62,6 +86,10 @@ public:
 	}
 	/*@ get message handler.*/
 	inline Handler& message_handler()
+	{
+		return m_message_handler;
+	}
+	inline const Handler& get_message_handler() const
 	{
 		return m_message_handler;
 	}
@@ -78,15 +106,25 @@ public:
 	server will run in a synchronous mode, else it will start number of threads 
 	(decicated by "thread_size")and message server run in a asynchronous mode.
 	*/
-	inline void run(IN const char* name, IN uint32_t thread_size = 1)
+	inline void run(
+		IN const char* name, 
+		IN uint32_t thread_size = 1,
+		IN bool suspend = false)
 	{
-		if (thread_size == 0)
-		{
-			thread_size = 1;
-		}
+		m_thread_size = thread_size;
+		if (m_thread_size == 0) m_thread_size = 1;
 		m_message_queue.set_name(name);
 		m_message_queue.open();
-		m_thread_pool.run(std::bind(&T::work, this), thread_size, name);
+		if (suspend) return;
+		m_thread_pool.run(std::bind(&T::work, this), m_thread_size, name);
+	}
+
+	/*@ resume suspened thread server.
+	*/
+	inline void resume()
+	{
+		m_thread_pool.run(std::bind(&T::work, this),
+			m_thread_size, m_message_queue.name().c_str());
 	}
 
 	/*@ wait server stop.*/
@@ -124,83 +162,73 @@ public:
 	}
 
 	// get message queue.
+	inline Queue& queue()
+	{
+		return m_message_queue;
+	}
 	inline const Queue& get_queue() const
 	{
 		return m_message_queue;
+	}
+	inline std::mutex& mutex()
+	{
+		return m_message_queue.mutex();
 	}
 
 	/*@ post message to message server, using template is for parameter of 
 	message and const message.
 	*/
-	inline void post(IN Message& msg)
+	inline void post(IN const Message& msg)
+	{
+		m_message_queue.post(Message(msg));
+	}
+	inline void post(IN Message&& msg)
 	{
 		m_message_queue.post(msg);
 	}
 	template<typename UniqueChecker>
-	inline void post_unique(IN Message& msg, IN UniqueChecker& unique_check)
+	inline void post(IN const Message& msg, IN UniqueChecker&& check)
 	{
-		m_message_queue.post_unique(msg, unique_check);
-	}
-
-	// post a value just like raw ptr(object*).
-	inline void post_value(IN Message msg)
-	{
-		m_message_queue.post(msg);
+		m_message_queue.post(Message(msg), check);
 	}
 	template<typename UniqueChecker>
-	inline void post_unique_value(
-		IN Message msg, IN UniqueChecker& unique_check)
+	inline void post(IN Message&& msg, IN UniqueChecker&& check)
 	{
-		m_message_queue.post_unique(msg, unique_check);
+		m_message_queue.post(msg, check);
 	}
 
 protected:
-	Queue m_message_queue;
-	Handler m_message_handler;
-	eco::ThreadPool m_thread_pool;
+	uint32_t	m_thread_size;
+	Queue		m_message_queue;
+	Handler		m_message_handler;
+	ThreadPool	m_thread_pool;
+	MessageQueueFlow m_flow;
 };
-}// ns.detail
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Message, typename Handler = std::function<void(Message&)> >
-class MessageServer : public detail::MessageServer<Message, Handler>
+template<typename Message, typename Handler = std::function<void(Message&)>>
+class MessagePool : public MessageServerT<Message, Handler, ThreadPool>
 {
-	ECO_OBJECT(MessageServer);
-public:
-	inline MessageServer()
-	{}
-
 protected:
 	/*@ work thread method.	*/
 	virtual void work() override
 	{
-		eco::this_thread::init();
-
-		while (true)
-		{
-			// don't declare message before while.
-			Message msg;
-			size_t queue_size = m_message_queue.pop(msg);
-			if (-1 == queue_size)
-			{
-				break;	// message queue has been closed.
-			}
-			m_flow.count(queue_size, m_message_queue.name(), "o");
-
-			// handler message.
-			try
-			{
-				m_message_handler(msg);
-			}
-			catch (std::exception& e)
-			{
-				ECO_LOGX(error, "message server") << e.what();
-			}
-		}// end while
+		work_impl<Message>();
 	}
+};
 
-	MessageQueueFlow m_flow;
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename Message, typename Handler = std::function<void(Message&)>>
+class MessageServer : public MessageServerT<Message, Handler, Thread>
+{
+protected:
+	/*@ work thread method.	*/
+	virtual void work() override
+	{
+		work_impl<Message>();
+	}
 };
 
 
@@ -210,36 +238,32 @@ class MessageServerPool
 {
 	ECO_OBJECT(MessageServerPool);
 public:
-	class HandlerPtr
+	class WorkerHandler
 	{
 	public:
 		inline void operator()(IN Message& msg)
 		{
-			(*m_handler_ptr)(msg);
+			(*m_pool_handler)(msg);
 		}
 
-		inline explicit HandlerPtr(IN Handler* v = nullptr) : m_handler_ptr(v)
+		inline explicit WorkerHandler(IN Handler* v = nullptr)
+			: m_pool_handler(v)
 		{}
 
 		inline Handler& handler()
 		{
-			return *m_handler_ptr;
+			return *m_pool_handler;
 		}
 
-		Handler* m_handler_ptr;
+		Handler* m_pool_handler;
 	};
-	typedef eco::MessageServer<Message, HandlerPtr> MessageServer;
 
-	class MessageWorker
+	class MessageWorker : public eco::MessageServer<Message, WorkerHandler>
 	{
+		ECO_OBJECT(MessageWorker);
 	public:
 		inline MessageWorker() : work(0)
 		{}
-
-		inline void init()
-		{
-			server.reset(new MessageServer());
-		}
 
 		inline void attach(IN const uint32_t v = 1)
 		{
@@ -251,13 +275,7 @@ public:
 			work -= v;
 		}
 
-		inline void post(IN Message& msg)
-		{
-			server->post(msg);
-		}
-
 		Atomic<uint32_t> work;
-		typename MessageServer::ptr server;
 	};
 
 public:
@@ -268,11 +286,23 @@ public:
 	template<typename T>
 	inline void set_message_handler(IN T h)
 	{
-		m_message_handler = h;
+		m_pool_handler = h;
 	}
 	inline Handler& message_handler()
 	{
-		return m_message_handler;
+		return m_pool_handler;
+	}
+	inline const Handler& get_message_handler() const
+	{
+		return m_pool_handler;
+	}
+
+	inline void set_capacity(uint32_t capacity)
+	{
+		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			(**it).set_capacity(capacity);
+		}
 	}
 
 	inline void run(IN const char* name, IN uint32_t thread_size)
@@ -281,12 +311,12 @@ public:
 		std::string queue_name;
 		for (auto i = 0; i != m_pool.size(); ++i)
 		{
-			auto* it = &m_pool[i];
-			it->init();
-			it->server->set_message_handler(HandlerPtr(&m_message_handler));
+			auto& it = m_pool[i];
+			it.reset(new MessageWorker());
+			it->set_message_handler(WorkerHandler(&m_pool_handler));
 			queue_name = name;
 			queue_name += eco::cast<std::string>(i);
-			it->server->run(queue_name.c_str(), 1);
+			it->run(queue_name.c_str(), 1);
 		}
 	}
 
@@ -295,15 +325,7 @@ public:
 	{
 		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
 		{
-			it->server->close();
-		}
-	}
-
-	inline void release()
-	{
-		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
-		{
-			it->server->release();
+			(**it).close();
 		}
 	}
 
@@ -311,32 +333,32 @@ public:
 	{
 		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
 		{
-			it->server->join();
+			(**it).join();
 		}
 	}
 
 	inline MessageWorker* attach(IN const uint32_t work = 1)
 	{
 		auto it_min = m_pool.begin();
-		uint32_t min_work = it_min->work;
+		uint32_t min_work = (**it_min).work;
 		for (auto it = it_min; it != m_pool.end(); ++it)
 		{
-			if (min_work > it->work)
+			if (min_work > (**it).work)
 			{
-				min_work = it->work;
+				min_work = (**it).work;
 				it_min = it;
 			}
 		}
-		it_min->attach(work);
-		return &(*it_min);
+		(**it_min).attach(work);
+		return it_min->get();
 	}
 
 private:
-	Handler m_message_handler;
-	std::vector<MessageWorker> m_pool;
+	Handler m_pool_handler;
+	std::vector<typename MessageWorker::ptr> m_pool;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

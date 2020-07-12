@@ -36,6 +36,22 @@ class DispatchHandler
 {
 	ECO_OBJECT(DispatchHandler);
 public:
+	struct Wrap
+	{
+		inline Wrap()
+		{}
+
+		inline Wrap(const MessageType& type, const Message& msg)
+			: m_type(type), m_msg(msg)
+		{}
+
+		inline Wrap(const MessageType& type, Message&& msg)
+			: m_type(type), m_msg(msg)
+		{}
+
+		Message		m_msg;
+		MessageType m_type;
+	};
 	typedef std::function<void(IN Message&)> HandlerFunc;
 	typedef std::unordered_map<MessageType, HandlerFunc> HandlerMap;
 
@@ -52,13 +68,15 @@ public:
 	/*@ dispatch message to message handler.
 	* @ para.msg: message to be dispatched.
 	*/
-	inline void operator()(IN Message& msg) const
+	inline void operator()(IN Wrap& wrap) const
 	{
-		dispatch((MessageType)msg->get_type(), msg);
+		dispatch(wrap.m_type, wrap.m_msg);
 	}
 
 	inline void dispatch(IN const MessageType& type, IN Message& msg) const
 	{
+		eco::this_thread::lock().set_object(type);
+
 		// get message type id and dispatch to the handler.
 		auto it = m_handler_map.find(type);
 		if (it != m_handler_map.end())
@@ -90,24 +108,36 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename MessageType, typename Message>
+template<
+	typename MessageType, typename Message,
+	typename MessageWrap = DispatchHandler<MessageType, Message>::Wrap >
 class DispatchServer :
-	public eco::MessageServer<Message, DispatchHandler<MessageType, Message> >
+	public eco::MessageServer<MessageWrap, DispatchHandler<MessageType, Message> >
 {
 public:
 	typedef DispatchHandler<MessageType, Message> ThisType;
 	typedef typename ThisType::HandlerFunc HandlerFunc;
 
 	/*@ add message and handler map.*/
-	void set_dispatch(IN const MessageType& type, IN HandlerFunc func)
+	inline void set_dispatch(IN const MessageType& type, IN HandlerFunc func)
 	{
 		message_handler().set_dispatch(type, func);
 	}
 
 	/*@ set message default handler.*/
-	void set_default(IN HandlerFunc func)
+	inline void set_default(IN HandlerFunc func)
 	{
 		message_handler().set_default(func);
+	}
+
+	inline void dispatch(IN const MessageType& type, IN Message&& msg)
+	{
+		post(MessageWrap(type, msg));
+	}
+
+	inline void dispatch(IN const MessageType& type, IN const Message& msg)
+	{
+		post(MessageWrap(type, msg));
 	}
 };
 

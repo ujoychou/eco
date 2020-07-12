@@ -69,14 +69,15 @@ public:
 	// start task.
 	virtual void start()
 	{
-		eco().post_task(std::dynamic_pointer_cast<Task>(shared_from_this()));
+		Eco::get().post_task(
+			std::dynamic_pointer_cast<Task>(shared_from_this()));
 	}
 
 	// if task throw exception mean fail, and it will be restart again.
 	virtual void operator()(void) = 0;
 
 	// start task.
-	static inline void start(std::function<void(void)> task);
+	static inline void start(std::function<void(void)>&& task);
 
 private:
 	uint32_t m_restart_secs;
@@ -88,15 +89,15 @@ private:
 class FuncTask : public Task
 {
 public:
-	inline FuncTask(std::function<void(void)>& task) : m_task(task) {}
+	inline FuncTask(std::function<void()>&& task) : m_task(task) {}
 	virtual void operator()(void) override { m_task(); }
 
 private:
-	std::function<void(void)> m_task;
+	std::function<void()> m_task;
 };
-void Task::start(std::function<void(void)> task)
+void Task::start(std::function<void()>&& task)
 {
-	eco().post_task(Task::ptr(new FuncTask(task)));
+	Eco::get().post_task(Task::ptr(new FuncTask(std::move(task))));
 }
 
 

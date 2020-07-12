@@ -57,7 +57,7 @@ public:
 		// if finished this task, set state and notify wait task to restart.
 		execute();
 		relock.finish(m_add_state, m_erase_state);
-		eco().move_wait();
+		Eco::get().move_wait();
 	}
 
 	// task start.
@@ -68,11 +68,11 @@ public:
 		if (task_state == task_no_ready || task_state == task_working_other)
 		{
 			prepare();
-			eco().post_wait(shared_from_this());
+			Eco::get().post_wait(shared_from_this());
 		}
 		else if (task_state == task_occupied)
 		{
-			eco().post_task(shared_from_this());
+			Eco::get().post_task(shared_from_this());
 		}
 	}
 
