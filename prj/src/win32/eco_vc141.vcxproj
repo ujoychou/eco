@@ -279,13 +279,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\net\Protocol.cpp" />
     <ClCompile Include="..\net\TcpClient.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\net\TcpClientOption.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
@@ -303,11 +298,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\net\TcpServerOption.cpp">
+    <ClCompile Include="..\net\TcpOption.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\net\Subscriber.cpp" />
     <ClCompile Include="..\net\TcpSession.cpp">
@@ -327,10 +323,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\process\ProcessWin.cpp" />
-    <ClCompile Include="..\proxy\Proxy.cpp" />
-    <ClCompile Include="..\proxy\ProxyWin.cpp" />
-    <ClCompile Include="..\proxy\WinConsoleEvent.cpp" />
-    <ClCompile Include="..\proxy\WinDump.cpp" />
     <ClCompile Include="..\service\Cluster.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -373,9 +365,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\sys\Sys.cpp" />
+    <ClCompile Include="..\sys\SysWin.cpp" />
+    <ClCompile Include="..\sys\WinConsoleEvent.cpp" />
+    <ClCompile Include="..\sys\WinDump.cpp" />
     <ClCompile Include="..\test\Timing.cpp" />
-    <ClCompile Include="..\thread\ThreadLin.cpp" />
-    <ClCompile Include="..\thread\ThreadWin.cpp" />
+    <ClCompile Include="..\thread\Thread.cpp" />
     <ClCompile Include="..\thread\Timer.cpp" />
     <ClCompile Include="..\Type.cpp" />
     <ClCompile Include="..\web\Html.cpp" />
@@ -383,6 +378,7 @@
     <ClCompile Include="..\xml\Reader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\Algorithm.h" />
     <ClInclude Include="..\..\..\Any.h" />
     <ClInclude Include="..\..\..\App.h" />
     <ClInclude Include="..\..\..\Being.h" />
@@ -403,7 +399,7 @@
     <ClInclude Include="..\..\..\ExportApi.h" />
     <ClInclude Include="..\..\..\filesystem\File.h" />
     <ClInclude Include="..\..\..\filesystem\Operations.h" />
-    <ClInclude Include="..\..\..\filesystem\SourceFile.h" />
+    <ClInclude Include="..\..\..\filesystem\Path.h" />
     <ClInclude Include="..\..\..\HeapOperators.h" />
     <ClInclude Include="..\..\..\Implement.h" />
     <ClInclude Include="..\..\..\log\Core.h" />
@@ -437,10 +433,11 @@
     <ClInclude Include="..\..\..\net\protocol\Crypt.h" />
     <ClInclude Include="..\..\..\net\protocol\ProtobufCodec.h" />
     <ClInclude Include="..\..\..\net\protocol\Protocol.h" />
-    <ClInclude Include="..\..\..\net\protocol\ProtocolHead.h" />
+    <ClInclude Include="..\..\..\net\protocol\ProtocolFamily.h" />
+    <ClInclude Include="..\..\..\net\protocol\ProtocolVersion.h" />
     <ClInclude Include="..\..\..\net\protocol\StringCodec.h" />
     <ClInclude Include="..\..\..\net\protocol\TcpProtocol.h" />
-    <ClInclude Include="..\..\..\net\protocol\TcpProtocolX.h" />
+    <ClInclude Include="..\..\..\net\protocol\TcpProtocol2.h" />
     <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h" />
     <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
     <ClInclude Include="..\..\..\net\RequestHandler.h" />
@@ -448,13 +445,12 @@
     <ClInclude Include="..\..\..\net\Subscriber.h" />
     <ClInclude Include="..\..\..\net\TcpAcceptor.h" />
     <ClInclude Include="..\..\..\net\TcpClient.h" />
-    <ClInclude Include="..\..\..\net\TcpClientOption.h" />
     <ClInclude Include="..\..\..\net\TcpConnection.h" />
     <ClInclude Include="..\..\..\net\TcpConnector.h" />
     <ClInclude Include="..\..\..\net\TcpDispatch.h" />
+    <ClInclude Include="..\..\..\net\TcpOption.h" />
     <ClInclude Include="..\..\..\net\TcpPeer.h" />
     <ClInclude Include="..\..\..\net\TcpServer.h" />
-    <ClInclude Include="..\..\..\net\TcpServerOption.h" />
     <ClInclude Include="..\..\..\net\TcpSession.h" />
     <ClInclude Include="..\..\..\net\TcpState.h" />
     <ClInclude Include="..\..\..\net\Worker.h" />
@@ -476,11 +472,6 @@
     <ClInclude Include="..\..\..\Project.h" />
     <ClInclude Include="..\..\..\proto\Object.pb.h" />
     <ClInclude Include="..\..\..\proto\Proto.h" />
-    <ClInclude Include="..\..\..\proxy\Proxy.h" />
-    <ClInclude Include="..\..\..\proxy\Win.h" />
-    <ClInclude Include="..\..\..\proxy\WinAutoHandler.h" />
-    <ClInclude Include="..\..\..\proxy\WinConsoleEvent.h" />
-    <ClInclude Include="..\..\..\proxy\WinDump.h" />
     <ClInclude Include="..\..\..\RtObject.h" />
     <ClInclude Include="..\..\..\RxApp.h" />
     <ClInclude Include="..\..\..\service\Cluster.h" />
@@ -492,6 +483,12 @@
     <ClInclude Include="..\..\..\service\Machine.h" />
     <ClInclude Include="..\..\..\service\Service.h" />
     <ClInclude Include="..\..\..\service\ServiceRuntime.h" />
+    <ClInclude Include="..\..\..\Store.h" />
+    <ClInclude Include="..\..\..\sys\Sys.h" />
+    <ClInclude Include="..\..\..\sys\Win.h" />
+    <ClInclude Include="..\..\..\sys\WinAutoHandler.h" />
+    <ClInclude Include="..\..\..\sys\WinConsoleEvent.h" />
+    <ClInclude Include="..\..\..\sys\WinDump.h" />
     <ClInclude Include="..\..\..\test\Case.h" />
     <ClInclude Include="..\..\..\test\Check.h" />
     <ClInclude Include="..\..\..\test\Context.h" />
@@ -522,12 +519,11 @@
     <ClInclude Include="..\..\..\thread\MessageServer.h" />
     <ClInclude Include="..\..\..\thread\Monitor.h" />
     <ClInclude Include="..\..\..\thread\Mutex.h" />
+    <ClInclude Include="..\..\..\thread\Set.h" />
     <ClInclude Include="..\..\..\thread\State.h" />
     <ClInclude Include="..\..\..\thread\Task.h" />
     <ClInclude Include="..\..\..\thread\TaskServer.h" />
     <ClInclude Include="..\..\..\thread\Thread.h" />
-    <ClInclude Include="..\..\..\thread\ThreadPool.h" />
-    <ClInclude Include="..\..\..\thread\ThreadState.h" />
     <ClInclude Include="..\..\..\thread\Timer.h" />
     <ClInclude Include="..\..\..\thread\TimerWheel.h" />
     <ClInclude Include="..\..\..\thread\topic\Role.h" />
@@ -539,6 +535,7 @@
     <ClInclude Include="..\..\..\web\Html.h" />
     <ClInclude Include="..\..\..\web\Json.h" />
     <ClInclude Include="..\..\..\xml\Reader.h" />
+    <ClInclude Include="..\Impl.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
@@ -552,6 +549,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\xml\Impl.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\log\Pusher.inl" />
@@ -581,9 +579,9 @@
     <None Include="..\web\JsonClassFinder.ipp" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\..\..\eco.app.xml" />
-    <Xml Include="..\..\..\eco.sys.xml" />
-    <Xml Include="..\..\..\proxy\compatibility.xml" />
+    <Xml Include="..\..\..\sys\compatibility.xml" />
+    <Xml Include="..\..\pak\eco.sys.xml" />
+    <Xml Include="..\..\pak\eco.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
