@@ -52,28 +52,19 @@ public:
 		m_msg = static_cast<google::protobuf::Message*>(message);
 	}
 
-	virtual void* get_message() override
-	{
-		return m_msg;
-	}
-
-	virtual uint32_t get_byte_size() const override
+	virtual uint32_t byte_size() const override
 	{
 		return m_msg->ByteSize();
 	}
 
-	virtual void encode(
-		OUT char* bytes,
-		IN  const uint32_t size) const override
+	virtual void encode(OUT char* bytes, IN uint32_t size) const override
 	{
 		m_msg->SerializeToArray(bytes, (int)size);
 	}
 
-	virtual bool decode(
-		IN  const char* bytes,
-		IN  const uint32_t size) override
+	virtual void* decode(IN const char* bytes, IN uint32_t size) override
 	{
-		return m_msg->ParseFromArray(bytes, (int)size);
+		return m_msg->ParseFromArray(bytes, (int)size) ? m_msg : nullptr;
 	}
 
 protected:

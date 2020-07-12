@@ -58,9 +58,7 @@ public:
 	* @ para.ip: net address string. exp:"127.0.0.1"
 	* @ para.port: net address port number. exp:"80"
 	*/
-	void set(
-		IN const char* ip,
-		IN const uint32_t port);
+	void set(IN const char* ip, IN const uint32_t port);
 
 	// address name or alias that easy to remember.
 	void set_name(const char*);
@@ -100,8 +98,8 @@ public:
 			&& strcmp(addr1.get_service_name(), addr2.get_service_name()) == 0;
 	}
 };
-template<typename Stream>
-Stream& operator<<(OUT Stream& stream, IN const Address& v)
+template<typename stream_t>
+stream_t& operator<<(OUT stream_t& stream, IN const Address& v)
 {
 	return stream < v.get_host_name() < ':' < v.get_service_name()
 		< eco::group(v.get_name());

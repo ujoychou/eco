@@ -38,11 +38,6 @@ public:
 	inline WebSocketShakeHand()
 	{}
 
-	inline static uint32_t size()
-	{
-		return 1024;
-	}
-
 	inline static const char* head_end()
 	{
 		return "\r\n\r\n";
@@ -177,7 +172,7 @@ private:
 			parse_key_number(key2, sec_key2.c_str());
 			key.append(key2);
 			key.append(last);
-			md5.asign(MD5(key.c_str(), key.size()).digest(), MD5::digest_size);
+			md5.assign(MD5(key.c_str(), key.size()).digest(), MD5::digest_size);
 			return true;
 		}
 		return false;
@@ -225,7 +220,7 @@ private:
 		uint32_t len = size - start - 1;
 		if (start != -1 && len > 0)
 		{
-			value.asign(&request[start + 1], len);
+			value.assign(&request[start + 1], len);
 			return true;
 		}
 		return false;
@@ -264,7 +259,7 @@ private:
 			{
 				// format: "key: value/r/n".
 				key_end += 2;	// skip ": ", note there is a space.
-				value.asign(key_end, static_cast<uint32_t>(val_end - key_end));
+				value.assign(key_end, static_cast<uint32_t>(val_end - key_end));
 				if (value[value.size() - 1] == '\r')
 					value.resize(value.size() - 1);
 				return true;

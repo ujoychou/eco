@@ -37,20 +37,23 @@ typedef std::weak_ptr<TcpPeer> TcpPeerWptr;
 ////////////////////////////////////////////////////////////////////////////////
 class DataContext
 {
-	ECO_OBJECT(DataContext);
 public:
-	inline DataContext(IN TcpSessionOwner* owner = nullptr)
-		: m_prot(nullptr), m_category(0)
+	inline DataContext()
+		: m_protocol(0), m_category(0), m_head_size(0)
+	{}
+
+	inline DataContext(IN const DataContext& v)
+		: m_protocol(0), m_category(0), m_head_size(0)
 	{
-		if (owner != nullptr)
-			m_session_owner = *owner;
+		assert(false);
+		ECO_ERROR << "data context copy contructor.";
 	}
 
 	inline DataContext(IN DataContext&& v)
 		: m_data(std::move(v.m_data))
 		, m_category(v.m_category)
-		, m_prot(v.m_prot)
-		, m_session_owner(v.m_session_owner)
+		, m_head_size(v.m_head_size)
+		, m_protocol(v.m_protocol)
 		, m_peer_wptr(std::move(v.m_peer_wptr))
 	{}
 
@@ -58,8 +61,8 @@ public:
 	{
 		m_data = std::move(v.m_data);
 		m_category = v.m_category;
-		m_prot = v.m_prot;
-		m_session_owner = v.m_session_owner;
+		m_head_size = v.m_head_size;
+		m_protocol = v.m_protocol;
 		m_peer_wptr = std::move(v.m_peer_wptr);
 		return *this;
 	}
@@ -79,11 +82,11 @@ public:
 	// message data.
 	eco::String			m_data;
 	MessageCategory		m_category;
+	uint32_t			m_head_size;
 
 	// protocol and tcp peer.
-	Protocol*			m_prot;
+	Protocol*			m_protocol;
 	TcpPeerWptr			m_peer_wptr;
-	TcpSessionOwner		m_session_owner;
 };
 
 
@@ -99,15 +102,6 @@ public:
 public:
 	inline Context()
 	{}
-
-	inline TcpSession& session()
-	{
-		return m_session;
-	}
-	inline const TcpSession& get_session() const
-	{
-		return m_session;
-	}
 
 	inline TcpConnection& connection()
 	{
@@ -133,9 +127,14 @@ public:
 		return meta::Stamp(m_meta.get_req1() >> 4);
 	}
 
-	inline const bool last() const
+	inline const bool is_last() const
 	{
-		return m_meta.last();
+		return m_meta.is_last();
+	}
+
+	inline const uint32_t has_error() const
+	{
+		return m_meta.m_error_id != 0;
 	}
 
 	inline void release_data()
@@ -153,14 +152,10 @@ public:
 		return *this;
 	}
 
-	inline void response(
-		IN Codec& codec,
-		IN const uint32_t type,
-		IN const bool last = true,
-		IN const bool encrypted = false)
+	inline void response(IN Codec* codec, IN MessageOption& opt)
 	{
 		m_meta.m_session_id = m_session.get_id();
-		m_session.response(codec, type, *this, last, encrypted);
+		m_session.response(codec, opt, *this);
 	}
 };
 

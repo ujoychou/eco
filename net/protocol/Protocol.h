@@ -24,15 +24,13 @@
 
 *******************************************************************************/
 #include <eco/net/protocol/Codec.h>
-#include <eco/net/protocol/ProtocolHead.h>
+#include <eco/net/protocol/ProtocolVersion.h>
 #include <eco/Object.h>
 
 
 
 namespace eco{;
 namespace net{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
@@ -67,85 +65,133 @@ enum
 	option_req8				= 0x08,
 	option_req1				= 0x10,
 	option_req2				= 0x20,
+	// option: error id response.
+	option_error			= 0x40,
 	// option: message has a session id.
 	option_sess				= 0x80,
 };
-typedef uint8_t MessageOption;
+typedef uint8_t MessageOptionMeta;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class MessageMeta
+class MessageOption
 {
 public:
 	MessageCategory	m_category;
-	// meta fixed head.
-	MessageModel	m_model;
-	MessageOption	m_option;
+
 	// meta option data.
+	uint32_t		m_error_id;
 	uint32_t		m_session_id;
 	uint32_t		m_message_type;
 	uint64_t		m_request_data;
-	// meta coder.
-	Codec*			m_codec;
-	
+
+	MessageOptionMeta	m_option;
+
 public:
-	inline MessageMeta()
-	{
-		memset(this, 0, sizeof(*this));
-	}
+	inline MessageOption()
+		: m_category(category_message)
+		, m_error_id(0)
+		, m_session_id(none_session)
+		, m_message_type(0)
+		, m_request_data(0)
+		, m_option(0)
+	{}
 
-	inline MessageMeta(IN MessageCategory v)
+	inline MessageOption(
+		IN uint32_t msg_type,
+		IN uint32_t err_id = 0,
+		IN bool     last_msg = true,
+		IN uint32_t sess_id = none_session)
 	{
-		memset(this, 0, sizeof(*this));
-		m_category = v;
-	}
-
-	inline MessageMeta(
-		IN Codec& codec,
-		IN const uint32_t session_id,
-		IN const uint32_t type,
-		IN const bool encrypted)
-	{
-		memset(this, 0, sizeof(*this));
 		m_category = category_message;
-		if (encrypted)
-			eco::add(m_category, category_encrypted);
-		if (session_id != none_session)
-			eco::add(m_category, category_session);
-		set_session_id(session_id);
-		set_message_type(type);
-		m_codec = &codec;
+		m_request_data = 0;
+		m_option = 0;
+		last(last_msg);
+		error_id(err_id);
+		session_id(sess_id);
+		message_type(msg_type);
 	}
 
-	inline void set_session_id(IN const uint32_t id)
+	inline MessageOption& sync(IN bool is = true)
+	{
+		eco::set(m_category, category_sync, is);
+		return *this;
+	}
+	inline bool is_sync() const
+	{
+		return eco::has(m_category, category_sync);
+	}
+
+	inline MessageOption& category(IN MessageCategory v)
+	{
+		eco::add(m_category, v);
+		return *this;
+	}
+
+	inline MessageOption& encrypt(IN bool is = true)
+	{
+		eco::set(m_category, category_encrypted, is);
+		return *this;
+	}
+
+	inline MessageOption& check_sum(IN bool is = true)
+	{
+		eco::set(m_category, category_checksum, is);
+		return *this;
+	}
+
+	inline MessageOption& session_id(IN uint32_t id)
 	{
 		m_session_id = id;
 		eco::set(m_option, option_sess, m_session_id != none_session);
+		return *this;
 	}
 
-	inline void set_message_type(IN const uint32_t type)
+	inline MessageOption& message_type(IN uint32_t v)
 	{
-		m_message_type = type;
-		eco::add(m_option, option_type);
+		m_message_type = v;
+		eco::set(m_option, option_type, v != 0);
+		return *this;
 	}
 
-	inline void set_last(IN bool is)
+	inline bool has_error() const
+	{
+		return m_error_id != 0;
+	}
+
+	inline MessageOption& error_id(IN uint32_t v)
+	{
+		m_error_id = v;
+		eco::set(m_option, option_error, v != 0);
+		return *this;
+	}
+
+	inline MessageOption& last(IN bool is = true)
 	{
 		eco::set(m_option, option_last, is);
+		return *this;
 	}
-	inline bool last() const
+	inline bool is_last() const
 	{
 		return eco::has(m_option, option_last);
 	}
 
-public:
-	inline void set_request_data(IN const void* req_data)
+	inline MessageOption& option(IN const void* data)
 	{
 		if (sizeof(void*) == 4)
-			set_request_data((uint32_t)(uint64_t)(req_data));
+			set_request_data((uint32_t)(uint64_t)(data));
 		else if (sizeof(void*) == 8)
-			set_request_data((uint64_t)(req_data));
+			set_request_data((uint64_t)(data));
+		return *this;
 	}
+
+	inline MessageOption& snap(IN uint8_t v)
+	{
+		set_request_data(v);
+		return *this;
+	}
+
+public:
 	inline void set_request_data(IN const uint8_t req_data)
 	{
 		m_request_data = req_data;
@@ -167,8 +213,8 @@ public:
 		eco::add(m_option, option_req8);
 	}
 	inline void set_request_data(
-		IN const uint64_t req_data, 
-		IN const MessageOption opt)
+		IN const uint64_t req_data,
+		IN const MessageOptionMeta opt)
 	{
 		m_request_data = req_data;
 		eco::add(m_option, opt);
@@ -193,28 +239,74 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API Protocol : public eco::HeapOperators
+class MessageMeta : public MessageOption
 {
-	ECO_OBJECT(Protocol);
 public:
-	inline Protocol() {}
+	MessageModel		m_model;
+	Codec*				m_codec;
+	
+public:
+	inline MessageMeta() : m_model(0), m_codec(0)
+	{}
 
-	/*@ #2.get message version.*/
-	virtual uint32_t version() = 0;
+	inline MessageMeta(IN Codec* c, const MessageOption& opt)
+		: MessageOption(opt), m_model(0), m_codec(c)
+	{}
 
-	/*@ #3.get message meta and message bytes.*/
-	virtual bool decode(
-		OUT eco::net::MessageMeta& meta,
-		OUT eco::Bytes& data,
-		IN  eco::String& bytes,
-		IN  eco::Error& e) = 0;
+	inline MessageMeta& codec(IN Codec& cdc)
+	{
+		m_codec = &cdc;
+		return *this;
+	}
 
-	/*@ #1.encode message to bytes string.*/
+	inline MessageMeta& operator=(IN const MessageOption& opt)
+	{
+		((MessageOption&)*this) = opt;
+		return *this;
+	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class ECO_API Protocol : public ProtocolVersion
+{
+	ECO_OBJECT_API(Protocol);
+public:
+	/*@ get message version.*/
+	void set_version(uint8_t);
+	uint8_t version() const;
+
+	/*@ max body size that this protocol support.*/
+	void set_max_size(uint32_t);
+	uint32_t max_size() const;
+
+	/* encode a heartbeat message, heartbeat encoded by protocol head, not by
+	protocol, so it has no protocol info. and heartbeat don't judge protocol,
+	it's responsibility is only judge peer live status.
+	*/
+	virtual void encode_heartbeat(
+		OUT eco::String& bytes) const = 0;
+
+	/*@ encode message to bytes string.*/
 	virtual bool encode(
 		OUT eco::String& bytes,
 		OUT uint32_t& start,
 		IN  const eco::net::MessageMeta& meta,
 		OUT eco::Error& e) = 0;
+
+	/*@ get message body size that don't include head size.*/
+	virtual bool decode_size(
+		OUT IN eco::net::MessageHead& head,
+		IN const char* bytes,
+		IN const uint32_t size) const = 0;
+
+	/*@ get message meta and message bytes.*/
+	virtual bool decode_meta(
+		OUT eco::net::MessageMeta& meta,
+		OUT eco::Bytes& data,
+		IN  eco::String& bytes,
+		IN  uint32_t head_size,
+		IN  eco::Error& e) = 0;
 };
 
 
