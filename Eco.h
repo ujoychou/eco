@@ -25,12 +25,15 @@ ECO_NS_BEGIN(net);
 class MessageHandler;
 ECO_NS_END(net);
 class Task;
-class Timer;
+class TimerServer;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Eco
 {
-	ECO_OBJECT_API(Eco);
+	ECO_SINGLETON_API(Eco);
 public:
+	// singleton object.
+	static Eco& get();
+
 	// post task to executing queue.
 	void post_task(IN std::shared_ptr<Task>& task);
 
@@ -41,7 +44,7 @@ public:
 	void move_wait();
 
 	// get timer.
-	Timer& timer();
+	TimerServer& timer();
 
 public:
 	// async management post item.
@@ -61,7 +64,5 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_API Eco& eco();
-ECO_API bool has_eco();
 ECO_NS_END(eco);
 #endif

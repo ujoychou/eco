@@ -1,5 +1,5 @@
-#ifndef ECO_EXPORT_IMPL_H
-#define ECO_EXPORT_IMPL_H
+#ifndef ECO_IMPLEMENT_H
+#define ECO_IMPLEMENT_H
 /*******************************************************************************
 @ name
 dll export template implement.
@@ -29,9 +29,8 @@ dll export template implement.
 #include <algorithm>
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_IMPL(type_t)\
+#define ECO_IMPL_impl(type_t)\
 type_t::Impl& type_t::impl()\
 {\
 	return (type_t::Impl&)(*m_impl);\
@@ -40,331 +39,326 @@ const type_t::Impl& type_t::impl() const\
 {\
 	return (const type_t::Impl&)(*m_impl);\
 }
-
-////////////////////////////////////////////////////////////////////////////////
-#define ECO_TYPE_IMPL(type_t)\
+#define ECO_IMPL_default(type_t, impl_t)\
 type_t::type_t()\
 {\
-	m_impl = new Impl;\
+	m_impl = new impl_t;\
 	m_impl->init(*this);\
-}\
+}
+#define ECO_IMPL_derive(type_t, impl_t, parent_t)\
+type_t::type_t() : parent_t(eco::null)\
+{\
+	m_impl = new impl_t; \
+	m_impl->init(*this); \
+}
+#define ECO_IMPL_destruct(type_t)\
 type_t::~type_t()\
 {\
 	delete m_impl;\
 	m_impl = nullptr;\
+}
+#define ECO_IMPL_nullheap(type_t, impl_t)\
+type_t::type_t(IN eco::Null)\
+{\
+	m_impl = nullptr;\
 }\
-ECO_IMPL(type_t)
+type_t::type_t(IN type_t&& val)\
+{\
+	m_impl = val.m_impl;\
+	val.m_impl = nullptr;\
+}\
+type_t& type_t::operator=(IN type_t&& val)\
+{\
+	reset();\
+	m_impl = val.m_impl;\
+	val.m_impl = nullptr;\
+	return *this;\
+}\
+type_t& type_t::operator=(IN eco::Null)\
+{\
+	reset();\
+	return *this;\
+}\
+type_t& type_t::operator=(IN eco::Heap)\
+{\
+	m_impl = new impl_t;\
+	m_impl->init(*this);\
+	return *this;\
+}\
+bool type_t::null() const\
+{\
+	return m_impl == nullptr;\
+}\
+void type_t::swap(IN type_t& val)\
+{\
+	std::swap(m_impl, val.m_impl); \
+}\
+void type_t::reserve()\
+{\
+	if (null()) (*this) = eco::heap; \
+}\
+void type_t::reset()\
+{\
+	delete m_impl;\
+	m_impl = nullptr;\
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_VALUE_IMPL(value_t) \
-ECO_TYPE_IMPL(value_t);\
-value_t::value_t(IN const value_t& val)\
+#define ECO_SINGLETON_IMPL_1(type_t)\
+ECO_IMPL_impl(type_t)\
+ECO_IMPL_default(type_t, Impl)\
+ECO_IMPL_destruct(type_t)
+
+#define ECO_SINGLETON_IMPL_2(type_t, parent_t)\
+ECO_IMPL_impl(type_t)\
+ECO_IMPL_derive(type_t, Impl, parent_t)\
+ECO_IMPL_destruct(type_t, Impl)
+
+#define ECO_SINGLETON_IMPL(...) ECO_MACRO(ECO_SINGLETON_IMPL_, __VA_ARGS__)
+
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_TYPE_IMPL_A(type_t)\
+ECO_IMPL_impl(type_t)\
+ECO_IMPL_destruct(type_t)\
+ECO_IMPL_nullheap(type_t, Impl)
+
+#define ECO_TYPE_IMPL_1(type_t)\
+ECO_TYPE_IMPL_A(type_t)\
+ECO_IMPL_default(type_t, Impl)
+
+#define ECO_TYPE_IMPL_2(type_t, parent_t)\
+ECO_TYPE_IMPL_A(type_t)\
+ECO_IMPL_derive(type_t, Impl, parent_t)
+
+#define ECO_TYPE_IMPL(...) ECO_MACRO(ECO_TYPE_IMPL_, __VA_ARGS__)
+
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_VALUE_IMPL_A(type_t)\
+type_t::type_t(IN const type_t& val)\
 {\
 	m_impl = new Impl(val.impl());\
 }\
-value_t& value_t::operator=(IN const value_t& val)\
+type_t& type_t::operator=(IN const type_t& val)\
 {\
 	impl() = val.impl();\
 	return *this;\
 }
 
+#define ECO_VALUE_IMPL_1(type_t) \
+ECO_TYPE_IMPL_1(type_t) \
+ECO_VALUE_IMPL_A(type_t)
+
+#define ECO_VALUE_IMPL_2(type_t, parent_t) \
+ECO_TYPE_IMPL_2(type_t, parent_t) \
+ECO_VALUE_IMPL_A(type_t)
+
+#define ECO_VALUE_IMPL(...) ECO_MACRO(ECO_VALUE_IMPL_, __VA_ARGS__)
+
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_OBJECT_IMPL(object_t) \
-ECO_TYPE_IMPL(object_t);\
-object_t::object_t(IN eco::Null)\
+#define ECO_OBJECT_IMPL_1(type_t)\
+ECO_TYPE_IMPL_1(type_t)
+
+#define ECO_OBJECT_IMPL_2(type_t, parent_t)\
+ECO_TYPE_IMPL_2(type_t, parent_t)
+
+#define ECO_OBJECT_IMPL(...) ECO_MACRO(ECO_OBJECT_IMPL_,__VA_ARGS__)
+
+#define ECO_OBJECT_COPY_IMPL(type_t) \
+ECO_OBJECT_IMPL(type_t);\
+type_t* type_t::copy() const\
 {\
-	m_impl = nullptr;\
-}\
-object_t& object_t::operator=(IN eco::Null)\
-{\
-	reset();\
-	return *this;\
-}\
-object_t& object_t::operator=(IN eco::Heap)\
-{\
-	m_impl = new Impl;\
-	m_impl->init(*this);\
-	return *this;\
-}\
-bool object_t::null() const\
-{\
-	return m_impl == nullptr;\
-}\
-void object_t::reset()\
-{\
-	delete m_impl;\
-	m_impl = nullptr;\
-}
-#define ECO_OBJECT_COPY_IMPL(object_t) \
-ECO_OBJECT_IMPL(object_t);\
-object_t* object_t::copy() const\
-{\
-	object_t* obj = new object_t(eco::null);\
+	type_t* obj = new type_t(eco::null);\
 	obj->m_impl = new Impl(*m_impl);\
 	obj->m_impl->init(*this);\
 	return obj;\
 }
 
-////////////////////////////////////////////////////////////////////////////////
-#define ECO_MOVABLE_IMPL(object_t) \
-ECO_OBJECT_IMPL(object_t);\
-object_t::object_t(IN object_t&& obj) : m_impl(obj.m_impl)\
-{\
-	obj.reset();\
-}\
-object_t& object_t::operator=(IN object_t&& obj)\
-{\
-	reset();\
-	m_impl = obj.m_impl;\
-	obj.reset();\
-	return *this;\
-}
-#define ECO_MOVABLE_COPY_IMPL(object_t) \
-ECO_MOVABLE_IMPL(object_t);\
-object_t* object_t::copy() const\
-{\
-	object_t* obj = new object_t(eco::null);\
-	obj->m_impl = new Impl(*m_impl);\
-	obj->m_impl->init(*this);\
-	return obj;\
-}
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_SHARED_PROXY(object_t) \
-class object_t::Proxy\
+#define ECO_SHARED_PROXY(type_t) \
+class type_t::Proxy\
 {\
 public:\
-	inline Proxy(IN bool heap)\
+	inline Proxy(IN bool heap = true)\
 	{\
-		if (heap)\
-			m_impl.reset(new object_t::Impl);\
+		if (heap) m_impl.reset(new type_t::Impl);\
 	}\
-	inline object_t::Impl& impl() const\
+	inline operator type_t::Impl&()\
 	{\
 		return *m_impl;\
 	}\
-	std::shared_ptr<object_t::Impl> m_impl;\
+	inline operator const type_t::Impl&() const\
+	{\
+		return *m_impl;\
+	}\
+	inline void init(type_t& parent) const\
+	{\
+		m_impl->init(parent);\
+	}\
+	std::shared_ptr<type_t::Impl> m_impl;\
 };
 
-#define ECO_SHARED_IMPL__(object_t)\
-object_t::Impl& object_t::impl() const\
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_SHARED_IMPL__(type_t)\
+ECO_IMPL_impl(type_t)\
+ECO_IMPL_default(type_t, Proxy)\
+ECO_IMPL_destruct(type_t)\
+ECO_IMPL_nullheap(type_t, Proxy)\
+type_t::type_t(IN const type_t& obj) : m_impl(nullptr)\
 {\
-	return m_proxy->impl();\
-}\
-object_t::object_t()\
-{\
-	m_proxy = new Proxy(true);\
-	m_proxy->m_impl->init(*this);\
-}\
-object_t::~object_t()\
-{\
-	delete m_proxy;\
-	m_proxy = nullptr;\
-}\
-object_t::object_t(IN eco::Null)\
-{\
-	m_proxy = new Proxy(false);\
-}\
-object_t::object_t(IN object_t&& obj)\
-{\
-	m_proxy = new Proxy(false);\
-	m_proxy->m_impl = std::move(obj.m_proxy->m_impl);\
-}\
-object_t::object_t(IN const object_t& obj)\
-{\
-	m_proxy = new Proxy(false);\
-	m_proxy->m_impl = obj.m_proxy->m_impl;\
-}\
-object_t& object_t::operator=(IN object_t&& obj)\
-{\
-	m_proxy->m_impl = std::move(obj.m_proxy->m_impl);\
-	return *this;\
-}\
-object_t& object_t::operator=(IN const object_t& obj)\
-{\
-	m_proxy->m_impl = obj.m_proxy->m_impl;\
-	return *this;\
-}\
-object_t& object_t::operator=(IN eco::Null)\
-{\
-	reset();\
-	return *this;\
-}\
-object_t& object_t::operator=(IN eco::Heap)\
-{\
-	m_proxy->m_impl.reset(new Impl);\
-	m_proxy->m_impl->init(*this);\
-	return *this;\
-}\
-bool object_t::operator==(IN const object_t& obj) const\
-{\
-	return m_proxy->m_impl == obj.m_proxy->m_impl;\
-}\
-bool object_t::operator!=(IN const object_t& obj) const\
-{\
-	return m_proxy->m_impl != obj.m_proxy->m_impl;\
-}\
-bool object_t::null() const\
-{\
-	return (m_proxy->m_impl.get() == nullptr);\
-}\
-void object_t::swap(IN object_t& obj)\
-{\
-	m_proxy->m_impl.swap(obj.m_proxy->m_impl);\
-}\
-void object_t::reset()\
-{\
-	m_proxy->m_impl.reset();\
-}\
-void object_t::reserve()\
-{\
-	if ((m_proxy->m_impl.get() == nullptr)) {\
-		m_proxy->m_impl.reset(new Impl);\
-		m_proxy->m_impl->init(*this);\
+	if (!obj.null())\
+	{\
+		m_impl = new Proxy(false);\
+		m_impl->m_impl = obj.m_impl->m_impl;\
 	}\
-}
-#define ECO_SHARED_COPY_IMPL__(object_t) \
-ECO_SHARED_IMPL__(object_t);\
-object_t object_t::copy() const\
+}\
+type_t& type_t::operator=(IN const type_t& obj)\
 {\
-	object_t obj = eco::null;\
-	obj.m_proxy->m_impl.reset(new Impl(*m_proxy->m_impl));\
-	obj.m_proxy->m_impl->init(obj);\
+	if (obj.null()) { reset(); return *this; }\
+	if (null()) m_impl = new Proxy(false); \
+	m_impl->m_impl = obj.m_impl->m_impl; \
+	return *this;\
+}\
+bool type_t::operator==(IN const type_t& obj) const\
+{\
+	if (null() && obj.null()) return true;\
+	if (null() || obj.null()) return false;\
+	return m_impl->m_impl == obj.m_impl->m_impl;\
+}\
+bool type_t::operator!=(IN const type_t& obj) const\
+{\
+	return !(operator==(obj));\
+}
+#define ECO_SHARED_COPY_IMPL__(type_t) \
+ECO_SHARED_IMPL__(type_t);\
+type_t type_t::copy() const\
+{\
+	type_t obj(eco::null);\
+	obj.m_impl = new Proxy(false);\
+	obj.m_impl->m_impl.reset(new Impl(*m_impl->m_impl));\
+	obj.m_impl->m_impl->init(obj);\
 	return obj;\
 }
 
+#define ECO_SHARED_IMPL(type_t)\
+ECO_SHARED_PROXY(type_t) \
+ECO_SHARED_IMPL__(type_t)
+#define ECO_SHARED_COPY_IMPL(type_t) \
+ECO_SHARED_PROXY(type_t) \
+ECO_SHARED_COPY_IMPL__(type_t);
 
-#define ECO_SHARED_IMPL(object_t)\
-ECO_SHARED_PROXY(object_t) \
-ECO_SHARED_IMPL__(object_t)
-#define ECO_SHARED_COPY_IMPL(object_t) \
-ECO_SHARED_PROXY(object_t) \
-ECO_SHARED_COPY_IMPL__(object_t);
 
 ////////////////////////////////////////////////////////////////////////////////
-// export value property implement
-#define ECO_PROPERTY_ATM_IMPL(object_t, property_t, property_name) \
-void object_t::set_##property_name(IN const property_t val)\
+// export value property implement: reference.
+#define ECO_PROPERTY_VAL_IMPL(type_t, property_t, property_name) \
+void type_t::set_##property_name(IN const property_t& val)\
 {\
 	impl().m_##property_name = val;\
 }\
-object_t& object_t::##property_name(IN const property_t val) \
+type_t& type_t::##property_name(IN const property_t& val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-const property_t object_t::get_##property_name() const\
+property_t& type_t::##property_name()\
+{\
+	return impl().m_##property_name;\
+}\
+const property_t& type_t::get_##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
-// export value property implement
-#define ECO_PROPERTY_VAL_IMPL(object_t, property_t, property_name) \
-void object_t::set_##property_name(IN const property_t& val)\
+// export value property implement: const value.
+#define ECO_PROPERTY_VVC_IMPL(type_t, property_t, property_name) \
+void type_t::set_##property_name(IN const property_t val)\
 {\
 	impl().m_##property_name = val;\
 }\
-object_t& object_t::##property_name(IN const property_t& val) \
+type_t& type_t::##property_name(IN const property_t val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-property_t& object_t::##property_name()\
-{\
-	return impl().m_##property_name;\
-}\
-const property_t& object_t::get_##property_name() const\
+const property_t type_t::get_##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
-// export value property implement
-#define ECO_PROPERTY_VAV_IMPL(object_t, property_t, property_name) \
-void object_t::set_##property_name(IN const property_t val)\
-{\
-	impl().m_##property_name = val;\
-}\
-object_t& object_t::##property_name(IN const property_t val) \
-{\
-	impl().m_##property_name = val;\
-	return *this;\
-}\
-property_t object_t::##property_name()\
-{\
-	return impl().m_##property_name;\
-}\
-const property_t object_t::get_##property_name() const\
+// export value property implement: value.
+#define ECO_PROPERTY_VAV_IMPL(type_t, property_t, property_name) \
+ECO_PROPERTY_VVC_IMPL(type_t, property_t, property_name)\
+property_t type_t::##property_name()\
 {\
 	return impl().m_##property_name;\
 }
 // export object property implement
-#define ECO_PROPERTY_OBJ_IMPL_NOHAS(object_t, property_type, property_name)\
-void object_t::set_##property_name(IN property_type& v)\
+#define ECO_PROPERTY_OBJ_IMPL_NOHAS(type_t, property_type, property_name)\
+void type_t::set_##property_name(IN property_type& v)\
 {\
 	impl().m_##property_name = v;\
 }\
-property_type& object_t::##property_name()\
+property_type& type_t::##property_name()\
 {\
 	if (impl().m_##property_name.null())\
 		impl().m_##property_name = eco::heap;\
 	return impl().m_##property_name;\
 }\
-const property_type& object_t::get_##property_name() const\
+const property_type& type_t::get_##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
 // export object property implement
-#define ECO_PROPERTY_OBJ_IMPL(object_t, property_type, property_name)\
-bool object_t::has_##property_name() const\
+#define ECO_PROPERTY_OBJ_IMPL(type_t, property_type, property_name)\
+bool type_t::has_##property_name() const\
 {\
 	return !impl().m_##property_name.null();\
 }\
-ECO_PROPERTY_OBJ_IMPL_NOHAS(object_t, property_type, property_name);
+ECO_PROPERTY_OBJ_IMPL_NOHAS(type_t, property_type, property_name);
 // export string property implement
-#define ECO_PROPERTY_STR_IMPL(object_t, property_name) \
-void object_t::set_##property_name(IN const char* val) \
+#define ECO_PROPERTY_STR_IMPL(type_t, property_name) \
+void type_t::set_##property_name(IN const char* val) \
 {\
 	impl().m_##property_name = val;\
 }\
-object_t& object_t::##property_name(IN const char* val) \
+type_t& type_t::##property_name(IN const char* val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-const char* object_t::get_##property_name() const\
+const char* type_t::get_##property_name() const\
 {\
 	return impl().m_##property_name.c_str();\
 }
-#define ECO_PROPERTY_BUF_IMPL(object_t, property_name) \
-void object_t::set_##property_name(IN const char* val) \
+#define ECO_PROPERTY_BUF_IMPL(type_t, property_name) \
+void type_t::set_##property_name(IN const char* val) \
 {\
 	eco_cpyc(impl().m_##property_name, val);\
 }\
-object_t& object_t::##property_name(IN const char* val) \
+type_t& type_t::##property_name(IN const char* val) \
 {\
 	eco_cpyc(impl().m_##property_name, val);\
 	return *this;\
 }\
-const char* object_t::get_##property_name() const\
+const char* type_t::get_##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
 // export bool property implement
-#define ECO_PROPERTY_BOL_IMPL(object_t, property_name) \
-void object_t::set_##property_name(IN const bool val) \
+#define ECO_PROPERTY_BOL_IMPL(type_t, property_name) \
+void type_t::set_##property_name(IN const bool val) \
 {\
 	impl().m_##property_name = val;\
 }\
-object_t& object_t::##property_name(IN const bool val) \
+type_t& type_t::##property_name(IN const bool val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-bool object_t::##property_name() const\
+bool type_t::##property_name() const\
 {\
 	return impl().m_##property_name > 0;\
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -141,100 +141,119 @@ n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,size,...) size
 #define ECO_MACRO(macro, ...) ECO_MACRO_CAT(ECO_MACRO_CAT(macro,\
 ECO_MACRO_GETN(__VA_ARGS__))(__VA_ARGS__), )
 
-
-////////////////////////////////////////////////////////////////////////////////
-#define ECO_NONCOPYABLE(object_t) \
-private:\
-	object_t(IN const object_t& );\
-	object_t& operator=(IN const object_t& );
-
-#define ECO_IMPL_API() \
-public:\
-	friend class Impl;\
-	class Impl;\
-	inline Impl& impl();\
-	inline const Impl& impl() const;\
-protected:\
-	Impl* m_impl;
-
-#define ECO_TYPE_API(type_t) \
-public:\
-	~type_t();\
-	type_t();\
-	ECO_IMPL_API()
-
-#define ECO_VALUE_API(value_t) \
-public:\
-	value_t(IN const value_t&); \
-	value_t& operator=(IN const value_t&);\
-	ECO_TYPE_API(value_t)
-
-#define ECO_OBJECT_API(object_t)\
-public:\
-	typedef std::weak_ptr<object_t> wptr;\
-	typedef std::shared_ptr<object_t> ptr;\
-	object_t(IN eco::Null);\
-	object_t& operator=(IN eco::Heap);\
-	object_t& operator=(IN eco::Null);\
-	bool null() const;\
-	void reset();\
-	ECO_TYPE_API(object_t)\
-	ECO_NONCOPYABLE(object_t)
-#define ECO_OBJECT_COPY_API(object_t) \
-public: object_t copy() const; \
-ECO_OBJECT_API(object_t)
-
-#define ECO_MOVABLE_API(object_t)\
-public:\
-	object_t(IN object_t&& moved);\
-	object_t& operator=(IN object_t&& moved);\
-	ECO_OBJECT_API(object_t)
-#define ECO_MOVABLE_COPY_API(object_t) \
-public: object_t copy() const; \
-ECO_MOVABLE_API(object_t)
-
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
-// for create shared object.
 struct Heap {};
 struct Null {};
 const Heap heap;
 const Null null;
 ECO_NS_END(eco);
 
-#define ECO_SHARED_API(object_t) \
-public:\
-	object_t();\
-	~object_t();\
-	object_t(IN eco::Null);\
-	object_t(IN object_t&& obj);\
-	object_t(IN const object_t& obj);\
-	object_t& operator=(IN object_t&& obj);\
-	object_t& operator=(IN const object_t& obj);\
-	object_t& operator=(IN eco::Heap);\
-	object_t& operator=(IN eco::Null);\
-	bool operator==(IN const object_t& obj) const;\
-	bool operator!=(IN const object_t& obj) const;\
-	bool null() const;\
-	void swap(IN object_t& obj);\
-	void reset();\
-	void reserve();\
-public:\
-	class Proxy;\
-	class Impl;\
-	inline Impl& impl() const;\
-protected:\
-	Proxy* m_proxy;
-#define ECO_SHARED_COPY_API(object_t) \
-public: object_t copy() const; \
-ECO_SHARED_API(object_t)
 
-
-
+////////////////////////////////////////////////////////////////////////////////
 #define ECO_IMPL_INIT(type_t)\
 public:\
 	inline void init(IN type_t&) {}
+
+#define ECO_NONCOPYABLE(type_t) \
+private:\
+	type_t(IN const type_t& );\
+	type_t& operator=(IN const type_t& );
+
+#define ECO_IMPL_API_A() \
+public:\
+	friend class Impl;\
+	class Impl;\
+	inline Impl& impl();\
+	inline const Impl& impl() const;
+
+#define ECO_IMPL_API() \
+ECO_IMPL_API_A()\
+protected:\
+	Impl* m_impl;
+
+
 ////////////////////////////////////////////////////////////////////////////////
+#define ECO_TYPE_API_A(type_t) \
+public:\
+	type_t();\
+	type_t(IN type_t&&); \
+	type_t(IN eco::Null); \
+	~type_t();\
+	type_t& operator=(IN type_t&&);\
+	type_t& operator=(IN eco::Heap);\
+	type_t& operator=(IN eco::Null);\
+	bool null() const;\
+	void swap(IN type_t&);\
+	void reserve();\
+	void reset();
+
+#define ECO_TYPE_API_1(type_t) \
+ECO_TYPE_API_A(type_t) \
+ECO_IMPL_API()
+
+#define ECO_TYPE_API_2(type_t, parent_t) \
+ECO_TYPE_API_A(type_t) \
+ECO_IMPL_API_A()
+
+#define ECO_TYPE_API(...) ECO_MACRO(ECO_TYPE_API_, __VA_ARGS__)
+
+
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_VALUE_API_A(type_t) \
+public:\
+	type_t(IN const type_t&); \
+	type_t& operator=(IN const type_t&);
+
+#define ECO_VALUE_API_1(type_t) \
+ECO_VALUE_API_A(type_t) \
+ECO_TYPE_API_1(type_t)
+
+#define ECO_VALUE_API_2(type_t, parent_t) \
+ECO_VALUE_API_A(type_t) \
+ECO_TYPE_API_2(type_t, parent_t)
+
+#define ECO_VALUE_API(...) ECO_MACRO(ECO_VALUE_API_, __VA_ARGS__)
+
+
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_OBJECT_API_A(type_t)\
+public:\
+	typedef std::weak_ptr<type_t> wptr;\
+	typedef std::shared_ptr<type_t> ptr;\
+	ECO_NONCOPYABLE(type_t)
+
+#define ECO_OBJECT_API_1(type_t) \
+ECO_OBJECT_API_A(type_t) \
+ECO_TYPE_API_1(type_t)
+
+#define ECO_OBJECT_API_2(type_t, parent_t) \
+ECO_OBJECT_API_A(type_t) \
+ECO_TYPE_API_2(type_t, parent_t)
+
+#define ECO_OBJECT_API(...) ECO_MACRO(ECO_OBJECT_API_, __VA_ARGS__)
+
+#define ECO_OBJECT_COPY_API(type_t) \
+public: type_t copy() const; \
+ECO_OBJECT_API(type_t)
+
+
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_SHARED_API(type_t) \
+ECO_TYPE_API_A(type_t)\
+ECO_IMPL_API_A() \
+public:\
+	type_t(IN const type_t& obj);\
+	type_t& operator=(IN const type_t& obj);\
+	bool operator==(IN const type_t& obj) const;\
+	bool operator!=(IN const type_t& obj) const;\
+protected:\
+	class Proxy; \
+	Proxy* m_impl;
+
+#define ECO_SHARED_COPY_API(type_t) \
+public: type_t copy() const; \
+ECO_SHARED_API(type_t)
 
 
 ECO_NS_BEGIN(eco);
@@ -244,34 +263,34 @@ enum { value_none = 0 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename ObjectT>
-inline void add(ObjectT& obj, uint32_t v)
+template<typename type_t>
+inline void add(type_t& obj, uint32_t v)
 {
 	obj |= v;
 }
-template<typename ObjectT>
-inline void del(ObjectT& obj, uint32_t v)
+template<typename type_t>
+inline void del(type_t& obj, uint32_t v)
 {
 	obj &= ~v;
 }
-template<typename ObjectT>
-inline void toggle(ObjectT& obj, uint32_t v)
+template<typename type_t>
+inline void toggle(type_t& obj, uint32_t v)
 {
 	obj ^= v;
 }
-template<typename ObjectT>
-inline void set(ObjectT& obj, uint32_t v, bool is)
+template<typename type_t>
+inline void set(type_t& obj, uint32_t v, bool is)
 {
 	obj = is ? (obj | v) : (obj & ~v);
 }
-template<typename ObjectT>
-inline void set_v(ObjectT& obj, const uint32_t add_v, const uint32_t del_v)
+template<typename type_t>
+inline void set_v(type_t& obj, const uint32_t add_v, const uint32_t del_v)
 {
 	eco::add(add_v);
 	eco::del(del_v);
 }
-template<typename ObjectT>
-inline bool has(const ObjectT& obj, uint32_t v)
+template<typename type_t>
+inline bool has(const type_t& obj, uint32_t v)
 {
 	return (obj & v) > 0;
 }
@@ -279,69 +298,69 @@ inline bool has(const ObjectT& obj, uint32_t v)
 
 ////////////////////////////////////////////////////////////////////////////////
 /*@ export property set. it can be reference in export header, because it's has
-only one member "object_t*" which just like export object or value.
+only one member "type_t*" which just like export object or value.
 * @ iterator: property set iterator.
 */
-template<class object_t>
+template<class type_t>
 class iterator
 {
 public:
 	// iterator traits.
 	typedef std::bidirectional_iterator_tag iterator_category;
-	typedef object_t value_type;
-	typedef object_t* difference_type;
-	typedef object_t* pointer;
-	typedef object_t& reference;
+	typedef type_t value_type;
+	typedef type_t* difference_type;
+	typedef type_t* pointer;
+	typedef type_t& reference;
 	typedef difference_type distance_type;
 
 public:
-	explicit iterator(object_t* first_obj = 0) : m_cur(first_obj)
+	explicit iterator(type_t* first_obj = 0) : m_cur(first_obj)
 	{}
 
-	inline iterator<object_t> operator++(void)
+	inline iterator<type_t> operator++(void)
 	{
 		return iterator(++m_cur);
 	}
 
-	inline iterator<object_t> operator++(int)
+	inline iterator<type_t> operator++(int)
 	{
-		object_t* temp = m_cur;
+		type_t* temp = m_cur;
 		++m_cur;
 		return iterator(temp);
 	}
-	inline iterator<object_t> operator--()
+	inline iterator<type_t> operator--()
 	{
 		return iterator(--m_cur);
 	}
-	inline iterator<object_t> operator--(int)
+	inline iterator<type_t> operator--(int)
 	{
-		object_t* temp = m_cur;
+		type_t* temp = m_cur;
 		--m_cur;
 		return iterator(temp);
 	}
-	inline int operator-(const iterator<object_t>& it) const
+	inline int operator-(const iterator<type_t>& it) const
 	{
 		return (int)(m_cur - it.m_cur);
 	}
-	inline object_t* operator->()
+	inline type_t* operator->()
 	{
 		return m_cur;
 	}
-	inline object_t& operator*()
+	inline type_t& operator*()
 	{
 		return *m_cur;
 	}
-	inline bool operator==(const iterator<object_t>& it) const
+	inline bool operator==(const iterator<type_t>& it) const
 	{
 		return m_cur == it.m_cur;
 	}
-	inline bool operator!=(const iterator<object_t>& it) const
+	inline bool operator!=(const iterator<type_t>& it) const
 	{
 		return m_cur != it.m_cur;
 	}
 
 private:
-	object_t* m_cur;
+	type_t* m_cur;
 };
 
 
