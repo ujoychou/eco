@@ -14,7 +14,7 @@ enum
 {
 	stamp_insert	= 0,		// insert object.(new object)
 	stamp_update	= 1,		// update object.
-	stamp_remove	= 2,		// remove object.
+	stamp_delete	= 2,		// delete object.
 	stamp_clean		= 3,		// clean  object.(not update)
 };
 typedef uint8_t Stamp;
@@ -27,7 +27,7 @@ inline bool is_clean(IN const Stamp v)
 }
 inline bool is_remove(IN const Stamp v)
 {
-	return (v == stamp_remove);
+	return (v == stamp_delete);
 }
 inline bool is_update(IN const Stamp v)
 {
@@ -46,7 +46,7 @@ inline void clean(OUT Stamp& v)
 }
 inline void remove(OUT Stamp& v)
 {
-	if (is_clean(v) || is_update(v)) v = stamp_remove;
+	if (is_clean(v) || is_update(v)) v = stamp_delete;
 }
 inline void insert(OUT Stamp& v)
 {
@@ -70,7 +70,7 @@ inline const char* get_text(IN const Stamp v)
 		return "insert";
 	case stamp_update:
 		return "update";
-	case stamp_remove:
+	case stamp_delete:
 		return "remove";
 	}
 	return "none";
