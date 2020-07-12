@@ -5,7 +5,9 @@
 #include <QtCore/QVariant.h>
 #include <QtCore/QDateTime>
 #include <QtCore/QCoreApplication>
+#include <QtWidgets/QStyle>
 #include <QtWidgets/QSplitter>
+#include <QtWidgets/QApplication>
 
 
 namespace eco{;
@@ -44,10 +46,7 @@ bool pointInWidget(QWidget* target, const QPoint& point)
 {
 	return globalRect(target).contains(point, true);
 }
-QString getAppDir()
-{
-	return QCoreApplication::applicationDirPath();
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 QString getString(IN const QVariant& qvar)
@@ -67,17 +66,39 @@ QString getString(IN const QVariant& qvar)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void setQssFile(QWidget* target, const QString& qss_path)
+void setQssFile(QWidget* target, const QString& qss_file)
 {
-	QString qss;
-	QFile file(qss_path);
+	QString css = target->styleSheet();
+	css += readFile(qss_file);
+	target->setStyleSheet(css);
+}
+void setQssFile(const QString& qss_file)
+{
+	QString css = qApp->styleSheet();
+	css += readFile(qss_file);
+	qApp->setStyleSheet(css);
+}
+QString readFile(const QString& filepath)
+{
+	QString value;
+	QFile file(filepath);
 	file.open(QFile::ReadOnly);
 	if (file.isOpen())
 	{
-		qss = QString(file.readAll());
-		target->setStyleSheet(qss);
+		value = QString(file.readAll());
 		file.close();
 	}
+	return value;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void updateClass(QWidget* parent, QWidget* target, const char* clss_name)
+{
+	target->setProperty("class", clss_name);
+	parent->style()->unpolish(target);
+	parent->style()->polish(target);
+	parent->update();
 }
 
 

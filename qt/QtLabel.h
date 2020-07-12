@@ -43,27 +43,71 @@ signals:
 public:
 	inline Label(
 		QWidget* parent = nullptr,
-		size_t param = 0,
+		uint64_t param = 0,
+        uint16_t group = 0,
+        bool alone = false,
 		Qt::WindowFlags f = Qt::WindowFlags())
-		: QLabel(parent, f), m_param(param) {}
+		: QLabel(parent, f)
+		, m_param(param)
+		, m_group(group)
+		, m_alone(alone)
+		, m_focus(false)
+	{}
 
 	inline Label(
 		const QString& text,
-		QWidget *parent = nullptr,
-		size_t param = 0,
+		QWidget* parent = nullptr,
+		uint64_t param = 0,
+        uint16_t group = 0,
+        bool alone = false,
 		Qt::WindowFlags f = Qt::WindowFlags())
-		: QLabel(text, parent, f), m_param(param) {}
+		: QLabel(text, parent, f)
+		, m_param(param)
+		, m_group(group)
+		, m_alone(alone)
+		, m_focus(false)
+	{}
 
 	// 获取ID
-	inline size_t param() const
+	inline uint64_t param() const
 	{
 		return m_param;
 	}
 
+	// 设置焦点
+	void focus(bool is);
+
+	// 是否被设置为焦点
+    inline bool isFocus() const
+    {
+        return m_focus;
+    }
+
+	// 切换焦点
+	inline void switchFocus()
+	{
+		focus(!isFocus());
+	}
+
+    // 组标识
+    inline uint16_t group() const
+    {
+        return m_group;
+    }
+
+    // 可以单独显示
+    inline bool alone() const
+    {
+        return m_alone;
+    }
+
 protected:
 	// 点击鼠标（释放）
 	virtual void mouseReleaseEvent(QMouseEvent* e) override;
-	size_t m_param;
+	uint64_t	m_param;		// 参数，用于标识对应的对象。
+    uint16_t	m_group;		// 所属分组。
+	uint16_t	m_focus;		// 是否选中。
+	uint16_t	m_alone;		// 是否可独立选中。
 };
 
 

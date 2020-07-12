@@ -50,9 +50,6 @@ protected:
 	{}
 
 public:
-	// 获取APP路径
-	QString get_app_path();
-
 	// 重启服务
 	void restart();
 };
@@ -88,12 +85,12 @@ class Startup
 {
 public:
 	Startup(
-		IN App& app,
+		IN App* app,
 		IN eco::Startup::CMainFunc main_func,
 		IN bool run_once)
 	{
 		main_func = nullptr;
-		AppWork::setApp(app, run_once);
+		AppWork::setApp(*app, run_once);
 	}
 
 	inline static int main(IN int argc, IN char* argv[])
@@ -109,7 +106,7 @@ public:
 #define ECO_ART_APP(AppClass, AppGet, run_once)\
 ECO_NAME(AppClass, AppGet)\
 const eco::qt::Startup eco_art_start_up(\
-AppGet(), &main<eco::qt::Startup>, run_once)
+&AppGet(), &main<eco::qt::Startup>, run_once)
 
 
 

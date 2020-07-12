@@ -65,11 +65,24 @@ bool pointInWidget(QWidget* target, const QPoint& point);
 // get qvariant string.
 QString getString(IN const QVariant& qvar);
 
-// get application .exe path.
-QString getAppDir();
-
 // set qwidget sheet style.
+void setQssFile(const QString& file);
 void setQssFile(QWidget* target, const QString& file);
+QString readFile(const QString& file);
+
+// update wideget class name.
+void updateClass(QWidget* parent, QWidget* target, const char* clss_name);
+////////////////////////////////////////////////////////////////////////////////
+// geometry function.
+inline int rectAdd(int x, int w)
+{
+	return (w == 0) ? x : x + w - 1;
+}
+inline int rectDel(int x, int w)
+{
+	return (w == 0) ? x : x - w + 1;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }};

@@ -11,28 +11,28 @@
 #include <QtWidgets/QMessageBox>
 #include <QtNetwork/QLocalServer>
 #include <QtNetwork/QLocalSocket>
-#include <eco/proxy/WinDump.h>
-#include <eco/proxy/WinConsoleEvent.h>
+#include <eco/sys/WinDump.h>
+#include <eco/sys/WinConsoleEvent.h>
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace eco{;
-extern "C" void init_app(IN App& app);
-extern "C" void load_app(IN App& app, bool command);
+extern "C" void init_argv(int argc, char* argv[]);
+extern "C" void init_app(IN App& app, IN void* module_func_addr);
+extern "C" void load_app(IN App& app);
 extern "C" void exit_app(IN App& app);
-extern "C" void exit_log(IN App& app);
 namespace qt{;
 ////////////////////////////////////////////////////////////////////////////////
 uint32_t AppWork::s_run_once = true;
 static inline App& app()
 {
-	return static_cast<App&>(*eco::App::app());
+	return static_cast<App&>(*eco::App::get());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void AppWork::setApp(App& app, bool run_once)
 {
 	s_run_once = run_once;
-	eco::Startup startup(app, nullptr);
+	eco::Startup startup(&app, nullptr);	// eco app mode init.
 }
 
 
@@ -50,26 +50,13 @@ int AppWork::main(int argc, char* argv[])
 	try
 	{
 		// 设置支持GPI
-		#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-			QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-		#endif
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+		QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
 		QApplication qt_app(argc, argv);
 
-		// 根据分辨率设置字体大小
-		#ifdef ECO_WIN
-			// 获取屏幕DC
-			HDC desktop_dc = GetDC(NULL);
-			// 获得原生分辨率
-			auto horizontal_dpi = GetDeviceCaps(desktop_dc, LOGPIXELSX);
-			auto vertical_dpi = GetDeviceCaps(desktop_dc, LOGPIXELSY);
-			auto dpi = (horizontal_dpi + vertical_dpi) / 2;
-			// 重新设置全局front像素
-			auto font = qt_app.font();
-			font.setPixelSize(font.pointSize() * dpi / 72);
-			qt_app.setFont(font);
-		#endif
-
 		// 只运行一个实例
+		init_argv(argc, argv);
 		if (s_run_once)
 		{
 			return AppWork::runOnce(qt_app);
@@ -82,7 +69,7 @@ int AppWork::main(int argc, char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		QMessageBox::critical(nullptr, tr("程序错误(main)"), QString(e.what()));
+		QMessageBox::critical(nullptr, tr("program error"), QString(e.what()));
 	}
 	return 0;
 }
@@ -94,8 +81,8 @@ int AppWork::run(QApplication& qt_app)
 	try
 	{
 		// 创建与初始化APP对象
-		eco::init_app(app());
-		eco::load_app(app(), false);
+		eco::init_app(app(), nullptr);
+		eco::load_app(app());
 
 		qt_app.exec();
 
@@ -105,12 +92,12 @@ int AppWork::run(QApplication& qt_app)
 	catch (eco::Error& e)
 	{
 		eco::exit_app(app());
-		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
+		QMessageBox::critical(nullptr, tr("program error"), QString(e.what()));
 	}
 	catch (std::exception& e)
 	{
 		eco::exit_app(app());
-		QMessageBox::critical(nullptr, tr("程序错误"), QString(e.what()));
+		QMessageBox::critical(nullptr, tr("program error"), QString(e.what()));
 	}
 	return 0;
 }
@@ -172,10 +159,6 @@ void AppWork::newLocalSocketConnection()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-QString App::get_app_path()
-{
-	return qApp->applicationFilePath();
-}
 void App::restart()
 {
 	qApp->quit();
