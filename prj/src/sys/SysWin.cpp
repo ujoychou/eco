@@ -1,8 +1,8 @@
 #include "PrecHeader.h"
-#include <eco/proxy/Proxy.h>
+#include <eco/sys/Sys.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/proxy/WinAutoHandler.h>
-#include <eco/filesystem/Operations.h>
+#include <eco/sys/WinAutoHandler.h>
+#include <eco/filesystem/path.h>
 #include <boost/filesystem/path.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -13,8 +13,9 @@
 #include "psapi.h"
 #pragma comment(lib, "psapi.lib")
 
-namespace eco{;
-namespace proxy{;
+
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(sys);
 ////////////////////////////////////////////////////////////////////////////////
 inline bool GetProcessFilePath(
 	OUT std::string& proc_path,
@@ -110,7 +111,7 @@ inline int FindWin32ProcessIdByPath(
 		{
 			return eco::error;
 		}
-		if (eco::filesystem::filepath_equal(exe_path, cur_exe_path))
+		if (eco::filesystem::equal(exe_path, cur_exe_path))
 		{
 			pid = entry.th32ProcessID;
 			return eco::ok;
@@ -136,7 +137,8 @@ bool OpenFile(IN const std::string& szFILE_PATH)
 bool RunExe(
 	IN const std::string& szEXE_FILE,
 	IN const std::string& szPARAS,
-	IN bool bShow)
+	IN bool bShow,
+	IN bool bSync)
 {
 	SHELLEXECUTEINFOA iShell = {0};
 	iShell.cbSize = sizeof(iShell);
@@ -148,7 +150,17 @@ bool RunExe(
 	}
 	iShell.lpVerb = ("open");
 	iShell.nShow = bShow ? SW_SHOW : SW_HIDE;
-	return (ShellExecuteExA(&iShell) == TRUE);
+	if (ShellExecuteExA(&iShell) != TRUE)
+	{
+		return false;
+	}
+
+	// sync wait for process end.
+	if (bSync)
+	{
+		WaitForSingleObject(iShell.hProcess, INFINITE);
+	}
+	return true;
 }
 
 
@@ -213,32 +225,32 @@ bool IsExeRunning(IN const std::string& exe_name)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::string GetRelativeDirectory(IN  const std::string& relative_dir)
+std::string GetRelativePath(IN  const std::string& relative_dir)
 {
-	std::string dest_dir = GetModuleDirectory();
+	std::string dest_dir = GetAppPath();
 	dest_dir += '/';
 	return dest_dir += relative_dir;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::string GetModuleFile()
+std::string GetAppFile()
 {
 	char module_file[2048];
 	GetModuleFileNameA(NULL, module_file, 2048);
 	return module_file;
 }
-std::string GetModuleDirectory()
+std::string GetAppPath()
 {
-	TCHAR module_file[2048];
-	GetModuleFileName(NULL, module_file, 2048);
+	char module_file[2048];
+	GetModuleFileNameA(NULL, module_file, 2048);
 	// Get the parent directory.
 	return boost::filesystem::path(module_file).parent_path().string();
 }
-std::string GetModuleName()
+std::string GetAppName()
 {
-	char path[256] = { 0 };
-	GetModuleFileNameA(NULL, path, 256);
+	char path[2048] = { 0 };
+	GetModuleFileNameA(NULL, path, 2048);
 	uint32_t start = eco::find_last(path, '\\');
 	if (start == std::string::npos) return eco::empty_str;
 	uint32_t end = eco::find_last(path, '.');
@@ -249,4 +261,24 @@ std::string GetModuleName()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
+std::string GetModuleFile(void* func_addr)
+{
+	// get current module dll handle.
+	HMODULE hdl = NULL;
+	if (func_addr != nullptr)
+	{
+		MEMORY_BASIC_INFORMATION mbi;
+		if (::VirtualQuery(func_addr, &mbi, sizeof(mbi)) != 0)
+			hdl = (HMODULE)mbi.AllocationBase;
+	}
+
+	// get dll file path by handle.
+	char file[2048];
+	GetModuleFileNameA(hdl, file, 2048);
+	return file;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(sys);
+ECO_NS_END(eco);

@@ -1,9 +1,10 @@
 #include "PrecHeader.h"
-#include <eco/proxy/WinDump.h>
-#include <eco/proxy/WinAutoHandler.h>
+#include <eco/sys/WinDump.h>
+#include <eco/sys/WinAutoHandler.h>
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef WIN32
-#include <eco/proxy/Proxy.h>
+#include <eco/thread/Mutex.h>
+#include <eco/sys/Sys.h>
 #include <eco/date_time/DateTime.h>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -13,6 +14,8 @@
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(win);
 static bool s_auto_restart = false;
+static bool s_init = false;
+static eco::Mutex s_mutex;
 ////////////////////////////////////////////////////////////////////////////////
 std::string get_dump_file_name()
 {
@@ -29,7 +32,7 @@ std::string get_dump_file_name()
 	// file name: \dump\eco.20180708121212.dump
 	eco::date_time::Timestamp ts(eco::date_time::fmt_iso);
 	file += "\\";
-	file += eco::proxy::GetModuleName();
+	file += eco::sys::GetAppName();
 	file += '.';
 	file += ts.get_value();
 	file += ".dmp";
@@ -58,7 +61,7 @@ LONG WINAPI ExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 	// restart app.
 	if (s_auto_restart)
 	{
-		eco::proxy::RunExe(eco::proxy::GetModuleFile(), "", true);
+		eco::sys::RunExe(eco::sys::GetAppFile(), "", true);
 	}
 	return 0;
 }
@@ -90,6 +93,9 @@ void DisableSetUnhandledExceptionFilter()
 ////////////////////////////////////////////////////////////////////////////////
 void Dump::init(IN bool auto_restart)
 {
+	eco::Mutex::ScopeLock lock(s_mutex);
+	if (s_init) return;
+
 	// currently this don't support win10.
 	SYSTEM_INFO info;
 	OSVERSIONINFOEX os;
@@ -101,6 +107,7 @@ void Dump::init(IN bool auto_restart)
 		::SetUnhandledExceptionFilter(&ExceptionFilter);
 		DisableSetUnhandledExceptionFilter();
 	}
+	s_init = true;
 }
 
 

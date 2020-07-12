@@ -1,5 +1,5 @@
 #include "PrecHeader.h"
-#include <eco/proxy/Proxy.h>
+#include <eco/sys/Sys.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
@@ -9,9 +9,8 @@
 #include <boost/algorithm/string.hpp>
 
 
-
-namespace eco{;
-namespace proxy{;
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(sys);
 ////////////////////////////////////////////////////////////////////////////////
 bool RunOnceExe(
 	IN const std::string& szEXE_FILE,
@@ -67,5 +66,5 @@ std::string GetSystemDateTime()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::proxy
-}// ns::eco
+ECO_NS_END(sys);
+ECO_NS_END(eco);

@@ -1,24 +1,26 @@
 #include "PrecHeader.h"
 #ifdef WIN32
-#include <eco/proxy/WinConsoleEvent.h>
+#include <eco/sys/WinConsoleEvent.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/App.h>
+#include "../Impl.h"
 
 
 ECO_NS_BEGIN(eco);
-extern App* s_app;
 ECO_NS_BEGIN(win);
 ////////////////////////////////////////////////////////////////////////////////
 BOOL OnConsole(DWORD msg)
 {
-	if (s_app == 0) return TRUE;
+	if (eco::App::get() == nullptr)
+	{
+		return TRUE;
+	}
 
 	switch (msg)
 	{
 	case CTRL_C_EVENT:
-		return s_app->on_console(eco::cmd::ctrl_c);
+		return AppInner::on_console(*eco::App::get(), eco::cmd::ctrl_c);
 	case CTRL_CLOSE_EVENT:
-		return s_app->on_console(eco::cmd::ctrl_close);
+		return AppInner::on_console(*eco::App::get(), eco::cmd::ctrl_close);
 	case CTRL_BREAK_EVENT:
 	case CTRL_LOGOFF_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
