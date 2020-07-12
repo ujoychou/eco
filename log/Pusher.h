@@ -47,12 +47,10 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Stream>
+template<typename stream_t>
 class PusherT
 {
 public:
-	typedef Stream Stream;
-
 	inline PusherT();
 	~PusherT();
 
@@ -74,13 +72,13 @@ public:
 	}
 
 	/*@ log stream.*/
-	inline Stream& stream()
+	inline stream_t& stream()
 	{
 		return m_stream;
 	}
 
 protected:
-	Stream m_stream;
+	stream_t m_stream;
 	SeverityLevel m_severity;
 	uint32_t	m_file_line;
 	const char* m_file_name;
@@ -88,16 +86,17 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Pusher : public PusherT<eco::Stream>
+
+template<uint32_t siz = text_size>
+class Pusher : public PusherT<eco::Stream<siz> > {};
+class PusherX : public PusherT<eco::StreamX>
 {
 public:
-	inline Pusher(IN const uint32_t size)
+	inline PusherX(IN const uint32_t size)
 	{
 		m_stream.buffer().reserve(size);
 	}
 };
-typedef PusherT<eco::StreamT<FixBuffer<text_size> > > LogPusher;
-typedef LogPusher::Stream LogStream;
 
 
 ////////////////////////////////////////////////////////////////////////////////

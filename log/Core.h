@@ -34,10 +34,8 @@ namespace log{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Core
 {
-	ECO_IMPL_API();
+	ECO_SINGLETON_API(Core);
 public:
-	~Core();
-
 	/*@ option: severity level. */
 	void set_severity_level(IN const char* v, IN const int flag = 0);
 	void set_severity_level(IN const SeverityLevel v, IN const int flag = 0);
@@ -72,15 +70,10 @@ public:
 	void add_console_sink(IN bool);
 	bool has_console_sink() const;
 
-	/*@ option: file sink file name.*/
+	/*@ option: file sink file path.*/
 	void set_file_path(IN const char*);
 	const char* get_file_path() const;
 	Core& file_path(IN const char*);
-
-	/*@ option: file sink file name.*/
-	void set_file_name(IN const char*);
-	const char* get_file_name() const;
-	Core& file_name(IN const char*);
 
 	/*@ option: file sink file size, bytes.*/
 	void set_file_roll_size(IN const uint32_t);
@@ -103,9 +96,6 @@ public:
 
 	/*@ append log info.*/
 	void append(IN eco::Bytes& buf, IN const SeverityLevel level);
-
-private:
-	Core();
 };
 
 

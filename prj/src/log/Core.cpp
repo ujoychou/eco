@@ -20,7 +20,7 @@ class ConsoleSink
 public:
 	inline void operator<<(IN const char* buf)
 	{
-		printf(buf);
+		std::cout << buf;
 	}
 };
 
@@ -59,10 +59,11 @@ public:
 	Server<Handler>::ptr m_server;
 
 	// core option.
-	uint32_t m_async;
+	uint16_t m_init;
+	uint16_t m_async;
 	SinkOption m_sink_option;
 	uint32_t m_capacity;
-	uint32_t m_async_flush;
+	uint32_t m_async_flush;			// async flush millseconds.
 
 	// console sink.
 	eco::Mutex m_sync_mutex;
@@ -86,24 +87,29 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_TYPE_IMPL(Core);
+ECO_SINGLETON_IMPL(Core);
 ECO_PROPERTY_STR_IMPL(Core, file_path);
 ECO_PROPERTY_BOL_IMPL(Core, async);
 ECO_PROPERTY_VAV_IMPL(Core, SinkOption, sink_option);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, capacity);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, async_flush);
 ECO_PROPERTY_VAV_IMPL(Core, uint32_t, file_roll_size);
-Core Core::Impl::s_object;
-ECO_API Core& get_core() { return Core::Impl::s_object; }
+ECO_API Core& get_core()
+{
+	return eco::Singleton<Core>::instance();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 Core::Impl::Impl()
 	: m_async(true)
+	, m_init(false)
 	, m_capacity(queue_size)
 	, m_file_roll_size(eco::log::file_roll_size)
-	, m_file_path("./log/")
+	, m_file_path("log")
 	, m_on_create(nullptr)
 	, m_sink_option(eco::log::console_sink | eco::log::file_sink)
-	, m_file_sev(eco::log::info)
+	, m_file_sev(eco::log::debug)
 	, m_console_sev(eco::log::info)
 	, m_async_flush(3000)
 {}
@@ -139,6 +145,8 @@ void Handler::operator()(IN const Pack& buf)
 ////////////////////////////////////////////////////////////////////////////////
 void Core::run()
 {
+	if (impl().m_init) return;
+
 	// create file path, if file path is not exist.
 	boost::system::error_code e;
 	const std::string& path_v = impl().m_file_path;
@@ -181,6 +189,7 @@ void Core::run()
 			impl().m_file_roll_size, 0,
 			false, impl().m_on_create));
 	}
+	impl().m_init = true;
 }
 
 
@@ -258,7 +267,7 @@ void Core::append(IN eco::Bytes& buf, IN const SeverityLevel level)
 		// async write file.
 		if (impl().m_file_sink.get() && level >= impl().m_file_sev)
 		{
-			impl().m_server->post(buf);
+			impl().m_server->queue().post(buf);
 		}
 		Handler(impl()).cout(buf, level);
 	}

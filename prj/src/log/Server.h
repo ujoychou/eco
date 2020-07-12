@@ -31,7 +31,8 @@ namespace log{;
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename HandlerT>
-class Server : public eco::detail::MessageServer<eco::Bytes, HandlerT, Queue>
+class Server : public eco::MessageServerT<
+	eco::Bytes, HandlerT, eco::Thread, Queue>
 {
 	ECO_OBJECT(Server);
 public:

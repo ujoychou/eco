@@ -11,8 +11,8 @@ namespace log{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename LogStream>
-inline PusherT<LogStream>::PusherT()
+template<typename stream_t>
+inline PusherT<stream_t>::PusherT()
 	: m_severity(none)
 	, m_file_line(0)
 	, m_file_name(nullptr)
@@ -20,8 +20,8 @@ inline PusherT<LogStream>::PusherT()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename LogStream>
-PusherT<LogStream>::~PusherT()
+template<typename stream_t>
+PusherT<stream_t>::~PusherT()
 {
 	if (m_severity < get_core().get_severity_level())
 	{
@@ -39,7 +39,6 @@ PusherT<LogStream>::~PusherT()
 	{
 		m_stream << " @" << m_file_name << '.' << m_file_line;
 	}
-	m_stream << eco::end();
 	
 	// turn line '\n' must input into the string.
 	m_stream.buffer().force_append('\n');
@@ -48,8 +47,8 @@ PusherT<LogStream>::~PusherT()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename LogStream>
-PusherT<LogStream>& PusherT<LogStream>::set(
+template<typename stream_t>
+PusherT<stream_t>& PusherT<stream_t>::set(
 	IN const char* func_name,
 	IN const char* file_name,
 	IN int file_line,
@@ -71,7 +70,7 @@ PusherT<LogStream>& PusherT<LogStream>::set(
 
 	// default domain is empty string.
 	eco::date_time::Timestamp now(eco::date_time::fmt_std_m);
-	m_stream << now.get_value() <= eco::this_thread::id_string()
+	m_stream << now.get_value() <= eco::this_thread::get_id()
 		<= Severity::get_display(sev_level) < ' ';
 	if (func_name != nullptr)
 		m_stream << eco::group(func_name) < ' ';

@@ -30,7 +30,7 @@ log queue.
 
 namespace eco{;
 namespace log{;
-typedef eco::FixBuffer<pack_size> Pack;
+typedef eco::Buffer<pack_size> Pack;
 ////////////////////////////////////////////////////////////////////////////////
 class Queue
 {
@@ -86,7 +86,7 @@ public:
 	/*@ when close logging, it should log all the data in queue.
 	and stop post log before close queue.
 	*/
-	void close()
+	inline void close()
 	{
 		m_state.none();
 
@@ -95,7 +95,7 @@ public:
 	}
 
 	template<typename Text>
-	void post(IN const Text& text)
+	inline void post(IN const Text& text)
 	{
 		// text size is too large.
 		if (text.size() > Pack::capacity())
@@ -128,7 +128,7 @@ public:
 		}
 	}
 
-	void pop(PackPtr& pack)
+	inline void pop(PackPtr& pack)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
 		

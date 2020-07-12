@@ -42,14 +42,14 @@ logging.
 #define ECO_LOG_1(sev) ECO_LOG_2(sev, nullptr)
 #define ECO_LOG_2(sev, func)\
 	if (eco::log::##sev >= eco::log::get_core().get_severity_level())\
-		eco::log::LogPusher().set(\
+		eco::log::Pusher<>().set(\
 		func, __FILE__, __LINE__, eco::log::##sev).stream()
 #define ECO_LOG(...) ECO_MACRO(ECO_LOG_,__VA_ARGS__)
 
 #define ECO_LOGX_1(sev) ECO_LOGX_2(sev, nullptr)
 #define ECO_LOGX_2(sev, func)\
 	if (eco::log::##sev >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher(256).set(\
+		eco::log::PusherX(256).set(\
 		func, __FILE__, __LINE__, eco::log::##sev).stream()
 #define ECO_LOGX(...) ECO_MACRO(ECO_LOGX_,__VA_ARGS__)
 
