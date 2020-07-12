@@ -85,8 +85,8 @@ public:
 	{
 		set_live_seconds(5);
 		m_orm_version.id("version").table("_version");
-		m_orm_version.add().property("value").field("version").pk(true).int_type();
-		m_orm_version.add().property("module").field("module").pk(true).vchar_small();
+		m_orm_version.add().property("value").field("version").pk().int_type().index();
+		m_orm_version.add().property("module").field("module").pk().varchar(150).index();
 		m_orm_version.add().property("timestamp").field("timestamp").date_time();
 	}
 
@@ -137,9 +137,11 @@ void Persist::Impl::on_live()
 	// 5.upgrade database according to it's current version.
 	if (!m_state.has(state_init))
 	{
+		Loading load(m_load_thread_id = eco::this_thread::id());
+
 		// get database version.
 		char cond_sql[64] = { 0 };
-		const char* app_name = eco::App::app()->get_name();
+		const char* app_name = eco::App::get()->get_name();
 		sprintf(cond_sql, "where %s='%s' order by %s desc",
 			m_orm_version.find_property("module")->get_field(), app_name,
 			m_orm_version.find_property("value")->get_field());
@@ -174,7 +176,12 @@ void Persist::Impl::on_live()
 			Loading load(m_load_thread_id = eco::this_thread::id());
 			m_handler->on_load();
 		}
+
 		m_state.add(state_load);
+		if (m_handler != nullptr)
+		{
+			m_handler->ok_load();
+		}
 	}
 }
 
@@ -213,8 +220,7 @@ void Persist::set_upgrade(IN const uint32_t ver, IN UpgradeFunc func)
 }
 eco::Database& Persist::master()
 {
-	if (impl().m_state.has(Impl::state_init) && 
-		!impl().m_state.has(Impl::state_load) &&
+	if (!impl().m_state.has(Impl::state_load) &&
 		eco::this_thread::id() != impl().m_load_thread_id)
 	{
 		// only persist is unready and not in "on_load".
@@ -238,6 +244,10 @@ void Persist::close()
 	{
 		impl().m_handler->on_exit();
 	}
+}
+bool Persist::ready() const
+{
+	return impl().m_state.has(Impl::state_load);
 }
 
 

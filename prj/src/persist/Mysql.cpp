@@ -55,6 +55,14 @@ public:
 		return m_db_name.c_str();
 	}
 
+	// get index sql.
+	virtual bool get_index_sql(
+		OUT std::string& sql,
+		IN  const PropertyMapping& pmap) const override
+	{
+		return pmap.get_index_sql(sql);
+	}
+
 public:
 	inline MySqlConfig() : m_port(0)
 	{}
@@ -79,7 +87,7 @@ public:
 			m_charset = "utf32";
 			return;
 		}
-		m_charset = "gbk";	// default is gbk.
+		m_charset = "utf8";	// default is utf8.
 	}
 
 public:
@@ -379,21 +387,21 @@ bool MySql::is_open()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void MySql::select(OUT Record& obj, IN  const char* sql)
+bool MySql::select(OUT Record& obj, IN  const char* sql)
 {
 	Recordset data_sheet;
 	select(data_sheet, sql);
 	if (data_sheet.size() > 0)
 	{
 		obj = data_sheet[0];
+		return true;
 	}
+	return false;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void MySql::select(
-	OUT Recordset& obj_sheet,
-	IN  const char* sql)
+void MySql::select(OUT Recordset& obj_sheet, IN const char* sql)
 {
 	eco::Mutex::ScopeLock lock(impl().m_mysql_mutex, !has_transaction());
 
@@ -530,6 +538,39 @@ void MySql::set_field(
 
 
 ////////////////////////////////////////////////////////////////////////////////
+bool MySql::has_index(const char* table, const char* index, const char* db)
+{
+	char cond_sql[256] = { 0 };
+	if (db == nullptr) db = impl().m_config.m_db_name.c_str();
+	sprintf(cond_sql, "where TABLE_SCHEMA='%s' and TABLE_NAME='%s' and "
+		"INDEX_NAME='%s'", db, table, index);
+	return has_record("information_schema.STATISTICS", cond_sql) > 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void MySql::set_index(
+	IN const char* table,
+	IN const PropertyMapping& prop,
+	IN const char* db)
+{
+	char sql[128] = { 0 };
+	if (db == 0) db = config().get_database();
+	if (has_index(table, prop.get_index_name().c_str(), db))
+	{
+		sprintf(sql, "drop index %s on %s.%s",
+			prop.get_index_name().c_str(), db, table);
+		execute_sql(sql);
+	}
+
+	std::string index_sql;
+	prop.get_index_sql(index_sql);
+	sprintf(sql, "alter table %s.%s add %s", db, table, index_sql.c_str());
+	execute_sql(sql);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 DatabaseConfig& MySql::config()
 {
 	return impl().m_config;
@@ -555,7 +596,7 @@ void MySql::commit()
 ////////////////////////////////////////////////////////////////////////////////
 void MySql::rollback()
 {
-	execute_sql("ROLLBACK;");
+	try { execute_sql("ROLLBACK;"); } catch (...) {}
 	impl().m_mysql_mutex.unlock();
 }
 

@@ -117,6 +117,9 @@ public:
 		return get_address().get_name();
 	}
 
+	// get persist state.
+	bool ready() const;
+
 	// register persist handler.
 	void set_handler(IN PersistHandler&);
 
@@ -167,6 +170,9 @@ public:
 	// it will throw exception when has error.
 	virtual void on_load() {}
 
+	// event: on_load finished.
+	virtual void ok_load() {}
+
 	// event: clear business data before master close.
 	virtual void to_exit() {}
 
@@ -175,6 +181,9 @@ public:
 
 	// get persist.
 	inline Persist& persist();
+
+	// get persist ready state.
+	inline bool ready();
 
 	// get persist master. when persis is unloaded it will throw error.
 	inline eco::Database& master();
@@ -193,6 +202,10 @@ inline Persist& PersistHandler::persist()
 inline eco::Database& PersistHandler::master()
 {
 	return persist().master();
+}
+inline bool PersistHandler::ready()
+{
+	return m_persist.ready();
 }
 ECO_NS_END(eco);
 #endif

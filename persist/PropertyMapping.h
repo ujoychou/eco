@@ -45,6 +45,8 @@ enum
 	constraint_pk		= 0x0001,		// primary key.
 	constraint_fk		= 0x0002,		// foreign key.
 	constraint_index	= 0x0004,		// index.
+	constraint_unique	= 0x0008,		// unique index.
+	constraint_nnull	= 0x0010,		// not null.
 };
 typedef uint16_t Constraint;
 
@@ -59,7 +61,7 @@ public:
 
 	inline bool operator==(IN const char* field_name) const
 	{
-		return strcmp(m_field_name, field_name) == 0;
+		return m_field_name == field_name;
 	}
 
 	inline PropertyMapping& field(IN const char* field)
@@ -83,6 +85,24 @@ public:
 	inline PropertyMapping& fk(IN bool is = true)
 	{
 		eco::set(m_constraint, constraint_fk, is);
+		return *this;
+	}
+
+	inline PropertyMapping& index(IN bool is = true)
+	{
+		eco::set(m_constraint, constraint_index, is);
+		return *this;
+	}
+
+	inline PropertyMapping& unique(IN bool is = true)
+	{
+		eco::set(m_constraint, constraint_unique, is);
+		return *this;
+	}
+
+	inline PropertyMapping& not_null(IN bool is = true)
+	{
+		eco::set(m_constraint, constraint_nnull, is);
 		return *this;
 	}
 
@@ -184,21 +204,25 @@ public:
 public:
 	inline const char* get_field() const
 	{
-		return m_field_name;
+		return m_field_name.c_str();
 	}
 
 	inline const char* get_property() const
 	{
-		return m_prop_name;
+		return m_prop_name.c_str();
 	}
 	inline operator const char* () const
 	{
-		return m_prop_name;
+		return m_prop_name.c_str();
+	}
+	inline operator const uint32_t() const
+	{
+		return m_field_index;
 	}
 
 	inline bool is_property(IN const char* prop) const
 	{
-		return strcmp(m_prop_name, prop) == 0;
+		return m_prop_name == prop;
 	}
 
 	inline bool is_pk() const
@@ -209,6 +233,21 @@ public:
 	inline bool is_fk() const
 	{
 		return eco::has(m_constraint, eco::constraint_fk);
+	}
+
+	inline bool is_index() const
+	{
+		return eco::has(m_constraint, eco::constraint_index);
+	}
+
+	inline bool is_unique() const
+	{
+		return eco::has(m_constraint, eco::constraint_unique);
+	}
+
+	inline bool is_not_null() const
+	{
+		return eco::has(m_constraint, eco::constraint_nnull);
 	}
 
 	inline bool has_constraint(IN const uint16_t v) const
@@ -266,8 +305,11 @@ public:
 
 	inline std::string get_field_type_sql(IN  DatabaseConfig* cfg) const
 	{
+		// standard field sql.
 		std::string temp;
 		get_field_type_sql(temp, m_field_type, m_field_size);
+
+		// special field by database.
 		if (temp.empty() && cfg != nullptr)
 		{
 			cfg->get_field_type_sql(temp, m_field_type, m_field_size);
@@ -279,10 +321,40 @@ public:
 		return temp;
 	}
 
+	inline std::string get_index_name() const
+	{
+		return std::string("_index_") + m_field_name;
+	}
+
+	inline bool get_index_sql(OUT std::string& sql) const
+	{
+		if (is_index())
+		{
+			sql += "INDEX ";
+		}
+		else if (is_unique())
+		{
+			sql += "UNIQUE INDEX ";
+		}
+		else
+		{
+			return false;
+		}
+
+		if (!sql.empty())
+		{
+			sql += get_index_name();
+			sql += " (";
+			sql += m_field_name;
+			sql += ")";
+		}
+		return true;
+	}
+
 ////////////////////////////////////////////////////////////////////////////////
 private:
-	const char*		m_prop_name;	// data object property.
-	const char*		m_field_name;	// db field name.
+	std::string		m_prop_name;	// data object property.
+	std::string		m_field_name;	// db field name.
 	uint32_t		m_field_index;	// db field index.
 	DataType		m_field_type;	// field type.
 	uint32_t		m_field_size;	// field size.

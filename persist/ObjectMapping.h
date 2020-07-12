@@ -88,25 +88,29 @@ public:
 		}
 
 		// primary key: "PRIMARY KEY (pk1, pk2)"
-		std::string pk_sql;
+		std::string temp("PRIMARY KEY (");
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
 			if (it->is_pk())
 			{
-				pk_sql += it->get_field();
-				pk_sql += ",";
+				temp += it->get_field();
+				temp += ",";
 			}
 		}
+		if (temp.back() != '(')		// not empty.
+		{
+			temp.back() = ')';
+			sql += temp;
+			sql += ',';
+		}
 
-		if (!pk_sql.empty())
+		// index: unique / normal.
+		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
-			pk_sql[pk_sql.size() - 1] = ')';
-			sql += "PRIMARY KEY (" + pk_sql + ")";
+			if (cfg->get_index_sql(sql, *it))
+				sql += ',';
 		}
-		else
-		{
-			sql[sql.size() - 1] = ')';
-		}
+		sql.back() = ')';
 	}
 
 	template<typename meta_t, typename object_t>
@@ -456,6 +460,18 @@ public:
 		uint32_t size = static_cast<uint32_t>(m_prop_map.size());
 		m_prop_map.push_back(PropertyMapping(size));
 		return m_prop_map.back();
+	}
+
+	// Remove a field.
+	inline void erase(IN const char* prop)
+	{
+		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
+		{
+			if (strcmp(it->get_property(), prop) == 0)
+			{
+				m_prop_map.erase(it); break;
+			}
+		}
 	}
 
 	// Find a field adapter.

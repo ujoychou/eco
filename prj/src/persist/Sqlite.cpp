@@ -49,6 +49,14 @@ public:
 		return m_db_name.c_str();
 	}
 
+	// get index sql.
+	virtual bool get_index_sql(
+		OUT std::string& sql,
+		IN  const PropertyMapping& pmap) const override
+	{
+		return false;		// sqlite don't support index.
+	}
+
 	inline void set_charset(IN const persist::Charset v)
 	{
 		switch (v)
@@ -107,7 +115,7 @@ public:
 		if (!boost::filesystem::exists(path, ec) &&
 			!boost::filesystem::create_directory(path, ec))
 		{
-			eco::FixStream err;
+			eco::Stream<> err;
 			err << "create directory fail" << m_config.m_db_name;
 			throw std::logic_error(err.c_str());
 		}
@@ -211,21 +219,21 @@ bool Sqlite::is_open()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Sqlite::select(OUT Record& obj, IN  const char* sql)
+bool Sqlite::select(OUT Record& obj, IN  const char* sql)
 {
 	Recordset rset;
 	select(rset, sql);
 	if (rset.size() > 0)
 	{
 		obj = rset[0];
+		return true;
 	}
+	return false;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Sqlite::select(
-	OUT Recordset& rd_set,
-	IN  const char* sql)
+void Sqlite::select(OUT Recordset& rd_set, IN  const char* sql)
 {
 	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex, !has_transaction());
 	impl().open_once();
@@ -352,6 +360,24 @@ void Sqlite::set_field(
 		throw std::logic_error(sql);
 	}
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool Sqlite::has_index(const char* table, const char* field, const char* db)
+{
+	return false;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void Sqlite::set_index(
+	IN const char* table,
+	IN const PropertyMapping& prop,
+	IN const char* db_name)
+{
+	
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////

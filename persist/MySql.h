@@ -61,7 +61,7 @@ public:
 	virtual bool is_open() override;
 
 	// read the object from database.
-	virtual void select(
+	virtual bool select(
 		OUT Record& obj,
 		IN  const char* sql) override;
 
@@ -99,6 +99,18 @@ public:
 
 	// set field in table, add field if the field is not exist else modify it.
 	virtual void set_field(
+		IN const char* table,
+		IN const PropertyMapping& prop,
+		IN const char* db_name = nullptr) override;
+
+	// is exist index in this table.
+	virtual bool has_index(
+		IN const char* table_name,
+		IN const char* index_name,
+		IN const char* db_name = nullptr) override;
+
+	// set index in table, add index if the field is not exist else modify it.
+	virtual void set_index(
 		IN const char* table,
 		IN const PropertyMapping& prop,
 		IN const char* db_name = nullptr) override;

@@ -51,15 +51,11 @@ public:
 	// auto rollback when hasn't call commit explicit.
 	inline ~Transaction()
 	{
-		try
+		if (!m_commited)
 		{
-			if (!m_commited)
-			{
-				m_db.rollback();
-				m_db.transaction_level() = 0;
-			}
+			m_db.rollback();
+			m_db.transaction_level() = 0;
 		}
-		catch (...)	{}
 	}
 
 	// commit when database operation finished.
@@ -67,9 +63,8 @@ public:
 	{
 		if (m_db.transaction_level() == 0)
 		{
-			throw std::logic_error("commit error: db has no transaction.");
+			throw std::logic_error("sql [commit] fail with no transaction.");
 		}
-
 		if (m_db.transaction_level() == 1)
 		{
 			m_db.commit();
@@ -128,7 +123,7 @@ public:
 	virtual bool is_open() = 0;
 
 	// read the object from database.
-	virtual void select(
+	virtual bool select(
 		OUT Record& obj,
 		IN  const char* sql) = 0;
 
@@ -165,6 +160,18 @@ public:
 
 	// set field in table, add field if the field is not exist else modify it.
 	virtual void set_field(
+		IN const char* table,
+		IN const PropertyMapping& prop,
+		IN const char* db_name = nullptr) = 0;
+
+	// is exist index in this table.
+	virtual bool has_index(
+		IN const char* table_name,
+		IN const char* index_name,
+		IN const char* db_name = nullptr) = 0;
+
+	// set index in table, add index if the field is not exist else modify it.
+	virtual void set_index(
 		IN const char* table,
 		IN const PropertyMapping& prop,
 		IN const char* db_name = nullptr) = 0;
@@ -349,7 +356,7 @@ public:
 
 	// read data from database.
 	template<typename meta_t, typename object_t>
-	inline void read(
+	inline bool read(
 		OUT object_t& obj,
 		IN  const ObjectMapping& mapping)
 	{
@@ -357,13 +364,14 @@ public:
 		mapping.get_select_sql<meta_t>(sql, obj, mapping.get_table());
 
 		Record rd;
-		select(rd, sql.c_str());
+		bool has = select(rd, sql.c_str());
 		mapping.decode<meta_t>(obj, rd, eco_db);
+		return has;
 	}
 
 	// read data from database.
 	template<typename meta_t, typename object_t>
-	inline void read(
+	inline bool read(
 		OUT object_t& obj,
 		IN  const ObjectMapping& mapping,
 		IN  const char* cond_sql,
@@ -374,8 +382,9 @@ public:
 		mapping.get_select_sql(sql, cond_sql, table, lias_table);
 
 		Record rd;
-		select(rd, sql.c_str());
+		bool has = select(rd, sql.c_str());
 		mapping.decode<meta_t>(obj, rd, eco_db);
+		return has;
 	}
 
 	// save data to database.
@@ -442,10 +451,10 @@ public:
 		{
 			ECO_THROW(0) << "get max id fail, pk isn't exist.";
 		}
-		eco::Stream sql;
-		sql.buffer().reserve(64);
-		sql << "select max(" << pk->get_property() 
-			<< ") from " << mapping.get_table(table);
+		std::string sql("select max(");
+		sql += pk->get_property();
+		sql += ") from ";
+		sql += mapping.get_table(table);
 
 		// get max id.
 		eco::Record rd;

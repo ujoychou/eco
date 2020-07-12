@@ -20,18 +20,24 @@
 
 
 namespace eco{;
+class PropertyMapping;
 ////////////////////////////////////////////////////////////////////////////////
 class DatabaseConfig
 {
 public:
+	// get config database name.
+	virtual const char* get_database() = 0;
+
 	// get database relative field type expression sql.
 	virtual void get_field_type_sql(
 		OUT std::string& field_sql,
 		IN  const uint32_t field_type,
 		IN  const uint32_t field_size) = 0;
 
-	// get config database name.
-	virtual const char* get_database() = 0;
+	// get index sql.
+	virtual bool get_index_sql(
+		OUT std::string& sql,
+		IN  const PropertyMapping& pmap) const = 0;
 };
 
 
