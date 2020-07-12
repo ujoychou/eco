@@ -44,7 +44,7 @@ public:
 		}
 
 		// inflate stream wrapper object.
-		StreamObject obj(sour, sour_size);
+		StreamObject obj(sour, (uInt)sour_size);
 		if (!obj.InflateInit())
 		{
 			return false;
@@ -58,7 +58,7 @@ public:
 		do{
 			// alloc output memory.
 			result.append(uncomp_unit_size, 0);
-			ret = obj.Inflate(&result[last_pos], uncomp_unit_size);
+			ret = obj.Inflate(&result[last_pos], (uInt)uncomp_unit_size);
 			if (ret < Z_OK)
 			{
 				return false;
