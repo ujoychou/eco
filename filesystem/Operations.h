@@ -21,13 +21,10 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/algorithm/string.hpp>
 
 
-
-
-namespace eco{;
-namespace filesystem{;
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(filesystem);
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
@@ -36,71 +33,76 @@ enum
 };
 typedef int Option;
 
+
 ////////////////////////////////////////////////////////////////////////////////
-// shim class for read file
-class ReadFile : public boost::noncopyable
+/*@ check file is exist.*/
+inline bool exist_file(IN const char* file)
 {
-public:
-	inline ReadFile()
-	{}
+	FILE* fp = ::fopen(file, "r");
+	if (fp) { ::fclose(fp); return true; }
+	return false;
+}
 
-	inline ReadFile(
-		IN const std::string& file,
-		IN const char* mode)
-	{
-		open(file, mode);
-	}
 
-	inline void open(
-		IN const std::string& file,
-		IN const char* mode)
+////////////////////////////////////////////////////////////////////////////////
+/*@ recursively remove all file in the directory.*/
+inline void get_files_if_impl(
+	OUT std::vector<boost::filesystem::path>& files,
+	IN  const boost::filesystem::path& sour_dir,
+	IN  const bool recursive,
+	IN  std::function<bool(const boost::filesystem::path& file)>& filter)
+{
+	using namespace boost::filesystem;
+
+	// recursively remove files.
+	for (directory_iterator it(sour_dir); it != directory_iterator(); ++it)
 	{
-		eco::filesystem::FileRaw reader;
-		reader.open(file.c_str(), mode);
-		uint32_t size = (uint32_t)reader.file_size(file.c_str());
-		if (size > 0)
+		const path& sour = it->path();
+		if (boost::filesystem::is_directory(sour) && recursive)
 		{
-			m_file_data.resize(size);
-			reader.read(&m_file_data[0], size);
+			get_files_if_impl(files, sour, true, filter);
 		}
-	}
+		else if (boost::filesystem::is_regular_file(sour))
+		{
+			if (filter && filter(sour))	files.push_back(sour);  
+		}
+	}// end for.
+}
 
-	inline std::string& data()
-	{
-		return m_file_data;
-	}
-	inline const std::string& get_data() const
-	{
-		return m_file_data;
-	}
 
-private:
-	std::string m_file_data;
-};
+////////////////////////////////////////////////////////////////////////////////
+inline void get_files_if(
+	OUT std::vector<boost::filesystem::path>& files,
+	IN  const boost::filesystem::path& sour_dir,
+	IN  const bool recursive,
+	IN  std::function<bool(const boost::filesystem::path& file)> filter)
+{
+	if (!exists(sour_dir)) return;
+	get_files_if_impl(files, sour_dir, recursive, filter);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 /*@ recursively copy all file in the directory.*/
-inline void copy_files(
-	IN  const boost::filesystem::path& sour_dir, 
-	IN  const boost::filesystem::path& dest_dir)
+inline void copy_files_impl(
+	IN  const boost::filesystem::path& sour_dir,
+	IN  const boost::filesystem::path& dest_dir,
+	IN  const bool recursive)
 {
 	using namespace boost::filesystem;
 
-	// create destination directory.
-	if (!exists(dest_dir))
-	{
-		create_directories(dest_dir);
-	}
-
 	// recursively copy files.
-	for (directory_iterator it(sour_dir); it!=directory_iterator(); ++it)
+	for (directory_iterator it(sour_dir); it != directory_iterator(); ++it)
 	{
 		const path& it_sour = it->path();
 		const path it_dest = dest_dir / it->path().filename();
-		if (boost::filesystem::is_directory(it_sour))
+		if (boost::filesystem::is_directory(it_sour) && recursive)
 		{
-			eco::filesystem::copy_files(it_sour, it_dest);
+			// create destination directory.
+			if (!exists(it_dest)) create_directory(it_dest);
+
+			// copy destination files.
+			eco::filesystem::copy_files_impl(it_sour, it_dest, recursive);
 		}
 		else if (boost::filesystem::is_regular_file(it_sour))
 		{
@@ -111,11 +113,29 @@ inline void copy_files(
 
 
 ////////////////////////////////////////////////////////////////////////////////
+/*@ recursively copy all file in the directory.*/
+inline void copy_files(
+	IN  const boost::filesystem::path& sour_dir, 
+	IN  const boost::filesystem::path& dest_dir,
+	IN  const bool recursive = true)
+{
+	using namespace boost::filesystem;
+
+	// create destination directory.
+	if (!exists(dest_dir))
+	{
+		create_directories(dest_dir);
+	}
+	copy_files_impl(sour_dir, dest_dir, recursive);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 /*@ recursively remove all file in the directory.*/
 inline bool remove_files_if_impl(
 	IN  const boost::filesystem::path& sour_dir,
 	IN  const Option option,
-	IN  std::function<bool(const boost::filesystem::path& file)>& remove_if)
+	IN  std::function<bool(const boost::filesystem::path& file)>& filter)
 {
 	using namespace boost::filesystem;
 
@@ -124,51 +144,41 @@ inline bool remove_files_if_impl(
 	for (directory_iterator it(sour_dir); it != directory_iterator(); ++it)
 	{
 		const path& sour = it->path();
-		if (boost::filesystem::is_directory(sour) && 
-			eco::has(option, remove_recursive))
+		if (is_directory(sour) && eco::has(option, remove_recursive))
 		{
-			if (!remove_files_if_impl(sour, remove_root | option, remove_if))
-			{
+			if (!remove_files_if_impl(sour, remove_root | option, filter))
 				remove_root_sour = false;
-			}
 		}
 		else if (boost::filesystem::is_regular_file(sour))
 		{
-			if (!remove_if || remove_if(sour))
-			{
+			if (!filter || filter(sour))
 				boost::filesystem::remove(sour);
-				continue;
-			}
-			remove_root_sour = false;
+			else
+				remove_root_sour = false;
 		}
 	}// end for.
 
 	if (remove_root_sour && eco::has(option, remove_root))
-	{
 		boost::filesystem::remove(sour_dir);
-	}
 	return remove_root_sour;
 }
 inline bool remove_files_if(
 	IN  const boost::filesystem::path& sour_dir,
 	IN  const Option option,
-	IN  std::function<bool(const boost::filesystem::path& file)> remove_if)
+	IN  std::function<bool(const boost::filesystem::path& file)> filter)
 {
-	return remove_files_if_impl(sour_dir, option, remove_if);
+	if (!exists(sour_dir)) return false;
+	return remove_files_if_impl(sour_dir, option, filter);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 /*@ recursively remove all file in the directory.*/
-inline void remove_files(
-	IN  const boost::filesystem::path& sour_dir,
-	IN  const bool remove_sour_dir)
+inline void remove_files(IN  const boost::filesystem::path& sour_dir)
 {
-	if (exists(sour_dir))
-	{
-		eco::filesystem::remove_files_if(sour_dir, remove_recursive, nullptr);
-	}
+	eco::filesystem::remove_files_if(sour_dir, remove_recursive, nullptr);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /*@ recursively remove all file in the directory.
@@ -189,69 +199,20 @@ inline void remove_files_by_suffix(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void filepath_format(OUT std::string& p)
+// write string to files.
+inline void write_file(const char* file, const char* c, size_t size)
 {
-	std::replace(p.begin(), p.end(), '/', '\\');
-
-	// remove "../"
-	std::string new_p;
-	new_p.reserve(p.size());
-	size_t pos = 0;
-	while (pos < p.size() - 1)
-	{
-		if (p[pos] == '.' && p[pos + 1] == '.')			// parent dir.
-		{
-			// remove parent dir.
-			if (new_p.size() > 1 && new_p.back() == '\\')
-			{
-				for (size_t i = new_p.size() - 2; i != size_t(-1); --i)
-				{
-					if (new_p[i] == '\\')
-					{
-						new_p.resize(i);
-						break;
-					}
-				}
-			}// end remove.
-			pos += 2;
-		}
-		else if (p[pos] == '.' && p[pos + 1] == '\\')		// current dir.
-		{
-			pos += 2;
-		}
-		// igore repeated '\\'
-		else if (p[pos] == '\\' && new_p.size() > 0 && new_p.back() == '\\')
-		{
-			pos += 1;
-		}
-		else
-		{
-			new_p.push_back(p[pos]);
-			pos += 1;
-		}
-	}// end for.
-
-	if (pos == p.size() - 1)
-	{
-		new_p.push_back(p[pos]);
-	}
-
-	p = new_p;
+	eco::filesystem::File f(file, "wt+");
+	f.write(c, size);
+	f.close();
+}
+inline void write_file(const char* file, const std::string& c)
+{
+	write_file(file, c.c_str(), c.size());
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool filepath_equal(IN const std::string& p1, IN const std::string& p2)
-{
-	std::string cmp1(p1);
-	std::string cmp2(p2);
-	filepath_format(cmp1);
-	filepath_format(cmp2);
-	return boost::algorithm::iequals(cmp1, cmp2);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-}// ns::filesystem
-}// ns::afw
+ECO_NS_END(filesystem);
+ECO_NS_END(eco);
 #endif

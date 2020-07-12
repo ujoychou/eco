@@ -1,5 +1,5 @@
-#ifndef ECO_FILE_H
-#define ECO_FILE_H
+#ifndef ECO_FILESYSTEM_FILE_H
+#define ECO_FILESYSTEM_FILE_H
 /*******************************************************************************
 @ name
 file.
@@ -21,17 +21,14 @@ file.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
-#include <eco/Object.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <eco/Type.h>
+#include <eco/Object.h>
 
 
-
-namespace eco{;
-namespace filesystem{;
-
-
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(filesystem);
 ////////////////////////////////////////////////////////////////////////////////
 class FileRaw : public eco::Object<FileRaw>
 {
@@ -130,6 +127,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 class File : public FileRaw
 {
+	ECO_OBJECT(File);
 public:
 	inline File() : m_file_size(0)
 	{}
@@ -182,5 +180,51 @@ private:
 };
 
 
-}}
+////////////////////////////////////////////////////////////////////////////////
+// shim class for read file
+class ReadFile
+{
+	ECO_NONCOPYABLE(ReadFile);
+public:
+	inline ReadFile()
+	{}
+
+	inline ReadFile(
+		IN const std::string& file,
+		IN const char* mode = "r")
+	{
+		open(file, mode);
+	}
+
+	inline void open(
+		IN const std::string& file,
+		IN const char* mode = "r")
+	{
+		eco::filesystem::FileRaw reader;
+		reader.open(file.c_str(), mode);
+		uint32_t size = (uint32_t)reader.file_size(file.c_str());
+		if (size > 0)
+		{
+			m_file_data.resize(size);
+			reader.read(&m_file_data[0], size);
+		}
+	}
+
+	inline std::string& data()
+	{
+		return m_file_data;
+	}
+	inline const std::string& get_data() const
+	{
+		return m_file_data;
+	}
+
+private:
+	std::string m_file_data;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(filesystem);
+ECO_NS_END(eco);
 #endif
