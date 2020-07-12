@@ -73,7 +73,7 @@ public:
 
 	virtual std::string Format() const
 	{
-		eco::FixStream buf;
+		eco::Stream<> buf;
 		buf << "[   fail   ] " << m_expect
 		<< " = expect : actual = " << m_actual << " "
 		<< "{" << m_detail << "}"
@@ -90,7 +90,7 @@ class TestLogicSuccess : public TestCheck
 public:
 	virtual std::string Format() const
 	{
-		eco::FixStream fmt; 
+		eco::Stream<> fmt;
 		fmt << "[   pass   ] " << "true  = expect : actual";
 		return fmt.c_str();
 	}
@@ -105,7 +105,7 @@ public:
 public:
 	virtual std::string Format() const
 	{
-		eco::FixStream fmt; 
+		eco::Stream<> fmt;
 		fmt << "[   pass   ] " << m_expect << " = expect : actual";
 		return fmt.c_str();
 	}

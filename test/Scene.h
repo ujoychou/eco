@@ -203,7 +203,7 @@ protected:
 	{
 		Runner::OnBegin();
 
-		eco::FixStream fmt;
+		eco::Stream<> fmt;
 		fmt << "[==========] " << GetFullName() << ": ";
 		fmt << GetResultSet().m_total_case << " case, ";
 		fmt << GetResultSet().m_total_scene << " scene.";
@@ -215,7 +215,7 @@ protected:
 		OnSceneEnd();
 		
 		// show count info.
-		eco::FixStream fmt;
+		eco::Stream<> fmt;
 		fmt << "[==========] " << GetFullName() << ": ";
 		fmt << "scene ";
 		fmt << GetResultSet().GetTotalChildScene() << "-";

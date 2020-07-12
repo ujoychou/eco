@@ -68,7 +68,7 @@ protected:
 		}
 		GetResultSet().m_checked_case = 1;
 
-		eco::FixStream fmt;
+		eco::Stream<> fmt;
 		if (GetResultSet().IsOk())
 		{
 			fmt << "[        ok] ";
