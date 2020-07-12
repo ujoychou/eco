@@ -41,10 +41,13 @@ typedef std::function<void(void)> Closure;
 // function general result.
 enum 
 {
-	ok				=  0,
-	fail			= -1,
-	error			= -2,
-	timeout			= -3,
+	ok				= 0,
+	fail			= 1,
+	error			= 2,
+	timeout			= 3,
+
+	// user defined error id.
+	defined_error_start	= 100,
 };
 typedef int Result;
 
@@ -263,7 +266,7 @@ inline const char* clss(IN const char* full_clss_name)
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-class GroupT
+class GroupT	// ()
 {
 public:
 	inline GroupT(IN const T& v) : value(v) {}
@@ -276,7 +279,7 @@ inline GroupT<T> group(IN const T& v)
 }
 
 template<typename T>
-class SquareT
+class SquareT	// []
 {
 public:
 	inline SquareT() {}
@@ -290,7 +293,7 @@ inline SquareT<T> square(IN const T& v)
 }
 
 template<typename T>
-class BraceT
+class BraceT	// {}
 {
 public:
 	inline BraceT() {}
@@ -302,10 +305,6 @@ inline BraceT<T> brace(IN const T& v)
 {
 	return BraceT<T>(v);
 }
-class Brace;
-inline const Brace* brace() { return 0; }
-class End;
-inline const End* end() { return 0; }
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -313,65 +312,6 @@ class String
 {
 	ECO_NONCOPYABLE(String);
 public:
-	inline String()
-		: m_data(nullptr)
-		, m_size(0)
-		, m_capacity(0)
-	{}
-
-	explicit inline String(IN uint32_t siz, IN bool reserved = false)
-		: m_data(nullptr)
-		, m_size(0)
-		, m_capacity(0)
-	{
-		if (reserved)
-			reserve(siz);
-		else
-			resize(siz);
-	}
-
-	explicit inline String(IN const char* v)
-		: m_data(nullptr)
-		, m_size(0)
-		, m_capacity(0)
-	{
-		asign(v);
-	}
-
-	explicit inline String(IN const std::string& v)
-		: m_data(nullptr)
-		, m_size(0)
-		, m_capacity(0)
-	{
-		asign(v.c_str(), v.size());
-	}
-
-	inline String(IN String&& v)
-		: m_data(v.m_data)
-		, m_size(v.m_size)
-		, m_capacity(v.m_capacity)
-	{
-		v.m_data = nullptr;
-		v.m_size = 0;
-		v.m_capacity = 0;
-	}
-
-	inline String& operator=(IN String&& v)
-	{
-		m_data = v.m_data;
-		m_size = v.m_size;
-		m_capacity = v.m_capacity;
-		v.m_data = nullptr;
-		v.m_size = 0;
-		v.m_capacity = 0;
-		return *this;
-	}
-
-	inline ~String()
-	{
-		release();
-	}
-
 	inline uint32_t size() const
 	{
 		return m_size;
@@ -389,7 +329,90 @@ public:
 
 	inline const char* c_str() const
 	{
-		return m_data;
+		return m_data == nullptr ? "" : m_data;
+	}
+
+	inline const char* find(IN const char* v) const
+	{
+		return eco::find(m_data, v);
+	}
+
+	inline uint32_t find_reverse(
+		IN const char* sub_str,
+		IN uint32_t rstart = -1,
+		IN uint32_t rend = -1) const
+	{
+		return eco::find_reverse(m_data, m_size, sub_str, rstart, rend);
+	}
+
+public:
+	inline String()	: m_data(nullptr), m_size(0), m_capacity(0)
+	{}
+
+	explicit inline String(IN uint32_t siz, IN bool reserved = false)
+		: m_data(nullptr), m_size(0), m_capacity(0)
+	{
+		if (reserved)
+			reserve(siz);
+		else
+			resize(siz);
+	}
+
+	explicit inline String(IN const char* v)
+		: m_data(nullptr), m_size(0), m_capacity(0)
+	{
+		assign(v);
+	}
+
+	explicit inline String(IN const char* v, uint32_t size)
+		: m_data(nullptr), m_size(0), m_capacity(0)
+	{
+		assign(v, size);
+	}
+
+	explicit inline String(IN const std::string& v)
+		: m_data(nullptr), m_size(0), m_capacity(0)
+	{
+		assign(v.c_str(), (uint32_t)v.size());
+	}
+
+	inline String(IN String&& v)
+		: m_data(v.m_data)
+		, m_size(v.m_size)
+		, m_capacity(v.m_capacity)
+	{
+		v.m_data = nullptr;
+		v.m_size = 0;
+		v.m_capacity = 0;
+	}
+
+	inline ~String()
+	{
+		release();
+	}
+
+	inline String& operator=(IN String&& v)
+	{
+		release();
+		m_data = v.m_data;
+		m_size = v.m_size;
+		m_capacity = v.m_capacity;
+		v.m_data = nullptr;
+		v.m_size = 0;
+		v.m_capacity = 0;
+		return *this;
+	}
+
+	inline String& operator=(IN const char* v)
+	{
+		assign(v);
+		return *this;
+	}
+
+	inline String& operator=(IN const std::string& v)
+	{
+		assign(v);
+		return *this;
 	}
 
 	inline char& operator[](uint32_t pos)
@@ -409,18 +432,18 @@ public:
 		std::swap(m_capacity, v.m_capacity);
 	}
 
-	inline void asign(IN const char* d)
+	inline void assign(IN const char* d)
 	{
-		asign(d, static_cast<uint32_t>(strlen(d)));
+		assign(d, static_cast<uint32_t>(strlen(d)));
 	}
-	inline void asign(IN const char* d, IN uint32_t s)
+	inline void assign(IN const char* d, IN uint32_t s)
 	{
 		resize(s);
 		memcpy(&m_data[0], d, s);
 	}
-	inline void asign(IN const std::string& v)
+	inline void assign(IN const std::string& v)
 	{
-		asign(v.c_str(), v.size());
+		assign(v.c_str(), (uint32_t)v.size());
 	}
 
 	inline void append(IN const char* d)
@@ -443,7 +466,7 @@ public:
 	}
 	inline void append(IN const std::string& v)
 	{
-		append(v.c_str(), v.size());
+		append(v.c_str(), (uint32_t)v.size());
 	}
 	inline void append(IN const char c)
 	{
@@ -458,17 +481,30 @@ public:
 		append(str.m_data, str.m_size);
 	}
 
-	// compatible with "FixBuffer".
+	// compatible with "Buffer".
 	inline uint32_t force_append(IN const char* buf, IN uint32_t buf_size)
 	{
 		append(buf, buf_size);
 		return buf_size;
 	}
-	// compatible with "FixBuffer".
+	// compatible with "Buffer".
 	inline uint32_t force_append(IN const char v)
 	{
 		append(v);
 		return 1;
+	}
+
+	inline void erase(uint32_t pos, uint32_t count)
+	{
+		if (count > 0 && m_size > pos)
+		{
+			uint32_t siz = m_size - pos;
+			if (count < siz) siz = count;
+			count = m_size - pos - siz;
+			if (count > 0) memcpy(&m_data[pos], &m_data[pos + siz], count);
+			m_size -= siz;
+			m_data[m_size] = 0;
+		}
 	}
 
 	inline void resize(IN uint32_t s)
@@ -528,40 +564,6 @@ public:
 		m_capacity = 0;
 	}
 
-	inline const char* find(IN const char* v) const
-	{
-		return eco::find(m_data, v);
-	}
-
-	inline const char* find_reverse(
-		IN const char* v,
-		IN const uint32_t find_end = 0) const
-	{
-		uint32_t len = (uint32_t)strlen(v);
-		if (m_size < find_end + len)
-			return nullptr;
-
-		const char* end = &m_data[find_end];
-		const char* start = &m_data[m_size - len];
-		for (; start != end; --start)
-		{
-			if (eco::find_cmp(start, v))
-				return start;
-		}
-		return eco::find_cmp(start, v) ? start : nullptr;
-	}
-
-private:
-	inline char* move()
-	{
-		char* d = m_data;
-
-		m_data = nullptr;
-		m_size = 0;
-		m_capacity = 0;
-		return d;
-	}
-
 private:
 	char* m_data;
 	uint32_t m_size;
@@ -570,14 +572,21 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<uint32_t fix_size>
-class FixBuffer
+template<uint32_t siz = 160>
+class Buffer
 {
 public:
-	inline FixBuffer()
+	inline Buffer()
 	{
-		assert(fix_size > 0);
+		assert(siz > 0);
 		clear();
+	}
+
+	inline explicit Buffer(const char* msg)
+	{
+		assert(siz > 0);
+		clear();
+		append(msg);
 	}
 
 	inline operator const char*() const
@@ -602,7 +611,7 @@ public:
 
 	inline static uint32_t capacity()
 	{
-		return fix_size - 1;	// last char = '\0'
+		return siz - 1;	// last char = '\0'
 	}
 
 	inline uint32_t avail() const
@@ -621,7 +630,7 @@ public:
 	}
 
 	template<uint32_t size_n>
-	inline uint32_t append(IN const FixBuffer<size_n>& buf)
+	inline uint32_t append(IN const Buffer<size_n>& buf)
 	{
 		return append(buf.m_data, buf.size());
 	}
@@ -694,14 +703,14 @@ public:
 		}
 	}
 
-	inline FixBuffer& operator=(IN const char* buf)
+	inline Buffer& operator=(IN const char* buf)
 	{
 		clear();
 		append(buf);
 		return *this;
 	}
 
-	inline FixBuffer& assign(IN const char* buf, IN uint32_t buf_size)
+	inline Buffer& assign(IN const char* buf, IN uint32_t buf_size)
 	{
 		clear();
 		append(buf, buf_size);
@@ -722,123 +731,128 @@ public:
 	}
 
 private:
-	char m_data[fix_size];
+	char m_data[siz];
 	uint32_t  m_cur_size;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 class Error;
-template<typename Buffer>
-class StreamT
+template<uint32_t siz = 160, typename buffer_t = Buffer<siz>>
+class Stream
 {
 public:
-	inline StreamT() : m_flag(0), m_status(0)
+	inline Stream()
 	{}
 
-	inline StreamT& operator<<(IN const bool v)
+	inline explicit Stream(const char* msg)
+	{
+		(*this) << msg;
+	}
+
+	inline Stream& operator<<(IN const bool v)
 	{
 		(*this) << eco::cast<std::string>(v).c_str();
 		return *this;
 	}
-	inline StreamT& operator<<(IN const char v)
+	inline Stream& operator<<(IN const char v)
 	{
 		m_buffer.append(v);
 		return *this;
 	}
-	inline StreamT& operator<<(IN const unsigned char v)
+	inline Stream& operator<<(IN const unsigned char v)
 	{
 		m_buffer.append(static_cast<char>(v));
 		return *this;
 	}
-	inline StreamT& operator<<(IN const int16_t v)
+	inline Stream& operator<<(IN const int16_t v)
 	{
 		Integer<int16_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const uint16_t v)
+	inline Stream& operator<<(IN const uint16_t v)
 	{
 		Integer<uint16_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const int32_t v)
+	inline Stream& operator<<(IN const int32_t v)
 	{
 		Integer<int32_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const uint32_t v)
+	inline Stream& operator<<(IN const uint32_t v)
 	{
 		Integer<uint32_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const long v)
+	inline Stream& operator<<(IN const long v)
 	{
 		return operator<<(int32_t(v));
 	}
-	inline StreamT& operator<<(IN unsigned long v)
+	inline Stream& operator<<(IN unsigned long v)
 	{
 		return operator<<(uint32_t(v));
 	}
-	inline StreamT& operator<<(IN const int64_t v)
+	inline Stream& operator<<(IN const int64_t v)
 	{
 		Integer<int64_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const uint64_t v)
+	inline Stream& operator<<(IN const uint64_t v)
 	{
 		Integer<uint64_t> str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const double v)
+	inline Stream& operator<<(IN const double v)
 	{
 		Double str(v);
 		m_buffer.append(str, str.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const char* v)
+	inline Stream& operator<<(IN const char* v)
 	{
 		m_buffer.append(v);
 		return *this;
 	}
-	inline StreamT& operator<<(IN const eco::String& v)
+	inline Stream& operator<<(IN const eco::String& v)
 	{
 		m_buffer.append(v.c_str(), static_cast<uint32_t>(v.size()));
 		return *this;
 	}
-	inline StreamT& operator<<(IN const std::string& v)
+	inline Stream& operator<<(IN const std::string& v)
 	{
 		m_buffer.append(v.c_str(), static_cast<uint32_t>(v.size()));
 		return *this;
 	}
-	inline StreamT& operator<<(IN const eco::Bytes& v)
+	inline Stream& operator<<(IN const eco::Bytes& v)
 	{
 		m_buffer.append(v.c_str(), v.size());
 		return *this;
 	}
-	inline StreamT& operator<<(IN const eco::Error& v);
-	inline StreamT& operator<=(IN const eco::Error& v);
+	inline Stream& operator<<(IN const eco::Error& v);
+	inline Stream& operator<=(IN const eco::Error& v);
 
 	// append "()[]{}"
 	template<typename T>
-	inline StreamT& operator<<(IN const eco::GroupT<T>& v)
+	inline Stream& operator<<(IN const eco::GroupT<T>& v)
 	{
 		(*this) << '(' << v.value << ')';
 		return *this;
 	}
 	template<typename T>
-	inline StreamT& operator<<(IN const eco::SquareT<T>& v)
+	inline Stream& operator<<(IN const eco::SquareT<T>& v)
 	{
 		(*this) << '[' << v.value << ']';
 		return *this;
 	}
 	template<typename T>
-	inline StreamT& operator<<(IN const eco::BraceT<T>& v)
+	inline Stream& operator<<(IN const eco::BraceT<T>& v)
 	{
 		(*this) << '{' << v.value << '}';
 		return *this;
@@ -846,54 +860,15 @@ public:
 
 	// same with operator <<.
 	template<typename T>
-	inline StreamT& operator<(IN const T& v)
+	inline Stream& operator<(IN const T& v)
 	{
 		return (*this) << v;
 	}
 	// append blank space ' ';
 	template<typename T>
-	inline StreamT& operator<=(IN const T& v)
+	inline Stream& operator<=(IN const T& v)
 	{
 		return (*this) << ' ' << v;
-	}
-
-public:
-	enum
-	{
-		status_brace = 0x0001,
-	};
-	typedef uint16_t Status;
-
-	inline StreamT& operator<<(IN const eco::Brace*)
-	{
-		(*this) << (!eco::has(m_status, status_brace) ? '{' : '}');
-		eco::toggle(m_status, status_brace);
-		return *this;
-	}
-	inline StreamT& operator<<(IN const eco::End*)
-	{
-		if (eco::has(m_status, status_brace)) (*this) << brace();
-		return *this;
-	}
-
-public:
-	// set stream flag.
-	inline StreamT& operator()(IN const uint32_t flag)
-	{
-		eco::add(m_flag, flag);
-		return *this;
-	}
-	inline uint16_t& flag()
-	{
-		return m_flag;
-	}
-	inline const uint16_t get_flag() const
-	{
-		return m_flag;
-	}
-	inline bool has_flag(IN const uint16_t v) const
-	{
-		return eco::has(m_flag, v);
 	}
 
 public:
@@ -902,17 +877,17 @@ public:
 		m_buffer.clear();
 	}
 
-	inline StreamT& operator=(IN const char* buf)
+	inline Stream& operator=(IN const char* buf)
 	{
 		m_buffer = buf;
 		return *this;
 	}
 
-	inline Buffer& buffer()
+	inline buffer_t& buffer()
 	{
 		return m_buffer;
 	}
-	inline const Buffer& get_buffer() const
+	inline const buffer_t& get_buffer() const
 	{
 		return m_buffer;
 	}
@@ -938,19 +913,9 @@ public:
 	}
 
 private:
-	uint16_t	m_flag;
-	Status		m_status;
-	Buffer		m_buffer;
+	buffer_t		m_buffer;
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
-// eco string stream, heap memory.
-const uint32_t fix_size = 256;
-typedef eco::StreamT<String> Stream;
-typedef eco::StreamT<FixBuffer<fix_size> > FixStream;
-#define EcoStream(len) eco::StreamT<eco::FixBuffer<len> >()
-#define EcoFix eco::FixStream()
+typedef eco::Stream<0, String> StreamX;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1039,9 +1004,27 @@ public:
 		return (*this);
 	}
 	template<typename value_type>
+	inline Error& operator<(IN const value_type v)
+	{
+		m_msg << v;
+		return (*this);
+	}
+	template<typename value_type>
 	inline Error& operator<=(IN const value_type v)
 	{
 		m_msg <= v;
+		return (*this);
+	}
+
+public:
+	inline Error& operator<<(IN const eco::String& v)
+	{
+		m_msg << v;
+		return (*this);
+	}
+	inline Error& operator<(IN const eco::String& v)
+	{
+		m_msg << v;
 		return (*this);
 	}
 	inline Error& operator<=(IN const eco::String& v)
@@ -1049,7 +1032,14 @@ public:
 		m_msg <= v;
 		return (*this);
 	}
-	inline Error& operator<<(IN const eco::String& v)
+	
+public:
+	inline Error& operator<<(IN const eco::Bytes& v)
+	{
+		m_msg << v;
+		return (*this);
+	}
+	inline Error& operator<(IN const eco::Bytes& v)
 	{
 		m_msg << v;
 		return (*this);
@@ -1059,7 +1049,14 @@ public:
 		m_msg <= v;
 		return (*this);
 	}
-	inline Error& operator<<(IN const eco::Bytes& v)
+	
+public:
+	inline Error& operator<<(IN const eco::Error& v)
+	{
+		m_msg << v;
+		return (*this);
+	}
+	inline Error& operator<(IN const eco::Error& v)
 	{
 		m_msg << v;
 		return (*this);
@@ -1069,15 +1066,10 @@ public:
 		m_msg <= v;
 		return (*this);
 	}
-	inline Error& operator<<(IN const eco::Error& v)
-	{
-		m_msg << v;
-		return (*this);
-	}
-
+	
 private:
 	int m_id;
-	FixStream m_msg;
+	eco::Stream<> m_msg;
 };
 
 
@@ -1089,15 +1081,15 @@ private:
 #define ECO_THROW_FUNC_2(eid, emsg) \
 throw eco::Error(eid, __func__) << ' ' << emsg << ' '
 #define ECO_THROW_FUNC(...) ECO_MACRO(ECO_THROW_FUNC_, __VA_ARGS__)
-
-template<typename Buffer>
-inline StreamT<Buffer>& StreamT<Buffer>::operator<<(IN const eco::Error& v)
+////////////////////////////////////////////////////////////////////////////////
+template<uint32_t siz, typename buffer_t>
+inline Stream<siz, buffer_t>& Stream<siz, buffer_t>::operator<<(IN const eco::Error& v)
 {
 	(*this) << v.message() << " #" << v.id();
 	return *this;
 }
-template<typename Buffer>
-inline StreamT<Buffer>& StreamT<Buffer>::operator<=(IN const eco::Error& v)
+template<uint32_t siz, typename buffer_t>
+inline Stream<siz, buffer_t>& Stream<siz, buffer_t>::operator<=(IN const eco::Error& v)
 {
 	(*this) << ' ' << v.message() << " #" << v.id();
 	return *this;
@@ -1218,12 +1210,11 @@ inline double round(double v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<uint32_t size>
+template<uint32_t size = 160, typename buffer_t = Buffer<size>>
 class Format
 {
 public:
-	inline explicit Format(IN const char* v = nullptr)
-		: m_format(v), m_cur_pos(0)
+	inline explicit Format(IN const char* v = 0) : m_format(v), m_cur_pos(0)
 	{}
 
 	inline void reset(IN const char* v)
@@ -1241,12 +1232,12 @@ public:
 			m_cur_pos = eco::find_first(str, '%');
 			if (m_cur_pos == -1)
 			{
-				m_stream << str;
+				m_buff.append(str);
 				return *this;
 			}
-			m_stream.buffer().append(str, m_cur_pos++);
+			m_buff.append(str, m_cur_pos++);
 			m_cur_pos += int(str - m_format);
-			m_stream << v;
+			m_buff.append(v);
 		}
 		return *this;
 	}
@@ -1260,18 +1251,18 @@ public:
 	{
 		if (m_cur_pos != -1)
 		{
-			m_stream << (m_format + m_cur_pos);
+			m_buff.append(m_format + m_cur_pos);
 			m_cur_pos = -1;
 		}
-		return m_stream.c_str();
+		return m_buff.c_str();
 	}
 
 private:
 	const char* m_format;
 	mutable uint32_t m_cur_pos;
-	mutable eco::StreamT<eco::FixBuffer<size> > m_stream;
+	mutable buffer_t m_buff;
 };
-typedef Format<fix_size> FixFormat;
+typedef Format<0, String> FormatX;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1388,6 +1379,7 @@ public:
 	inline operator const float() const;
 	inline operator const double() const;
 	inline operator const bool() const;
+	inline double to_double(int precision) const;
 
 private:
 	ValueType m_vtype;
@@ -1411,6 +1403,7 @@ template<typename type_t>
 const uint32_t TypeId<type_t>::value = __typeid(typeid(type_t).name());
 
 ////////////////////////////////////////////////////////////////////////////////
+#define ECO_TYPE_NAME(type_t) #type_t
 #define ECO_TYPE_1(type_t) ECO_TYPE__(type_t)\
 public:\
 	inline static const eco::Type* type()\
@@ -1452,7 +1445,7 @@ public:\
 	}\
 	inline static const char* type_name()\
 	{\
-		return #type_t;\
+		return ECO_TYPE_NAME(type_t);\
 	}\
 	virtual const char* get_type_name() const\
 	{\
@@ -1577,13 +1570,15 @@ public:
 	const eco::Context& get_property_set() const;
 	ContextNode& property_set(IN const eco::Context&);
 
+	// get children
 	bool has_children() const;
 	void set_children(IN eco::ContextNodeSet&);
 	eco::ContextNodeSet& children();
 	const eco::ContextNodeSet& get_children() const;
+	eco::ContextNodeSet get_children(const char* child_key) const;
 
-	// get children
-	eco::ContextNode get_children(const char* key) const;
+	// get child node.
+	eco::ContextNode get_child(const char* child_key) const;
 
 	// get children
 	bool get_property_set(eco::Context& context, const char* key) const;
@@ -1591,7 +1586,10 @@ public:
 	// get key value.
 	const StringAny& at(IN const char* key) const;
 	const StringAny* find(IN const char* key) const;
-	const StringAny get(IN const char* key) const;
+	const StringAny  get(IN const char* key) const;
+
+	// merge context node.
+	void merge(eco::ContextNode& node);
 };
 
 
@@ -1634,14 +1632,9 @@ public:
 	ContextNode& at(IN const int i);
 	const ContextNode& at(IN const int i) const;
 
-	// get property set.
-	bool get_property_set(
-		OUT eco::Context& result,
-		IN const char* parent_key) const;
-
-	// get context node.
-	ContextNodeSet get_children(
-		IN const char* parent_key) const;
+	/*@ access parameter by item name.*/
+	ContextNode* find(IN const char* name);
+	const ContextNode* find(IN const char* name) const;
 };
 
 
@@ -1660,7 +1653,9 @@ public:
 	std::string  m_value;
 	eco::Context m_property_set;
 	eco::ContextNodeSet m_children;
-	Impl() : m_children(eco::null) {}
+
+public:
+	inline Impl() : m_children(eco::null) {}
 };
 class ContextNodeSet::Impl
 {

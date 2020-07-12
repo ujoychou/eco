@@ -56,7 +56,7 @@ public:
 	void remove_being(IN Being* be);
 
 	// 定时器
-	Timer& timer();
+	TimerServer& timer();
 
 	// 生命活动频率
 	static void set_unit_live_tick_seconds(uint32_t secs);
@@ -82,7 +82,7 @@ public:
 	// 系统生命：生命节奏（每x秒1次），用于维系系统正常运行。
 	static uint32_t s_unit_live_tick_sec;
 	uint32_t m_tick_count;
-	eco::Timer m_timer;
+	eco::TimerServer m_timer;
 
 	// 生命对象列表
 	std::list<Being*> m_be_list;

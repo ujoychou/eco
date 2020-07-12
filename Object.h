@@ -140,9 +140,6 @@ private:\
     ECO_IMPL_API();\
     ECO_NONCOPYABLE(object_t);\
 public:\
-	inline static object_t& instance() {\
-		return eco::Singleton<object_t>::instance();\
-	}\
 	~object_t();\
 private:\
 	friend class eco::Singleton<object_t>;\
@@ -152,7 +149,7 @@ private:\
 #define ECO_SINGLETON_NAME(object_t, method)\
 inline object_t& method()\
 {\
-	return object_t::instance();\
+	return eco::Singleton<object_t>::instance();\
 }
 #define ECO_NAME(object_t, method)\
 inline object_t& method()\

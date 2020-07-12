@@ -138,10 +138,6 @@ public:
 	}
 
 	// get app config.
-	inline const eco::Config& get_sys_config() const
-	{
-		return get_app().get_sys_config();
-	}
 	const eco::Config& get_config() const
 	{
 		return get_app().get_config();

@@ -89,23 +89,22 @@ inline size_t strncat(OUT char* dest, IN const char* src, IN size_t len)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline void cpy_pos(OUT char& dest, OUT uint32_t& pos, IN  const char sour)
+inline void copy(OUT char& dest, OUT uint32_t& pos, IN  const char sour)
 {
 	dest = sour;
 	pos += 1;
 }
-inline void cpy_pos(OUT char* dest, OUT uint32_t& pos,
-	IN  const char* sour, IN uint32_t size)
+inline void copy(char* dest, uint32_t& pos, const char* sour, uint32_t size)
 {
 	memcpy(dest, sour, size);
 	pos += size;
 }
-#define eco_cpy_pos_dest(dest, pos, sour) \
+#define eco_copy_dest(dest, pos, sour) \
 {\
 	memcpy(dest, sour, sizeof(dest));\
 	pos += sizeof(dest);\
 }
-#define eco_cpy_pos_sour(dest, pos, sour) \
+#define eco_copy_sour(dest, pos, sour) \
 {\
 	memcpy(dest, sour, sizeof(sour));\
 	pos += sizeof(sour);\
@@ -114,9 +113,9 @@ inline void cpy_pos(OUT char* dest, OUT uint32_t& pos,
 
 ////////////////////////////////////////////////////////////////////////////////
 #define eco_cpyc(dest, sour) eco::strncpy(dest, sour, sizeof(dest) - 1)
-#define eco_cpys(dest, sour) eco::strncpy(dest, (sour).c_str(), sizeof(dest) - 1);
+#define eco_cpys(dest, sour) eco::strncpy(dest, (sour).c_str(), sizeof(dest) - 1)
 #define eco_catc(dest, sour) eco::strncat(dest, sour, sizeof(dest) - 1)
-#define eco_cats(dest, sour) eco::strncat(dest, (sour).c_str(), sizeof(dest) - 1);
+#define eco_cats(dest, sour) eco::strncat(dest, (sour).c_str(), sizeof(dest) - 1)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -136,20 +135,58 @@ inline const char* find(IN const char* dest, IN const char* v)
 	return nullptr;
 }
 
+/*@find sub string from string.
+@return: the index of string array.
+*/
 inline const char* find(
-	IN const char* dest, IN const size_t size,
-	IN const char* v, IN size_t v_size = 0)
+	IN const char* data, 
+	IN const size_t size,
+	IN const char* sub,
+	IN size_t sub_size = 0)
 {
-	if (v_size == 0) v_size = strlen(v);
-	const char* end = &dest[size - v_size];
-	for (; dest <= end; ++dest)
+	if (sub_size == 0) sub_size = strlen(sub);
+	const char* end = &data[size - sub_size];
+	for (; data <= end; ++data)
 	{
-		if (find_cmp(dest, v))
-			return dest;
+		if (find_cmp(data, sub)) return data;
 	}
 	return nullptr;
 }
 
+/*@reverse find sub string from string.
+@return: the index of string array.
+exp:
+String str("there is a desk.");
+str.find_reverse("is", 10, 6) == 6;
+str.find_reverse("desk") == 11;
+*/
+inline uint32_t find_reverse(
+	IN const char* data,
+	IN uint32_t size,
+	IN const char* sub,
+	IN uint32_t rstart = -1,
+	IN uint32_t rend = -1)
+{
+	// size isn't enough.
+	uint32_t size_sub = (uint32_t)strlen(sub);
+	if (size_sub > size) return -1;
+
+	uint32_t pos = size - size_sub;
+	if (rstart == -1 || pos < rstart) rstart = pos;
+	rend += 1;
+	if (rend > rstart) return -1;
+
+	// reverse find with "--".
+	const char* end = &data[rend];
+	const char* start = &data[rstart];
+	// "--end" because of "rend += 1"
+	for (--end; start != end; --start)
+	{
+		if (eco::find_cmp(start, sub))
+			return uint32_t(start - data);
+	}
+	return -1;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 inline uint32_t find_first(IN const char* key, IN const char flag)

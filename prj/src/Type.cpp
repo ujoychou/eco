@@ -77,6 +77,72 @@ const StringAny ContextNode::get(IN const char* key) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
+void merge_impl(ContextNode::Impl& a, ContextNode::Impl& b)
+{
+	if (a.m_name != b.m_name)
+	{
+		assert(false);
+		return;
+	}
+	
+	// merge value
+	a.m_value = b.m_value;
+
+	// merge property set.
+	auto itb = b.m_property_set.begin();
+	for (; itb != b.m_property_set.end(); ++itb)
+	{
+		auto ita = a.m_property_set.begin();
+		for (; ita != a.m_property_set.end(); ++ita)
+		{
+			if (eco::equal(ita->get_name(), itb->get_name()))
+			{
+				ita->set_value(itb->get_value());
+				break;
+			}
+		}
+		if (ita == a.m_property_set.end())
+		{
+			a.m_property_set.push_back(*itb);
+		}
+	}
+
+	// merge children.
+	if (!b.m_children.null())
+	{
+		auto icb = b.m_children.begin();
+		for (; icb != b.m_children.end(); ++icb)
+		{
+			if (a.m_children.null())
+			{
+				a.m_children = eco::heap;
+				a.m_children.push_back(*icb);
+				continue;
+			}
+
+			auto ica = a.m_children.begin();
+			for (; ica != a.m_children.end(); ++ica)
+			{
+				if (ica->impl().m_name == icb->impl().m_name)
+				{
+					merge_impl(ica->impl(), icb->impl());
+					break;
+				}
+			}
+			if (ica == a.m_children.end())
+			{
+				a.m_children.push_back(*icb);
+			}
+		}
+	}
+}
+void ContextNode::merge(eco::ContextNode& node)
+{
+	merge_impl(impl(), node.impl());
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 const StringAny* ContextNode::find(IN const char* key) const
 {
 	int node_end = eco::find_first(key, '/');
@@ -107,11 +173,13 @@ const StringAny* ContextNode::find(IN const char* key) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco::ContextNode ContextNode::get_children(const char* key) const
+eco::ContextNode ContextNode::get_child(const char* key) const
 {
 	int node_end = eco::find_first(key, '/');
 	if (node_end == -1)
 	{
+		if (impl().m_children.null()) return eco::null;
+
 		// find the children.
 		auto it = impl().m_children.begin();
 		for (; it != impl().m_children.end(); ++it)
@@ -127,75 +195,74 @@ eco::ContextNode ContextNode::get_children(const char* key) const
 		for (; it != impl().m_children.end(); ++it)
 		{
 			if (strncmp(it->get_name(), key, node_end) == 0)
-				return it->get_children(&key[node_end + 1]);
-		}
-	}
-	ECO_THROW(0, "get context node child error: ") << key;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-bool ContextNode::get_property_set(eco::Context& result, const char* key) const
-{
-	auto nodes = impl().m_children;
-	return !nodes.null() ? nodes.get_property_set(result, key) : false;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-ECO_SHARED_IMPL(ContextNodeSet);
-ECO_PROPERTY_SET_IMPL(ContextNodeSet, ContextNode);
-////////////////////////////////////////////////////////////////////////////////
-eco::ContextNodeSet ContextNodeSet::get_children(
-	IN const char* parent_key) const
-{
-	int node_end = eco::find_first(parent_key, '/');
-	for (auto it = impl().m_items.begin(); it != impl().m_items.end(); ++it)
-	{
-		// find the key node.
-		if (node_end == -1 && strcmp(it->get_name(), parent_key) == 0)
-		{
-			return it->has_children() ? it->get_children() : eco::null;
-		}
-
-		// find the next level node.
-		if (node_end != -1 &&
-			strncmp(it->get_name(), parent_key, node_end) == 0)
-		{
-			return !it->has_children() ? eco::null
-				: it->get_children().get_children(&parent_key[node_end + 1]);
+				return it->get_child(&key[node_end + 1]);
 		}
 	}
 	return eco::null;
 }
 
 
- ////////////////////////////////////////////////////////////////////////////////
-bool ContextNodeSet::get_property_set(
-	OUT eco::Context& result,
-	IN const char* node_key) const
+////////////////////////////////////////////////////////////////////////////////
+eco::ContextNodeSet ContextNode::get_children(IN const char* key) const
 {
-	int node_end = eco::find_first(node_key, '/');
-	for (auto it = impl().m_items.begin(); it != impl().m_items.end(); ++it)
+	int node_end = eco::find_first(key, '/');
+	if (node_end == -1)
 	{
-		// find the key node.
-		if (node_end == -1 && strcmp(it->get_name(), node_key) == 0)
+		if (impl().m_children.null()) return eco::null;
+		// find the children.
+		eco::ContextNodeSet result;
+		auto it = impl().m_children.begin();
+		for (; it != impl().m_children.end(); ++it)
 		{
-			result = it->get_property_set();
-			return true;
+			if (strcmp(key, it->get_name()) == 0)
+				result.add(*it);
 		}
-
-		// find the next level node.
-		if (node_end != -1 &&
-			strncmp(it->get_name(), node_key, node_end) == 0)
+		return !result.empty() ? result : eco::null;
+	}
+	else
+	{
+		// recursive find the key value.
+		auto it = impl().m_children.begin();
+		for (; it != impl().m_children.end(); ++it)
 		{
-			if (it->has_children())
-			{
-				return it->get_children().get_property_set(
-					result, &node_key[node_end + 1]);
-			}
+			if (strncmp(it->get_name(), key, node_end) == 0)
+				return it->get_children(&key[node_end + 1]);
 		}
 	}
-	return false;
+	return eco::null;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool ContextNode::get_property_set(eco::Context& result, const char* key) const
+{
+	auto node = get_child(key);
+	if (!node.null())
+	{
+		result = node.get_property_set();
+	}
+	return !node.null();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_SHARED_IMPL(ContextNodeSet);
+ECO_PROPERTY_SET_IMPL(ContextNodeSet, ContextNode);
+ContextNode* ContextNodeSet::find(IN const char* name)
+{
+	for (size_t i = 0; i < impl().m_items.size(); ++i)
+	{
+		ContextNode& node = impl().m_items[i];
+		if (node.impl().m_name == name)
+			return &node;
+	}
+	return nullptr;
+}
+const ContextNode* ContextNodeSet::find(IN const char* name) const
+{
+	ContextNodeSet* pthis = (ContextNodeSet*)this;
+	return pthis->find(name);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);

@@ -19,8 +19,8 @@
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/thread/Mutex.h>
 #include <eco/Object.h>
+#include <mutex>
 #include <vector>
 #include <memory>
 
@@ -31,49 +31,10 @@ template<typename Object>
 class MemoryPool
 {
 public:
-	inline void reserve(IN const uint32_t size)
+	inline MemoryPool()
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		m_buffer.reserve(size);
-	}
-
-	inline std::shared_ptr<Object> create()
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		if (m_buffer.size() == 0)	// add new buffer item.
-		{
-			m_buffer.push_back(new Object);
-		}
-
-		std::shared_ptr<Object> sp(m_buffer.back(),
-			std::bind(&MemoryPool::recycle, this, std::placeholders::_1));
-		m_buffer.pop_back();
-		return sp;
-	}
-
-	template<typename BaseObject>
-	inline std::shared_ptr<BaseObject> create()
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		if (m_buffer.size() == 0)	// add new buffer item.
-		{
-			m_buffer.push_back(new Object);
-		}
-
-		std::shared_ptr<BaseObject> sp(m_buffer.back(),
-			std::bind(&MemoryPool::recycle, this, std::placeholders::_1));
-		m_buffer.pop_back();
-		return sp;
-	}
-
-	inline void clear()
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		std::for_each(m_buffer.begin(), m_buffer.end(),
-			[](Object* heap_ptr) {
-			delete heap_ptr;
-		});
-		m_buffer.clear();
+		using namespace std::placeholders;
+		m_recycle = std::bind(&MemoryPool::recycle, this, _1);
 	}
 
 	inline ~MemoryPool()
@@ -81,26 +42,79 @@ public:
 		clear();
 	}
 
+	inline void reserve(IN const uint32_t size)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_buffer.reserve(size);
+	}
+
+	inline std::shared_ptr<Object> create()
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (m_buffer.size() == 0)	// add new buffer item.
+		{
+			m_buffer.push_back(new Object);
+		}
+		std::shared_ptr<Object> sp(m_buffer.back(), m_recycle);
+		m_buffer.pop_back();
+		return sp;
+	}
+
+	template<typename BaseObject>
+	inline std::shared_ptr<BaseObject> create()
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (m_buffer.size() == 0)	// add new buffer item.
+		{
+			m_buffer.push_back(new Object);
+		}
+		std::shared_ptr<BaseObject> sp(m_buffer.back(), m_recycle);
+		m_buffer.pop_back();
+		return sp;
+	}
+
+	inline void clear()
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		std::for_each(m_buffer.begin(), m_buffer.end(), [](Object* heap) {
+			delete heap;
+		});
+		m_buffer.clear();
+	}
+
 private:
 	inline void recycle(IN Object* p)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std::lock_guard<std::mutex> lock(m_mutex);
 		m_buffer.push_back(p);
 	}
 
-	eco::Mutex m_mutex;
+	std::mutex m_mutex;
 	std::vector<Object*> m_buffer;
+	std::function<void(Object*)> m_recycle;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Object>
-inline MemoryPool<Object>& get_memory_pool()
+inline MemoryPool<Object>& memory_pool()
 {
 	return eco::Singleton<MemoryPool<Object>>::instance();
 }
+template<typename Object>
+inline std::shared_ptr<Object> memory_pool_new()
+{
+	return memory_pool<Object>().create();
+}
+template<typename Object>
+inline std::shared_ptr<Object> memory_pool_copy(IN const Object& obj)
+{
+	std::shared_ptr<Object> cpy = memory_pool_new<Object>();
+	memcpy(cpy.get(), &obj, sizeof(obj));
+	return cpy;
+}
 
-#define ECO_POOL_NEW(object_t) get_memory_pool<object_t>().create()
+
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);
 #endif

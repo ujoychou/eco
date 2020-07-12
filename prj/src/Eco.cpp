@@ -2,18 +2,34 @@
 #include "Eco.ipp"
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Being.h>
+#include <eco/thread/Thread.h>
 
 
 ECO_NS_BEGIN(eco);
-ECO_OBJECT_IMPL(Eco);
+////////////////////////////////////////////////////////////////////////////////
+class ThreadCheckOut
+{
+public:
+	inline static void on_timer(ThreadCheck& obj) { obj.on_timer();	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_SINGLETON_IMPL(Eco);
+Eco& Eco::get()
+{
+	return Singleton<Eco>::instance();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 Eco::Impl::Impl()
 {
 	m_tick_count = 0;
 	reset_current_being();
 }
-// 默认每5秒1次，检测与修复系统。
-uint32_t Eco::Impl::s_unit_live_tick_sec = 5;
+// 默认每1秒1次，检测与修复系统。
+uint32_t Eco::Impl::s_unit_live_tick_sec = 1;
 uint32_t Eco::Impl::s_task_server_thread_size = 0;
 
 
@@ -29,7 +45,7 @@ void Eco::Impl::start()
 	m_timer.start();
 	if (s_task_server_thread_size > 0)
 	{
-		m_task_server.run("eco", s_task_server_thread_size);
+		m_task_server.run("btask", s_task_server_thread_size);
 	}
 
 	// 启动生命节奏：定时执行系统维护工作。
@@ -52,6 +68,8 @@ void Eco::Impl::stop()
 ////////////////////////////////////////////////////////////////////////////////
 void Eco::Impl::on_live_timer()
 {
+	ThreadCheckOut().on_timer(ThreadCheck::me());
+
 	// 生命对象的周期活动，每个生命节奏时间运行一次。
 	++m_tick_count;
 	while (Being* be = get_next_being())
@@ -159,7 +177,7 @@ void Eco::Impl::remove_being(IN Being* be)
 ////////////////////////////////////////////////////////////////////////////////
 void Eco::Impl::post_task(IN Task::ptr& task)
 {
-	m_task_server.post(std::move(task));
+	m_task_server.queue().post(task);
 }
 void Eco::Impl::post_wait(IN Task::ptr& task)
 {
@@ -202,7 +220,7 @@ void Eco::move_wait()
 {
 	impl().move_wait();
 }
-Timer& Eco::timer()
+TimerServer& Eco::timer()
 {
 	return impl().m_timer;
 }
@@ -263,28 +281,9 @@ void Eco::Impl::set_task_server_thread_size(IN uint32_t v)
 {
 	s_task_server_thread_size = v;
 }
-Timer& Eco::Impl::timer()
+TimerServer& Eco::Impl::timer()
 {
 	return m_timer;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-static eco::Mutex s_eco_mutex;
-static std::auto_ptr<Eco> s_eco;
-bool has_eco()
-{
-	return s_eco.get() != nullptr;
-}
-Eco& eco()
-{
-	eco::Mutex::ScopeLock lock(s_eco_mutex);
-	if (s_eco.get() == nullptr)
-	{
-		s_eco.reset(new Eco);
-		s_eco->impl().start();
-	}
-	return *s_eco;
 }
 
 

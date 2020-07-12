@@ -131,7 +131,10 @@ bool StringAny::operator==(IN const char* v) const
 {
 	return m_value == v;
 }
-
+inline double StringAny::to_double(int precision) const
+{
+	return eco::cast<double>(m_value, precision);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void Parameter::set_name(IN const char* val)

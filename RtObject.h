@@ -26,7 +26,9 @@
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_RTX(object_t, parent_t) ECO_TYPE__(object_t)\
+// runtime object implement.
+#define ECO_RTX__(object_t, parent_t, create_func) \
+ECO_TYPE__(object_t)\
 public:\
 	typedef std::weak_ptr<object_t> wptr;\
 	typedef std::shared_ptr<object_t> ptr;\
@@ -34,14 +36,10 @@ public:\
 	{\
 		return type_name();\
 	}\
-	inline static eco::RtObject::ptr create()\
-	{\
-		return eco::RtObject::ptr(new object_t());\
-	}\
 	inline static const eco::RtClass* clss()\
 	{\
 		static eco::RtClass s_clss(\
-			parent_t::clss(), class_name(), type_id(), &object_t::create,\
+			parent_t::clss(), class_name(), type_id(), create_func,\
 			&eco::Singleton<eco::RtClassInit<object_t> >::instance());\
 		return &s_clss;\
 	}\
@@ -53,6 +51,17 @@ public:\
 	{\
 		return clss();\
 	}
+// runtime object who is a instance can be created.
+#define ECO_RTX(object_t, parent_t)\
+ECO_RTX__(object_t, parent_t, &object_t::create)\
+inline static eco::RtObject::ptr create()\
+{\
+	return eco::RtObject::ptr(new object_t());\
+}
+// runtime object who is a interface cann't be created.
+#define ECO_RTI(object_t, parent_t) \
+ECO_RTX__(object_t, parent_t, nullptr)
+
 
 ////////////////////////////////////////////////////////////////////////////////
 class RtClass;
