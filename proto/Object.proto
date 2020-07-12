@@ -2,7 +2,7 @@ syntax = "proto3";
 package proto;
 
 ////////////////////////////////////////////////////////////////////////////////
-// 错误信息
+// 错误信息 （TO DELETE ZHOUYU 0511）
 message Error
 {
 	int32  id		= 1;		// 错误ID

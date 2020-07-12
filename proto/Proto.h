@@ -19,7 +19,6 @@
 
 *******************************************************************************/
 #include <eco/net/Log.h>
-#include <eco/proxy/Win.h>
 #include "Object.pb.h"
 
 
@@ -36,7 +35,6 @@ template<typename Stream>
 Stream& operator<<(OUT Stream& stream, IN const ::proto::Error& e)
 {
 	std::string error(e.message());
-	eco::win::utf8_to_gbk(error);
 	return stream <= error <= '#' < e.id();
 }
 
