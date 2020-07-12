@@ -267,7 +267,7 @@ public:
 	typedef std::shared_ptr<TopicEvent> ptr;
 
 	// get snap seq size to publish snap.
-	virtual uint32_t get_snap_seq(IN eco::Topic& topic)
+	virtual size_t get_snap_seq(IN eco::Topic& topic)
 	{
 		return 0;	// publish all snap.
 	}
@@ -280,10 +280,10 @@ class Content
 public:
 	inline Content(
 		IN eco::ContentData::ptr& new_c,
-		IN eco::ContentData::ptr& old_c,
+		IN eco::ContentData* old_c,
 		IN eco::Snap snap,
 		IN eco::TopicEvent* event = nullptr)
-		: m_event(event), m_snap(snap), m_new_c(&new_c), m_old_c(&old_c)
+		: m_event(event), m_snap(snap), m_new_c(&new_c), m_old_c(old_c)
 	{}
 
 	// data context.
@@ -310,20 +310,20 @@ public:
 	}
 
 	// cast content old object.
+	inline bool has_old() const
+	{
+		return m_old_c != nullptr;
+	}
 	template<typename value_t>
 	inline value_t& cast_old()
 	{
-		return *static_cast<value_t*>((**m_old_c).get_value());
+		return *static_cast<value_t*>(m_old_c->get_value());
 	}
 	template<typename value_t>
 	inline value_t* cast_old_ptr()
 	{
-		return type_id() == eco::TypeId<value_t>::value
-			? static_cast<value_t*>((**m_old_c).get_value()) : nullptr;
-	}
-	inline bool has_old() const
-	{
-		return m_old_c == nullptr;
+		return (has_old() && type_id() == eco::TypeId<value_t>::value)
+			? static_cast<value_t*>(m_old_c->get_value()) : nullptr;
 	}
 
 	// content type.
@@ -386,7 +386,7 @@ private:
 	eco::Snap m_snap;
 	eco::TopicEvent* m_event;
 	eco::ContentData::ptr* m_new_c;
-	eco::ContentData::ptr* m_old_c;
+	eco::ContentData* m_old_c;
 };
 
 
@@ -516,12 +516,14 @@ public:
 	inline bool operator==(const TopicUid& v) const
 	{
 		if (m_type != v.m_type) return false;
+		if (m_server != v.m_server) return false;
+
 		if (m_type == TopicUid::type_iid)
-			return m_data.iid == v.m_data.iid && m_server == v.m_server;
+			return m_data.iid == v.m_data.iid;
 		if (m_type == TopicUid::type_tid)
-			return m_data.tid == v.m_data.tid && m_server == v.m_server;
+			return m_data.tid == v.m_data.tid;
 		if (m_type == TopicUid::type_sid)
-			return eco::equal(m_data.sid, m_data.sid) && m_server == v.m_server;
+			return eco::equal(m_data.sid, m_data.sid);
 		return false;
 	}
 
@@ -620,6 +622,27 @@ public:
 	inline Topic() {}
 	virtual ~Topic() {}
 
+	virtual void add_queued(eco::ContentData::ptr& newc) const
+	{}
+
+	// topic type: PopTopic(Topic)/OneTopic/SeqTopic/SetTopic.
+	inline bool pop_topic_type() const
+	{
+		return get_type_name() == ECO_TYPE_NAME(Topic);
+	}
+	inline bool one_topic_type() const
+	{
+		return get_type_name() == ECO_TYPE_NAME(OneTopic);
+	}
+	inline bool seq_topic_type() const
+	{
+		return get_type_name() == ECO_TYPE_NAME(SeqTopic);
+	}
+	inline bool set_topic_type() const
+	{
+		return get_type_name() == ECO_TYPE_NAME(SetTopic);
+	}
+
 	// topic identity.
 	inline const TopicUid& get_uid() const
 	{
@@ -695,7 +718,7 @@ public:
 			if (node->m_working)
 			{
 				auto* suber = (Subscriber*)node->m_subscriber;
-				suber->on_publish(*this, Content(new_c, old_c, snap_none));
+				suber->on_publish(*this, Content(new_c, &*old_c, snap_none));
 			}
 			node = next;
 		}

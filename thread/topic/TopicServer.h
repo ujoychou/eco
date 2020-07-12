@@ -38,6 +38,21 @@ public:
 		m_impl.join();
 	}
 
+	inline void set_capacity(uint32_t size)
+	{
+		m_impl.set_capacity(size);
+	}
+
+	inline uint32_t capacity() const
+	{
+		return m_impl.capacity();
+	}
+
+	inline uint32_t size() const
+	{
+		return m_impl.size();
+	}
+
 	// publish object to topic, create object if "make != nullptr". 
 	template<typename object_t, typename topic_id_t>
 	inline void publish(
@@ -88,13 +103,9 @@ public:
 		Topic::ptr topic = find_topic(topic_id);
 		if (topic != nullptr)
 		{
-			auto* set_topic = static_cast<set_topic_t*>(topic.get());
-			ContentData::ptr newc = set_topic->find(obj_id);
-			if (newc)
-			{
-				newc->stamp() = eco::meta::stamp_remove;
-				m_impl.publish_new(topic, newc);
-			}
+			assert(topic->get_type_name() == ECO_TYPE_NAME(SetTopic));
+			if (topic->get_type_name() == ECO_TYPE_NAME(SetTopic))
+				publish_to(topic, obj_id, eco::meta::stamp_delete);
 		}
 	}
 
@@ -190,6 +201,7 @@ public:
 		return 0;
 	}
 
+	// whether the topic has subscriber.
 	template<typename topic_id_t>
 	inline bool has_subscriber(
 		IN const topic_id_t& topic_id,
@@ -197,6 +209,14 @@ public:
 	{
 		Topic::ptr topic = find_topic(topic_id);
 		return (topic == nullptr) ? false : topic->has_subscriber(subscriber);
+	}
+
+	// whether the topic has subscriber.
+	template<typename topic_id_t>
+	inline bool has_subscriber(IN const topic_id_t& topic_id) const
+	{
+		Topic::ptr topic = find_topic(topic_id);
+		return (topic == nullptr) ? false : topic->has_subscriber();
 	}
 
 public:
@@ -423,6 +443,19 @@ public:
 	inline void join()
 	{}
 
+	inline void set_capacity(uint32_t capacity)
+	{}
+
+	inline uint32_t capacity() const
+	{
+		return 0;
+	}
+
+	inline uint32_t size() const
+	{
+		return 0;
+	}
+
 	inline void publish_new(
 		IN eco::Topic::ptr& topic,
 		IN eco::ContentData::ptr& newc)
@@ -470,6 +503,21 @@ public:
 	inline void join()
 	{
 		m_publish_server.join();
+	}
+
+	inline void set_capacity(uint32_t capacity)
+	{
+		m_publish_server.set_capacity(capacity);
+	}
+
+	inline uint32_t capacity() const
+	{
+		return m_publish_server.get_queue().capacity();
+	}
+
+	inline uint32_t size() const
+	{
+		return m_publish_server.get_queue().size();
 	}
 
 	inline void publish_new(
