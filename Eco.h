@@ -24,8 +24,8 @@ ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 class MessageHandler;
 ECO_NS_END(net);
-class Task;
 class TimerServer;
+class TaskUnit;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Eco
 {
@@ -35,10 +35,10 @@ public:
 	static Eco& get();
 
 	// post task to executing queue.
-	void post_task(IN std::shared_ptr<Task>& task);
+	void post_task(IN TaskUnit& task);
 
 	// post task to wait queue.
-	void post_wait(IN std::shared_ptr<Task>& task);
+	void post_wait(IN TaskUnit& task);
 
 	// move wait task to executing.
 	void move_wait();

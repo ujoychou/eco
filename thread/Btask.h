@@ -68,11 +68,11 @@ public:
 		if (task_state == task_no_ready || task_state == task_working_other)
 		{
 			prepare();
-			Eco::get().post_wait(shared_from_this());
+			Eco::get().post_wait(TaskUnit(shared_from_this()));
 		}
 		else if (task_state == task_occupied)
 		{
-			Eco::get().post_task(shared_from_this());
+			Eco::get().post_task(TaskUnit(shared_from_this()));
 		}
 	}
 
@@ -82,8 +82,8 @@ public:
 		IN uint32_t sour_state,
 		IN uint32_t add_state,
 		IN uint32_t erase_state = 0,
-		IN uint32_t restart_secs = v_restart_secs)
-		: Task(restart_secs > 0 ? restart_secs : v_restart_secs)
+		IN uint32_t restart_secs = restart_secs_default)
+		: Task(restart_secs > 0 ? restart_secs : restart_secs_default)
 		, m_sour_state(sour_state)
 		, m_add_state(add_state)
 		, m_erase_state(erase_state)

@@ -27,23 +27,23 @@ namespace eco{;
 class TaskHandler
 {
 public:
-	inline void operator()(IN Task::ptr& task)
+	inline void operator()(IN TaskUnit& task)
 	{
 		// execute this task.
 		bool result = true;
 		try
 		{
-			(*task)();
+			task();
 		}
 		catch (std::exception& e)
 		{
 			result = false;
-			ECO_LOGX(error) << task->get_type_name() << ": " << e.what();
+			ECO_LOG(error, "task") << task.get_type_name() << ": " << e.what();
 		}
 
 		if (!result && m_post_func)
 		{
-			Eco::get().timer().add(task->restart_secs() * 1000, false,
+			Eco::get().timer().add(task.restart_secs() * 1000, false,
 				[this, task] () mutable {
 				m_post_func(std::move(task));
 			});
@@ -52,7 +52,7 @@ public:
 	}
 
 	// set post func
-	typedef std::function<void(Task::ptr&&)> PostFunc;
+	typedef std::function<void(TaskUnit&&)> PostFunc;
 	inline void set_post(PostFunc&& func)
 	{
 		m_post_func = func;
@@ -64,26 +64,45 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class TaskServer : public MessagePool<Task::ptr, TaskHandler>
+class TaskServer : public MessagePool<TaskUnit, TaskHandler>
 {
 public:
 	inline TaskServer()
 	{
-		void(T::*func)(Task::ptr&&) = &T::post;
+		void(T::*func)(TaskUnit&&) = &T::post;
 		m_message_handler.set_post(
 			std::bind(func, this, std::placeholders::_1));
 	}
 
-	inline void post(IN std::function<void()>&& task)
+	inline void post(IN Closure&& task)
 	{
-		T::post(Task::ptr(new FuncTask(std::move(task))));
+		T::post(TaskUnit(std::forward<Closure>(task)));
 	}
 
 	inline void post(IN Task::ptr& task)
 	{
-		T::post(task);
+		T::post(TaskUnit(task));
+	}
+	inline void post(IN Task::ptr&& task)
+	{
+		T::post(TaskUnit(task));
+	}
+
+private:
+	inline void post(IN TaskUnit&& task)
+	{
+		T::post(std::forward<TaskUnit>(task));
 	}
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+struct ClosureHandler
+{
+	inline void operator()(IN Closure& task) {	task(); }
+};
+typedef MessageServerPool<Closure, ClosureHandler> ClosureServerPool;
+typedef ClosureServerPool::MessageWorker ClosureWorker;
 
 
 ////////////////////////////////////////////////////////////////////////////////
