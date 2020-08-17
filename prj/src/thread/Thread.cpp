@@ -16,20 +16,23 @@ thread_local size_t	 t_nid = 0;
 thread_local char	 t_sid[16] = { 0 };
 thread_local char	 t_name[32] = { 0 };
 thread_local Thread::Impl* t_thread = 0;
-
-
+// thread local error.
+thread_local eco::Format<> t_format;
+thread_local eco::proto::Error t_error;
+thread_local eco::this_thread::Error t_terror;
+thread_local eco::log::PusherT<eco::StreamX> t_logbuf;
 ////////////////////////////////////////////////////////////////////////////////
 class ThreadLockGuard
 {
 public:
 	inline ThreadLockGuard(ThreadLock& lock) : m_lock(lock)
 	{
-		ThreadCheck::me().add_lock(&m_lock);
+		ThreadCheck::get().add_lock(&m_lock);
 		++s_thread_count;
 	}
 	inline ~ThreadLockGuard()
 	{
-		ThreadCheck::me().del_lock(&m_lock);
+		ThreadCheck::get().del_lock(&m_lock);
 		--s_thread_count;
 	}
 	ThreadLock& m_lock;
@@ -77,9 +80,9 @@ public:
 
 	inline void run(
 		IN std::function<void()>& func,
-		IN const char* name)
+		IN const char* name_)
 	{
-		m_name = name;
+		m_name = name_;
 		m_thread = std::thread([=] {
 			t_thread = m_lock.m_thread;
 			eco_cpys(t_name, m_name);
@@ -108,9 +111,9 @@ const char* Thread::get_id() const
 {
 	return impl().m_sid.c_str();
 }
-void Thread::run(std::function<void()>&& func, IN const char* name)
+void Thread::run(std::function<void()>&& func, IN const char* name_)
 {
-	impl().run(std::move(func), name);
+	impl().run(std::move(func), name_);
 }
 void Thread::join()
 {
@@ -121,8 +124,90 @@ void Thread::join()
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(this_thread);
+////////////////////////////////////////////////////////////////////////////////
+void Error::set_id(int id)
+{
+	t_error.set_id(id);
+	t_error.mutable_path()->clear();
+	t_error.mutable_message()->clear();
+}
+Error& Error::id(int id)
+{
+	t_error.set_id(id);
+	t_error.mutable_path()->clear();
+	t_error.mutable_message()->clear();
+	return *this;
+}
+void Error::set_path(const char* v)
+{
+	t_error.clear_id();
+	t_error.set_path(v);
+	t_error.mutable_message()->clear();
+}
+Error& Error::path(const char* v)
+{
+	t_error.clear_id();
+	t_error.set_path(v);
+	t_error.mutable_message()->clear();
+	return *this;
+}
+Error& Error::key(int id)
+{
+	t_error.set_id(id);
+	t_error.mutable_path()->clear();
+	t_error.mutable_message()->clear();
+	return *this;
+}
+Error& Error::key(const char* v)
+{
+	t_error.clear_id();
+	t_error.set_path(v);
+	t_error.mutable_message()->clear();
+	return *this;
+}
+eco::proto::Error& Error::data() const
+{
+	return t_error;
+}
+bool Error::has_error() const
+{
+	return t_error.id() != 0 || !t_error.path().empty();
+}
+Error::operator bool() const
+{
+	return t_error.id() != 0 || !t_error.path().empty();
+}
+void Error::clear()
+{
+	t_error.clear_id();
+	t_error.mutable_path()->clear();
+	t_error.mutable_message()->clear();
+}
+Error& Error::operator / (const char* v)
+{
+	*t_error.mutable_path() += '/';
+	*t_error.mutable_path() += v;
+	return *this;
+}
+Error& Error::operator < (const char v)
+{
+	*t_error.mutable_message() += v;
+	return *this;
+}
+Error& Error::operator < (const char* v)
+{
+	*t_error.mutable_message() += v;
+	return *this;
+}
+Error& Error::append(const char* v, uint32_t n)
+{
+	t_error.mutable_message()->append(v, n);
+	return *this;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 size_t id()
 {
 	Thread::Impl::this_thread_init();
@@ -140,6 +225,26 @@ const char* name()
 ThreadLock& lock()
 {
 	return t_thread->m_lock;
+}
+eco::this_thread::Error& error()
+{
+	t_error.mutable_path();
+	t_error.mutable_message();
+	return t_terror;
+}
+eco::Format<>& format()
+{
+	return t_format;
+}
+eco::Format<>& format(const char* msg)
+{
+	t_format.reset(msg);
+	return t_format;
+}
+eco::log::PusherT<eco::StreamX>& logbuf()
+{
+	t_logbuf.stream().clear();
+	return t_logbuf;
 }
 void init()
 {
@@ -189,7 +294,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_SINGLETON_IMPL(ThreadCheck);
-ThreadCheck& ThreadCheck::me()
+ThreadCheck& ThreadCheck::get()
 {
 	return eco::Singleton<ThreadCheck>::instance();
 }

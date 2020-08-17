@@ -61,7 +61,7 @@ protected:
 			}
 			catch (std::exception& e)
 			{
-				ECO_LOGX(error, "message server") << e.what();
+				ECO_LOG(error, "message server") << e.what();
 			}
 		}// end while
 	}
@@ -320,7 +320,7 @@ public:
 		}
 	}
 
-	// use "close" to wait all message handled.
+	// use "close" to notify all message exit.
 	inline void close()
 	{
 		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
@@ -334,6 +334,15 @@ public:
 		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
 		{
 			(**it).join();
+		}
+	}
+
+	// use "stop" to wait all message handled.
+	inline void stop()
+	{
+		for (auto it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			(**it).stop();
 		}
 	}
 

@@ -19,16 +19,17 @@ thread and common thread function.
 * copyright(c) 2016 - 2018, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Cast.h>
 #include <eco/Object.h>
-#include <eco/ExportApi.h>
+#include <eco/thread/Error.h>
 #include <list>
 #include <atomic>
 #include <thread>
-#include <functional>
 
 
 ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(log);
+template<typename stream_t> class PusherT;
+ECO_NS_END(log);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Thread
 {
@@ -115,7 +116,7 @@ class ECO_API ThreadCheck
 public:
 	void set_time();
 	int64_t get_time() const;
-	static ThreadCheck& me();
+	static ThreadCheck& get();
 
 private:
 	void on_timer();
@@ -142,7 +143,7 @@ public:
 	inline void set_object(uint64_t object_id)
 	{
 		m_object = object_id;
-		m_stamp = ThreadCheck::me().get_time();
+		m_stamp = ThreadCheck::get().get_time();
 	}
 
 	// the function of thread end.
@@ -180,6 +181,8 @@ private:
 
 
 ECO_NS_BEGIN(this_thread);
+#define ECO_THIS_ERROR(id_path) eco::this_thread::error().key(id_path)
+#define ECO_THIS_THROW(id_path) throw eco::this_thread::error().key(id_path)
 ////////////////////////////////////////////////////////////////////////////////
 // get current thread id.
 ECO_API size_t id();
@@ -190,6 +193,16 @@ ECO_API const char* name();
 
 // get current thread lock.
 ECO_API ThreadLock& lock();
+
+// get current thread error.
+ECO_API eco::this_thread::Error& error();
+
+// get current thread format.
+ECO_API eco::Format<>& format();
+ECO_API eco::Format<>& format(const char* msg);
+
+// get current thread logging buffer.
+ECO_API eco::log::PusherT<eco::StreamX>& logbuf();
 
 // init thread.
 ECO_API void init();

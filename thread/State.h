@@ -24,12 +24,9 @@ thread safe object state.
 
 namespace eco{;
 namespace atomic{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class State
 {
-	ECO_NONCOPYABLE(State);
 public:
 	// state flag.
 	enum Flag
