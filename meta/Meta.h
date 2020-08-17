@@ -90,22 +90,22 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename ObjectId>
+template<typename object_id_t>
 class PropertyValue
 {
 public:
-	ObjectId	m_id;				// object id.
+	object_id_t	m_id;				// object id.
 	std::string m_property;			// property name
 	std::string m_value;			// Property value.
 
 	inline PropertyValue(
-		IN const ObjectId id,
+		IN const object_id_t id,
 		IN const char* p,
 		IN const char* v)
 		: m_id(id), m_property(p), m_value(v)
 	{}
 
-	inline void set_id(IN const ObjectId id)
+	inline void set_id(IN const object_id_t id)
 	{
 		m_id = id;
 	}

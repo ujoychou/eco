@@ -16,6 +16,8 @@ enum
 	stamp_update	= 1,		// update object.
 	stamp_delete	= 2,		// delete object.
 	stamp_clean		= 3,		// clean  object.(not update)
+
+	stamp_silent	= 8,		// publish content silently.
 };
 typedef uint8_t Stamp;
 
