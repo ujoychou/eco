@@ -49,12 +49,12 @@ public:
 	uint32_t m_request_start;
 	SessionData::ptr m_session;
 	ClientUserObserver m_user_observer;
-	uint64_t m_request_data;
+	uint64_t m_option_data;
 	uint32_t m_auto_login;
 
 public:
 	inline SessionDataPack(IN bool auto_login = false)
-		: m_request_data(0), m_auto_login(auto_login), m_request_start(0)
+		: m_option_data(0), m_auto_login(auto_login), m_request_start(0)
 	{}
 };
 
@@ -64,42 +64,42 @@ class SyncRequest : public eco::Object<SyncRequest>
 {
 public:
 	inline SyncRequest(
-		IN Codec* err_codec,
-		IN Codec* rsp_codec,
+		IN Codec& err_codec,
+		IN Codec& rsp_codec,
 		IN std::vector<void*>* rsp_set)
 		: m_err_codec(err_codec)
 		, m_rsp_codec(rsp_codec)
 		, m_rsp_set(rsp_set)
-		, m_error_id(0)
+		, m_err(false)
 	{}
 
 	// if decode "error or response" message fail. return false, else true.
-	inline bool decode(const eco::Bytes& msg)
+	inline bool decode(const eco::Bytes& msg, bool err)
 	{
 		// 1.parse reject error object.
-		if (m_error_id != 0)
+		if (m_err = err)
 		{
-			if (m_err_codec && !m_err_codec->decode(msg.m_data, msg.m_size))
+			if (!m_err_codec.empty() && 
+				!m_err_codec.decode(msg.m_data, msg.m_size))
 				return false;					// #.decode error msg fail.
 		}
 
 		// 2.parse response object or response_set.
-		if (msg.m_size > 0 && m_rsp_codec)
+		if (msg.m_size > 0 && !m_rsp_codec.empty())
 		{
-			void* obj = m_rsp_codec->decode(msg.m_data, msg.m_size);
+			void* obj = m_rsp_codec.decode(msg.m_data, msg.m_size);
 			if (obj == nullptr) return false;	// #.decode rsp msg fail.
 			if (m_rsp_set) m_rsp_set->push_back(obj);
 		}
 		return true;
 	}
 
-	uint32_t	m_error_id;
-	Codec*		m_err_codec;
-	Codec*		m_rsp_codec;
+	uint32_t	m_err;
+	Codec&		m_err_codec;
+	Codec&		m_rsp_codec;
 	std::vector<void*>* m_rsp_set;
 	eco::Monitor m_monitor;
 };
-////////////////////////////////////////////////////////////////////////////////
 class AsyncRequest : public eco::Object<AsyncRequest>
 {
 public:
@@ -107,6 +107,18 @@ public:
 		: m_func(f) {}
 
 	std::function<void(eco::net::Context&)> m_func;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Loading
+{
+public:
+	OnLoadDataFunc m_func;
+	eco::atomic::State m_state;
+
+	inline Loading() {}
+	inline Loading(OnLoadDataFunc& f) : m_func(f) {}
 };
 
 
@@ -128,6 +140,7 @@ public:
 	// connection event.
 	ClientOpenFunc  m_on_open;
 	ClientCloseFunc m_on_close;
+	std::vector<Loading> m_loading;
 
 	// session data management.
 	MakeSessionDataFunc m_make_session;
@@ -135,8 +148,8 @@ public:
 	// all session that client have, diff by "&session".
 	std::unordered_map<void*, SessionDataPack::ptr> m_authority_map;
 	// connected session that has id build by server.
-	eco::HashMap<uint32_t, SessionDataPack::ptr> m_session_map;
-	mutable eco::Mutex	m_mutex;
+	eco::HashMap<uint64_t, SessionDataPack::ptr> m_session_map;
+	mutable eco::Mutex m_mutex;
 
 	// async management.
 	eco::Atomic<uint32_t> m_request_id;
@@ -162,6 +175,29 @@ public:
 	inline TcpPeer::ptr& peer()
 	{
 		return m_balancer.m_peer;
+	}
+
+	TcpState& get_state()
+	{
+		return m_balancer.m_peer->impl().state();
+	}
+	const TcpState& state() const
+	{
+		return m_balancer.m_peer->impl().get_state();
+	}
+
+	inline void set_load_event(OnLoadDataFunc func)
+	{
+		m_loading.push_back(Loading(func));
+	}
+	inline bool ready() const
+	{
+		for (const Loading& it : m_loading)
+		{
+			if (it.m_state.is_none())
+				return false;
+		}
+		return true;
 	}
 
 	// open a session with no authority.
@@ -202,9 +238,9 @@ public:
 
 	// async management post item.
 	inline SyncRequest::ptr post_sync(
-		IN const uint32_t req_id,
-		IN Codec* err_codec,
-		IN Codec* rsp_codec,
+		IN uint32_t req_id,
+		IN Codec& err_codec,
+		IN Codec& rsp_codec,
 		IN std::vector<void*>* rsp_set = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
@@ -250,14 +286,14 @@ public:
 	inline AsyncRequest::ptr pop_async(IN uint32_t req_id, IN bool last)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		AsyncRequest::ptr async;
+		AsyncRequest::ptr async_;
 		auto it = m_async_manager.find(req_id);
 		if (it != m_async_manager.end())
 		{
-			async = it->second;
+			async_ = it->second;
 			if (last) m_async_manager.erase(it);
 		}
-		return async;
+		return async_;
 	}
 	inline void erase_async(IN const uint32_t req_id)
 	{
@@ -323,7 +359,7 @@ public:
 		eco::Error e;
 		eco::String data;
 		uint32_t start = 0;
-		if (m_protocol.protocol_latest()->encode(data, start, meta, e))
+		if (peer()->impl().m_protocol->encode(data, start, meta, e))
 		{
 			send(data, start);
 		}
@@ -334,7 +370,7 @@ public:
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
 		if (peer())
-			peer()->impl().send_heartbeat(*m_protocol.protocol_latest());
+			peer()->impl().send_heartbeat();
 	}
 
 	inline void send(IN SessionDataPack::ptr& pack)
@@ -355,19 +391,36 @@ public:
 		IN TcpSessionImpl& sess,
 		IN MessageMeta& meta);
 
-	inline eco::Result request(
+	inline bool request(
 		IN MessageMeta& req,
-		IN Codec* err_codec,
-		IN Codec* rsp_codec,
+		IN Codec& err_codec,
+		IN Codec& rsp_codec,
 		IN std::vector<void*>* rsp_set);
 
 	inline void async(
 		IN MessageMeta& req,
 		IN ResponseFunc& rsp_func);
 
+	template<typename codec_t, typename err_t, typename rsp_t>
+	inline void async(
+		IN uint32_t req_type, IN const void* req,
+		IN std::function<void(err_t&, eco::net::Context&)>&& reject,
+		IN std::function<void(rsp_t&, eco::net::Context&)>&& resolve)
+	{
+		codec_t req_codec(req);
+		MessageMeta req_meta;
+		req_meta.codec(req_codec).message_type(req_type);
+		return async(req_meta, context_func<codec_t, err_t, rsp_t>(
+			reject, resolve));
+	}
+
 public:
 	// when peer has connected to server.
 	void on_connect(IN const eco::Error* e);
+
+	// load data when peer connected.
+	void on_load_data();
+	void on_load_locale(eco::atomic::State& state);
 
 	// when peer has received a message data bytes.
 	void on_read(IN void* peer, IN MessageHead& head, IN eco::String& data);
@@ -376,7 +429,7 @@ public:
 	void on_send(IN void* peer, IN uint32_t size);
 
 	// when peer has been closed.
-	void on_close(ConnectionId peer_id, const Error& e, bool erase_peer);
+	void on_close(SessionId peer_id, const Error& e, bool erase_peer);
 
 	inline const char* websocket_key() const
 	{

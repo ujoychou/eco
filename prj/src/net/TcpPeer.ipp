@@ -38,18 +38,27 @@ class TcpPeer::Impl : public TcpConnectorHandler
 {
 	ECO_IMPL_INIT(TcpPeer);
 public:
-	TcpState m_state;
-	eco::atomic::State m_data_state;
-	TcpPeer::wptr m_peer_observer;
-	TcpPeerHandler* m_handler;
-	TcpConnector m_connector;
-	std::auto_ptr<ConnectionData> m_data;
-	MessageWorker* m_server;
+	
+	TcpState			m_state;			// peer socket state.
+	eco::atomic::State	m_data_state;		// peer data state.
+	TcpPeer::wptr		m_peer_observer;	// this peer.
+	TcpPeerHandler*		m_handler;			// peer handler.
+	TcpConnector		m_connector;		// socket io.
+	MessageWorker*		m_server;			// message server post.
+	SessionId			m_id;				// peer session id, uuid.
+	Protocol*			m_protocol;			// current protocol.
+	eco::String			m_user;				// user name.
+	eco::String			m_lang;				// lang name.
+	std::auto_ptr<ConnectionData> m_data;	// connection data.
 
 public:
 	// never be called, this is just for complie success.
-	inline Impl() : m_handler(0), m_connector(0), m_server(0)
+	inline Impl() : m_connector(0)
 	{
+		m_id = 0;
+		m_server = nullptr;
+		m_handler = nullptr;
+		m_protocol = nullptr;
 		assert(false);
 	}
 
@@ -60,6 +69,7 @@ public:
 		: m_handler(hdl)
 		, m_connector(io_server)
 		, m_server(msg_server)
+		, m_id(0), m_protocol(0)
 	{}
 
 	inline ~Impl()
@@ -71,6 +81,8 @@ public:
 	inline void restart(IN MessageWorker* worker, IN TcpPeer::ptr& peer)
 	{
 		m_server = worker;
+		m_user.clear();
+		m_lang.clear();
 		prepare(peer);
 	}
 
@@ -80,12 +92,19 @@ public:
 		m_peer_observer.reset();
 		m_state.set_closed();
 		m_data_state.none();
+		m_user.clear();
+		m_lang.clear();
 		m_connector.release();
 		if (m_server)
 		{
 			m_server->detach();
 			m_server = nullptr;
 		}
+	}
+
+	inline void set_protocol(Protocol* p)
+	{
+		if (m_protocol != p) m_protocol = p;
 	}
 
 	// peer must be created in the heap(by new).
@@ -146,19 +165,19 @@ public:
 	}
 
 	// tcp peer identity which is the address of connector.
-	inline size_t get_id() const
+	inline SessionId id() const
 	{
-		return m_connector.get_id();
+		return m_id;
 	}
 
-	inline eco::String get_ip() const
+	inline eco::String ip() const
 	{
-		return m_connector.get_ip();
+		return m_connector.ip();
 	}
 
-	inline uint32_t get_port() const
+	inline uint32_t port() const
 	{
-		return m_connector.get_port();
+		return m_connector.port();
 	}
 
 	// tcp peer connection state.
@@ -239,7 +258,7 @@ public:
 		uint32_t start = 0;
 		if (!prot.encode(data, start, meta, e))
 		{
-			ECO_ERROR << NetLog(get_id(), __func__,
+			ECO_ERROR << NetLog(id(), __func__,
 				meta.m_session_id) <= e;
 			return;
 		}
@@ -247,17 +266,17 @@ public:
 	}
 
 	// send heartbeat.
-	inline void send_heartbeat(IN const Protocol& prot)
+	inline void send_heartbeat()
 	{
 		if (m_state.ready())
 		{
 			eco::String data;
-			prot.encode_heartbeat(data);
+			m_protocol->encode_heartbeat(data);
 			send(data, 0);
 		}
 	}
 	// send live heartbeat.
-	inline void send_live_heartbeat(IN Protocol& prot)
+	inline void send_live_heartbeat()
 	{
 		if (m_state.ready())
 		{
@@ -266,13 +285,14 @@ public:
 			if (get_state().self_live())
 				state().set_self_live(false);
 			else
-				send_heartbeat(prot);
+				send_heartbeat();
 		}
 	}
 
 	// close peer.
 	inline bool close()
 	{
+		m_data_state.none();
 		if (!m_state.closed())
 		{
 			// 1.close state.
@@ -293,7 +313,7 @@ public:
 	inline bool close_and_notify(const eco::Error& e, IN bool erase_peer)
 	{
 		if (!close()) return false;
-		m_handler->m_on_close(get_id(), e, erase_peer);
+		m_handler->m_on_close(id(), e, erase_peer);
 		return true;
 	}
 
@@ -320,7 +340,7 @@ public:
 
 public:
 	// when accept this peer.
-	void on_accept_state();
+	void on_accept_state(uint64_t id);
 	void on_accept(const TcpOption& opt);
 
 	// when peer has connected to server.(tcp client)

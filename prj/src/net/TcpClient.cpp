@@ -2,6 +2,7 @@
 #include "TcpClient.ipp"
 ////////////////////////////////////////////////////////////////////////////////
 #include "TcpOuter.h"
+#include <eco/App.h>
 #include <eco/net/protocol/TcpProtocol2.h>
 #include <random>
 #include <chrono>
@@ -25,7 +26,7 @@ void LoadBalancer::update_address(IN AddressSet& addr)
 bool LoadBalancer::connect()
 {
 	// this client has connect to server.
-	if (m_peer->get_state().connected() || m_address_set.empty())
+	if (m_peer->state().connected() || m_address_set.empty())
 	{
 		return false;
 	}
@@ -60,7 +61,7 @@ void TcpClient::Impl::async_connect(IN bool reconnect)
 		if (!m_option.websocket())
 		{
 			m_protocol.add_protocol(new TcpProtocol());
-			//m_protocol.add_protocol(new TcpProtocol2());
+			m_protocol.add_protocol(new TcpProtocol2());
 		}
 		else
 		{
@@ -76,7 +77,7 @@ void TcpClient::Impl::async_connect(IN bool reconnect)
 	}
 	if (e)
 	{
-		ECO_LOGX(info) << logging() << e;
+		ECO_LOG(info) << logging() << e;
 		return;
 	}
 
@@ -98,6 +99,12 @@ void TcpClient::Impl::async_connect(IN bool reconnect)
 		m_peer_handler.m_on_connect = 
 			std::bind(&TcpClient::Impl::on_connect, this, _1);
 
+		// init data load func.
+		if (m_option.locale_())
+		{
+			set_load_event(std::bind(&TcpClient::Impl::on_load_locale, this, _1));
+		}
+		
 		// start io server, timer and dispatch server.
 		std::string name("worker-");
 		name += m_option.get_name();
@@ -107,6 +114,7 @@ void TcpClient::Impl::async_connect(IN bool reconnect)
 		// create peer.
 		m_balancer.m_peer = TcpPeer::make(
 			m_worker.get_io_worker(), 0, &m_peer_handler);
+		m_balancer.m_peer->impl().set_protocol(m_protocol.protocol_latest());
 		if (m_make_connection)
 		{
 			m_balancer.m_peer->impl().make_connection_data(
@@ -125,7 +133,7 @@ void TcpClient::Impl::async_connect(IN bool reconnect)
 	
 	if (m_balancer.connect())
 	{
-		ECO_LOGX(info) << logging();
+		ECO_LOG(info) << logging();
 	}
 }
 
@@ -171,7 +179,7 @@ void TcpClient::Impl::close()
 	eco::Mutex::ScopeLock lock(m_mutex);
 	if (peer())
 	{
-		auto id = peer()->get_id();
+		auto id = peer()->id();
 		m_timer.close();
 		m_session_map.clear();
 		m_balancer.release();
@@ -223,7 +231,7 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 	meta.m_session_id = 0;
 	meta.m_category |= (category_authority | category_session);
 	// use "&session" when get response, because it represent user.
-	pack->m_request_data = meta.m_request_data;
+	pack->m_option_data = meta.m_option_data;
 	meta.option(session_key);
 	if (!m_protocol.protocol_latest()->encode(
 		pack->m_request, pack->m_request_start, meta, e))
@@ -236,10 +244,10 @@ void TcpClient::Impl::async_auth(IN TcpSessionImpl& sess, IN MessageMeta& meta)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco::Result TcpClient::Impl::request(
+bool TcpClient::Impl::request(
 	IN MessageMeta& req,
-	IN Codec* err_codec,
-	IN Codec* rsp_codec,
+	IN Codec& err_codec,
+	IN Codec& rsp_codec,
 	IN std::vector<void*>* rsp_set)
 {
 	// async manager.
@@ -251,7 +259,7 @@ eco::Result TcpClient::Impl::request(
 	// send message.
 	send(req);
 	auto result = sync->m_monitor.timed_wait(m_timeout_millsec);
-	auto ec = sync->m_error_id > 0 ? sync->m_error_id : result;
+	auto ec = sync->m_err ? eco::error : eco::ok;
 	erase_sync(req_id);
 	eco::thread::release(sync);
 	return ec;
@@ -277,26 +285,13 @@ void TcpClient::Impl::on_connect(IN const eco::Error* e)
 	if (e == nullptr)
 	{
 		peer()->impl().init_option(m_option);
+		on_load_data();
 
-		// auto clear data state.
-		peer()->data_state().none();
-
-		// reconnect to server: session authority.
-		auto it = m_authority_map.begin();
-		for (; it != m_authority_map.end(); ++it)
-		{
-			eco::String data;
-			SessionDataPack& pack = (*it->second);
-			data.assign(pack.m_request.c_str(), pack.m_request.size());
-			send(data, pack.m_request_start);
-		}
-		ECO_INFO << NetLog(peer()->get_id(), __func__)
-			<= m_option.get_name();
+		ECO_INFO << NetLog(peer()->id(), __func__) <= m_option.get_name();
 	}
 	else
 	{
-		ECO_ERROR << NetLog(peer()->get_id(), __func__)
-			<= m_option.get_name() <= *e;
+		ECO_ERROR << NetLog(peer()->id(), __func__)	<= m_option.get_name() <= *e;
 	}
 
 	// notify on connect.
@@ -308,17 +303,49 @@ void TcpClient::Impl::on_connect(IN const eco::Error* e)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::on_close(
-	ConnectionId peer_id, const Error& e, bool erase_peer)
+void TcpClient::Impl::on_close(SessionId peer, const Error& e, bool erase_peer)
 {
 	m_session_map.clear();
-	ECO_INFO << NetLog(peer_id, __func__);
+
+	// reset loading state.
+	for (Loading& it : m_loading)
+	{
+		it.m_state.none();
+	}
+
+	ECO_INFO << NetLog(peer, __func__) < e;
 
 	// notify on close.
 	if (m_on_close)
 	{
 		m_on_close(e);
 	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpClient::Impl::on_load_data()
+{
+	for (Loading& it : m_loading)
+	{
+		if (!it.m_state.is_ok())
+		{
+			it.m_func(it.m_state);
+		}
+	}
+}
+void TcpClient::Impl::on_load_locale(eco::atomic::State& state)
+{
+	async<ProtobufCodec, eco::proto::Error, eco::proto::Locale>(
+		eco::proto_locale_get_req, nullptr,
+		[&state](eco::proto::Error& e, eco::net::Context& c) {
+		ECO_LOG(error, "load_locale") < e;
+	},
+		[&state, this](eco::proto::Locale& loc, eco::net::Context& c) {
+		eco::App::get()->locale().add_locale(loc, m_option.get_module_());
+		state.ok();
+		ECO_LOG(info, "load_locale");
+	});
 }
 
 
@@ -349,6 +376,11 @@ void TcpClient::Impl::on_timer(IN const eco::Error* e)
 		check_peer_live();
 	}
 
+	if (get_state().connected())
+	{
+		on_load_data();
+	}
+
 	set_tick_timer();		// set next timer.
 }
 
@@ -365,9 +397,9 @@ void TcpClient::Impl::on_read(
 		peer->state().set_peer_live(true);
 		if (m_option.response_heartbeat())
 		{
-			peer->send_heartbeat(*head.m_protocol);
+			peer->send_heartbeat();
 		}
-		ECO_DEBUG << NetLog(peer->get_id(), __func__) <= "heartbeat";
+		ECO_DEBUG << NetLog(peer->id(), __func__) <= "heartbeat";
 		return;
 	}
 
@@ -388,9 +420,9 @@ void TcpClient::register_handler(IN uint64_t id, IN HandlerFunc hf)
 {
 	impl().m_dispatch.register_handler(id, std::move(hf));
 }
-void TcpClient::register_default_handler(IN HandlerFunc hf)
+void TcpClient::register_default(IN HandlerFunc hf)
 {
-	impl().m_dispatch.register_default_handler(std::move(hf));
+	impl().m_dispatch.register_default(std::move(hf));
 }
 void TcpClient::set_event(ClientOpenFunc on_open, ClientCloseFunc on_close)
 {
@@ -403,6 +435,10 @@ void TcpClient::set_recv_event(
 	impl().m_peer_handler.m_on_decode_head = on_decode;
 	impl().m_dispatch.message_handler().set_event(on_recv);
 }
+void TcpClient::set_load_event(OnLoadDataFunc func)
+{
+	impl().set_load_event(func);
+}
 void TcpClient::set_timeout(IN const uint32_t millsec)
 {
 	impl().m_timeout_millsec = millsec;
@@ -410,6 +446,10 @@ void TcpClient::set_timeout(IN const uint32_t millsec)
 void TcpClient::set_connection_data(IN MakeConnectionDataFunc make)
 {
 	impl().m_make_connection = make;
+}
+bool TcpClient::ready() const
+{
+	return impl().ready();
 }
 
 
@@ -422,17 +462,13 @@ eco::atomic::State& TcpClient::data_state()
 {
 	return impl().m_balancer.m_peer->data_state();
 }
-const TcpState& TcpClient::get_state() const
+const TcpState& TcpClient::state() const
 {
-	return impl().m_balancer.m_peer->get_state();
+	return impl().m_balancer.m_peer->state();
 }
 void TcpClient::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;
-}
-ConnectionId TcpClient::get_id()
-{
-	return impl().peer()->get_id();
 }
 void TcpClient::close()
 {
@@ -470,17 +506,17 @@ void TcpClient::async_connect(IN AddressSet& addr, IN bool reconnect)
 {
 	impl().async_connect(addr, reconnect);
 }
-void TcpClient::connect(IN uint32_t millsec)
+bool TcpClient::connect(IN uint32_t millsec)
 {
 	impl().async_connect(false);
-	eco::thread::time_wait(std::bind(&TcpState::connected,
-		&impl().peer()->get_state()), millsec);
+	return eco::thread::time_wait(std::bind(&TcpState::connected,
+		&impl().peer()->state()), millsec);
 }
-void TcpClient::connect(IN AddressSet& addr, IN uint32_t millsec)
+bool TcpClient::connect(IN AddressSet& addr, IN uint32_t millsec)
 {
 	impl().async_connect(addr, false);
-	eco::thread::time_wait(std::bind(&TcpState::connected,
-		&impl().peer()->get_state()), millsec);
+	return eco::thread::time_wait(std::bind(&TcpState::connected,
+		&impl().peer()->state()), millsec);
 }
 
 
@@ -502,10 +538,10 @@ void TcpClient::authorize(IN TcpSession& session, IN MessageMeta& meta)
 	TcpSessionOuter outer(session);
 	impl().async_auth(outer.impl(), meta);
 }
-eco::Result TcpClient::request(
+bool TcpClient::request(
 	IN MessageMeta& req,
-	IN Codec* err_codec,
-	IN Codec* rsp_codec,
+	IN Codec& err_codec,
+	IN Codec& rsp_codec,
 	IN std::vector<void*>* rsp_set)
 {
 	return impl().request(req, err_codec, rsp_codec, rsp_set);

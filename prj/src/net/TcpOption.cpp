@@ -4,8 +4,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-namespace eco{;
-namespace net{;
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class TcpOption::Impl
 {
@@ -16,8 +16,9 @@ public:
 	uint32_t	m_max_byte_size;
 
 	// option.
-	uint16_t m_no_delay;
-	uint16_t m_websocket;
+	uint8_t m_no_delay;
+	uint8_t m_websocket;
+	uint8_t m_locale_;
 	// server tick time.
 	uint32_t m_tick_time;
 	uint32_t m_tick_count;
@@ -39,6 +40,7 @@ public:
 	// constructor.
 	inline Impl()
 	{
+		m_locale_ = false;
 		m_no_delay = true;
 		m_websocket = false;
 		m_tick_time = 5;
@@ -66,6 +68,7 @@ public:
 ECO_VALUE_IMPL(TcpOption);
 ECO_PROPERTY_STR_IMPL(TcpOption, name);
 ECO_PROPERTY_STR_IMPL(TcpOption, router);
+ECO_PROPERTY_BOL_IMPL(TcpOption, locale_);
 ECO_PROPERTY_BOL_IMPL(TcpOption, no_delay);
 ECO_PROPERTY_BOL_IMPL(TcpOption, websocket);
 ECO_PROPERTY_BOL_IMPL(TcpOption, io_heartbeat);
@@ -108,15 +111,19 @@ class TcpClientOption::Impl : public TcpOption::Impl
 {
 	ECO_IMPL_INIT(TcpClientOption);
 public:
-	uint32_t m_auto_reconnect_tick;
+	std::string m_module_;
+	uint16_t m_locale;
+	uint16_t m_auto_reconnect_tick;
 
 	inline Impl() : TcpOption::Impl()
 	{
+		m_locale = false;
 		m_auto_reconnect_tick = 1;
 	}
 };
 ECO_VALUE_IMPL(TcpClientOption, TcpOption);
-ECO_PROPERTY_VAV_IMPL(TcpClientOption, uint32_t, auto_reconnect_tick);
+ECO_PROPERTY_STR_IMPL(TcpClientOption, module_);
+ECO_PROPERTY_VAV_IMPL(TcpClientOption, uint16_t, auto_reconnect_tick);
 
 
 //##############################################################################
@@ -158,4 +165,12 @@ ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint32_t, clean_dos_peer_tick);
 ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint16_t, io_thread_size);
 ECO_PROPERTY_VAV_IMPL(TcpServerOption, uint16_t, business_thread_size);
 ////////////////////////////////////////////////////////////////////////////////
-}}
+const uint32_t TcpServerOption::horizontal_virtual_service_number() const
+{
+	return 8192;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(net);
+ECO_NS_END(eco);
