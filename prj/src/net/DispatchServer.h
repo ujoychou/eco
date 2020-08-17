@@ -64,6 +64,8 @@ public:
 	void operator()(IN DataContext& dc);
 	void handle_client(OUT Context& c, IN  TcpPeer& peer);
 	void handle_server(OUT Context& c, IN  TcpPeer& peer, IN Protocol* prot);
+	bool handle_server_topic(OUT Context& c, IN void*);
+	bool handle_client_topic(OUT Context& c, IN void*);
 
 public:
 	// receive mode event. 
@@ -82,7 +84,7 @@ public:
 		message_handler().set_dispatch(id, hf);
 	}
 
-	inline void register_default_handler(IN HandlerFunc&& hf)
+	inline void register_default(IN HandlerFunc&& hf)
 	{
 		message_handler().set_default(hf);
 	}
@@ -101,7 +103,7 @@ public:
 		message_handler().set_dispatch(id, hf);
 	}
 
-	inline void register_default_handler(IN HandlerFunc&& hf)
+	inline void register_default(IN HandlerFunc&& hf)
 	{
 		message_handler().set_default(hf);
 	}
