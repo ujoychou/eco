@@ -24,14 +24,13 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/App.h>
 #include <eco/net/RequestHandler.h>
 #include <eco/net/protocol/ProtobufCodec.h>
-#include <eco/sys/Win.h>
 
 
-
-namespace eco{;
-namespace net{;
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 template<typename message_t, typename handler_t>
 class ProtobufHandler : public RequestHandler<message_t, handler_t>
@@ -41,112 +40,160 @@ public:
 
 	inline bool on_decode(IN const char* bytes, IN uint32_t size)
 	{
-		ProtobufCodec codec(request());
+		ProtobufCodec codec(&request());
 		return codec.decode(bytes, size);
 	}
 
-public:
-	// response message to the request.
-	inline void response(
-		IN const google::protobuf::Message& msg,
-		IN MessageOption& opt)
+	inline void to_request()
 	{
-		context().response(&ProtobufCodec(msg), opt);
-	}
-
-	// response message to the request.
-	inline void response(
-		IN const google::protobuf::Message& msg,
-		IN const bool is_last = true)
-	{
-		response_type(msg, get_response_type(), is_last);
-	}
-
-	// response message with no object.
-	inline void response()
-	{
-		response_error(0);
-	}
-
-	// response message to the request.
-	inline void response_type(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t msg_type,
-		IN const bool is_last = true)
-	{
-		MessageOption opt(msg_type, 0, is_last);
-		context().response(&ProtobufCodec(msg), opt);
-	}
-
-	// response message to the request.
-	inline void response_error(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t error_id)
-	{
-		MessageOption opt(get_response_type(), error_id, true);
-		context().response(&ProtobufCodec(msg), opt);
-	}
-	inline void response_error(IN const uint32_t error_id)
-	{
-		MessageOption opt(get_response_type(), error_id, true);
-		context().response(nullptr, opt);
+		if (handler_t::req_sev() == 0) return;
+		ECO_REQ_SEV(handler_t::req_sev()) << ProtobufCodec::to_json(request());
 	}
 
 public:
-	// response message to the request.
-	inline static void async_response(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t async_id,
-		IN MessageOption& opt,
-		IN const bool logging = true)
+	inline void send(
+		IN const google::protobuf::Message* msg,
+		IN int type, IN bool last_, IN bool err)
+	{
+		ProtobufCodec cdc(msg);
+		MessageMeta meta;
+		meta.codec(cdc).message_type(type).last(last_).error(err);
+		context().response(meta);
+
+		// logging protobuf.
+		if (!last_) return;
+		int sev = err ? handler_t::err_sev() : handler_t::rsp_sev();
+		if (sev == eco::log::none) return;
+		ECO_RSP_SEV(sev) << (msg ? ProtobufCodec::to_json(*msg) : empty_str);
+	}
+
+	// response message to client.
+	inline void resolve(
+		IN const google::protobuf::Message* msg = nullptr,
+		IN bool last_ = true)
+	{
+		send(msg, handler_t::response_type(), last_, false);
+	}
+
+	// response message to client.
+	template<typename object_t, typename set_t>
+	inline void resolve_set(IN const set_t& set)
+	{
+		for (auto it = set.begin(); it != set.end(); )
+		{
+			const object_t& obj = eco::object(*it);
+			resolve(&obj, ++it == set.end());
+		}
+	}
+
+	// response error message to client.
+	inline void reject()
+	{
+		auto& e = eco::this_thread::error().data();
+		get_error(e, "");
+		reject(&e);
+	}
+	inline void reject(eco::proto::Error& e, const char* mdl = "")
+	{
+		get_error(e, mdl);
+		reject(&e);
+	}
+	inline void reject(uint32_t eid)
+	{
+		eco::this_thread::error().id(eid);
+		reject();
+	}
+	inline void reject(const std::string& path_)
+	{
+		eco::this_thread::error().path(path_);
+		reject();
+	}
+	inline void reject(IN const google::protobuf::Message* msg)
+	{
+		send(msg, handler_t::response_type(), true, true);
+	}
+
+public:
+	inline static handler_ptr send(
+		IN int async_id,
+		IN const google::protobuf::Message* msg,
+		IN int type, IN bool last_, IN bool err)
 	{
 		auto h = pop_async(async_id, opt.is_last());
-		if (h == 0 && logging)
+		if (h) h->send(msg, type, last_, err);
+		return h;
+	}
+	inline static handler_ptr resolve(
+		IN int async_id,
+		IN const google::protobuf::Message* msg = nullptr,
+		IN bool last_ = true)
+	{
+		return send(msg, async_id, handler_t::response_type(), last_, false);
+	}
+	inline static void reject(
+		IN int async_id,
+		IN const google::protobuf::Message* msg)
+	{
+		return send(msg, async_id, handler_t::response_type(), true, true);
+	}
+	inline static void reject(
+		IN int async_id, IN eco::proto::Error& e, IN const char* mdl = "")
+	{
+		auto h = pop_async(async_id, true);
+		if (h) h->reject(e, mdl);
+		return h;
+	}
+	inline static void reject(
+		IN int async_id, uint32_t eid, const char* param = "")
+	{
+		auto h = pop_async(async_id, true);
+		if (h) h->reject(eid, param);
+		return h;
+	}
+	inline static void reject(
+		IN int async_id, const char* path, const char* param = "")
+	{
+		auto h = pop_async(async_id, true);
+		if (h) h->reject(path, param);
+		return h;
+	}
+
+public:
+	inline void get_error(eco::proto::Error& e, const char* mdl)
+	{
+		const char* lang_ = connection().lang();
+		if (!eco::empty(lang_))
 		{
-			ECO_WARN << eco::net::Log(nullptr, handler_t::response_type(),
-				handler_t::name())(eco::net::rsp);
-			return;
+			const char* msg = (!e.path().empty())
+				? eco::loc::locale().get_error(e.path().c_str(),
+					e.mutable_message()->c_str(), mdl, lang_)
+				: eco::loc::locale().get_error(e.id(),
+					e.mutable_message()->c_str(), mdl, lang_);
+			e.set_message(msg);
 		}
-		h->response(msg, opt);
-		if (logging) ECO_HDL(debug, *h);
-	}
-
-	// response message to the request.
-	inline static void async_response(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t async_id,
-		IN const bool is_last = true,
-		IN const bool logging = true)
-	{
-		uint32_t type = handler_t::response_type();
-		async_response_type(msg, async_id, type, is_last, logging);
-	}
-
-	// response message to the request.
-	inline static void async_response_type(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t async_id,
-		IN const uint32_t msg_type,
-		IN const bool is_last,
-		IN const bool logging = true)
-	{
-		MessageOption opt(msg_type, 0, is_last);
-		async_response(msg, async_id, opt, logging);
-	}
-
-	// response message to the request.
-	inline void async_response_error(
-		IN const google::protobuf::Message& msg,
-		IN const uint32_t async_id,
-		IN const uint32_t error_id)
-	{
-		MessageOption opt(handler_t::response_type(), error_id, true);
-		async_response(msg, async_id, opt, true);
 	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
+class GetLocaleHandler : 
+	public eco::net::ProtobufHandler<NullRequest, GetLocaleHandler>
+{
+	ECO_HANDLE_OPTION(auth_none);
+	ECO_HANDLE_LOGGING(none, none, none);	// disable logging locale.
+	ECO_HANDLE(eco::proto_locale_get_req, eco::proto_locale_get_rsp, "locale");
+public:
+	virtual void on_request() override
+	{
+		ECO_REQ(debug);
+		resolve(&eco::App::get()->locale().data());
+		ECO_RSP(debug);
+	}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(net);
+ECO_NS_END(eco);
 #endif
 #endif

@@ -23,18 +23,18 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/net/Context.h>
-#include <eco/net/TcpSession.h>
-#include <eco/net/TcpConnection.h>
+#include <eco/Eco.h>
 #include <eco/net/Log.h>
 #include <eco/net/Ecode.h>
-#include <eco/proto/Proto.h>
+#include <eco/net/Context.h>
+#include <eco/loc/Locale.h>
 #include <eco/thread/Map.h>
-#include <eco/Eco.h>
+#include <eco/proto/Proto.h>
 
 
 namespace eco{;
 namespace net{;
+class NullRequest {};
 ////////////////////////////////////////////////////////////////////////////////
 class MessageHandler : public std::enable_shared_from_this<MessageHandler>
 {
@@ -45,33 +45,33 @@ public:
 	{
 	public:
 		inline Log(
-			IN const MessageHandler& h,
+			IN MessageHandler& h,
 			IN const uint32_t type = 0)
-			: eco::net::Log(h.session(), 
-				(type == 0 ? h.get_request_type() : type), h.get_name())
+			: eco::net::Log(h.connection(),
+			(type ? type : h.request_type()), h.get_name())
 		{}
 
 		inline Log(
-			IN const MessageHandler& h,
-			IN const std::string& user_name) 
-			: eco::net::Log(h.connection().get_id(), h.session().get_id(),
-				h.get_request_type(), h.get_name(), user_name.c_str())
-		{}
-
-		inline Log(
-			IN Context& c,
-			IN const char* name,
-			IN const uint32_t type = 0)
-			: eco::net::Log(c, c.get_type(), name)
+			IN MessageHandler& h,
+			IN const std::string& user) 
+			: eco::net::Log(h.connection().id(), h.session().id(),
+				h.request_type(), h.get_name(), user.c_str())
 		{}
 
 		inline Log(
 			IN Context& c,
 			IN const char* name,
-			IN const std::string& user_name,
 			IN const uint32_t type = 0)
-			: eco::net::Log(c.connection().get_id(), c.m_session.get_id(),
-				(type == 0 ? c.get_type() : type), name, user_name.c_str())
+			: eco::net::Log(c, c.type(), name)
+		{}
+
+		inline Log(
+			IN Context& c,
+			IN const char* name,
+			IN const std::string& user,
+			IN const uint32_t type = 0)
+			: eco::net::Log(c.connection().id(), c.m_session.id(),
+				(type == 0 ? c.type() : type), name, user.c_str())
 		{}
 
 		inline Log& operator()(uint8_t mode)
@@ -92,17 +92,41 @@ public:
 	inline MessageHandler() {}
 	virtual ~MessageHandler() = 0 {}
 
-	// message name.
-	virtual const char* get_name() const = 0;
+	// decode message from bytes string.
+	inline bool on_decode(
+		IN const char* bytes, IN uint32_t size);
 
-	// message response type.
-	virtual const uint32_t get_response_type() const
+	// default option.
+	inline int to_request() {}
+
+	// receiving request notify, and handle request object.
+	virtual void on_request() {}
+
+	// default option.
+	inline static int auth()
 	{
-		return 0;
+		return auth_none;
 	}
 
+	// default logging severity.
+	inline static int req_sev()
+	{
+		return eco::log::debug;
+	}
+	inline static int rsp_sev()
+	{
+		return eco::log::debug;
+	}
+	inline static int err_sev()
+	{
+		return eco::log::error;
+	}
+
+	// message name.
+	virtual const char* get_name() = 0;
+
 	// message type.
-	inline const uint32_t get_request_type() const
+	inline const uint32_t request_type()
 	{
 		return m_context.m_meta.m_message_type;
 	}
@@ -112,15 +136,11 @@ public:
 	{
 		return m_context;
 	}
-	inline const Context& get_context() const
+	inline TcpSession& session()
 	{
-		return m_context;
+		return m_context.m_session;
 	}
-	inline TcpSession& session() const
-	{
-		return (TcpSession&)m_context.m_session;
-	}
-	inline TcpConnection& connection() const
+	inline TcpConnection& connection()
 	{
 		return session().connection();
 	}
@@ -167,33 +187,34 @@ template<typename request_t, typename handler_t>
 class RequestHandler : public MessageHandler
 {
 public:
-	typedef RequestHandler<request_t, handler_t> Handler;
-
-	// decode message from bytes string.
-	virtual bool on_decode(IN const char* bytes, IN uint32_t size) = 0;
-
-	// receiving request notify, and handle request object.
-	virtual void on_request()
-	{}
-
-public:
+	typedef request_t request_t;
+	typedef std::shared_ptr<handler_t> ptr;
+	
 	inline RequestHandler()
 	{
 		eco::make(m_request);
 	}
 
+	// get name of this class type.
+	inline static const char* name()
+	{
+		static const char* v = eco::clss(typeid(handler_t).name());
+		return v;
+	}
+
+	virtual const char* get_name() override
+	{
+		return name();
+	}
+
 	// request that recv from remote peer.
 	// request object type.
 	typedef typename eco::Raw<request_t>::reference reference;
+	typedef typename eco::Raw<request_t>::const_reference const_reference;
 	// same with: inline auto& request()
 	inline reference& request()
 	{
-		return eco::object(m_request);
-	}
-	// same with: inline const auto& get_request() const
-	inline const reference& get_request() const
-	{
-		return  eco::get_object(m_request);
+		return eco::get_object(m_request);
 	}
 
 	// request value type.
@@ -201,35 +222,7 @@ public:
 	{
 		return m_request;
 	}
-	inline const request_t& get_request_value()
-	{
-		return m_request;
-	}
 
-	// response message to the request.
-	inline void response(IN Codec& codec, IN MessageOption& opt)
-	{
-		context().response(codec, opt);
-	}
-
-	// response message to the request.
-	inline void response(IN Codec& codec, IN uint32_t error_id, IN bool last)
-	{
-		response(get_response_type(), codec, error_id, last);
-	}
-
-	// response message to the request.
-	inline void response(
-		IN uint32_t msg_type,
-		IN Codec& codec,
-		IN uint32_t error_id,
-		IN bool last)
-	{
-		MessageOption opt(msg_type, error_id, last);
-		context().response(codec, opt);
-	}
-
-public:
 	// handler_t method.
 	typedef std::shared_ptr<handler_t> handler_ptr;
 	inline handler_ptr shared_from_this()
@@ -238,37 +231,16 @@ public:
 			MessageHandler::shared_from_this());
 	}
 
-	inline static handler_ptr find_async(
-		uint32_t req_id, bool last = true, bool logging = true)
+	inline static handler_ptr pop_async(uint32_t req_id, bool last = true)
 	{
 		auto hdl = eco::net::MessageHandler::pop_async(req_id, last);
-		if (hdl == 0 && logging)
+		if (hdl == 0)
 		{
-			ECO_LOG(warn) << eco::net::Log(nullptr, 
-				handler_t::response_type(), handler_t::name())(eco::net::rsp);
+			auto type = handler_t::response_type();
+			ECO_LOG(warn) << eco::net::Log(0, type, handler_t::name())(rsp);
 		}
 		return std::dynamic_pointer_cast<handler_t>(hdl);
 	}
-
-	inline static handler_ptr pop_async(
-		uint32_t req_id, bool last = true, bool logging = true)
-	{
-		auto hdl = find_async(req_id, last, logging);
-		if (hdl == 0) { ECO_THROW(eco::net::e_server_handler_error); }
-		return hdl;
-	}
-
-	// get name of this class type.
-	inline static const char* name()
-	{
-		static const char* v = eco::clss(typeid(handler_t).name());
-		return v; 
-	}
-	virtual const char* get_name() const override
-	{
-		return name();
-	}
-	inline static int auth() { return authorized; }
 
 protected:
 	request_t m_request;
@@ -280,19 +252,26 @@ protected:
 @auth_v: message recv when user must have been authed, set 1 else set 0.
 if don't need to check authorized, set -1.
 */
-#define ECO_OPTION(auth_v) public: inline static int auth() { return auth_v; }
+#define ECO_HANDLE_OPTION(auth_v) \
+public: inline static int auth() { return auth_v; }
+
+#define ECO_HANDLE_LOGGING(req_sev_, rsp_sev_, err_sev_) \
+public:\
+inline static int req_sev() { return eco::log::##req_sev_; }\
+inline static int rsp_sev() { return eco::log::##rsp_sev_; }\
+inline static int err_sev() { return eco::log::##err_sev_; }
+
 #define ECO_HANDLE_1(req_type) ECO_HANDLE_2(req_type, 0)
 #define ECO_HANDLE_2(req_type, rsp_type)\
 public:\
 inline static const uint32_t request_type() { return req_type;}\
-inline static const uint32_t response_type(){ return rsp_type;}\
-virtual const uint32_t get_response_type() const override { return rsp_type; }
+inline static const uint32_t response_type(){ return rsp_type;}
 #define ECO_HANDLE_3(req_type, rsp_type, name_v)\
 ECO_HANDLE_2(req_type, rsp_type)\
 inline static const char* name() { return name_v; }\
-virtual const char* get_name() const override { return name_v;}
+virtual const char* get_name() override { return name_v;}
 #define ECO_HANDLE_4(req_type, rsp_type, name_v, auth_v)\
-ECO_OPTION(auth_v)\
+ECO_HANDLE_OPTION(auth_v)\
 ECO_HANDLE_3(req_type, rsp_type, name_v)
 #define ECO_HANDLE(...) ECO_MACRO(ECO_HANDLE_,__VA_ARGS__)
 
