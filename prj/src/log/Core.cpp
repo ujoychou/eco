@@ -317,14 +317,14 @@ SeverityLevel Severity::get_level(IN const char* sev_name)
 ////////////////////////////////////////////////////////////////////////////////
 const char* Severity::get_name(IN const SeverityLevel sev_level)
 {
-	if (sev_level > eco::log::none || sev_level < 0)
+	if (sev_level > eco::log::fatal || sev_level < 0)
 		return "unknown";
 	return g_sev_name[sev_level];
 }
 const char* Severity::get_display(IN const SeverityLevel sev_level)
 {
-	if (sev_level >= eco::log::none || sev_level < 0)
-		return "Unknown";
+	if (sev_level > eco::log::fatal || sev_level < 0)
+		return "[unknown]";
 	return g_sev_display[sev_level];
 }
 
