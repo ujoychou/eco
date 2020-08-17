@@ -1,8 +1,9 @@
-#include "PrecHeader.h"
+ï»¿#include "PrecHeader.h"
 #include <eco/date_time/DateTime.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Type.h>
 #include <eco/date_time/Time.h>
+#include <eco/thread/Thread.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -99,11 +100,11 @@ public:
 	{
 		if (str == nullptr) str = eco::empty_str.c_str();
 
-		// È¥³ı¿Õ¸ñ
+		// å»é™¤ç©ºæ ¼
 		std::string dt_v(str);
 		boost::trim(dt_v);
 
-		// ¸ñÊ½Îª"2014-01-01x00:00:00"
+		// æ ¼å¼ä¸º"2014-01-01x00:00:00"
 		if (dt_v.size() == 19 &&
 			std::count(dt_v.begin(), dt_v.end(), ':') == 2 &&
 			std::count(dt_v.begin(), dt_v.end(), '-') == 2)
@@ -112,7 +113,7 @@ public:
 			m_time = dt_v.substr(11, 8);
 			return true;
 		}
-		// ¸ñÊ½"2014-01-01"£º×ª»»Îª"2014-01-01x00:00:00"
+		// æ ¼å¼"2014-01-01"ï¼šè½¬æ¢ä¸º"2014-01-01x00:00:00"
 		if (dt_v.size() == 10 &&
 			std::count(dt_v.begin(), dt_v.end(), '-') == 2)
 		{
@@ -120,7 +121,7 @@ public:
 			m_time = "00:00:00";
 			return true;
 		}
-		// ¸ñÊ½"20140101"£º×ª»»Îª"2014-01-01x00:00:00"
+		// æ ¼å¼"20140101"ï¼šè½¬æ¢ä¸º"2014-01-01x00:00:00"
 		if (dt_v.size() == 8 &&
 			std::count(dt_v.begin(), dt_v.end(), ':') == 0)
 		{
@@ -130,7 +131,7 @@ public:
 			m_time = "00:00:00";
 			return true;
 		}
-		// ¸ñÊ½"00:00:00"£º×ª»»Îª"1900-01-01x00:00:00"
+		// æ ¼å¼"00:00:00"ï¼šè½¬æ¢ä¸º"1900-01-01x00:00:00"
 		if (dt_v.size() == 8 &&
 			std::count(dt_v.begin(), dt_v.end(), ':') == 2)
 		{
@@ -138,7 +139,7 @@ public:
 			m_time = dt_v;
 			return true;
 		}
-		// ¸ñÊ½"000000"£º×ª»»Îª"1900-01-01x00:00:00"
+		// æ ¼å¼"000000"ï¼šè½¬æ¢ä¸º"1900-01-01x00:00:00"
 		if (dt_v.size() == 6)
 		{
 			dt_v.insert(4, 1, ':');
@@ -147,7 +148,7 @@ public:
 			m_time = dt_v;
 			return true;
 		}
-		// ¸ñÊ½"20140101T00:00:00"£º×ª»»Îª"2014-01-01x00:00:00"
+		// æ ¼å¼"20140101T00:00:00"ï¼šè½¬æ¢ä¸º"2014-01-01x00:00:00"
 		if (dt_v.size() == 17 &&
 			std::count(dt_v.begin(), dt_v.end(), ':') == 2 &&
 			std::count(dt_v.begin(), dt_v.end(), '-') == 0)
@@ -158,7 +159,7 @@ public:
 			m_time = dt_v.substr(11, 8);
 			return true;
 		}
-		// ¸ñÊ½"20140101000000"£º×ª»»Îª"2014-01-01x00:00:00"
+		// æ ¼å¼"20140101000000"ï¼šè½¬æ¢ä¸º"2014-01-01x00:00:00"
 		if (dt_v.size() == 14 &&
 			std::count(dt_v.begin(), dt_v.end(), ':') == 0 &&
 			std::count(dt_v.begin(), dt_v.end(), '-') == 0)
@@ -172,7 +173,7 @@ public:
 			m_time = dt_v.substr(11, 8);
 			return true;
 		}
-		// ¸ñÊ½"20140101T000000"£º×ª»»Îª"2014-01-01x00:00:00"
+		// æ ¼å¼"20140101T000000"ï¼šè½¬æ¢ä¸º"2014-01-01x00:00:00"
 		if (dt_v.size() == 15 &&
 			std::count(dt_v.begin(), dt_v.end(), ':') == 0 &&
 			std::count(dt_v.begin(), dt_v.end(), '-') == 0)
@@ -455,6 +456,51 @@ uint32_t Time::today_seconds()
 {
 	using namespace boost::posix_time;
 	return (uint32_t)second_clock::local_time().time_of_day().total_seconds();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+uint64_t make_id_by_ver1(uint16_t front, uint32_t& ts, uint32_t& seq)
+{
+	/* sess_id = 3bit-ver + 13bit-front + 32bit-timestamp + 16bit-seq.
+			   = 8          8192          4294967296(136year) 65536â€¬
+	means: this system can make 536870912=8192 * 65536(0.54 billion) object
+	each second for 136 * 8 years. and it can redefine by 8 times.
+	start time: 20200101 00:00:00
+	*/
+	const uint8_t ver = 0;
+	const uint32_t max_seq = (1 << 16);
+	eco::date_time::DateTime start(
+		eco::date_time::Date(2020, 1, 1),
+		eco::date_time::Time(false));
+
+	// get timestamp and seq.
+	while (ts == 0 || seq + 1 == max_seq)
+	{
+		eco::date_time::DateTime curr = eco::date_time::now();
+		auto ts_curr = uint32_t(curr.total_seconds() - start.total_seconds());
+		if (ts == 0)
+		{
+			ts = ts_curr;
+			seq = 0;
+			break;
+		}
+		else if (ts_curr > ts)
+		{
+			++ts;
+			seq = 0;
+			break;
+		}
+		eco::this_thread::sleep(1000);
+	}
+
+	uint64_t result = ver;
+	result = result << 13;
+	result += front;
+	result = result << 32;
+	result += ts;
+	result = result << 16;
+	return result += seq++;
 }
 
 
