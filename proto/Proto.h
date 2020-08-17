@@ -18,24 +18,34 @@
 * 版权所有(c) 2016 - 2019, siberia corp, 保留所有权利。
 
 *******************************************************************************/
-#include <eco/net/Log.h>
 #include "Object.pb.h"
 
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Stream>
-Stream& operator<<(OUT Stream& stream, IN const ::proto::Property& p)
+enum 
 {
-	return stream <= p.user_id() < '-' < p.object_id()
+	// locale.
+	proto_locale_get_req		= 101,
+	proto_locale_get_rsp		= 102,
+
+	// user defined protocol start from 1000.
+	proto_user_defined			= 1000,
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename Stream>
+Stream& operator<<(OUT Stream& stream, IN const eco::proto::Property& p)
+{
+	return stream <= p.user_id() < '-' < p.object() < p.entity()
 		<= p.name() <= p.value();
 }
 
 template<typename Stream>
-Stream& operator<<(OUT Stream& stream, IN const ::proto::Error& e)
+Stream& operator<<(OUT Stream& stream, IN const eco::proto::Error& e)
 {
-	std::string error(e.message());
-	return stream <= error <= '#' < e.id();
+	return stream <= e.message() <= '#' < e.id();
 }
 
 

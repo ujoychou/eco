@@ -12,7 +12,6 @@ message GetServiceReq
 // 获取服务回报
 message Service
 {
-	Error  error = 2;
 	string service_name = 10;
 	string process_name = 11;
 	string did_protocol = 12;

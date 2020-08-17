@@ -52,6 +52,7 @@ inline void InitDefaults() {
   InitDefaultsTestRsp();
 }
 }  // namespace protobuf_Test_2eproto
+namespace eco {
 namespace proto {
 class TestReq;
 class TestReqDefaultTypeInternal;
@@ -60,11 +61,13 @@ class TestRsp;
 class TestRspDefaultTypeInternal;
 extern TestRspDefaultTypeInternal _TestRsp_default_instance_;
 }  // namespace proto
+}  // namespace eco
+namespace eco {
 namespace proto {
 
 // ===================================================================
 
-class TestReq : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:proto.TestReq) */ {
+class TestReq : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:eco.proto.TestReq) */ {
  public:
   TestReq();
   virtual ~TestReq();
@@ -250,7 +253,7 @@ class TestReq : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   double dbl4() const;
   void set_dbl4(double value);
 
-  // @@protoc_insertion_point(class_scope:proto.TestReq)
+  // @@protoc_insertion_point(class_scope:eco.proto.TestReq)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -272,7 +275,7 @@ class TestReq : public ::google::protobuf::Message /* @@protoc_insertion_point(c
 };
 // -------------------------------------------------------------------
 
-class TestRsp : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:proto.TestRsp) */ {
+class TestRsp : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:eco.proto.TestRsp) */ {
  public:
   TestRsp();
   virtual ~TestRsp();
@@ -354,30 +357,30 @@ class TestRsp : public ::google::protobuf::Message /* @@protoc_insertion_point(c
 
   // accessors -------------------------------------------------------
 
-  // .proto.Error error = 1;
+  // .eco.proto.Error error = 1;
   bool has_error() const;
   void clear_error();
   static const int kErrorFieldNumber = 1;
-  const ::proto::Error& error() const;
-  ::proto::Error* release_error();
-  ::proto::Error* mutable_error();
-  void set_allocated_error(::proto::Error* error);
+  const ::eco::proto::Error& error() const;
+  ::eco::proto::Error* release_error();
+  ::eco::proto::Error* mutable_error();
+  void set_allocated_error(::eco::proto::Error* error);
 
-  // .proto.TestReq data = 2;
+  // .eco.proto.TestReq data = 2;
   bool has_data() const;
   void clear_data();
   static const int kDataFieldNumber = 2;
-  const ::proto::TestReq& data() const;
-  ::proto::TestReq* release_data();
-  ::proto::TestReq* mutable_data();
-  void set_allocated_data(::proto::TestReq* data);
+  const ::eco::proto::TestReq& data() const;
+  ::eco::proto::TestReq* release_data();
+  ::eco::proto::TestReq* mutable_data();
+  void set_allocated_data(::eco::proto::TestReq* data);
 
-  // @@protoc_insertion_point(class_scope:proto.TestRsp)
+  // @@protoc_insertion_point(class_scope:eco.proto.TestRsp)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::proto::Error* error_;
-  ::proto::TestReq* data_;
+  ::eco::proto::Error* error_;
+  ::eco::proto::TestReq* data_;
   mutable int _cached_size_;
   friend struct ::protobuf_Test_2eproto::TableStruct;
   friend void ::protobuf_Test_2eproto::InitDefaultsTestRspImpl();
@@ -398,13 +401,13 @@ inline void TestReq::clear_int1() {
   int1_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 TestReq::int1() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.int1)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.int1)
   return int1_;
 }
 inline void TestReq::set_int1(::google::protobuf::uint64 value) {
   
   int1_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.int1)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.int1)
 }
 
 // uint64 int2 = 11;
@@ -412,13 +415,13 @@ inline void TestReq::clear_int2() {
   int2_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 TestReq::int2() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.int2)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.int2)
   return int2_;
 }
 inline void TestReq::set_int2(::google::protobuf::uint64 value) {
   
   int2_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.int2)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.int2)
 }
 
 // uint64 int3 = 12;
@@ -426,13 +429,13 @@ inline void TestReq::clear_int3() {
   int3_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 TestReq::int3() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.int3)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.int3)
   return int3_;
 }
 inline void TestReq::set_int3(::google::protobuf::uint64 value) {
   
   int3_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.int3)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.int3)
 }
 
 // uint64 int4 = 13;
@@ -440,13 +443,13 @@ inline void TestReq::clear_int4() {
   int4_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 TestReq::int4() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.int4)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.int4)
   return int4_;
 }
 inline void TestReq::set_int4(::google::protobuf::uint64 value) {
   
   int4_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.int4)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.int4)
 }
 
 // string str1 = 14;
@@ -454,41 +457,41 @@ inline void TestReq::clear_str1() {
   str1_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TestReq::str1() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.str1)
   return str1_.GetNoArena();
 }
 inline void TestReq::set_str1(const ::std::string& value) {
   
   str1_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.str1)
 }
 #if LANG_CXX11
 inline void TestReq::set_str1(::std::string&& value) {
   
   str1_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_set_rvalue:eco.proto.TestReq.str1)
 }
 #endif
 inline void TestReq::set_str1(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   str1_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_set_char:eco.proto.TestReq.str1)
 }
 inline void TestReq::set_str1(const char* value, size_t size) {
   
   str1_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_set_pointer:eco.proto.TestReq.str1)
 }
 inline ::std::string* TestReq::mutable_str1() {
   
-  // @@protoc_insertion_point(field_mutable:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_mutable:eco.proto.TestReq.str1)
   return str1_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TestReq::release_str1() {
-  // @@protoc_insertion_point(field_release:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_release:eco.proto.TestReq.str1)
   
   return str1_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -499,7 +502,7 @@ inline void TestReq::set_allocated_str1(::std::string* str1) {
     
   }
   str1_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), str1);
-  // @@protoc_insertion_point(field_set_allocated:proto.TestReq.str1)
+  // @@protoc_insertion_point(field_set_allocated:eco.proto.TestReq.str1)
 }
 
 // string str2 = 15;
@@ -507,41 +510,41 @@ inline void TestReq::clear_str2() {
   str2_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TestReq::str2() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.str2)
   return str2_.GetNoArena();
 }
 inline void TestReq::set_str2(const ::std::string& value) {
   
   str2_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.str2)
 }
 #if LANG_CXX11
 inline void TestReq::set_str2(::std::string&& value) {
   
   str2_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_set_rvalue:eco.proto.TestReq.str2)
 }
 #endif
 inline void TestReq::set_str2(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   str2_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_set_char:eco.proto.TestReq.str2)
 }
 inline void TestReq::set_str2(const char* value, size_t size) {
   
   str2_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_set_pointer:eco.proto.TestReq.str2)
 }
 inline ::std::string* TestReq::mutable_str2() {
   
-  // @@protoc_insertion_point(field_mutable:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_mutable:eco.proto.TestReq.str2)
   return str2_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TestReq::release_str2() {
-  // @@protoc_insertion_point(field_release:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_release:eco.proto.TestReq.str2)
   
   return str2_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -552,7 +555,7 @@ inline void TestReq::set_allocated_str2(::std::string* str2) {
     
   }
   str2_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), str2);
-  // @@protoc_insertion_point(field_set_allocated:proto.TestReq.str2)
+  // @@protoc_insertion_point(field_set_allocated:eco.proto.TestReq.str2)
 }
 
 // string str3 = 16;
@@ -560,41 +563,41 @@ inline void TestReq::clear_str3() {
   str3_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TestReq::str3() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.str3)
   return str3_.GetNoArena();
 }
 inline void TestReq::set_str3(const ::std::string& value) {
   
   str3_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.str3)
 }
 #if LANG_CXX11
 inline void TestReq::set_str3(::std::string&& value) {
   
   str3_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_set_rvalue:eco.proto.TestReq.str3)
 }
 #endif
 inline void TestReq::set_str3(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   str3_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_set_char:eco.proto.TestReq.str3)
 }
 inline void TestReq::set_str3(const char* value, size_t size) {
   
   str3_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_set_pointer:eco.proto.TestReq.str3)
 }
 inline ::std::string* TestReq::mutable_str3() {
   
-  // @@protoc_insertion_point(field_mutable:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_mutable:eco.proto.TestReq.str3)
   return str3_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TestReq::release_str3() {
-  // @@protoc_insertion_point(field_release:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_release:eco.proto.TestReq.str3)
   
   return str3_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -605,7 +608,7 @@ inline void TestReq::set_allocated_str3(::std::string* str3) {
     
   }
   str3_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), str3);
-  // @@protoc_insertion_point(field_set_allocated:proto.TestReq.str3)
+  // @@protoc_insertion_point(field_set_allocated:eco.proto.TestReq.str3)
 }
 
 // string str4 = 17;
@@ -613,41 +616,41 @@ inline void TestReq::clear_str4() {
   str4_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TestReq::str4() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.str4)
   return str4_.GetNoArena();
 }
 inline void TestReq::set_str4(const ::std::string& value) {
   
   str4_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.str4)
 }
 #if LANG_CXX11
 inline void TestReq::set_str4(::std::string&& value) {
   
   str4_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_set_rvalue:eco.proto.TestReq.str4)
 }
 #endif
 inline void TestReq::set_str4(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   str4_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_set_char:eco.proto.TestReq.str4)
 }
 inline void TestReq::set_str4(const char* value, size_t size) {
   
   str4_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_set_pointer:eco.proto.TestReq.str4)
 }
 inline ::std::string* TestReq::mutable_str4() {
   
-  // @@protoc_insertion_point(field_mutable:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_mutable:eco.proto.TestReq.str4)
   return str4_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TestReq::release_str4() {
-  // @@protoc_insertion_point(field_release:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_release:eco.proto.TestReq.str4)
   
   return str4_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -658,7 +661,7 @@ inline void TestReq::set_allocated_str4(::std::string* str4) {
     
   }
   str4_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), str4);
-  // @@protoc_insertion_point(field_set_allocated:proto.TestReq.str4)
+  // @@protoc_insertion_point(field_set_allocated:eco.proto.TestReq.str4)
 }
 
 // double dbl1 = 18;
@@ -666,13 +669,13 @@ inline void TestReq::clear_dbl1() {
   dbl1_ = 0;
 }
 inline double TestReq::dbl1() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.dbl1)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.dbl1)
   return dbl1_;
 }
 inline void TestReq::set_dbl1(double value) {
   
   dbl1_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.dbl1)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.dbl1)
 }
 
 // double dbl2 = 19;
@@ -680,13 +683,13 @@ inline void TestReq::clear_dbl2() {
   dbl2_ = 0;
 }
 inline double TestReq::dbl2() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.dbl2)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.dbl2)
   return dbl2_;
 }
 inline void TestReq::set_dbl2(double value) {
   
   dbl2_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.dbl2)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.dbl2)
 }
 
 // double dbl3 = 20;
@@ -694,13 +697,13 @@ inline void TestReq::clear_dbl3() {
   dbl3_ = 0;
 }
 inline double TestReq::dbl3() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.dbl3)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.dbl3)
   return dbl3_;
 }
 inline void TestReq::set_dbl3(double value) {
   
   dbl3_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.dbl3)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.dbl3)
 }
 
 // double dbl4 = 21;
@@ -708,45 +711,45 @@ inline void TestReq::clear_dbl4() {
   dbl4_ = 0;
 }
 inline double TestReq::dbl4() const {
-  // @@protoc_insertion_point(field_get:proto.TestReq.dbl4)
+  // @@protoc_insertion_point(field_get:eco.proto.TestReq.dbl4)
   return dbl4_;
 }
 inline void TestReq::set_dbl4(double value) {
   
   dbl4_ = value;
-  // @@protoc_insertion_point(field_set:proto.TestReq.dbl4)
+  // @@protoc_insertion_point(field_set:eco.proto.TestReq.dbl4)
 }
 
 // -------------------------------------------------------------------
 
 // TestRsp
 
-// .proto.Error error = 1;
+// .eco.proto.Error error = 1;
 inline bool TestRsp::has_error() const {
   return this != internal_default_instance() && error_ != NULL;
 }
-inline const ::proto::Error& TestRsp::error() const {
-  const ::proto::Error* p = error_;
-  // @@protoc_insertion_point(field_get:proto.TestRsp.error)
-  return p != NULL ? *p : *reinterpret_cast<const ::proto::Error*>(
-      &::proto::_Error_default_instance_);
+inline const ::eco::proto::Error& TestRsp::error() const {
+  const ::eco::proto::Error* p = error_;
+  // @@protoc_insertion_point(field_get:eco.proto.TestRsp.error)
+  return p != NULL ? *p : *reinterpret_cast<const ::eco::proto::Error*>(
+      &::eco::proto::_Error_default_instance_);
 }
-inline ::proto::Error* TestRsp::release_error() {
-  // @@protoc_insertion_point(field_release:proto.TestRsp.error)
+inline ::eco::proto::Error* TestRsp::release_error() {
+  // @@protoc_insertion_point(field_release:eco.proto.TestRsp.error)
   
-  ::proto::Error* temp = error_;
+  ::eco::proto::Error* temp = error_;
   error_ = NULL;
   return temp;
 }
-inline ::proto::Error* TestRsp::mutable_error() {
+inline ::eco::proto::Error* TestRsp::mutable_error() {
   
   if (error_ == NULL) {
-    error_ = new ::proto::Error;
+    error_ = new ::eco::proto::Error;
   }
-  // @@protoc_insertion_point(field_mutable:proto.TestRsp.error)
+  // @@protoc_insertion_point(field_mutable:eco.proto.TestRsp.error)
   return error_;
 }
-inline void TestRsp::set_allocated_error(::proto::Error* error) {
+inline void TestRsp::set_allocated_error(::eco::proto::Error* error) {
   ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
   if (message_arena == NULL) {
     delete reinterpret_cast< ::google::protobuf::MessageLite*>(error_);
@@ -762,10 +765,10 @@ inline void TestRsp::set_allocated_error(::proto::Error* error) {
     
   }
   error_ = error;
-  // @@protoc_insertion_point(field_set_allocated:proto.TestRsp.error)
+  // @@protoc_insertion_point(field_set_allocated:eco.proto.TestRsp.error)
 }
 
-// .proto.TestReq data = 2;
+// .eco.proto.TestReq data = 2;
 inline bool TestRsp::has_data() const {
   return this != internal_default_instance() && data_ != NULL;
 }
@@ -775,28 +778,28 @@ inline void TestRsp::clear_data() {
   }
   data_ = NULL;
 }
-inline const ::proto::TestReq& TestRsp::data() const {
-  const ::proto::TestReq* p = data_;
-  // @@protoc_insertion_point(field_get:proto.TestRsp.data)
-  return p != NULL ? *p : *reinterpret_cast<const ::proto::TestReq*>(
-      &::proto::_TestReq_default_instance_);
+inline const ::eco::proto::TestReq& TestRsp::data() const {
+  const ::eco::proto::TestReq* p = data_;
+  // @@protoc_insertion_point(field_get:eco.proto.TestRsp.data)
+  return p != NULL ? *p : *reinterpret_cast<const ::eco::proto::TestReq*>(
+      &::eco::proto::_TestReq_default_instance_);
 }
-inline ::proto::TestReq* TestRsp::release_data() {
-  // @@protoc_insertion_point(field_release:proto.TestRsp.data)
+inline ::eco::proto::TestReq* TestRsp::release_data() {
+  // @@protoc_insertion_point(field_release:eco.proto.TestRsp.data)
   
-  ::proto::TestReq* temp = data_;
+  ::eco::proto::TestReq* temp = data_;
   data_ = NULL;
   return temp;
 }
-inline ::proto::TestReq* TestRsp::mutable_data() {
+inline ::eco::proto::TestReq* TestRsp::mutable_data() {
   
   if (data_ == NULL) {
-    data_ = new ::proto::TestReq;
+    data_ = new ::eco::proto::TestReq;
   }
-  // @@protoc_insertion_point(field_mutable:proto.TestRsp.data)
+  // @@protoc_insertion_point(field_mutable:eco.proto.TestRsp.data)
   return data_;
 }
-inline void TestRsp::set_allocated_data(::proto::TestReq* data) {
+inline void TestRsp::set_allocated_data(::eco::proto::TestReq* data) {
   ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
   if (message_arena == NULL) {
     delete data_;
@@ -812,7 +815,7 @@ inline void TestRsp::set_allocated_data(::proto::TestReq* data) {
     
   }
   data_ = data;
-  // @@protoc_insertion_point(field_set_allocated:proto.TestRsp.data)
+  // @@protoc_insertion_point(field_set_allocated:eco.proto.TestRsp.data)
 }
 
 #ifdef __GNUC__
@@ -824,6 +827,7 @@ inline void TestRsp::set_allocated_data(::proto::TestReq* data) {
 // @@protoc_insertion_point(namespace_scope)
 
 }  // namespace proto
+}  // namespace eco
 
 // @@protoc_insertion_point(global_scope)
 

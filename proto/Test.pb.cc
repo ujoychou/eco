@@ -19,6 +19,7 @@
 #include "third_party/protobuf/version.h"
 #endif
 // @@protoc_insertion_point(includes)
+namespace eco {
 namespace proto {
 class TestReqDefaultTypeInternal {
  public:
@@ -31,6 +32,7 @@ class TestRspDefaultTypeInternal {
       _instance;
 } _TestRsp_default_instance_;
 }  // namespace proto
+}  // namespace eco
 namespace protobuf_Test_2eproto {
 void InitDefaultsTestReqImpl() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -41,11 +43,11 @@ void InitDefaultsTestReqImpl() {
   ::google::protobuf::internal::InitProtobufDefaults();
 #endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
   {
-    void* ptr = &::proto::_TestReq_default_instance_;
-    new (ptr) ::proto::TestReq();
+    void* ptr = &::eco::proto::_TestReq_default_instance_;
+    new (ptr) ::eco::proto::TestReq();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::proto::TestReq::InitAsDefaultInstance();
+  ::eco::proto::TestReq::InitAsDefaultInstance();
 }
 
 void InitDefaultsTestReq() {
@@ -64,11 +66,11 @@ void InitDefaultsTestRspImpl() {
   protobuf_Object_2eproto::InitDefaultsError();
   protobuf_Test_2eproto::InitDefaultsTestReq();
   {
-    void* ptr = &::proto::_TestRsp_default_instance_;
-    new (ptr) ::proto::TestRsp();
+    void* ptr = &::eco::proto::_TestRsp_default_instance_;
+    new (ptr) ::eco::proto::TestRsp();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::proto::TestRsp::InitAsDefaultInstance();
+  ::eco::proto::TestRsp::InitAsDefaultInstance();
 }
 
 void InitDefaultsTestRsp() {
@@ -80,38 +82,38 @@ void InitDefaultsTestRsp() {
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, int1_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, int2_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, int3_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, int4_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, str1_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, str2_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, str3_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, str4_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, dbl1_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, dbl2_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, dbl3_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestReq, dbl4_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, int1_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, int2_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, int3_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, int4_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, str1_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, str2_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, str3_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, str4_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, dbl1_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, dbl2_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, dbl3_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestReq, dbl4_),
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestRsp, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestRsp, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestRsp, error_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::proto::TestRsp, data_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestRsp, error_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::TestRsp, data_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::proto::TestReq)},
-  { 17, -1, sizeof(::proto::TestRsp)},
+  { 0, -1, sizeof(::eco::proto::TestReq)},
+  { 17, -1, sizeof(::eco::proto::TestRsp)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::google::protobuf::Message*>(&::proto::_TestReq_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::proto::_TestRsp_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::eco::proto::_TestReq_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::eco::proto::_TestRsp_default_instance_),
 };
 
 void protobuf_AssignDescriptors() {
@@ -136,17 +138,17 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\nTest.proto\022\005proto\032\014Object.proto\"\261\001\n\007Te"
-      "stReq\022\014\n\004int1\030\n \001(\004\022\014\n\004int2\030\013 \001(\004\022\014\n\004int"
-      "3\030\014 \001(\004\022\014\n\004int4\030\r \001(\004\022\014\n\004str1\030\016 \001(\t\022\014\n\004s"
-      "tr2\030\017 \001(\t\022\014\n\004str3\030\020 \001(\t\022\014\n\004str4\030\021 \001(\t\022\014\n"
-      "\004dbl1\030\022 \001(\001\022\014\n\004dbl2\030\023 \001(\001\022\014\n\004dbl3\030\024 \001(\001\022"
-      "\014\n\004dbl4\030\025 \001(\001\"D\n\007TestRsp\022\033\n\005error\030\001 \001(\0132"
-      "\014.proto.Error\022\034\n\004data\030\002 \001(\0132\016.proto.Test"
-      "Reqb\006proto3"
+      "\n\nTest.proto\022\teco.proto\032\014Object.proto\"\261\001"
+      "\n\007TestReq\022\014\n\004int1\030\n \001(\004\022\014\n\004int2\030\013 \001(\004\022\014\n"
+      "\004int3\030\014 \001(\004\022\014\n\004int4\030\r \001(\004\022\014\n\004str1\030\016 \001(\t\022"
+      "\014\n\004str2\030\017 \001(\t\022\014\n\004str3\030\020 \001(\t\022\014\n\004str4\030\021 \001("
+      "\t\022\014\n\004dbl1\030\022 \001(\001\022\014\n\004dbl2\030\023 \001(\001\022\014\n\004dbl3\030\024 "
+      "\001(\001\022\014\n\004dbl4\030\025 \001(\001\"L\n\007TestRsp\022\037\n\005error\030\001 "
+      "\001(\0132\020.eco.proto.Error\022 \n\004data\030\002 \001(\0132\022.ec"
+      "o.proto.TestReqb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 291);
+      descriptor, 303);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "Test.proto", &protobuf_RegisterTypes);
   ::protobuf_Object_2eproto::AddDescriptors();
@@ -163,6 +165,7 @@ struct StaticDescriptorInitializer {
   }
 } static_descriptor_initializer;
 }  // namespace protobuf_Test_2eproto
+namespace eco {
 namespace proto {
 
 // ===================================================================
@@ -190,7 +193,7 @@ TestReq::TestReq()
     ::protobuf_Test_2eproto::InitDefaultsTestReq();
   }
   SharedCtor();
-  // @@protoc_insertion_point(constructor:proto.TestReq)
+  // @@protoc_insertion_point(constructor:eco.proto.TestReq)
 }
 TestReq::TestReq(const TestReq& from)
   : ::google::protobuf::Message(),
@@ -216,7 +219,7 @@ TestReq::TestReq(const TestReq& from)
   ::memcpy(&int1_, &from.int1_,
     static_cast<size_t>(reinterpret_cast<char*>(&dbl4_) -
     reinterpret_cast<char*>(&int1_)) + sizeof(dbl4_));
-  // @@protoc_insertion_point(copy_constructor:proto.TestReq)
+  // @@protoc_insertion_point(copy_constructor:eco.proto.TestReq)
 }
 
 void TestReq::SharedCtor() {
@@ -231,7 +234,7 @@ void TestReq::SharedCtor() {
 }
 
 TestReq::~TestReq() {
-  // @@protoc_insertion_point(destructor:proto.TestReq)
+  // @@protoc_insertion_point(destructor:eco.proto.TestReq)
   SharedDtor();
 }
 
@@ -266,7 +269,7 @@ TestReq* TestReq::New(::google::protobuf::Arena* arena) const {
 }
 
 void TestReq::Clear() {
-// @@protoc_insertion_point(message_clear_start:proto.TestReq)
+// @@protoc_insertion_point(message_clear_start:eco.proto.TestReq)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -285,7 +288,7 @@ bool TestReq::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:proto.TestReq)
+  // @@protoc_insertion_point(parse_start:eco.proto.TestReq)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
     tag = p.first;
@@ -356,7 +359,7 @@ bool TestReq::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->str1().data(), static_cast<int>(this->str1().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "proto.TestReq.str1"));
+            "eco.proto.TestReq.str1"));
         } else {
           goto handle_unusual;
         }
@@ -372,7 +375,7 @@ bool TestReq::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->str2().data(), static_cast<int>(this->str2().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "proto.TestReq.str2"));
+            "eco.proto.TestReq.str2"));
         } else {
           goto handle_unusual;
         }
@@ -388,7 +391,7 @@ bool TestReq::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->str3().data(), static_cast<int>(this->str3().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "proto.TestReq.str3"));
+            "eco.proto.TestReq.str3"));
         } else {
           goto handle_unusual;
         }
@@ -404,7 +407,7 @@ bool TestReq::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->str4().data(), static_cast<int>(this->str4().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "proto.TestReq.str4"));
+            "eco.proto.TestReq.str4"));
         } else {
           goto handle_unusual;
         }
@@ -479,17 +482,17 @@ bool TestReq::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:proto.TestReq)
+  // @@protoc_insertion_point(parse_success:eco.proto.TestReq)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:proto.TestReq)
+  // @@protoc_insertion_point(parse_failure:eco.proto.TestReq)
   return false;
 #undef DO_
 }
 
 void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:proto.TestReq)
+  // @@protoc_insertion_point(serialize_start:eco.proto.TestReq)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -518,7 +521,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str1().data(), static_cast<int>(this->str1().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str1");
+      "eco.proto.TestReq.str1");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       14, this->str1(), output);
   }
@@ -528,7 +531,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str2().data(), static_cast<int>(this->str2().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str2");
+      "eco.proto.TestReq.str2");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       15, this->str2(), output);
   }
@@ -538,7 +541,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str3().data(), static_cast<int>(this->str3().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str3");
+      "eco.proto.TestReq.str3");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       16, this->str3(), output);
   }
@@ -548,7 +551,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str4().data(), static_cast<int>(this->str4().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str4");
+      "eco.proto.TestReq.str4");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       17, this->str4(), output);
   }
@@ -577,13 +580,13 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:proto.TestReq)
+  // @@protoc_insertion_point(serialize_end:eco.proto.TestReq)
 }
 
 ::google::protobuf::uint8* TestReq::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:proto.TestReq)
+  // @@protoc_insertion_point(serialize_to_array_start:eco.proto.TestReq)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -612,7 +615,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str1().data(), static_cast<int>(this->str1().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str1");
+      "eco.proto.TestReq.str1");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         14, this->str1(), target);
@@ -623,7 +626,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str2().data(), static_cast<int>(this->str2().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str2");
+      "eco.proto.TestReq.str2");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         15, this->str2(), target);
@@ -634,7 +637,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str3().data(), static_cast<int>(this->str3().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str3");
+      "eco.proto.TestReq.str3");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         16, this->str3(), target);
@@ -645,7 +648,7 @@ void TestReq::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->str4().data(), static_cast<int>(this->str4().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "proto.TestReq.str4");
+      "eco.proto.TestReq.str4");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         17, this->str4(), target);
@@ -675,12 +678,12 @@ void TestReq::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:proto.TestReq)
+  // @@protoc_insertion_point(serialize_to_array_end:eco.proto.TestReq)
   return target;
 }
 
 size_t TestReq::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:proto.TestReq)
+// @@protoc_insertion_point(message_byte_size_start:eco.proto.TestReq)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -772,22 +775,22 @@ size_t TestReq::ByteSizeLong() const {
 }
 
 void TestReq::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:proto.TestReq)
+// @@protoc_insertion_point(generalized_merge_from_start:eco.proto.TestReq)
   GOOGLE_DCHECK_NE(&from, this);
   const TestReq* source =
       ::google::protobuf::internal::DynamicCastToGenerated<const TestReq>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:proto.TestReq)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:eco.proto.TestReq)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:proto.TestReq)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:eco.proto.TestReq)
     MergeFrom(*source);
   }
 }
 
 void TestReq::MergeFrom(const TestReq& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:proto.TestReq)
+// @@protoc_insertion_point(class_specific_merge_from_start:eco.proto.TestReq)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -836,14 +839,14 @@ void TestReq::MergeFrom(const TestReq& from) {
 }
 
 void TestReq::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:proto.TestReq)
+// @@protoc_insertion_point(generalized_copy_from_start:eco.proto.TestReq)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void TestReq::CopyFrom(const TestReq& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:proto.TestReq)
+// @@protoc_insertion_point(class_specific_copy_from_start:eco.proto.TestReq)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -884,10 +887,10 @@ void TestReq::InternalSwap(TestReq* other) {
 // ===================================================================
 
 void TestRsp::InitAsDefaultInstance() {
-  ::proto::_TestRsp_default_instance_._instance.get_mutable()->error_ = const_cast< ::proto::Error*>(
-      ::proto::Error::internal_default_instance());
-  ::proto::_TestRsp_default_instance_._instance.get_mutable()->data_ = const_cast< ::proto::TestReq*>(
-      ::proto::TestReq::internal_default_instance());
+  ::eco::proto::_TestRsp_default_instance_._instance.get_mutable()->error_ = const_cast< ::eco::proto::Error*>(
+      ::eco::proto::Error::internal_default_instance());
+  ::eco::proto::_TestRsp_default_instance_._instance.get_mutable()->data_ = const_cast< ::eco::proto::TestReq*>(
+      ::eco::proto::TestReq::internal_default_instance());
 }
 void TestRsp::clear_error() {
   if (GetArenaNoVirtual() == NULL && error_ != NULL) {
@@ -906,7 +909,7 @@ TestRsp::TestRsp()
     ::protobuf_Test_2eproto::InitDefaultsTestRsp();
   }
   SharedCtor();
-  // @@protoc_insertion_point(constructor:proto.TestRsp)
+  // @@protoc_insertion_point(constructor:eco.proto.TestRsp)
 }
 TestRsp::TestRsp(const TestRsp& from)
   : ::google::protobuf::Message(),
@@ -914,16 +917,16 @@ TestRsp::TestRsp(const TestRsp& from)
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_error()) {
-    error_ = new ::proto::Error(*from.error_);
+    error_ = new ::eco::proto::Error(*from.error_);
   } else {
     error_ = NULL;
   }
   if (from.has_data()) {
-    data_ = new ::proto::TestReq(*from.data_);
+    data_ = new ::eco::proto::TestReq(*from.data_);
   } else {
     data_ = NULL;
   }
-  // @@protoc_insertion_point(copy_constructor:proto.TestRsp)
+  // @@protoc_insertion_point(copy_constructor:eco.proto.TestRsp)
 }
 
 void TestRsp::SharedCtor() {
@@ -934,7 +937,7 @@ void TestRsp::SharedCtor() {
 }
 
 TestRsp::~TestRsp() {
-  // @@protoc_insertion_point(destructor:proto.TestRsp)
+  // @@protoc_insertion_point(destructor:eco.proto.TestRsp)
   SharedDtor();
 }
 
@@ -967,7 +970,7 @@ TestRsp* TestRsp::New(::google::protobuf::Arena* arena) const {
 }
 
 void TestRsp::Clear() {
-// @@protoc_insertion_point(message_clear_start:proto.TestRsp)
+// @@protoc_insertion_point(message_clear_start:eco.proto.TestRsp)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -987,13 +990,13 @@ bool TestRsp::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:proto.TestRsp)
+  // @@protoc_insertion_point(parse_start:eco.proto.TestRsp)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .proto.Error error = 1;
+      // .eco.proto.Error error = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
@@ -1005,7 +1008,7 @@ bool TestRsp::MergePartialFromCodedStream(
         break;
       }
 
-      // .proto.TestReq data = 2;
+      // .eco.proto.TestReq data = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
@@ -1029,27 +1032,27 @@ bool TestRsp::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:proto.TestRsp)
+  // @@protoc_insertion_point(parse_success:eco.proto.TestRsp)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:proto.TestRsp)
+  // @@protoc_insertion_point(parse_failure:eco.proto.TestRsp)
   return false;
 #undef DO_
 }
 
 void TestRsp::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:proto.TestRsp)
+  // @@protoc_insertion_point(serialize_start:eco.proto.TestRsp)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .proto.Error error = 1;
+  // .eco.proto.Error error = 1;
   if (this->has_error()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       1, *this->error_, output);
   }
 
-  // .proto.TestReq data = 2;
+  // .eco.proto.TestReq data = 2;
   if (this->has_data()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, *this->data_, output);
@@ -1059,24 +1062,24 @@ void TestRsp::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:proto.TestRsp)
+  // @@protoc_insertion_point(serialize_end:eco.proto.TestRsp)
 }
 
 ::google::protobuf::uint8* TestRsp::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:proto.TestRsp)
+  // @@protoc_insertion_point(serialize_to_array_start:eco.proto.TestRsp)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .proto.Error error = 1;
+  // .eco.proto.Error error = 1;
   if (this->has_error()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageToArray(
         1, *this->error_, deterministic, target);
   }
 
-  // .proto.TestReq data = 2;
+  // .eco.proto.TestReq data = 2;
   if (this->has_data()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageToArray(
@@ -1087,12 +1090,12 @@ void TestRsp::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:proto.TestRsp)
+  // @@protoc_insertion_point(serialize_to_array_end:eco.proto.TestRsp)
   return target;
 }
 
 size_t TestRsp::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:proto.TestRsp)
+// @@protoc_insertion_point(message_byte_size_start:eco.proto.TestRsp)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1100,14 +1103,14 @@ size_t TestRsp::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .proto.Error error = 1;
+  // .eco.proto.Error error = 1;
   if (this->has_error()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSize(
         *this->error_);
   }
 
-  // .proto.TestReq data = 2;
+  // .eco.proto.TestReq data = 2;
   if (this->has_data()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSize(
@@ -1122,44 +1125,44 @@ size_t TestRsp::ByteSizeLong() const {
 }
 
 void TestRsp::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:proto.TestRsp)
+// @@protoc_insertion_point(generalized_merge_from_start:eco.proto.TestRsp)
   GOOGLE_DCHECK_NE(&from, this);
   const TestRsp* source =
       ::google::protobuf::internal::DynamicCastToGenerated<const TestRsp>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:proto.TestRsp)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:eco.proto.TestRsp)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:proto.TestRsp)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:eco.proto.TestRsp)
     MergeFrom(*source);
   }
 }
 
 void TestRsp::MergeFrom(const TestRsp& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:proto.TestRsp)
+// @@protoc_insertion_point(class_specific_merge_from_start:eco.proto.TestRsp)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   if (from.has_error()) {
-    mutable_error()->::proto::Error::MergeFrom(from.error());
+    mutable_error()->::eco::proto::Error::MergeFrom(from.error());
   }
   if (from.has_data()) {
-    mutable_data()->::proto::TestReq::MergeFrom(from.data());
+    mutable_data()->::eco::proto::TestReq::MergeFrom(from.data());
   }
 }
 
 void TestRsp::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:proto.TestRsp)
+// @@protoc_insertion_point(generalized_copy_from_start:eco.proto.TestRsp)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void TestRsp::CopyFrom(const TestRsp& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:proto.TestRsp)
+// @@protoc_insertion_point(class_specific_copy_from_start:eco.proto.TestRsp)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -1189,5 +1192,6 @@ void TestRsp::InternalSwap(TestRsp* other) {
 
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace proto
+}  // namespace eco
 
 // @@protoc_insertion_point(global_scope)
