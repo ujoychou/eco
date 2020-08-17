@@ -53,28 +53,19 @@ public:
 
 	// add timer for dedicated duration.
 	Timer add(IN uint32_t millsecs, IN bool repeated, IN Task::ptr& task);
-	inline Timer add(uint32_t millsecs, bool repeated, Closure&& task)
-	{
-		return add(millsecs, repeated, Task::ptr(new FuncTask(std::move(task))));
-	}
+	Timer add(uint32_t millsecs, bool repeated, Closure&& task);
 
 	/*@ add timer for dedicated date time.
 	* @ para.date_time: format as "2015-03-02 12:12:12".
 	*/
 	Timer add(IN const char* date_time, IN Task::ptr& task);
-	inline Timer add(IN const char* date_time, IN Closure&& task)
-	{
-		return add(date_time, Task::ptr(new FuncTask(std::move(task))));
-	}
+	Timer add(IN const char* date_time, IN Closure&& task);
 
 	/*@ add daily timer, and it can repeat.
 	* @ para.time: format as "12:12:12".
 	*/
 	Timer add_daily(IN const char* time, IN Task::ptr& task);
-	inline Timer add_daily(const char* time, IN Closure&& task)
-	{
-		return add_daily(time, Task::ptr(new FuncTask(std::move(task))));
-	}
+	Timer add_daily(const char* time, IN Closure&& task);
 };
 
 

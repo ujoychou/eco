@@ -21,12 +21,12 @@ class AsioTimer
 {
 	ECO_OBJECT(AsioTimer);
 public:
-	Task::ptr task;
+	TaskUnit task;
 	deadline_timer timer;
 	TimerServer::Impl* server;
 
-	inline AsioTimer(io_service& io, Task::ptr& t, TimerServer::Impl* s)
-		: timer(io), task(t), server(s)
+	inline AsioTimer(io_service& io, TaskUnit& t, TimerServer::Impl* s)
+		: timer(io), task(std::move(t)), server(s)
 	{}
 
 	virtual void cancel()
@@ -43,7 +43,7 @@ public:
 	eco::Mutex mutex;
 
 	inline AsioTimerRepeated(
-		io_service& io, Task::ptr& t, TimerServer::Impl* s)
+		io_service& io, TaskUnit& t, TimerServer::Impl* s)
 		: AsioTimer(io, t, s), canceled(0)
 	{}
 
@@ -111,7 +111,7 @@ public:
 	}
 
 	// execute task, return false if cancelled.
-	inline bool execute(Task::ptr& task, const boost::system::error_code& ec)
+	inline bool execute(TaskUnit& task, const boost::system::error_code& ec)
 	{
 		try
 		{
@@ -122,7 +122,7 @@ public:
 			}
 			else if (!ec)
 			{
-				(*task)();
+				task();
 			}
 		}
 		catch (std::exception& e)
@@ -134,7 +134,7 @@ public:
 
 public:
 	/*@ add task timer.*/
-	inline Timer add_task(uint32_t ms, bool repeated, Task::ptr& task)
+	inline Timer add_task(uint32_t ms, bool repeated, TaskUnit& task)
 	{
 		Timer obj;	// timer object.
 		if (repeated)
@@ -175,7 +175,7 @@ public:
 
 public:
 	// add dedicated time timer: date time format: 2015-05-21 12:21:12
-	inline Timer add_time(std::string& date_time, Task::ptr& t)
+	inline Timer add_time(std::string& date_time, TaskUnit& t)
 	{
 		AsioTimer::ptr ti(new AsioTimer(*m_worker.get_io_service(), t, this));
 		boost::posix_time::ptime utime;
@@ -192,7 +192,7 @@ public:
 
 public:
 	// add daily timer that can be repeated.
-	inline Timer add_daily(std::string& time, Task::ptr& t)
+	inline Timer add_daily(std::string& time, TaskUnit& t)
 	{
 		AsioTimerRepeated::ptr ti(new AsioTimerRepeated(
 			*m_worker.get_io_service(), t, this));
@@ -278,15 +278,33 @@ void TimerServer::join()
 ////////////////////////////////////////////////////////////////////////////////
 Timer TimerServer::add(const char* date_time, Task::ptr& task)
 {
-	return impl().add_time(std::string(date_time), task);
+	return impl().add_time(std::string(date_time), TaskUnit(task));
 }
+Timer TimerServer::add(const char* date_time, Closure&& task)
+{
+	return impl().add_time(std::string(date_time), TaskUnit(task));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 Timer TimerServer::add(uint32_t millsecs, bool repeated, Task::ptr& task)
 {
-	return impl().add_task(millsecs, repeated, task);
+	return impl().add_task(millsecs, repeated, TaskUnit(task));
 }
+Timer TimerServer::add(uint32_t millsecs, bool repeated, Closure&& task)
+{
+	return impl().add_task(millsecs, repeated, TaskUnit(task));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 Timer TimerServer::add_daily(const char* time, Task::ptr& task)
 {
-	return impl().add_daily(std::string(time), task);
+	return impl().add_daily(std::string(time), TaskUnit(task));
+}
+Timer TimerServer::add_daily(const char* time, Closure&& task)
+{
+	return impl().add_daily(std::string(time), TaskUnit(task));
 }
 
 
