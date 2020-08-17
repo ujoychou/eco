@@ -67,13 +67,12 @@ public:
 		std::auto_ptr<TcpPeer> ptr(peer);
 		try
 		{
-			eco::this_thread::lock().set_object(ptr->impl().get_id());
+			eco::this_thread::lock().set_object(ptr->impl().id());
 			ptr->impl().release();
 		}
 		catch (std::exception& e)
 		{
-			ECO_ERROR << NetLog(ptr->get_id(), __func__)
-				<= ptr->get_ip() <= e.what();
+			ECO_ERROR << NetLog(ptr->id(), __func__) <= ptr->ip() <= e.what();
 		}
 		
 		// release buffer peer algorithm.
@@ -130,6 +129,7 @@ public:
 		TcpPeer::ptr pr(m_peer_pool.make(
 			m_worker_pool.get_io_worker(),
 			m_server->m_dispatch_pool.attach()));
+		pr->impl().m_id = m_server->make_session_id();
 		m_acceptor->async_accept(
 			*(boost::asio::ip::tcp::socket*)(pr->impl().socket()),
 			boost::bind(&Impl::on_accept, this,
@@ -183,12 +183,12 @@ public:
 	/*@ when accepted a client connection.*/
 	inline void on_accept(
 		IN TcpPeer::ptr& pr,
-		IN const boost::system::error_code& e)
+		IN const boost::system::error_code& ec)
 	{
-		if (e)
+		if (ec)
 		{
-			eco::Error error(e.message(), e.value());
-			m_on_accept(pr, &error);
+			eco::Error e(ec.value(), ec.message());
+			m_on_accept(pr, &e);
 		}
 		else
 		{

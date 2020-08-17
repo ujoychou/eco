@@ -24,12 +24,13 @@ void TcpServer::Impl::start()
 		if (!m_option.websocket())
 		{
 			m_protocol.add_protocol(new TcpProtocol());
-			//m_protocol.add_protocol(new TcpProtocol2());
+			m_protocol.add_protocol(new TcpProtocol2());
 		}
 		else
 		{
 			// server must not mask.
 			m_protocol.add_protocol(new WebSocketProtocol(false));
+			m_protocol.add_protocol(new WebSocketProtocol2(false));
 		}
 	}
 
@@ -96,7 +97,7 @@ void TcpServer::Impl::start()
 		m_option.get_max_session_size(),
 		m_option.get_io_thread_size(), 
 		m_option.get_business_thread_size());
-	ECO_LOGX(info) << log;
+	ECO_LOG(info) << log;
 }
 
 
@@ -107,25 +108,24 @@ SessionData::ptr TcpServer::Impl::add_session(
 {
 	if (m_make_session == nullptr)
 	{
-		ECO_WARN << NetLog(conn.get_id(), __func__)
+		ECO_WARN << NetLog(conn.id(), __func__)
 			<= "this is connection mode, don't support session.";
 		return SessionData::ptr();
 	}
 	// session overloaded.
 	if (m_session_map.size() >= m_option.get_max_session_size())
 	{
-		ECO_ERROR << NetLog(conn.get_id(), __func__)
+		ECO_ERROR << NetLog(conn.id(), __func__)
 			<= "session has reached max size: "
 			< m_option.get_max_session_size();
 		return SessionData::ptr();
 	}
 
 	// create session: session id and session data.
-	sess_id = next_session_id();
+	sess_id = make_session_id();
 	SessionData::ptr new_sess(m_make_session(sess_id, conn));
-	m_session_map.set(sess_id, new_sess);
-	add_conn_session(conn.get_id(), sess_id);
-	ECO_INFO << NetLog(conn.get_id(), __func__, sess_id);
+	add_conn_session(conn.id(), sess_id, new_sess);
+	ECO_INFO << NetLog(conn.id(), __func__, sess_id);
 	return new_sess;
 }
 
@@ -139,7 +139,7 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 		return;
 	}
 	m_option.step_tick();
-	ThreadCheck::me().set_time();
+	ThreadCheck::get().set_time();
 
 	// send rhythm heartbeat.
 	if (m_option.is_time_to_heartbeat_send_tick())
@@ -156,7 +156,7 @@ void TcpServer::Impl::on_timer(IN const eco::Error* e)
 	if (m_option.get_clean_dos_peer_tick() > 0)
 	{
 		m_peer_set.clean_dos_peer(
-			ThreadCheck::me().get_time(),
+			ThreadCheck::get().get_time(),
 			m_option.get_clean_dos_peer_tick());
 	}
 
@@ -181,13 +181,14 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& peer, IN const eco::Error* e)
 	}
 
 	// hub verify the most tcp_connection num.
-	peer->impl().on_accept_state();
-	if (m_peer_set.accept(peer, ThreadCheck::me().get_time()))
+	peer->impl().on_accept_state(make_session_id());
+	peer->impl().set_protocol(m_protocol.protocol_latest());
+	if (m_peer_set.accept(peer, ThreadCheck::get().get_time()))
 	{
 		peer->impl().on_accept(m_option);
 		if (m_on_accept)
 		{
-			m_on_accept(peer->get_id());
+			m_on_accept(peer->id());
 		}
 	}
 	else
@@ -204,14 +205,15 @@ void TcpServer::Impl::on_read(
 	auto* peer = static_cast<TcpPeer::Impl*>(impl);
 
 	// #.send heartbeat.
+	peer->set_protocol(head.m_protocol);
 	if (is_heartbeat(head.m_category))
 	{
 		peer->state().set_peer_live(true);
 		if (m_option.response_heartbeat())
 		{
-			peer->send_heartbeat(*head.m_protocol);
+			peer->send_heartbeat();
 		}
-		ECO_DEBUG << NetLog(peer->get_id(), __func__) <= "heartbeat";
+		ECO_DEBUG << NetLog(peer->id(), __func__) <= "heartbeat";
 		return;
 	}
 
@@ -221,7 +223,7 @@ void TcpServer::Impl::on_read(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpServer::Impl::on_close(IN ConnectionId id, IN bool erase_peer)
+void TcpServer::Impl::on_close(IN SessionId id, IN bool erase_peer)
 {
 	// when "erase_peer=false" that because of close_and_notify called in
 	// peerset, for avoid repeated peer.
@@ -252,6 +254,13 @@ void TcpServer::set_connection_data(IN MakeConnectionDataFunc make)
 void TcpServer::set_session_data(IN MakeSessionDataFunc make)
 {
 	impl().m_make_session = make;
+}
+uint64_t TcpServer::make_object_id(uint32_t& ts, uint32_t& seq, int ver)
+{
+	if (ver == 1)
+		return eco::date_time::make_id_by_ver1(
+			impl().m_option.horizental_number(), ts, seq);
+	return 0;
 }
 void TcpServer::start()
 {
@@ -285,9 +294,9 @@ void TcpServer::register_handler(IN uint64_t id, IN HandlerFunc hf)
 {
 	impl().m_dispatch_pool.register_handler(id, std::move(hf));
 }
-void TcpServer::register_default_handler(IN HandlerFunc hf)
+void TcpServer::register_default(IN HandlerFunc hf)
 {
-	impl().m_dispatch_pool.register_default_handler(std::move(hf));
+	impl().m_dispatch_pool.register_default(std::move(hf));
 }
 void TcpServer::set_event(ServerAcceptFunc on_accept, ServerCloseFunc on_close)
 {

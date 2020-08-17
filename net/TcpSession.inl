@@ -27,8 +27,6 @@
 
 namespace eco{;
 namespace net{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TcpSessionInner
 {
@@ -55,47 +53,40 @@ private:
 
 	void authorize(IN const MessageMeta& meta);
 
-	void response(Codec* codec, MessageOption& opt, const Context& c);
+	void response(MessageMeta& meta, const Context& c);
 
 	friend class TcpSession;
 	TcpSessionImpl* m_impl;
 };
 
 
-//##############################################################################
-//##############################################################################
+////////////////////////////////////////////////////////////////////////////////
 void TcpSession::close()
 {
 	TcpSessionInner inner(m_impl);
 	return inner.close();
 }
-
 bool TcpSession::authorize()
 {
 	TcpSessionInner inner(m_impl);
 	return inner.authorize();
 }
-
 bool TcpSession::authorized() const
 {
 	return !m_impl.m_session_wptr.expired();
 }
-
-TcpConnection& TcpSession::connection()
+TcpConnection& TcpSession::connection() const
 {
 	return m_impl.m_conn;
 }
-
-const TcpConnection& TcpSession::get_connection() const
-{
-	return m_impl.m_conn;
-}
-
 SessionData::ptr TcpSession::data() const
 {
 	return m_impl.m_session_wptr.lock();
 }
-
+const SessionId TcpSession::id() const
+{
+	return m_impl.m_session_id;
+}
 template<typename SessionDataT>
 inline std::shared_ptr<SessionDataT> TcpSession::cast()
 {
@@ -108,26 +99,18 @@ inline std::shared_ptr<SessionDataT> TcpSession::cast()
 	return std::dynamic_pointer_cast<SessionDataT>(sess);
 }
 
-const SessionId TcpSession::get_id() const
-{
-	return m_impl.m_session_id;
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSession::response(Codec* codec, MessageOption& opt, const Context& c)
+void TcpSession::response(MessageMeta& meta, const Context& c)
 {
 	TcpSessionInner inner(m_impl);
-	return inner.response(codec, opt, c);
+	return inner.response(meta, c);
 }
 void TcpSession::authorize(IN const MessageMeta& meta)
 {
 	TcpSessionInner inner(m_impl);
 	return inner.authorize(meta);
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
 void TcpSession::send(IN const MessageMeta& meta)
 {
 	if (m_impl.m_session_id != none_session)
@@ -139,12 +122,11 @@ void TcpSession::send(IN const MessageMeta& meta)
 			m.session_id(m_impl.m_session_id);
 			m_impl.m_conn.send(meta);
 		}
+		return;
 	}
-	else
-	{
-		connection().send(meta);
-	}
+	connection().send(meta);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 }}

@@ -1,4 +1,4 @@
-#ifndef ECO_NET_TCP_SERVER_IPP
+﻿#ifndef ECO_NET_TCP_SERVER_IPP
 #define ECO_NET_TCP_SERVER_IPP
 /*******************************************************************************
 @ name
@@ -65,20 +65,22 @@ public:
 	ServerCloseFunc  m_on_close;
 	
 	// session data management.
-	MakeSessionDataFunc m_make_session;
-	eco::Atomic<SessionId> m_next_session_id;
-	std::vector<SessionId> m_left_session_ids;
-	eco::HashMap<SessionId, SessionData::ptr> m_session_map;
-	// connection session data.
 	typedef std::set<SessionId> SessionSet;
 	typedef std::shared_ptr<SessionSet> SessionSetPtr;
-	eco::Mutex m_conn_session_mutex;
-	std::unordered_map<ConnectionId, SessionSetPtr> m_conn_session;
+	uint32_t m_session_ts;
+	uint32_t m_session_seq;
+	MakeSessionDataFunc m_make_session;
+
+	// connection session data.
+	mutable std::mutex m_session_mutex;
+	std::unordered_map<SessionId, SessionSetPtr> m_conn_session;
+	std::unordered_map<SessionId, SessionData::ptr> m_session_map;
 
 public:
-	inline Impl() : m_make_connection(nullptr), m_make_session(nullptr)
+	inline Impl() : m_make_connection(0), m_make_session(0)
 	{
-		m_next_session_id = none_session;
+		m_session_ts = 0;
+		m_session_seq = 0;
 	}
 
 	inline ~Impl()
@@ -125,21 +127,6 @@ public:
 		return (uint32_t)m_peer_set.get_connection_size();
 	}
 
-	// produce a new session id.
-	inline uint32_t next_session_id()
-	{
-		eco::Mutex::ScopeLock lock(m_session_map.mutex());
-		// reuse session id that has been recycled.
-		if (m_left_session_ids.size() > 0)
-		{
-			uint32_t id = m_left_session_ids.back();
-			m_left_session_ids.pop_back();
-			return id;
-		}
-		// session will not reach the "uint32_t" max value.
-		return ++m_next_session_id;
-	}
-
 	// add new connection.
 	inline void set_valid_peer(IN TcpPeer& peer, IN Protocol* prot)
 	{
@@ -152,7 +139,7 @@ public:
 		// set valid state which peer is a dos peer.
 		if (!peer.impl().get_state().valid())
 		{
-			m_peer_set.set_valid_peer(peer.impl().get_id());
+			m_peer_set.set_valid_peer(peer.impl().id());
 			peer.impl().state().set_valid(true);
 		}
 	}
@@ -163,51 +150,53 @@ public:
 		IN const TcpConnection& conn);
 
 	// find exist session.
-	inline SessionData::ptr find_session(IN const SessionId id) const
+	inline SessionData::ptr find_session(IN SessionId id) const
 	{
-		SessionData::ptr v;
-		m_session_map.find(v, id);
-		return v;
+		std::lock_guard<std::mutex> lock(m_session_mutex);
+		auto it = m_session_map.find(id);
+		return it != m_session_map.end() ? it->second : nullptr;
+	}
+
+	// make next session id.
+	inline uint64_t make_session_id()
+	{
+		return eco::date_time::make_id_by_ver1(
+			m_option.horizental_number(), m_session_ts, m_session_seq);
 	}
 
 	// erase session.
-	inline void erase_session(
-		IN const SessionId sess_id, 
-		IN const ConnectionId conn_id)
+	inline void erase_session(IN SessionId sess_id, IN SessionId conn_id)
 	{
+		std::lock_guard<std::mutex> lock(m_session_mutex);
+		auto it = m_session_map.find(sess_id);
+		if (it != m_session_map.end())
 		{
-			eco::Mutex::ScopeLock lock(m_session_map.mutex());
-			auto it = m_session_map.map().find(sess_id);
-			if (it != m_session_map.map().end())
-			{
-				auto v = it->second;
-				m_session_map.map().erase(it);
-				m_left_session_ids.push_back(sess_id);
-			}
+			m_session_map.erase(it);
 		}
-		erase_conn_session(conn_id, sess_id);
+		erase_conn_session_raw(conn_id, sess_id);
 	}
 
 	// add conn session
 	inline void add_conn_session(
-		IN const ConnectionId conn_id, 
-		IN const SessionId sess_id)
+		IN SessionId conn_id,
+		IN SessionId sess_id,
+		IN SessionData::ptr new_sess)
 	{
-		eco::Mutex::ScopeLock lock(m_conn_session_mutex);
+		std::lock_guard<std::mutex> lock(m_session_mutex);
 		SessionSetPtr& map = m_conn_session[conn_id];
-		if (map == nullptr)
-		{
-			map.reset(new SessionSet);
-		}
+		if (map == nullptr) map.reset(new SessionSet);
 		(*map).insert(sess_id);
+		m_session_map[sess_id] = new_sess;
 	}
 
 	// erase conn session
-	inline bool erase_conn_session(
-		IN const ConnectionId conn_id,
-		IN const SessionId sess_id)
+	inline bool erase_conn_session(SessionId conn_id, SessionId sess_id)
 	{
-		eco::Mutex::ScopeLock lock(m_conn_session_mutex);
+		std::lock_guard<std::mutex> lock(m_session_mutex);
+		return erase_conn_session_raw(conn_id, sess_id);
+	}
+	inline bool erase_conn_session_raw(SessionId conn_id, SessionId sess_id)
+	{
 		auto it = m_conn_session.find(conn_id);
 		if (it != m_conn_session.end())
 		{
@@ -218,9 +207,9 @@ public:
 	}
 
 	// erase conn session
-	inline void clear_conn_session(IN ConnectionId conn_id)
+	inline void clear_conn_session(IN SessionId conn_id)
 	{
-		eco::Mutex::ScopeLock lock(m_conn_session_mutex);
+		std::lock_guard<std::mutex> lock(m_session_mutex);
 		auto itc = m_conn_session.find(conn_id);
 		if (itc != m_conn_session.end())
 		{
@@ -228,7 +217,6 @@ public:
 			for (auto it = sess_map->begin(); it != sess_map->end(); ++it)
 			{
 				m_session_map.erase(*it);
-				m_left_session_ids.push_back(*it);
 			}
 			m_conn_session.erase(itc);
 		}
@@ -275,9 +263,9 @@ public:
 	inline void async_send_heartbeat()
 	{
 		if (m_option.rhythm_heartbeat())
-			m_peer_set.send_rhythm_heartbeat(*m_protocol.protocol_latest());
+			m_peer_set.send_rhythm_heartbeat();
 		else
-			m_peer_set.send_live_heartbeat(*m_protocol.protocol_latest());
+			m_peer_set.send_live_heartbeat();
 	}
 
 	// on call.
@@ -293,7 +281,7 @@ public:
 	void on_send(IN void* peer, IN uint32_t size);
 
 	// when peer has been closed.
-	void on_close(IN ConnectionId id, IN bool erase_peer);
+	void on_close(IN SessionId id, IN bool erase_peer);
 };
 
 

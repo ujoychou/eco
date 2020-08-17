@@ -44,10 +44,7 @@ or send a response, so get the request and response info.
 ////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
 namespace net{;
-
-
-typedef uint32_t SessionId;
-typedef size_t ConnectionId;
+typedef uint64_t SessionId;
 const SessionId none_session = 0;
 ////////////////////////////////////////////////////////////////////////////////
 // get local machine network info: ip\hostname\mac address.

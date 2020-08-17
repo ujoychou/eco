@@ -80,8 +80,11 @@ public:
 	}
 	void set_session_data(IN MakeSessionDataFunc make);
 
+	// make session id.
+	uint64_t make_object_id(uint32_t& ts, uint32_t& seq, int ver = 1);
+
 	// register dispatch handler.
-	virtual void register_default_handler(IN HandlerFunc hf) override;
+	virtual void register_default(IN HandlerFunc hf) override;
 	virtual void register_handler(IN uint64_t id, IN HandlerFunc hf) override;
 
 public:

@@ -99,7 +99,7 @@ public:
 
 	// when peer has been closed.
 	// m_on_close(peer_id, erase_peer)
-	std::function<void(IN ConnectionId, IN const eco::Error& e, 
+	std::function<void(IN SessionId, IN const eco::Error& e, 
 		IN bool erase_peer)> m_on_close;
 };
 
@@ -121,24 +121,31 @@ public:
 	void init_option(const TcpOption& opt);
 
 	// tcp peer identity which is the address of connector.
-	ConnectionId get_id() const;
+	SessionId id() const;
+	const char* user() const;
+	const char* lang() const;
 
 	// tcp remote client peer ip.
-	eco::String get_ip() const;
-	uint32_t get_port() const;
+	eco::String ip() const;
+	uint32_t port() const;
 
 	// io stopped.
 	bool stopped() const;
 
 	// tcp peer connection state.
-	const TcpState& get_state() const;
+	const TcpState& state() const;
 
 	// tcp peer connection state.
 	eco::atomic::State& data_state();
-	const eco::atomic::State& get_data_state() const;
 
 	// get peer data.
 	ConnectionData* data();
+
+	// authorize user and language.
+	void authorize(IN const char* user, IN const char* lang);
+
+	// whether peer has been authorized.
+	bool authorized() const;
 
 	// async connect to server address.
 	void async_connect(IN const Address& addr);

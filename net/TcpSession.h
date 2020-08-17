@@ -42,22 +42,22 @@ class SessionData : public eco::HeapOperators
 public:
 	// #.event: after server session connect.
 	inline SessionData(
-		IN const eco::net::SessionId id,
+		IN const eco::net::SessionId id_,
 		IN const eco::net::TcpConnection& conn)
-		: m_id(id), m_conn(conn)
+		: m_id(id_), m_conn(conn)
 	{}
 
 	// #.event: after server session close.
 	virtual ~SessionData() = 0 {}
 
 	// get user id.
-	virtual const uint64_t get_user_id() const
+	virtual const uint64_t user_id() const
 	{
 		return 0;
 	}
 
 	// get user name.
-	virtual const char* get_user_name() const
+	virtual const char* user_name() const
 	{
 		return nullptr;
 	}
@@ -72,45 +72,48 @@ public:
 		return m_conn;
 	}
 
-	inline const SessionId get_id() const
+	inline const SessionId id() const
 	{
 		return m_id;
 	}
 
 	// async send message.
-	inline void send(IN const MessageMeta& meta)
+	inline void send(IN MessageMeta& meta)
 	{
-		m_conn.send(meta);
+		m_conn.send(meta.session_id(m_id));
 	}
 
 	// async send message.
-	inline void send(IN Codec* codec, IN uint32_t type, IN bool last)
+	inline void send(IN Codec& cdc, IN int type, IN bool last_)
 	{
-		m_conn.send(codec, MessageOption(type, 0, last, m_id));
+		MessageMeta meta;
+		meta.codec(cdc).message_type(type).last(last_);
+		m_conn.send(meta);
 	}
 
 	// async publish message.
-	inline void publish(IN Codec* codec, IN uint32_t type)
+	inline void publish(IN Codec& cdc, IN int type, IN char snap_)
 	{
-		m_conn.send(codec, MessageOption(type, 0, false, m_id));
+		MessageMeta meta;
+		meta.codec(cdc).message_type(type).snap(snap_);
+		m_conn.send(meta);
 	}
 
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void send(
 		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const bool last)
+		IN int type, IN bool last_)
 	{
-		m_conn.send(msg, MessageOption(type, 0, last, m_id));
+		send(ProtobufCodec(&msg), type, last_);
 	}
 
 	// async publish protobuf.
 	inline void publish(
 		IN const google::protobuf::Message& msg,
-		IN const uint32_t type)
+		IN int type, IN char snap_)
 	{
-		m_conn.publish(msg, MessageOption(type, 0, false, m_id));
+		send(ProtobufCodec(&msg), type, snap_);
 	}
 #endif
 
@@ -146,8 +149,8 @@ public:
 	TcpConnection		m_conn;
 
 	// session data
-	SessionId			m_session_id;		// session id.
 	SessionData::wptr	m_session_wptr;		// session data.
+	SessionId			m_session_id;		// session id.
 	
 	// session owner: client or server.
 	TcpOwner			m_owner;
@@ -173,11 +176,10 @@ public:
 	inline bool authorized() const;
 
 	// get connection.
-	inline TcpConnection& connection();
-	inline const TcpConnection& get_connection() const;
+	inline TcpConnection& connection() const;
 
 	// get session data.
-	inline const SessionId get_id() const;
+	inline const SessionId id() const;
 
 	// get session data.
 	inline SessionData::ptr data() const;
@@ -188,7 +190,7 @@ public:
 
 public:
 	// async response message.
-	inline void response(IN Codec*, IN MessageOption&, IN const Context&);
+	inline void response(IN MessageMeta& meta, IN const Context& c);
 
 	// async send message.
 	inline void send(IN const MessageMeta& meta);
@@ -200,39 +202,34 @@ public:
 	// async send protobuf.
 	inline void send(
 		IN const google::protobuf::Message& msg,
-		IN uint32_t type, IN bool is_last)
+		IN int type, IN bool last_)
 	{
-		ProtobufCodec codec(msg);
-		MessageOption opt(type, 0, is_last, get_id());
-		send(MessageMeta(&codec, opt));
+		ProtobufCodec cdc(&msg);
+		send(MessageMeta().codec(cdc).message_type(type).last(last_));
 	}
 
 	// async send protobuf authority info.
 	inline void authorize(
 		IN const google::protobuf::Message& msg,
-		IN uint32_t type, IN bool is_last)
+		IN int type, IN bool last_)
 	{
-		ProtobufCodec codec(msg);
-		MessageOption opt(type, 0, is_last, get_id());
-		authorize(MessageMeta(&codec, opt));
+		ProtobufCodec cdc(&msg);
+		send(MessageMeta().codec(cdc).message_type(type).last(last_));
 	}
 
 	// async send response to client by context.
 	inline void response(
 		IN const google::protobuf::Message& msg,
-		IN const uint32_t type,
-		IN const uint32_t error_id,
-		IN const bool is_last,
-		IN const Context& context)
+		IN int type, IN bool last_, IN const Context& c)
 	{
-		ProtobufCodec codec(msg);
-		response(&codec, MessageOption(type, error_id, is_last), context);
+		ProtobufCodec cdc(&msg);
+		response(MessageMeta().codec(cdc).message_type(type).last(last_), c);
 	}
 #endif
 
 private:
 	// implement.
-	TcpSessionImpl m_impl;
+	mutable TcpSessionImpl m_impl;
 	friend class TcpSessionOuter;
 };
 }}

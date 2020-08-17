@@ -24,9 +24,7 @@
 
 *******************************************************************************/
 #include <eco/meta/Stamp.h>
-#include <eco/net/protocol/Protocol.h>
 #include <eco/net/TcpSession.h>
-#include <eco/net/TcpConnection.h>
 #include <eco/thread/topic/Role.h>
 
 
@@ -97,34 +95,48 @@ public:
 	eco::String			m_data;
 	eco::Bytes			m_message;
 	MessageMeta			m_meta;
-	TcpSession			m_session;
+	mutable TcpSession	m_session;
 	
 public:
 	inline Context()
 	{}
 
-	inline TcpConnection& connection()
+	inline TcpConnection& connection() const
 	{
 		return m_session.connection();
 	}
-	inline const TcpConnection& get_connection() const
-	{
-		return m_session.get_connection();
-	}
 
-	inline const uint32_t get_type() const
+	inline const uint32_t type() const
 	{
 		return m_meta.m_message_type;
 	}
 
-	inline const Snap get_snap() const
+	// publish topic content snap.
+	inline const Snap snap() const
 	{
 		return Snap(m_meta.get_req1() & 0xFF);
 	}
+	inline bool snap_none() const
+	{
+		return snap() == eco::snap_none;
+	}
+	inline bool snap_head() const
+	{
+		return eco::has(snap(), eco::snap_head);
+	}
+	inline bool snap_last() const
+	{
+		return eco::has(snap(), eco::snap_last);
+	}
 
-	inline const meta::Stamp get_stamp() const
+	// publish topic content stamp.
+	inline const meta::Stamp stamp() const
 	{
 		return meta::Stamp(m_meta.get_req1() >> 4);
+	}
+	inline bool stamp_delete() const
+	{
+		return eco::has(stamp(), eco::meta::stamp_delete);
 	}
 
 	inline const bool is_last() const
@@ -134,7 +146,7 @@ public:
 
 	inline const uint32_t has_error() const
 	{
-		return m_meta.m_error_id != 0;
+		return m_meta.has_error();
 	}
 
 	inline void release_data()
@@ -152,10 +164,9 @@ public:
 		return *this;
 	}
 
-	inline void response(IN Codec* codec, IN MessageOption& opt)
+	inline void response(IN MessageMeta& meta)
 	{
-		m_meta.m_session_id = m_session.get_id();
-		m_session.response(codec, opt, *this);
+		m_session.response(meta, *this);
 	}
 };
 

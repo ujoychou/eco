@@ -38,7 +38,7 @@ void TcpSessionInner::close()
 		if (impl().m_owner.m_server)
 		{
 			auto* server = (TcpServer::Impl*)impl().m_owner.m_owner;
-			server->erase_session(impl().m_session_id, impl().m_conn.get_id());
+			server->erase_session(impl().m_session_id, impl().m_conn.id());
 		}
 		else
 		{
@@ -65,20 +65,15 @@ void TcpSessionInner::authorize(IN const MessageMeta& meta_v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpSessionInner::response(Codec* d, MessageOption& opt, const Context& c)
+void TcpSessionInner::response(MessageMeta& meta, const Context& c)
 {
 	if (impl().m_session_id != none_session)
 	{
 		SessionData::ptr sess = impl().m_session_wptr.lock();
-		if (sess != nullptr)
-		{
-			return impl().m_conn.response(d, opt, c);
-		}
+		if (sess) impl().m_conn.response(meta, c);
+		return;
 	}
-	else
-	{
-		impl().m_conn.response(d, opt, c);
-	}
+	impl().m_conn.response(meta, c);
 }
 
 

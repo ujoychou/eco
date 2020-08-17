@@ -189,7 +189,7 @@ public:
 
 		if (ec) 
 		{
-			eco::Error e(ec.message(), ec.value());
+			eco::Error e(ec.value(), ec.message());
 			m_handler->on_connect(false, &e);
 			return;
 		}
@@ -231,7 +231,7 @@ public:
 		}
 		if (ec)		// error tcp peer will close this socket.
 		{
-			eco::Error e(ec.message(), ec.value());
+			eco::Error e(ec.value(), ec.message());
 			close_error_peer(MessageHead(), m_buffer, e);
 			peer.reset();
 		}
@@ -396,7 +396,7 @@ public:
 		{
 			if (ec)
 			{
-				eco::Error e(ec.message(), ec.value());
+				eco::Error e(ec.value(), ec.message());
 				m_handler->on_write((uint32_t)bytes_transferred, &e);
 				return;
 			}
@@ -598,15 +598,11 @@ void TcpConnector::release()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-size_t TcpConnector::get_id() const
-{
-	return impl().get_id();
-}
-eco::String TcpConnector::get_ip() const
+eco::String TcpConnector::ip() const
 {
 	return impl().get_ip();
 }
-uint32_t TcpConnector::get_port() const
+uint32_t TcpConnector::port() const
 {
 	return impl().get_port();
 }
