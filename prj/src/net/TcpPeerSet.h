@@ -84,17 +84,17 @@ public:
 			if (m_peer_map.size() > m_max_conn_size)
 			{
 				ECO_ERROR << "over max conn size:" <= m_max_conn_size
-					<= p->impl().get_ip() <= p->impl().get_port();
+					<= p->impl().ip() <= p->impl().port();
 				return false;
 			}
 			// add to connection set.
-			m_peer_map[p->impl().get_id()] = p;
-			m_peer_dos[p->impl().get_id()] = ts;
+			m_peer_map[p->impl().id()] = p;
+			m_peer_dos[p->impl().id()] = ts;
 			psize = m_peer_map.size();
 			dsize = m_peer_dos.size();
 		}
-		ECO_INFO << "accept "< p->impl().get_id() <= psize <= dsize
-			<= p->impl().get_ip() <= p->impl().get_port();
+		ECO_INFO << "accept "< p->impl().id() <= psize <= dsize
+			<= p->impl().ip() <= p->impl().port();
 		return true;
 	}
 
@@ -130,22 +130,22 @@ public:
 	}
 
 	/*@ send heartbeat to all connection in regular intervals.*/
-	inline void send_rhythm_heartbeat(IN Protocol& prot)
+	inline void send_rhythm_heartbeat()
 	{
 		std::lock_guard<std::mutex> lock(m_peer_map_mutex);
 		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); ++it)
 		{
-			it->second->impl().send_heartbeat(prot);
+			it->second->impl().send_heartbeat();
 		}
 	}
 
 	/*@ send heartbeat to all inactive connections.*/
-	inline void send_live_heartbeat(IN Protocol& prot)
+	inline void send_live_heartbeat()
 	{
 		std::lock_guard<std::mutex> lock(m_peer_map_mutex);
 		for (auto it = m_peer_map.begin(); it != m_peer_map.end(); ++it)
 		{
-			it->second->impl().send_live_heartbeat(prot);
+			it->second->impl().send_live_heartbeat();
 		}
 	}
 
@@ -172,7 +172,7 @@ public:
 		{
 			auto& it = m_clean_set[i];
 			eco::Error e(e_peer_lost, "peer lost client heartbeat.");
-			ECO_FUNC(warn) < it->impl().get_id() <= it.use_count() <= e;
+			ECO_FUNC(warn) < it->impl().id() <= it.use_count() <= e;
 			it->impl().close_and_notify(e, false);
 		}
 		m_clean_set.clear();
@@ -202,7 +202,7 @@ public:
 		{
 			auto& it = m_clean_set[i];
 			eco::Error e(e_peer_dos_lost, "peer dos lost.");
-			ECO_FUNC(error) << it->impl().get_id() <= timeout <= e;
+			ECO_FUNC(error) << it->impl().id() <= timeout <= e;
 			it->impl().close_and_notify(e, false);
 		}
 		m_clean_set.clear();

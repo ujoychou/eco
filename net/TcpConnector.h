@@ -69,12 +69,9 @@ public:
 		IN TcpConnectorHandler& handler,
 		IN std::weak_ptr<TcpPeer>& peer);
 
-	// get tcp connection id.
-	ConnectionId get_id() const;
-
 	// get remote ip address.
-	eco::String get_ip() const;
-	uint32_t get_port() const;
+	eco::String ip() const;
+	uint32_t port() const;
 
 	// io worker stopped.
 	bool stopped() const;

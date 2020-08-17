@@ -87,7 +87,7 @@ public:
 		m_conn.m_prot = &prot;
 	}
 
-	inline void set_id(IN const size_t id)
+	inline void set_id(IN SessionId id)
 	{
 		m_conn.m_id = id;
 	}
