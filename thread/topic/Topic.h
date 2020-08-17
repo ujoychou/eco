@@ -14,16 +14,14 @@ class OneTopic : public Topic
 {
 	ECO_TOPIC(OneTopic, Topic);
 protected:
-	virtual void do_snap(
-		IN eco::Subscription& node,
-		IN eco::TopicEvent* event) override
+	virtual void do_snap(IN eco::Subscription& node) override
 	{
 		if (m_snap != nullptr)
 		{
 			auto* suber = (Subscriber*)node.m_subscriber;
 			Snap type = snap_head | snap_last;
 			m_snap->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(m_snap, nullptr, type, event));
+			suber->on_publish(*this, Content(m_snap, nullptr, type));
 		}
 	}
 
@@ -157,24 +155,22 @@ public:
 	}
 
 protected:
-	virtual void do_snap(
-		IN eco::Subscription& node,
-		IN eco::TopicEvent* event) override
+	virtual void do_snap(IN eco::Subscription& node) override
 	{
 		// get start seq.
-		size_t seq = event ? event->get_snap_seq(*this) : 0;
+		auto* suber = (eco::Subscriber*)node.m_subscriber;
+		size_t seq = !node.data() ? 0 : suber->get_snap_seq(*this, node.data());
 		if (seq > m_snap_set.size())
 		{
 			seq = 0;
 			ECO_ERROR << "seq topic hasn't enough content to publish snap "
 				<< "seq > size()" << seq <= m_snap_set.size();
 		}
-		size_t seq_init = seq + 1;
-		eco::Snap type = eco::snap_head;
 
 		// *node subscriber may be destruct in "on_publish";
 		// publish the snap, and set a content type.
-		auto* suber = (eco::Subscriber*)node.m_subscriber;
+		size_t seq_init = seq + 1;
+		eco::Snap type = eco::snap_head;
 		for (; seq < m_snap_set.size() && node.m_working; ++seq)
 		{
 			if (seq == seq_init)
@@ -186,7 +182,7 @@ protected:
 			eco::ContentData* old = nullptr;
 			if (seq > 0) old = m_snap_set[seq - 1].get();
 			cur->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(cur, old, type, event));
+			suber->on_publish(*this, Content(cur, old, type));
 		}
 	}
 
@@ -217,39 +213,50 @@ protected:
 
 //##############################################################################
 //##############################################################################
-class IdAdapter
+////////////////////////////////////////////////////////////////////////////////
+template<typename object_id_t>
+class ContentIdT : public eco::ContentData
 {
 public:
-	template<typename ObjectId, typename Object>
-	inline void get_id(ObjectId& id, const Object& obj)
+	inline ContentIdT(const object_id_t& id, meta::Stamp s)
+		: eco::ContentData(s), m_id(id)
+	{}
+	virtual void* get_id() override
 	{
-		id = obj.id();
+		return &m_id;
 	}
+	object_id_t m_id;
 };
-class GetIdAdapter
+
+template<typename object_id_t, typename object_t, typename value_t>
+class SetContentDataT : public ContentDataT<object_t, value_t>
 {
 public:
-	template<typename ObjectId, typename Object>
-	inline void get_id(ObjectId& id, const Object& obj)
+	inline SetContentDataT(const object_id_t& id, const value_t& v, meta::Stamp s)
+		: ContentDataT<object_t, value_t>(v, s), m_id(id)
+	{}
+	virtual void* get_id() override	
 	{
-		id = obj.get_id();
+		return &m_id;
 	}
+	object_id_t m_id;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename ObjectId, typename Object, 
-	typename ObjectIdAdapter = GetIdAdapter,
-	typename ObjectMap = std::unordered_map<ObjectId, eco::ContentData::ptr> >
+template<typename object_id_t, typename object_t,
+	typename object_map = std::unordered_map<object_id_t, eco::ContentData::ptr>>
 class SetTopic : public Topic
 {
 	ECO_TOPIC(SetTopic, Topic);
 public:
-	typedef Object object;
+	typedef object_t object;
+	typedef object_id_t object_id;
+	typedef std::shared_ptr<object_t> object_ptr;
 
 	// find object by identity.
 	template<typename value_t>
-	inline bool find(OUT value_t& v, IN  const ObjectId& id) const
+	inline bool find(OUT value_t& v, IN  const object_id_t& id) const
 	{
 		ContentData::ptr c = find(id);
 		if (c != nullptr) v = *(value_t*)c->get_value();
@@ -257,47 +264,45 @@ public:
 	}
 
 	// find content by identity.
-	inline ContentData::ptr find(IN const ObjectId& id) const
+	inline ContentData::ptr find(IN const object_id_t& id) const
 	{
 		eco::Mutex::ScopeLock lock(mutex());
-		auto it = m_snap_set.find(id);
-		return (it != m_snap_set.end()) ? it->second : nullptr;
+		auto it = m_snap_map.find(id);
+		return (it != m_snap_map.end()) ? it->second : nullptr;
 	}
 
 	// get objects map.
-	inline const ObjectMap& get_object_map() const
+	inline const object_map& get_object_map() const
 	{
-		return m_snap_set;
+		return m_snap_map;
 	}
 
 	// get objects map size.
 	inline size_t size() const
 	{
 		eco::Mutex::ScopeLock lock(mutex());
-		return m_snap_set.size();
+		return m_snap_map.size();
 	}
 
 protected:
-	virtual void do_snap(
-		IN eco::Subscription& node,
-		IN eco::TopicEvent* event) override
+	virtual void do_snap(IN eco::Subscription& node) override
 	{
-		if (m_snap_set.empty()) return;
+		if (m_snap_map.empty()) return;
 
 		// *node subscriber may be destruct in "on_publish";
 		// publish the snap, and set a content type.
 		uint32_t index = 0;
 		auto* suber = (Subscriber*)node.m_subscriber;
 		Snap snap = snap_head;
-		auto it = m_snap_set.begin();
-		for (; it != m_snap_set.end() && node.m_working; ++it, ++index)
+		auto it = m_snap_map.begin();
+		for (; it != m_snap_map.end() && node.m_working; ++it, ++index)
 		{
 			if (index == 1)
 				eco::del(snap, snap_head);
-			if (index == m_snap_set.size() - 1)
+			if (index == m_snap_map.size() - 1)
 				eco::add(snap, snap_last);
 			it->second->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(it->second, nullptr, snap, event));
+			suber->on_publish(*this, Content(it->second, nullptr, snap));
 		}
 	}
 
@@ -305,27 +310,21 @@ protected:
 		OUT eco::ContentData::ptr& newc,
 		OUT eco::ContentData::ptr& old) override
 	{
-		// get object id.
-		ObjectId id;
-		if (eco::TypeId<ObjectId>() == newc->get_type_id())
-			id = *(ObjectId*)newc->get_value();
-		else
-			ObjectIdAdapter().get_id(id, *(Object*)newc->get_value());
-
 		// remove, insert, update object.
+		const object_id_t& id = *(object_id_t*)newc->get_id();
 		if (eco::meta::is_remove(newc->get_stamp()))
 		{
-			auto it = m_snap_set.find(id);
-			if (it != m_snap_set.end())
+			auto it = m_snap_map.find(id);
+			if (it != m_snap_map.end())
 			{
 				newc = old = it->second;
 				newc->stamp() = meta::stamp_delete;
-				m_snap_set.erase(it);
+				m_snap_map.erase(it);
 			}
 		}
 		else
 		{
-			auto& oldc = m_snap_set[id];
+			auto& oldc = m_snap_map[id];
 			newc->stamp() = oldc ? meta::stamp_update : meta::stamp_insert;
 			old = oldc;	oldc = newc;
 		}
@@ -334,10 +333,10 @@ protected:
 
 	virtual void do_clear() override
 	{
-		m_snap_set.clear();
+		m_snap_map.clear();
 	}
 
-	ObjectMap m_snap_set;
+	object_map m_snap_map;
 };
 
 

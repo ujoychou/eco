@@ -75,6 +75,10 @@ public:
 		, m_working(false)
 	{}
 
+	// for SubscriptionT.
+	virtual ~Subscription() {}
+	virtual void* data() { return nullptr; }
+
 	// reserve subscriber in topic, and subscriber will really work until
 	// subscribe() setting working state to "true".
 	inline void subscribe_reserve(
@@ -162,6 +166,30 @@ private:
 		m_topic = nullptr;
 	}
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename data_t>
+class SubscriptionT : public Subscription
+{
+public:
+	inline SubscriptionT(
+		IN detail::Topic* t, 
+		IN detail::Subscriber* s, 
+		IN const data_t& d)
+		: Subscription(t, s), m_data(d)
+	{}
+
+	virtual ~SubscriptionT()
+	{}
+
+	virtual void* data() override
+	{
+		return &m_data;
+	}
+	data_t m_data;
+};
+
 ECO_NS_END(eco);
 
 
@@ -201,6 +229,10 @@ public:
 	// add subscriber to this topic.
 	inline AutoRefPtr<Subscription> reserve_subscribe(
 		IN Subscriber* subscriber);
+
+	template<typename data_t>
+	inline AutoRefPtr<Subscription> reserve_subscribe(
+		IN Subscriber* subscriber, IN data_t& data);
 
 	// erase subscriber from this topic.
 	inline bool unsubscribe(IN Subscriber* subscriber);
@@ -326,20 +358,28 @@ inline Topic::~Topic()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline AutoRefPtr<Subscription> Topic::reserve_subscribe(
-	IN Subscriber* subscriber)
+AutoRefPtr<Subscription> Topic::reserve_subscribe(IN Subscriber* subscriber)
 {
 	AutoRefPtr<Subscription> aref;
-	if (has_subscriber(subscriber))
-	{
-		return aref;
-	}
+	if (has_subscriber(subscriber)) return aref;
 
-	Subscription* node(new Subscription(this, subscriber));
+	aref.reset(new Subscription(this, subscriber));
 	eco::Mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
-	node->subscribe_reserve(m_topic_subscriber_head,
+	aref->subscribe_reserve(m_topic_subscriber_head,
 		subscriber->m_subscriber_topic_head);
-	aref.reset(node);
+	return aref;
+}
+template<typename data_t>
+AutoRefPtr<Subscription> Topic::reserve_subscribe(
+	IN Subscriber* subscriber, IN data_t& data)
+{
+	AutoRefPtr<Subscription> aref;
+	if (has_subscriber(subscriber)) return aref;
+	aref.reset(new SubscriptionT<data_t>(this, subscriber, data));
+
+	eco::Mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
+	aref->subscribe_reserve(m_topic_subscriber_head,
+		subscriber->m_subscriber_topic_head);
 	return aref;
 }
 

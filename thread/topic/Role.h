@@ -9,20 +9,22 @@
 
 
 ECO_NS_BEGIN(eco);
+class Topic;
+class SeqTopic;
 ////////////////////////////////////////////////////////////////////////////////
 // topic content snap type.
 enum
 {
-	snap_head = 1,
-	snap_last = 2,
-	snap_none = 4,
+	snap_none = 0,		// new content.
+	snap_head = 1,		// head snap.
+	snap_last = 2,		// last snap.
 };
 typedef uint8_t Snap;
 
 // whether it is a snap.
 inline bool is_newc(IN const Snap v)
 {
-	return eco::has(v, snap_none);
+	return v == 0;
 }
 inline bool is_snap(IN const Snap v)
 {
@@ -38,15 +40,14 @@ inline bool is_snap_head(IN const Snap v)
 }
 
 
-
 //##############################################################################
 //##############################################################################
 class TopicId
 {
 public:
 	inline explicit TopicId(
-		IN const uint16_t type  = 0,
-		IN const uint16_t prop	= 0,
+		IN const uint16_t type = 0,
+		IN const uint16_t prop = 0,
 		IN const uint64_t value = 0)
 	{
 		set(type, prop, value);
@@ -56,6 +57,15 @@ public:
 	{
 		m_type = d.m_type;
 		m_value = d.m_value;
+	}
+
+	inline eco::TopicId& data(
+		IN const uint32_t type,
+		IN const uint64_t value)
+	{
+		m_type = type;
+		m_value = value;
+		return *this;
 	}
 
 	inline void set(
@@ -75,22 +85,22 @@ public:
 	}
 
 public:
-	inline uint16_t get_type() const
+	inline uint16_t type() const
 	{
 		return uint16_t(m_type >> 16);
 	}
 
-	inline uint16_t get_prop() const
+	inline uint16_t prop() const
 	{
 		return uint16_t(m_type & 0xFFFF);
 	}
 
-	inline uint32_t get_type_value() const
+	inline uint32_t type_value() const
 	{
 		return m_type;
 	}
 
-	inline uint64_t get_value() const
+	inline uint64_t value() const
 	{
 		return m_value;
 	}
@@ -168,13 +178,17 @@ public:
 	{}
 
 	// set topic content object_t.
-	virtual void* get_object() = 0;
+	virtual void* get_object() { return nullptr; }
 
 	// set topic content value_t. 
-	virtual void* get_value() = 0;
+	virtual void* get_value() { return nullptr; }
+
+	// set topic id.
+	virtual void* get_id() { return nullptr; }
 
 	// content type.
-	virtual const uint32_t get_type_id() const = 0;
+	virtual const uint32_t get_type_id() const { return 0; }
+	virtual const uint32_t get_object_id() const { return 0; }
 
 	// get content object.
 	template<typename value_t>
@@ -204,12 +218,12 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Object, typename Value>
+template<typename object_t, typename value_t>
 class ContentDataT : public eco::ContentData
 {
 public:
-	inline ContentDataT(IN const Value& v, IN eco::meta::Stamp ts)
-		: m_value((Value&)v), eco::ContentData(ts)
+	inline ContentDataT(IN const value_t& v, IN eco::meta::Stamp ts)
+		: m_value((value_t&)v), eco::ContentData(ts)
 	{}
 
 	virtual ~ContentDataT()
@@ -217,7 +231,12 @@ public:
 
 	virtual const uint32_t get_type_id() const override
 	{
-		return eco::TypeId<Value>::value;
+		return eco::TypeId<value_t>::value;
+	}
+
+	virtual const uint32_t get_object_id() const override
+	{
+		return eco::TypeId<object_t>::value;
 	}
 
 	virtual void* get_value() override
@@ -227,50 +246,11 @@ public:
 
 	virtual void* get_object() override
 	{
-		return get_object(m_value);
+		return &eco::get_object<object_t>(m_value);
 	}
 
 private:
-	inline Object* get_object(IN Object* obj)
-	{
-		return obj;
-	}
-	inline const Object* get_object(IN const Object* obj)
-	{
-		return obj;
-	}
-	inline Object* get_object(IN Object& obj)
-	{
-		return &obj;
-	}
-	inline const Object* get_object(IN const Object& obj) const
-	{
-		return &obj;
-	}
-	inline Object* get_object(IN std::shared_ptr<Object>& obj)
-	{
-		return obj.get();
-	}
-	inline const Object* get_object(IN const std::shared_ptr<Object>& obj) const
-	{
-		return obj.get();
-	}
-	Value m_value;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class Topic;
-class TopicEvent
-{
-public:
-	typedef std::shared_ptr<TopicEvent> ptr;
-
-	// get snap seq size to publish snap.
-	virtual size_t get_snap_seq(IN eco::Topic& topic)
-	{
-		return 0;	// publish all snap.
-	}
+	value_t m_value;
 };
 
 
@@ -281,20 +261,9 @@ public:
 	inline Content(
 		IN eco::ContentData::ptr& new_c,
 		IN eco::ContentData* old_c,
-		IN eco::Snap snap,
-		IN eco::TopicEvent* event = nullptr)
-		: m_event(event), m_snap(snap), m_new_c(&new_c), m_old_c(old_c)
+		IN eco::Snap snap)
+		: m_snap(snap), m_new_c(&new_c), m_old_c(old_c)
 	{}
-
-	// data context.
-	inline bool has_event() const
-	{
-		return m_event != nullptr;
-	}
-	inline eco::TopicEvent* event()
-	{
-		return m_event;
-	}
 
 	// cast content object.
 	template<typename value_t>
@@ -331,11 +300,19 @@ public:
 	{
 		return (**m_new_c).get_type_id();
 	}
+	inline const uint32_t object_id() const
+	{
+		return (**m_new_c).get_object_id();
+	}
 
 	// content data.
 	inline eco::ContentData& data()
 	{
 		return **m_new_c;
+	}
+	inline eco::ContentData::ptr& get_data_ptr()
+	{
+		return *m_new_c;
 	}
 	inline const eco::ContentData::ptr& data_ptr() const
 	{
@@ -384,7 +361,6 @@ public:
 
 private:
 	eco::Snap m_snap;
-	eco::TopicEvent* m_event;
 	eco::ContentData::ptr* m_new_c;
 	eco::ContentData* m_old_c;
 };
@@ -409,6 +385,12 @@ public:
 	// erase topic and clear content.
 	virtual void on_erase(IN eco::Topic& t)
 	{}
+
+	// get snap seq size to publish snap.
+	virtual size_t get_snap_seq(IN eco::SeqTopic& topic, IN void* data)
+	{
+		return 0;	// publish all snap.
+	}
 };
 
 
@@ -489,7 +471,7 @@ public:
 	{
 		if (m_type == type_sid)
 		{
-			delete m_data.sid;
+			delete []m_data.sid;
 			m_data.sid = nullptr;
 		}
 	}
@@ -570,7 +552,8 @@ private:
 		{
 			memset(this, 0, sizeof(*this));
 		}
-		inline ~Data() {}
+		inline ~Data()
+		{}
 	};
 	Data	m_data;
 	void*	m_server;
@@ -591,21 +574,18 @@ typedef eco::CreateRtObject CreateTopic;
 #define ECO_TOPIC(topic_t, parent_t) ECO_RTX(topic_t, parent_t)
 
 ////////////////////////////////////////////////////////////////////////////////
-class Topic : public detail::Topic, public RtObject
+class Topic : public detail::Topic, public eco::Subscriber, public RtObject
 {
 	ECO_TOPIC(Topic, RtObject);
-public:
-	// init topic event.
-	virtual void on_init(IN eco::TopicEvent* event) {}
-
-	// erase topic event.
-	virtual void on_erase(IN eco::TopicEvent* event) {}
-
 protected:
+	// publish content: new/remove content.
+	virtual void on_publish(IN eco::Topic& t, IN eco::Content& c)
+	{
+		publish_new(c.get_data_ptr());
+	}
+
 	// publish snap to subscriber.
-	virtual void do_snap(
-		IN eco::Subscription& node,
-		IN eco::TopicEvent* evt) {}
+	virtual void do_snap(IN eco::Subscription& node) {}
 
 	// move new content to snap content.
 	virtual bool do_move(
@@ -621,9 +601,6 @@ protected:
 public:
 	inline Topic() {}
 	virtual ~Topic() {}
-
-	virtual void add_queued(eco::ContentData::ptr& newc) const
-	{}
 
 	// topic type: PopTopic(Topic)/OneTopic/SeqTopic/SetTopic.
 	inline bool pop_topic_type() const
@@ -694,13 +671,13 @@ public:
 	}
 
 	// topic server: publish snap after subsriber reserve topic.
-	virtual void publish_snap(IN Subscription& node, IN eco::TopicEvent* evt)
+	virtual void publish_snap(IN Subscription& node)
 	{
 		eco::Mutex::ScopeLock lock(mutex());
 		if (node.m_subscriber != nullptr)
 		{
 			node.subscribe_submit();
-			do_snap(node, evt);
+			do_snap(node);
 		}
 	}
 
@@ -710,7 +687,11 @@ public:
 		// publish new content to all subscriber.
 		eco::Mutex::ScopeLock lock(mutex());
 		eco::ContentData::ptr old_c;
+		eco::meta::Stamp stmp = new_c->stamp();
 		if (!do_move(new_c, old_c)) return;
+		// stamp with silent: only update data but not publish.
+		if (eco::has(stmp, eco::meta::stamp_silent)) return;
+
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
@@ -824,25 +805,21 @@ public:
 	// subscriber subscribe topic.
 	inline Publisher(
 		IN Topic::ptr& topic,
-		IN AutoRefPtr<Subscription>& node,
-		IN eco::TopicEvent::ptr& event)
+		IN AutoRefPtr<Subscription>& node)
 		: m_topic(std::move(topic))
 		, m_node(std::move(node))
 		, m_mode(mode_publish_snap)
-		, m_event(event)
 	{}
 
 	inline Publisher(Publisher&& pub)
 		: m_topic(std::move(pub.m_topic))
 		, m_new_content(std::move(pub.m_new_content))
 		, m_node(std::move(pub.m_node))
-		, m_event(pub.m_event)
 		, m_mode(pub.m_mode)
 	{}
 
 	inline Publisher& operator=(Publisher&& pub)
 	{
-		m_event = pub.m_event;
 		m_mode = pub.m_mode;
 		m_topic = std::move(pub.m_topic);
 		m_new_content = std::move(pub.m_new_content);
@@ -858,7 +835,7 @@ public:
 			m_topic->publish_new(m_new_content);
 			break;
 		case mode_publish_snap:
-			m_topic->publish_snap(*m_node, m_event.get());
+			m_topic->publish_snap(*m_node);
 			break;
 		case mode_publish_erase:
 			m_topic->publish_erase();
@@ -872,17 +849,13 @@ public:
 private:
 	uint32_t m_mode;
 	Topic::ptr m_topic;
-	TopicEvent::ptr m_event;
 	ContentData::ptr m_new_content;
 	AutoRefPtr<Subscription> m_node;
 };
 class PublisherHandler
 {
 public:
-	inline void operator()(Publisher& task)
-	{
-		task();
-	}
+	inline void operator()(Publisher& task)	{ task(); }
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -53,20 +53,7 @@ public:
 		return m_impl.size();
 	}
 
-	// publish object to topic, create object if "make != nullptr". 
-	template<typename object_t, typename topic_id_t>
-	inline void publish(
-		IN const topic_id_t& topic_id,
-		IN const object_t& obj,
-		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
-	{
-		Topic::ptr topic = get_topic(topic_id);
-		if (topic != nullptr)
-		{
-			publish_to(topic, obj, stamp);
-		}
-	}
-
+public:
 	// publish object to topic, and create topic.
 	template<typename topic_t, typename object_t, typename topic_id_t>
 	inline void publish(
@@ -94,22 +81,6 @@ public:
 		}
 	}
 
-	// publish "object to be removed."
-	template<typename set_topic_t, typename object_id_t, typename topic_id_t>
-	inline void remove(
-		IN const topic_id_t& topic_id,
-		IN const object_id_t& obj_id)
-	{
-		Topic::ptr topic = find_topic(topic_id);
-		if (topic != nullptr)
-		{
-			assert(topic->get_type_name() == ECO_TYPE_NAME(SetTopic));
-			if (topic->get_type_name() == ECO_TYPE_NAME(SetTopic))
-				publish_to(topic, obj_id, eco::meta::stamp_delete);
-		}
-	}
-
-public:
 	// publish object to topic.
 	template<typename object_t>
 	inline void publish_to(
@@ -134,45 +105,132 @@ public:
 	}
 
 public:
-	// subscribe topic.
-	inline bool subscribe(
-		IN Topic::ptr& topic,
-		IN Subscriber* subscriber,
-		IN TopicEvent::ptr event = nullptr)
-	{
-		auto supscription = topic->reserve_subscribe(subscriber);
-		if (!supscription.null())
-		{
-			m_impl.publish_snap(topic, supscription, event);
-			return true;
-		}
-		return false;
-	}
-
-	// subscribe topic.
-	template<typename topic_id_t>
-	inline bool subscribe(
+	// publish object to set_topic, and create topic.
+	template<typename topic_t, typename topic_id_t>
+	inline void publish(
 		IN const topic_id_t& topic_id,
-		IN Subscriber* subscriber,
-		IN eco::CreateTopic create = nullptr,
-		IN TopicEvent::ptr event = nullptr)
+		IN const typename topic_t::object_id& obj_id,
+		IN const typename topic_t::object& obj,
+		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
-		Topic::ptr topic = get_topic(topic_id, create, event);
+		Topic::ptr topic = get_topic(topic_id, topic_t::create);
 		if (topic != nullptr)
 		{
-			return subscribe(topic, subscriber, event);
+			publish_to<topic_t>(topic, obj_id, obj, stamp);
 		}
-		return false;
+	}
+	template<typename topic_t, typename topic_id_t>
+	inline void publish(
+		IN const topic_id_t& topic_id,
+		IN const typename topic_t::object_id& obj_id,
+		IN const typename topic_t::object_ptr& obj,
+		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
+	{
+		Topic::ptr topic = get_topic(topic_id, topic_t::create);
+		if (topic != nullptr)
+		{
+			publish_to<topic_t>(topic, obj_id, obj, stamp);
+		}
+	}
+
+	// publish set_topic "object to be removed."
+	template<typename topic_id_t, typename object_id_t>
+	inline void remove(
+		IN const topic_id_t& topic_id,
+		IN const object_id_t& obj_id)
+	{
+		Topic::ptr topic = find_topic(topic_id);
+		if (topic != nullptr)
+		{
+			assert(topic->set_topic_type());
+			ContentData::ptr newc(new ContentIdT<object_id_t>(
+				obj_id, eco::meta::stamp_delete));
+			m_impl.publish_new(topic, newc);
+		}
+	}
+
+	// publish object to set_topic.
+	template<typename topic_t>
+	inline void publish_to(
+		IN Topic::ptr& topic,
+		IN const typename topic_t::object_id& obj_id,
+		IN const typename topic_t::object& obj,
+		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
+	{
+		ContentData::ptr newc(new SetContentDataT<topic_t::object_id,
+			topic_t::object, topic_t::object>(obj_id, obj, stamp));
+		m_impl.publish_new(topic, newc);
+	}
+
+	// publish shared object to set_topic.
+	template<typename topic_t>
+	inline void publish_to(
+		IN Topic::ptr& topic,
+		IN const typename topic_t::object_id& obj_id,
+		IN const typename topic_t::object_ptr& obj,
+		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
+	{
+		ContentData::ptr newc(new SetContentDataT<topic_t::object_id,
+			topic_t::object, topic_t::object_ptr>(obj_id, obj, stamp));
+		m_impl.publish_new(topic, newc);
+	}
+
+public:
+	// subscribe topic.
+	inline bool subscribe(IN Topic::ptr& topic,	IN Subscriber* subscriber)
+	{
+		auto node = topic->reserve_subscribe(subscriber);
+		if (node.null()) return false;
+		m_impl.publish_snap(topic, node);
+		return true;
+	}
+	template<typename data_t>
+	inline bool subscribe(IN Topic::ptr& t, IN Subscriber* s, IN data_t& d)
+	{
+		auto node = t->reserve_subscribe(s, d);
+		if (node.null()) return false;
+		m_impl.publish_snap(t, node);
+		return true;
 	}
 
 	// subscribe topic id.
 	template<typename topic_t, typename topic_id_t>
-	inline bool subscribe(
-		IN const topic_id_t& topic_id,
-		IN Subscriber* subscriber,
-		IN TopicEvent::ptr event = nullptr)
+	inline bool subscribe(IN const topic_id_t& topic_id, IN Subscriber* suber)
 	{
-		return subscribe(topic_id, subscriber, topic_t::create, event);
+		Topic::ptr topic = get_topic(topic_id, topic_t::create);
+		if (topic == nullptr) return false;
+		return subscribe(topic, suber);
+	}
+
+	// subscribe topic.
+	template<typename topic_t, typename topic_id_t, typename data_t>
+	inline bool subscribe(IN const topic_id_t& id, Subscriber* s, data_t& d)
+	{
+		Topic::ptr topic = get_topic(id, topic_t::create);
+		if (topic == nullptr) return false;
+		return subscribe(topic, s, d);
+	}
+
+	// topic subscribe topic.
+	template<typename topic_t, typename topic_id_t>
+	inline bool subscribe(
+		IN const topic_id_t& topic_id_sub,
+		IN const topic_id_t& topic_id_pub)
+	{
+		Topic::ptr sub = get_topic(topic_id_sub, topic_t::create, 0);
+		Topic::ptr pub = get_topic(topic_id_pub, topic_t::create, 0);
+		return subscribe(pub, sub.get());
+	}
+
+	// topic subscribe topic.
+	template<typename topic_pub_t, typename topic_sub_t, typename topic_id_t>
+	inline bool subscribe(
+		IN const topic_id_t& topic_id_sub,
+		IN const topic_id_t& topic_id_pub)
+	{
+		Topic::ptr sub = get_topic(topic_id_sub, topic_sub_t::create, 0);
+		Topic::ptr pub = get_topic(topic_id_pub, topic_pub_t::create, 0);
+		return subscribe(pub, sub.get());
 	}
 
 	// unsubscribe topic, and remove topic when there is no subscriber.
@@ -180,20 +238,17 @@ public:
 	inline int unsubscribe(
 		IN const topic_id_t& topic_id,
 		IN Subscriber* subscriber,
-		IN TopicEvent::ptr event = nullptr)
+		IN bool erase_topic_if_no_suber = false)
 	{
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		auto& topic_map = __get_topic_map(topic_id);
 		auto it = topic_map.find(topic_id);
-		if (it != topic_map.end() && it->second->unsubscribe(subscriber))
+		if (it != topic_map.end() &&
+			it->second->detail::Topic::unsubscribe(subscriber))
 		{
-			if (!it->second->has_subscriber())
+			if (erase_topic_if_no_suber && !it->second->has_subscriber())
 			{
-				if (event.get() != nullptr)
-				{
-					it->second->on_erase(event.get());
-					topic_map.erase(it);
-				}
+				topic_map.erase(it);
 				return 2;
 			}
 			return 1;
@@ -223,10 +278,9 @@ public:
 	// get and create derived topic.
 	template<typename topic_t, typename topic_id_t>
 	inline typename topic_t::ptr get_topic(
-		IN const topic_id_t& topic_id,
-		IN TopicEvent::ptr event = nullptr)
+		IN const topic_id_t& topic_id)
 	{
-		auto topic = get_topic(topic_id, topic_t::create, event);
+		auto topic = get_topic(topic_id, topic_t::create);
 		return std::dynamic_pointer_cast<topic_t>(topic);
 	}
 
@@ -234,8 +288,7 @@ public:
 	template<typename topic_id_t>
 	inline Topic::ptr get_topic(
 		IN const topic_id_t& topic_id,
-		IN CreateTopic create = nullptr,
-		IN TopicEvent::ptr event = nullptr)
+		IN CreateTopic create = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		auto& topic_map = __get_topic_map(topic_id);
@@ -249,7 +302,6 @@ public:
 		{
 			Topic::ptr topic = std::dynamic_pointer_cast<Topic>(create());
 			TopicInner().id(*topic).set(topic_id, this);
-			topic->on_init(event.get());
 			return topic_map[topic_id] = topic;
 		}
 		return nullptr;
@@ -465,10 +517,9 @@ public:
 
 	inline void publish_snap(
 		IN eco::Topic::ptr& topic,
-		IN eco::AutoRefPtr<eco::Subscription>& sub,
-		IN TopicEvent::ptr& event)
+		IN eco::AutoRefPtr<eco::Subscription>& sub)
 	{
-		topic->publish_snap(*sub, event.get());
+		topic->publish_snap(*sub);
 	}
 
 	inline void publish_erase(
@@ -529,10 +580,9 @@ public:
 
 	inline void publish_snap(
 		IN eco::Topic::ptr& topic,
-		IN eco::AutoRefPtr<eco::Subscription>& sub,
-		IN TopicEvent::ptr& event)
+		IN eco::AutoRefPtr<eco::Subscription>& sub)
 	{
-		m_publish_server.post(Publisher(topic, sub, event));
+		m_publish_server.post(Publisher(topic, sub));
 	}
 
 	inline void publish_erase(
