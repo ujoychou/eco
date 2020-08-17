@@ -16,6 +16,24 @@
     </console_sink>
   </logging>
 
+  <!--国际化-->
+  <locale default="zh-cn">
+    <zh-cn>
+      <path  value="zh-cn"/>
+      <word  value="zh-cn/word_tr.xml" note="交易"/>
+      <word  value="zh-cn/word_rc.xml" note="风控"/>
+      <word  value="zh-cn/word_fee.xml" note="手续费"/>
+      <error value="zh-cn/error.xml" note="全局"/>
+      <error value="zh-cn/error_rc.xml" note="风控"/>
+    </zh-cn>
+    <en-us>
+      <path value="en-us"/>
+    </en-us>
+    <vi-ta>
+      <path value="vi-ta"/>
+    </vi-ta>
+  </locale>
+
   <!--#.生命机制-->
   <eco enable="true">
     <being enable="true">
@@ -63,6 +81,7 @@
     <response_heartbeat value="false"/>
     <heartbeat_recv_tick value="12"/>
     <heartbeat_send_tick value="3"/>
+    <clean_dos_peer_tick value="1"/>
   </provider>
 
   <!--#.消费者-->
@@ -94,6 +113,7 @@
       <password value="123456"/>
       <database value="dev"/>
       <address  value="127.0.0.1:3306"/>
+      <charset value="utf8"/>
     </test_env>
   </persist>
 

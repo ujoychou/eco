@@ -26,11 +26,11 @@ app that run process.
 #include <eco/Config.h>
 #include <eco/log/Log.h>
 #include <eco/cmd/Group.h>
-#include <eco/HeapOperators.h>
+#include <eco/loc/Locale.h>
+#include <eco/thread/Timer.h>
 #include <eco/net/TcpServer.h>
 #include <eco/net/TcpClient.h>
 #include <eco/net/Subscriber.h>
-#include <eco/thread/Timer.h>
 #include <eco/persist/Persist.h>
 
 
@@ -96,6 +96,8 @@ public:
 		return strcmp(get_exe_file(), get_module_file()) == 0;
 	}
 	
+	// whether app is ready.
+	bool ready() const;
 
 	/*@ get app config.*/
 	void set_name(IN const char*);
@@ -103,8 +105,8 @@ public:
 	App& name(IN const char*);
 
 	/*@ system config file path, default: "eco.sys.xml"; */
-	void set_sys_config_file(IN const char*);
-	const char* get_sys_config_file() const;
+	void set_config_file(IN const char*);
+	const char* get_config_file() const;
 
 	/*@ get app config.*/
 	const Config& get_config() const;
@@ -137,8 +139,11 @@ public:
 	// eco erx
 	std::shared_ptr<RxDll> get_erx(IN const char* name);
 
-	// restart current app.
-	void restart();
+	// eco locale and multi language.
+	inline eco::loc::Locale& locale()
+	{
+		return eco::loc::locale();
+	}
 
 private:
 	friend class Startup;
@@ -190,7 +195,7 @@ public:
 		IN void* module_func_addr,
 		IN const char* sys_cfg = nullptr)
 	{
-		if (sys_cfg) app.set_sys_config_file(sys_cfg);
+		if (sys_cfg) app.set_config_file(sys_cfg);
 		eco::App::init(app, module_func_addr, false);
 	}
 

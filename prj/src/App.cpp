@@ -5,7 +5,6 @@
 #include <eco/sys/Sys.h>
 #include <eco/cmd/Engine.h>
 #include <eco/net/TcpServer.h>
-#include <eco/net/TcpOption.h>
 #ifdef WIN32
 #	include <eco/sys/WinDump.h>
 #	include <eco/sys/WinConsoleEvent.h>
@@ -38,18 +37,22 @@ public:
 public:
 	App* m_app;
 	std::string m_name;
-	std::string m_sys_config_file;
+	std::string m_module_file;
+	std::string m_module_path;
 	eco::Config m_sys_config;
+	std::string m_sys_config_file;
+	mutable eco::atomic::State m_state;
 	std::vector<RxDll::ptr> m_erx_set;
 	std::vector<eco::Persist> m_persist_set;
 	net::TcpServer m_provider;
 	std::vector<net::TcpClient> m_consumer_set;
 	std::vector<net::AddressSet> m_router_set;
-	std::string m_module_file;
-	std::string m_module_path;
 	
 public:
 	inline Impl() : m_app(0)
+	{}
+
+	inline ~Impl()
 	{}
 
 	inline void init(IN App& parent)
@@ -70,6 +73,19 @@ public:
 		if (m_name.empty()) set_name(v);
 	}
 
+	inline bool ready() const
+	{
+		for (const eco::Persist& it : m_persist_set)
+		{
+			if (!it.ready()) return false;
+		}
+		for (const eco::net::TcpClient& it : m_consumer_set)
+		{
+			if (!it.ready()) return false;
+		}
+		return true;
+	}
+
 	// wait master finish init app.
 	inline void wait_master(App& app);
 	// 1.wait slaves exit and master exit.
@@ -82,9 +98,6 @@ public:
 		return s_app == &app;
 	}
 
-	inline ~Impl()
-	{}
-
 	// wait command and provider thread.
 	void init(IN App* app, IN void* module_func_addr);
 	void load(IN App& app);
@@ -95,6 +108,12 @@ public:
 	// log eco cmd
 	inline void init_log();
 	inline void init_eco();
+
+	// locale multi language.
+	inline void init_locale();
+	inline std::string get_locale_path(
+		const std::string& path,
+		const eco::StringAny& any);
 
 	// erx dll
 	inline bool enable_erx() const;
@@ -195,6 +214,56 @@ inline void App::Impl::init_eco()
 
 
 ////////////////////////////////////////////////////////////////////////////////
+inline std::string App::Impl::get_locale_path(
+	const std::string& path, const eco::StringAny& any)
+{
+	std::string f = m_module_path;
+	f += path;
+	f += '/';
+	f += any.c_str();
+	return f;
+}
+inline void App::Impl::init_locale()
+{
+	// locale setting.
+	eco::ContextNode node = m_sys_config.find_node("locale");
+	if (node.null() || !node.has_children()) return;
+	const StringAny* any = node.find("default");
+	if (any) eco::loc::locale().set_default(any->c_str());
+
+	// language setting.
+	eco::ContextNodeSet node_set = node.get_children();
+	for (const ContextNode& lang : node_set)
+	{
+		std::string path = lang.get("path");
+		std::string ver = lang.get("version");
+		eco::loc::locale().set_language_info(
+			lang.get_name(), path.c_str(), ver.c_str());
+
+		eco::ContextNodeSet file_set = lang.get_children();
+		if (file_set.null() || file_set.empty()) continue;
+		for (const eco::ContextNode& file : file_set)
+		{
+			if (eco::equal(file.get_name(), "word"))
+			{
+				std::string f = get_locale_path(path, file.get("file"));
+				eco::StringAny m = file.get("module");
+				eco::loc::locale().add_word_file(
+					lang.get_name(), f.c_str(), m.c_str());
+			}
+			else if (eco::equal(file.get_name(), "error"))
+			{
+				std::string f = get_locale_path(path, file.get("file"));
+				eco::StringAny m = file.get("module");
+				eco::loc::locale().add_error_file(
+					lang.get_name(), f.c_str(), m.c_str());
+			}
+		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 inline bool App::Impl::enable_erx() const
 {
 	return m_sys_config.has("erx");
@@ -278,20 +347,20 @@ inline void App::Impl::on_rx_exit()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-RxDll::ptr App::Impl::get_erx(IN const char* name)
+RxDll::ptr App::Impl::get_erx(IN const char* name_)
 {
 	for (auto it = m_erx_set.begin(); it != m_erx_set.end(); ++it)
 	{
-		if (eco::equal((**it).get_name(), name))
+		if (eco::equal((**it).get_name(), name_))
 		{
 			return *it;
 		}
 	}
 	return nullptr;
 }
-RxDll::ptr App::get_erx(IN const char* name)
+RxDll::ptr App::get_erx(IN const char* name_)
 {
-	return impl().get_erx(name);
+	return impl().get_erx(name_);
 }
 
 
@@ -325,6 +394,8 @@ inline void App::Impl::init_option(net::TcpOption& option, ContextNode& node)
 	const eco::StringAny* v = nullptr;
 	if (v = node.find("router"))
 		option.set_router(v->c_str());
+	if (v = node.find("locale"))
+		option.set_locale_(*v);
 	if (v = node.find("tick_time"))
 		option.set_tick_time(*v);
 	if (v = node.find("no_delay"))
@@ -427,6 +498,11 @@ inline void App::Impl::init_consumer()
 		eco::net::TcpClient client;
 		client.set_address(init_address(*it));
 		init_option(client.option(), *it);
+		client.option().set_module_(client.get_option().get_name());
+		if (v = it->find("module"))
+			client.option().set_module_(*v);
+		if (v = it->find("locale"))
+			client.option().set_locale_(*v);
 		if (v = it->find("auto_reconnect_tick"))
 			client.option().set_auto_reconnect_tick(*v);
 		m_consumer_set.push_back(client);
@@ -573,11 +649,11 @@ const char* App::get_name() const
 {
 	return impl().m_name.c_str();
 }
-void App::set_sys_config_file(IN const char* v)
+void App::set_config_file(IN const char* v)
 {
 	impl().m_sys_config_file = v;
 }
-const char* App::get_sys_config_file() const
+const char* App::get_config_file() const
 {
 	return impl().m_sys_config_file.c_str();
 }
@@ -641,22 +717,22 @@ eco::net::TcpServer& App::provider()
 {
 	return impl().m_provider;
 }
-net::TcpClient App::find_consumer(IN const char* name)
+net::TcpClient App::find_consumer(IN const char* name_)
 {
 	auto it = impl().m_consumer_set.begin();
 	for (; it != impl().m_consumer_set.end(); ++it)
 	{
-		if (strcmp(it->get_name(), name) == 0)
+		if (strcmp(it->name(), name_) == 0)
 			return *it;
 	}
 	return eco::null;
 }
-net::TcpClient App::get_consumer(IN const char* name)
+net::TcpClient App::get_consumer(IN const char* name_)
 {
-	auto item = find_consumer(name);
+	auto item = find_consumer(name_);
 	if (item.null())
 	{
-		ECO_THROW(0) << name << " consumer isn't exist.";
+		ECO_THROW(0) << name_ << " consumer isn't exist.";
 	}
 	return item;
 }
@@ -676,18 +752,38 @@ net::TcpClient App::add_consumer(IN eco::net::AddressSet& addr)
 {
 	return impl().add_consumer(addr);
 }
+bool App::ready() const
+{
+	if (impl().m_state.is_none())
+	{
+		return false;
+	}
+	if (impl().m_state.has(eco::atomic::State::_b))
+	{
+		return true;
+	}
+	if (impl().m_state.has(eco::atomic::State::_a))
+	{
+		if (impl().ready())
+		{
+			impl().m_state.add(eco::atomic::State::_b);
+			return true;
+		}
+	}
+	return false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
-eco::Persist App::persist(IN const char* name)
+eco::Persist App::persist(IN const char* name_)
 {
-	eco::Persist result = find_persist(name);
+	eco::Persist result = find_persist(name_);
 	if (result.null())
 		ECO_THROW(0) << "persist set is empty.";
 	return result;
 }
-eco::Persist App::find_persist(IN const char* name)
+eco::Persist App::find_persist(IN const char* name_)
 {
-	if (name == nullptr)
+	if (name_ == nullptr)
 	{
 		if (!impl().m_persist_set.empty())
 		{
@@ -697,7 +793,7 @@ eco::Persist App::find_persist(IN const char* name)
 	auto it = impl().m_persist_set.begin();
 	for (; it != impl().m_persist_set.end(); ++it)
 	{
-		if (strcmp(it->get_name(), name) == 0)
+		if (strcmp(it->name(), name_) == 0)
 		{
 			return *it;
 		}
@@ -728,9 +824,6 @@ extern "C" ECO_API void init_argv(int argc, char* argv[])
 	App::Impl::s_exe_path += '\\';
 	App::Impl::s_init_path += '\\';
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
 extern "C" ECO_API void init_app(IN App& app, IN void* module_func_addr)
 {
 	app.impl().init(&app, module_func_addr);
@@ -800,7 +893,10 @@ void App::Impl::init(App* app, void* module_func_addr)
 		init_log();
 		init_eco();
 	}
-	
+
+	// #.init locale.
+	init_locale();
+
 	// #.init service.
 	init_router();
 	init_consumer();
@@ -829,6 +925,8 @@ void App::Impl::load(IN App& app)
 	start_provider();
 
 	if (master(app)) s_monitor.finish();
+
+	m_state.add(eco::atomic::State::_a);
 }
 
 
@@ -933,9 +1031,9 @@ std::mutex s_init_once;
 bool App::init_once(App& app, void* addr, const char* sys_cfg, bool command)
 {
 	std::lock_guard<std::mutex> lock(s_init_once);
-	if (App::get() == nullptr)
+	if (app.impl().m_module_path.empty())
 	{
-		if (sys_cfg) app.set_sys_config_file(sys_cfg);
+		if (sys_cfg) app.set_config_file(sys_cfg);
 		App::init(app, addr, command);
 		return true;
 	}
@@ -970,10 +1068,4 @@ int App::main(IN App& app, IN int argc, IN char* argv[])
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void App::restart()
-{
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-}
+ECO_NS_END(eco);
