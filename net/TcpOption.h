@@ -160,6 +160,11 @@ public:
 	bool websocket() const;
 	TcpOption& websocket(IN const bool);
 
+	// get or provide locale.
+	void set_locale_(IN const bool);
+	bool locale_() const;
+	TcpOption& locale_(IN const bool);
+
 public:
 	// check when send heartbeat.
 	inline bool is_time_to_heartbeat_send_tick() const
@@ -182,11 +187,16 @@ class ECO_API TcpClientOption : public TcpOption
 {
 	ECO_VALUE_API(TcpClientOption, TcpOption);
 public:
+	// client module name.
+	void set_module_(IN const char*);
+	const char* get_module_() const;
+	TcpClientOption& module_(IN const char*);
+
 	/* the time auto reconnect to server.*/
-	void set_auto_reconnect_tick(IN const uint32_t);
-	uint32_t auto_reconnect_tick();
-	const uint32_t get_auto_reconnect_tick() const;
-	TcpClientOption& auto_reconnect_tick(IN const uint32_t);
+	void set_auto_reconnect_tick(IN const uint16_t);
+	uint16_t auto_reconnect_tick();
+	const uint16_t get_auto_reconnect_tick() const;
+	TcpClientOption& auto_reconnect_tick(IN const uint16_t);
 
 	// check when clean dead peer.
 	inline bool is_time_to_reconnect_tick() const
@@ -202,6 +212,9 @@ class ECO_API TcpServerOption : public TcpOption
 {
 	ECO_VALUE_API(TcpServerOption, TcpOption);
 public:
+	// server horizontal virtual service number.
+	const uint32_t horizontal_virtual_service_number() const;
+
 	// server port.
 	void set_port(IN const uint32_t);
 	uint32_t port();
@@ -245,6 +258,11 @@ public:
 	{
 		return get_clean_dos_peer_tick() > 0
 			&& tick_count() % get_clean_dos_peer_tick() == 0;
+	}
+
+	inline uint32_t	horizental_number() const
+	{
+		return get_port() / horizontal_virtual_service_number();
 	}
 };
 
