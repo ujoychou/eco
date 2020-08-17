@@ -78,14 +78,11 @@ public:
 	}
 	inline eco::ContextNode get_node_raw(IN  const char* node_key) const
 	{
-		if (m_root.has_children())
+		if (m_root.has_children() && node_key != nullptr)
 		{
-			if (node_key == nullptr)
-				return m_root;
-			else
-				return m_root.get_child(node_key);
+			return m_root.get_child(node_key);
 		}
-		return eco::null;
+		return m_root;
 	}
 
 	////////////////////////////////////////////////////////////////////////////
