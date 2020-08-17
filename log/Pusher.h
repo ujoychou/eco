@@ -23,14 +23,13 @@ logger.
 * copyright(c) 2016 - 2018, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/log/Type.h>
+#include <eco/log/Core.h>
+#include <eco/thread/Thread.h>
+#include <eco/date_time/DateTime.h>
 
 
-
-namespace eco{;
-namespace log{;
-
-
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(log);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Severity
 {
@@ -51,24 +50,72 @@ template<typename stream_t>
 class PusherT
 {
 public:
-	inline PusherT();
-	~PusherT();
+	inline PusherT()
+		: m_severity(none)
+		, m_file_line(0)
+		, m_file_name(nullptr)
+	{}
+
+	inline ~PusherT()
+	{
+		pop();
+	}
+
+	// post message to server or queue.
+	inline void pop()
+	{
+		if (m_severity < get_core().get_severity_level()) return;
+
+		const char* t_name = eco::this_thread::name();
+		if (m_severity > eco::log::info)
+		{
+			// logging thread name.
+			if (!eco::empty(t_name))
+				m_stream << " &" << t_name;
+			// logging source file info.
+			if (m_file_name != nullptr)
+				m_stream << " @" << m_file_name << '.' << m_file_line;
+		}
+
+		// turn line '\n' must input into the string.
+		m_stream.buffer().force_append('\n');
+		get_core().append(m_stream.get_bytes(), m_severity);
+	}
 
 	/*@ logging collector. domain has 'logging', 'monitor', 'report'
 	*/
-	PusherT& set(
-		IN const char* func_name,
-		IN const char* file_name,
-		IN int file_line,
-		IN SeverityLevel sev_level);
-
-	/*@ set pusher without func name. */
 	inline PusherT& set(
+		IN const char* func_name,
 		IN const char* file_name,
 		IN int file_line,
 		IN SeverityLevel sev_level)
 	{
-		return set(nullptr, file_name, file_line, sev_level);
+		assert(sev_level >= get_core().get_severity_level());
+		m_severity = sev_level;
+
+		// info< logging no need to save source file info.
+		if (sev_level > eco::log::info)
+		{
+			uint32_t pos = -1;
+			m_file_name = (
+				(pos = find_last(file_name, '/')) != -1 ||
+				(pos = find_last(file_name, '\\')) != -1)
+				? &file_name[pos + 1] : file_name;
+			m_file_line = file_line;
+		}
+		else
+		{
+			m_file_line = 0;
+			m_file_name = 0;
+		}
+
+		// default domain is empty string.
+		eco::date_time::Timestamp now(eco::date_time::fmt_std_m);
+		m_stream << now.get_value() <= eco::this_thread::get_id()
+			<= Severity::get_display(sev_level) < ' ';
+		if (func_name != nullptr)
+			m_stream << eco::group(func_name) < ' ';
+		return *this;
 	}
 
 	/*@ log stream.*/
@@ -83,23 +130,10 @@ protected:
 	uint32_t	m_file_line;
 	const char* m_file_name;
 };
+typedef eco::log::PusherT<eco::StreamX> Pusher;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-
-template<uint32_t siz = text_size>
-class Pusher : public PusherT<eco::Stream<siz> > {};
-class PusherX : public PusherT<eco::StreamX>
-{
-public:
-	inline PusherX(IN const uint32_t size)
-	{
-		m_stream.buffer().reserve(size);
-	}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-}}
-#include <eco/log/Pusher.inl>
+ECO_NS_END(log);
+ECO_NS_END(eco);
 #endif

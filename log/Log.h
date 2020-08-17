@@ -27,6 +27,34 @@ logging.
 #include <eco/log/Pusher.h>
 
 
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(log);
+////////////////////////////////////////////////////////////////////////////////
+class Logger
+{
+public:
+	inline eco::StreamX& set(
+		IN const char* func_name,
+		IN const char* file_name,
+		IN int file_line,
+		IN SeverityLevel sev_level)
+	{
+		m_buf = &eco::this_thread::logbuf();
+		return m_buf->set(func_name, file_name, file_line, sev_level).stream();
+	}
+
+	inline ~Logger()
+	{
+		m_buf->pop();
+	}
+
+private:
+	eco::log::Pusher* m_buf;
+};
+ECO_NS_END(log);
+ECO_NS_END(eco);
+
+
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_DEBUG ECO_LOG(debug)
 #define ECO_INFO  ECO_LOG(info)
@@ -40,27 +68,21 @@ logging.
 @unlimited_size: logging unlimited size.
 */
 #define ECO_LOG_1(sev) ECO_LOG_2(sev, nullptr)
-#define ECO_LOG_2(sev, func)\
-	if (eco::log::##sev >= eco::log::get_core().get_severity_level())\
-		eco::log::Pusher<>().set(\
-		func, __FILE__, __LINE__, eco::log::##sev).stream()
+#define ECO_LOG_2(sev, func) \
+if (eco::log::##sev >= eco::log::get_core().get_severity_level())\
+	eco::log::Logger().set(func, __FILE__, __LINE__, eco::log::##sev)
 #define ECO_LOG(...) ECO_MACRO(ECO_LOG_,__VA_ARGS__)
-
-#define ECO_LOGX_1(sev) ECO_LOGX_2(sev, nullptr)
-#define ECO_LOGX_2(sev, func)\
-	if (eco::log::##sev >= eco::log::get_core().get_severity_level())\
-		eco::log::PusherX(256).set(\
-		func, __FILE__, __LINE__, eco::log::##sev).stream()
-#define ECO_LOGX(...) ECO_MACRO(ECO_LOGX_,__VA_ARGS__)
-
-/* logging stream message.
-@sev: severity_level.
-@unlimited_size,: logging unlimited size.
-*/
 #define ECO_FUNC(sev) ECO_LOG(sev, __func__)
-#define ECO_FUNCX(sev) ECO_LOGX(sev, __func__)
 
-// log message with heap memory, it has no length limit instead of FixPusher.
-// it's buffer implement is eco::String, so you can dedicated a reserve size.
+
+////////////////////////////////////////////////////////////////////////////////
+// logging message with a severity level value "integer type".
+#define ECO_LOG_SEV_1(sev) ECO_LOG_SEV_2(sev, nullptr)
+#define ECO_LOG_SEV_2(sev, func)\
+if (sev >= eco::log::get_core().get_severity_level())\
+	eco::log::Logger().set(func, __FILE__, __LINE__, sev)
+#define ECO_LOG_SEV(...) ECO_MACRO(ECO_LOG_SEV_,__VA_ARGS__)
+
+
 ////////////////////////////////////////////////////////////////////////////////
 #endif
