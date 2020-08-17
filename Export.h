@@ -164,8 +164,8 @@ private:\
 public:\
 	friend class Impl;\
 	class Impl;\
-	inline Impl& impl();\
-	inline const Impl& impl() const;
+	Impl& impl();\
+	const Impl& impl() const;
 
 #define ECO_IMPL_API() \
 ECO_IMPL_API_A()\
@@ -365,30 +365,20 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// object id 1: global object.
-typedef uint64_t ObjectId;
-
-// object id 2: attached object.
-class AspectId
-{
-public:
-	uint64_t object_id;
-	uint32_t aspect_id;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 // general value type
 enum
 {
-	type_bool			= 1,
-	type_int32			= 2,
-	type_int64			= 3,
-	type_string			= 4,
-	type_double			= 5,
-	type_date			= 6,
-	type_time			= 7,
-	type_date_time		= 8,
+	type_bool			= 1,			// "true/false"
+	type_int32			= 2,			// "1"
+	type_int64			= 3,			// "1"
+	type_string			= 4,			// "abcdefg,1234"
+	type_double			= 5,			// "2.35"
+	type_date			= 6,			// "20051010"
+	type_time			= 7,			// "10:10:10"
+	type_date_time		= 8,			// "20051010 10:10:10"
+	type_enum			= 9,			// "1:x;2:y;3:z"
+	type_percent		= 10,			// "10%"
+	type_defined		= 100,			// user defined type.
 };
 typedef uint16_t ValueType;
 

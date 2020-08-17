@@ -27,7 +27,7 @@ eco basic type.
 #include <iostream>
 #include <unordered_map>
 #include <eco/Cast.h>
-#include <eco/ExportApi.h>
+#include <eco/HeapOperators.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -327,6 +327,11 @@ public:
 		return m_data == 0;
 	}
 
+	inline bool empty() const
+	{
+		return eco::empty(c_str());
+	}
+
 	inline const char* c_str() const
 	{
 		return m_data == nullptr ? "" : m_data;
@@ -439,7 +444,7 @@ public:
 	inline void assign(IN const char* d, IN uint32_t s)
 	{
 		resize(s);
-		memcpy(&m_data[0], d, s);
+		if (s > 0) memcpy(&m_data[0], d, s);
 	}
 	inline void assign(IN const std::string& v)
 	{
@@ -452,6 +457,7 @@ public:
 	}
 	inline void append(IN const char* d, IN uint32_t s)
 	{
+		if (s == 0) return;
 		reserve(m_size + s);
 		memcpy(&m_data[m_size], d, s);
 		m_size += s;
@@ -459,6 +465,7 @@ public:
 	}
 	inline void append(IN uint32_t s, IN const char c)
 	{
+		if (s == 0) return;
 		reserve(m_size + s);
 		memset(&m_data[m_size], c, s);
 		m_size += s;
@@ -697,10 +704,8 @@ public:
 	// erase a space for force content using.
 	inline void force(IN const uint32_t size)
 	{
-		int32_t erase_size = static_cast<int32_t>(size - avail());
-		if (erase_size > 0) {
-			erase(erase_size);
-		}
+		int32_t pop_size = static_cast<int32_t>(size - avail());
+		if (pop_size > 0) pop(pop_size);
 	}
 
 	inline Buffer& operator=(IN const char* buf)
@@ -723,7 +728,7 @@ public:
 		m_data[m_cur_size] = 0;
 	}
 
-	void erase(IN const uint32_t size)
+	void pop(IN uint32_t size)
 	{
 		int32_t new_size = static_cast<int32_t>(m_cur_size - size);
 		m_cur_size = (new_size > 0) ? new_size : 0;
@@ -923,16 +928,23 @@ typedef eco::Stream<0, String> StreamX;
 class Error : public std::exception
 {
 public:
-	virtual ~Error() throw() {}
-	inline explicit Error(int eid = 0) : m_id(eid) {}
-	inline explicit Error(const char* msg) : m_id(-1) { m_msg << msg; }
-	inline explicit Error(int eid, const char* msg) : m_id(eid) { m_msg << msg; }
-	inline explicit Error(const char* msg, int eid) : m_id(eid) { m_msg << msg; }
-	inline explicit Error(int eid, const std::string& msg) : m_id(eid)
+	virtual ~Error() throw()
+	{}
+
+	inline Error(int eid = 0) : m_id(eid)
+	{}
+
+	inline Error(const char* msg) : m_id(eco::error)
 	{
 		m_msg << msg;
 	}
-	inline explicit Error(const std::string& msg, int eid) : m_id(eid)
+
+	inline explicit Error(int eid, const char* msg) : m_id(eid)
+	{
+		m_msg << msg;
+	}
+
+	inline explicit Error(int eid, const std::string& msg) : m_id(eid)
 	{
 		m_msg << msg;
 	}
@@ -1221,46 +1233,86 @@ public:
 	{
 		m_format = v;
 		m_cur_pos = 0;
+		m_stream.clear();
+	}
+
+	inline Format& operator()(IN const char* v)
+	{
+		reset(v);
+		return *this;
+	}
+
+	inline bool next()
+	{
+		if (m_cur_pos == -1) return false;
+
+		const char* str = m_format + m_cur_pos;
+		m_cur_pos = eco::find_first(str, '%');
+		if (m_cur_pos == -1)
+		{
+			if (str != m_format) m_stream.buffer().append(str);
+			return false;
+		}
+		m_stream.buffer().append(str, m_cur_pos++);
+		m_cur_pos += int(str - m_format);
+		return true;
 	}
 
 	template<typename T>
 	inline Format& operator%(IN const T v)
 	{
-		if (m_cur_pos != -1)
-		{
-			const char* str = m_format + m_cur_pos;
-			m_cur_pos = eco::find_first(str, '%');
-			if (m_cur_pos == -1)
-			{
-				m_buff.append(str);
-				return *this;
-			}
-			m_buff.append(str, m_cur_pos++);
-			m_cur_pos += int(str - m_format);
-			m_buff.append(v);
-		}
+		if (next()) m_stream << v;
 		return *this;
 	}
 
-	inline operator const char* () const
+	inline Format& arg(IN const char* v)
+	{
+		if (next()) m_stream.buffer().append(v);
+		return *this;
+	}
+
+	inline Format& arg(IN const char* v, IN uint32_t n)
+	{
+		if (next()) m_stream.buffer().append(v, n);
+		return *this;
+	}
+
+	inline Format& arg(IN char c, IN const char* v)
+	{
+		uint32_t pos = eco::find_first(v, c);
+		while (pos != std::string::npos)
+		{
+			arg(v, pos);
+			v += pos + 1;
+			pos = eco::find_first(v, c);
+		}
+		arg(v);
+		return *this;
+	}
+
+	inline operator const char*() const
 	{
 		return c_str();
 	}
 
 	inline const char* c_str() const
 	{
+		if (m_cur_pos == 0)
+		{
+			return m_format;
+		}
 		if (m_cur_pos != -1)
 		{
-			m_buff.append(m_format + m_cur_pos);
+			m_stream.buffer().append(m_format + m_cur_pos);
 			m_cur_pos = -1;
 		}
-		return m_buff.c_str();
+		return m_stream.c_str();
 	}
 
 private:
 	const char* m_format;
 	mutable uint32_t m_cur_pos;
-	mutable buffer_t m_buff;
+	mutable Stream<size, buffer_t> m_stream;
 };
 typedef Format<0, String> FormatX;
 
@@ -1331,9 +1383,14 @@ class StringAny
 {
 public:
 	inline StringAny(IN const char*);
+	inline StringAny(IN StringAny&&);
+	inline StringAny(IN const StringAny&);
 	inline StringAny& operator=(IN const char*);
+	inline StringAny& operator=(IN StringAny&&);
+	inline StringAny& operator=(IN const StringAny&);
 	inline bool empty() const;
 	inline const char* c_str() const;
+	inline std::string& str();
 	inline eco::ValueType type() const;
 
 public:

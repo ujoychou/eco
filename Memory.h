@@ -299,6 +299,22 @@ inline void split(OUT array_t& set, IN const char* str, IN char token)
 		set.push_back(v);
 	}
 }
+template<typename type_t, typename array_t>
+inline void split(OUT array_t& set, IN const char* str, IN char token)
+{
+	const char* v = str;
+	uint32_t pos = eco::find_first(v, token);
+	while (pos != -1)
+	{
+		set.push_back(eco::cast<type_t>(std::string(v, pos)));
+		v += pos + 1;
+		pos = eco::find_first(v, token);
+	}
+	if (!eco::empty(v))
+	{
+		set.push_back(eco::cast<type_t>(v));
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

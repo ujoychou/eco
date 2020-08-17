@@ -30,27 +30,29 @@ template<typename T>
 inline static void make(T&) {}
 template<typename T>
 inline static void make(std::shared_ptr<T>& ptr) { ptr.reset(new T()); }
-
 // get object type.
 template<typename T>
-inline T& object() { return *(T*)nullptr; }
+inline T& get_object() { return *(T*)nullptr; }
 template<typename T>
-inline T& object(T& obj) { return obj; }
+inline T& get_object(T& obj) { return obj; }
 template<typename T>
-inline T& object(std::shared_ptr<T>& ptr) { return *ptr; }
+inline T& get_object(std::shared_ptr<T>& ptr) { return *ptr; }
 template<typename T>
-inline const T& get_object(const T& obj) { return obj; }
+inline const T& object(const T& obj) { return obj; }
 template<typename T>
-inline const T& get_object(const std::shared_ptr<T>& ptr) { return *ptr; }
+inline const T& object(const std::shared_ptr<T>& ptr) { return *ptr; }
 
 // get T when type is shared_ptr<T>, else return T when type is T.
 template<typename T>
 class Raw
 {
 public:
-	typedef decltype(&eco::object(eco::object<T>())) ptr;
-	typedef decltype(&eco::object(eco::object<T>())) pointer;
-	typedef decltype(eco::object(eco::object<T>()))  reference;
+	typedef decltype(&eco::get_object(eco::get_object<T>())) ptr;
+	typedef decltype(&eco::get_object(eco::get_object<T>())) pointer;
+	typedef decltype(eco::get_object(eco::get_object<T>()))  reference;
+	typedef decltype(&eco::object(eco::get_object<T>())) const_ptr;
+	typedef decltype(&eco::object(eco::get_object<T>())) const_pointer;
+	typedef decltype(eco::object(eco::get_object<T>()))  const_reference;
 };
 
 

@@ -22,6 +22,10 @@
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 StringAny::StringAny() : m_vtype(0) {}
+StringAny::StringAny(IN StringAny&& v)
+	: m_value(std::move(v.m_value)), m_vtype(v.m_vtype) { v.m_vtype = 0; }
+StringAny::StringAny(IN const StringAny& v)
+	: m_value(v.m_value), m_vtype(v.m_vtype) {}
 StringAny::StringAny(IN const char* v) : m_value(v), m_vtype(type_string) {}
 StringAny::StringAny(IN bool v)
 	: m_value(eco::cast<std::string>(v).c_str()), m_vtype(type_bool) {}
@@ -50,14 +54,31 @@ StringAny::StringAny(IN double v, IN int precision)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+StringAny& StringAny::operator=(IN StringAny&& v)
+{
+	m_value = std::move(v.m_value);
+	m_vtype = v.m_vtype;
+	v.m_vtype = 0;
+	return *this;
+}
+StringAny& StringAny::operator=(IN const StringAny& v)
+{
+	m_value = v.m_value;
+	m_vtype = v.m_vtype;
+	return *this;
+}
 StringAny& StringAny::operator=(IN const char* v)
 {
+	m_vtype = type_string;
 	m_value = v;
 	return *this;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 bool StringAny::operator==(IN const StringAny& obj) const
 {
-	return m_value == obj.m_value;
+	return m_value == obj.m_value && m_vtype == obj.m_vtype;
 }
 bool StringAny::empty() const
 {
@@ -66,6 +87,10 @@ bool StringAny::empty() const
 const char* StringAny::c_str() const
 {
 	return m_value.c_str();
+}
+std::string& StringAny::str()
+{
+	return m_value;
 }
 StringAny::operator const char*() const
 {

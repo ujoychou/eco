@@ -62,6 +62,11 @@ public:
 		return m_time;
 	}
 
+	inline uint64_t total_seconds() const
+	{
+		return m_date.days() * Time::day_seconds() + m_time;
+	}
+
 private:
 	Time m_time;
 	Date m_date;
@@ -335,6 +340,12 @@ inline bool history(
 {
 	return date1 > date2 || date1 == date2 && time1 > time2;
 }
+
+// make session id by version.
+ECO_API uint64_t make_id_by_ver1(
+	uint16_t front, uint32_t& ts, uint32_t& seq);
+
+
 ////////////////////////////////////////////////////////////////////////////////
 }}
 #endif
