@@ -40,7 +40,7 @@ public:
 	template<typename T>
 	inline Class& bind(IN const char* help_info)
 	{
-		return bind(T::get_name(), T::get_alias(), help_info, T::create);
+		return bind(T::get_alias(), T::get_name(), help_info, T::create);
 	}
 
 	// add a concrete command with a execute func.
