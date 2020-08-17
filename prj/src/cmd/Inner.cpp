@@ -121,7 +121,7 @@ void HelpCommand::execute(IN eco::cmd::Context& context)
 		auto it = inner_cmds.begin();
 		for (; it != inner_cmds.end(); ++it)
 		{
-			snprintf(fmt, sizeof(fmt), "(c) %-8s %-15s: %s",
+			snprintf(fmt, sizeof(fmt), "(c) %-10s %-20s: %s",
 				it->get_alias(), it->get_name(), it->get_help_info());
 			EcoCout << fmt;
 		}

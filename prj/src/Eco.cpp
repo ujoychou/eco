@@ -20,9 +20,6 @@ Eco& Eco::get()
 {
 	return Singleton<Eco>::instance();
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
 Eco::Impl::Impl()
 {
 	m_tick_count = 0;
@@ -68,7 +65,7 @@ void Eco::Impl::stop()
 ////////////////////////////////////////////////////////////////////////////////
 void Eco::Impl::on_live_timer()
 {
-	ThreadCheckOut().on_timer(ThreadCheck::me());
+	ThreadCheckOut().on_timer(ThreadCheck::get());
 
 	// 生命对象的周期活动，每个生命节奏时间运行一次。
 	++m_tick_count;
@@ -87,7 +84,7 @@ void Eco::Impl::on_live_timer()
 			}
 			catch (std::exception& e)
 			{
-				ECO_LOGX(error, "live") << be->get_name() <= e.what();
+				ECO_LOG(error, "live") << be->get_name() <= e.what();
 			}
 			
 			m_running.none();			// 3.生命对象运行结束
@@ -175,11 +172,11 @@ void Eco::Impl::remove_being(IN Being* be)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::Impl::post_task(IN Task::ptr& task)
+void Eco::Impl::post_task(IN TaskUnit& task)
 {
 	m_task_server.queue().post(task);
 }
-void Eco::Impl::post_wait(IN Task::ptr& task)
+void Eco::Impl::post_wait(IN TaskUnit& task)
 {
 	eco::Mutex::ScopeLock lock(m_wait_task_list_mutex);
 	m_wait_task_list.push_back(std::move(task));
@@ -191,7 +188,7 @@ void Eco::Impl::move_wait()
 	auto it = m_wait_task_list.begin();
 	while (it != m_wait_task_list.end())
 	{
-		Btask* btask = (Btask*)it->get();
+		Btask* btask = it->cast<Btask>();
 		eco::TaskState state = btask->occupy();
 		if (state == task_no_ready || state == task_working_other)
 		{
@@ -208,11 +205,11 @@ void Eco::Impl::move_wait()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::post_task(IN Task::ptr& task)
+void Eco::post_task(IN TaskUnit& task)
 {
 	impl().post_task(task);
 }
-void Eco::post_wait(IN Task::ptr& task)
+void Eco::post_wait(IN TaskUnit& task)
 {
 	impl().post_wait(task);
 }

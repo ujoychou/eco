@@ -12,6 +12,21 @@
 namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
+bool DispatchHandler::handle_server_topic(OUT Context& c, IN void* s)
+{
+	auto* server = (TcpServer::Impl*)s;
+	return false;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool DispatchHandler::handle_client_topic(OUT Context& c, IN void* cl)
+{
+	return false;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 // return whether need to dispatch meta context.
 void DispatchHandler::handle_server(Context& c, TcpPeer& peer, Protocol* prot)
 {
@@ -34,7 +49,7 @@ void DispatchHandler::handle_server(Context& c, TcpPeer& peer, Protocol* prot)
 	// #.handle request.
 	if (!eco::has(c.m_meta.m_category, category_message))
 	{
-		ECO_WARN << NetLog(peer.impl().get_id(), func, c.m_meta.m_session_id)
+		ECO_WARN << NetLog(peer.impl().id(), func, c.m_meta.m_session_id)
 			<= "discard" <= c.m_meta.m_category
 			<= c.m_meta.m_message_type;
 		return ;
@@ -43,6 +58,12 @@ void DispatchHandler::handle_server(Context& c, TcpPeer& peer, Protocol* prot)
 	// make connection data.
 	server->set_valid_peer(peer, prot);
 	peer.impl().state().set_peer_active(true);
+
+	// handle topic.
+	if (handle_server_topic(c, server))
+	{
+		return;
+	}
 	dispatch(c.m_meta.m_message_type, c);
 }
 
@@ -59,7 +80,7 @@ void DispatchHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
 		eco::has(c.m_meta.m_category, category_session))
 	{
 		// find authority request.
-		auto* key = reinterpret_cast<TcpSession*>(c.m_meta.m_request_data);
+		auto* key = reinterpret_cast<TcpSession*>(c.m_meta.m_option_data);
 		if (key == nullptr)
 		{
 			ECO_WARN << "authority request id invalid.";
@@ -69,7 +90,7 @@ void DispatchHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
 		if (pack == nullptr)
 		{
 			ECO_WARN << "authority pack has expired: req_id="
-				<< c.m_meta.m_request_data;
+				<< c.m_meta.m_option_data;
 			return ;
 		}
 
@@ -78,7 +99,7 @@ void DispatchHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
 		if (sess.impl().m_user == nullptr)
 		{
 			ECO_WARN << "authority user has expired: sid="
-				<< c.m_meta.m_request_data;
+				<< c.m_meta.m_option_data;
 			return ;
 		}
 		// open session: set session data.
@@ -91,7 +112,7 @@ void DispatchHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
 			outer.set_id(c.m_meta.m_session_id);
 			client->m_session_map.set(c.m_meta.m_session_id, pack);
 		}
-		c.m_meta.m_request_data = pack->m_request_data;
+		c.m_meta.m_option_data = pack->m_option_data;
 	}
 	else
 	{
@@ -114,11 +135,10 @@ void DispatchHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
 		auto sync = client->pop_sync(c.m_meta.get_req4(), c.m_meta.is_last());
 		if (sync != nullptr)
 		{
-			sync->m_error_id = c.m_meta.m_error_id;
-			if (!sync->decode(c.m_message))
+			if (!sync->decode(c.m_message, c.has_error()))
 			{
-				ECO_ERROR << Log(c.m_session, c.m_meta.m_message_type,
-					nullptr)(eco::net::rsp) <= "decode fail.";
+				ECO_ERROR << Log(c.connection(), c.type(), 0)(eco::net::rsp)
+					<= "decode fail.";
 			}
 			else
 			{
@@ -169,7 +189,7 @@ void DispatchHandler::operator()(IN DataContext& dc)
 	{
 		if (impl.option().response_heartbeat())
 		{
-			impl.send_heartbeat(*dc.m_protocol);
+			impl.send_heartbeat();
 		}
 		return ;
 	}
@@ -194,7 +214,7 @@ void DispatchHandler::operator()(IN DataContext& dc)
 	if (!dc.m_protocol->decode_meta(
 		c.m_meta, c.m_message, dc.m_data, dc.m_head_size, e))
 	{
-		ECO_ERROR << NetLog(impl.get_id(), func, sess_id) <= e;
+		ECO_ERROR << NetLog(impl.id(), func, sess_id) <= e;
 		return;
 	}
 
@@ -204,7 +224,7 @@ void DispatchHandler::operator()(IN DataContext& dc)
 	sess.impl().m_owner.set(impl.owner(), impl.state().server());
 	conn.set_peer(dc.m_peer_wptr);
 	conn.set_protocol(*dc.m_protocol);
-	conn.set_id(impl.get_id());
+	conn.set_id(impl.id());
 	c.m_data = std::move(dc.m_data);
 	// handle and dispatch context.
 	if (!impl.state().server())

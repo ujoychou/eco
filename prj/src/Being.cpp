@@ -121,11 +121,11 @@ void Being::live()
 			}
 			catch (eco::Error& e)
 			{
-				ECO_FUNCX(error) << get_name() <= e;
+				ECO_FUNC(error) << get_name() <= e;
 			}
 			catch (std::exception& e)
 			{
-				ECO_FUNCX(error) << get_name() <= e.what();
+				ECO_FUNC(error) << get_name() <= e.what();
 			}
 			
 			Eco::get().impl().add_being(this);

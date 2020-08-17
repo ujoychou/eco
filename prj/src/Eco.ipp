@@ -42,10 +42,10 @@ public:
 	void stop();
 
 	// 加入执行任务
-	void post_task(IN Task::ptr& task);
+	void post_task(IN TaskUnit& task);
 
 	// 加入等待任务
-	void post_wait(IN Task::ptr& task);
+	void post_wait(IN TaskUnit& task);
 
 	// 通知等待任务
 	void move_wait();
@@ -94,7 +94,7 @@ public:
 	// 任务队列
 	static uint32_t s_task_server_thread_size;
 	eco::TaskServer m_task_server;
-	std::list<Task::ptr> m_wait_task_list;
+	std::list<TaskUnit> m_wait_task_list;
 	mutable eco::Mutex m_wait_task_list_mutex;
 
 	// 服务异步管理
