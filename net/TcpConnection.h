@@ -66,8 +66,8 @@ public:
 	inline TcpConnection() : m_prot(nullptr), m_id(0)
 	{}
 
-	inline TcpConnection(TcpPeer::wptr& wptr, Protocol& prot, size_t id)
-		: m_peer(wptr), m_prot(&prot), m_id(id)
+	inline TcpConnection(TcpPeer::wptr& wptr, Protocol& prot, size_t id_)
+		: m_peer(wptr), m_prot(&prot), m_id(id_)
 	{}
 
 	inline TcpConnection(IN const TcpConnection& other)
@@ -109,13 +109,19 @@ public:
 	inline bool authorized() const;
 
 	// get tcp connection id.
-	inline ConnectionId get_id() const
+	inline const SessionId id() const
 	{
 		return m_id;
 	}
 
+	inline void authorize(const char* user, const char* lang)
+	{
+		TcpPeer::ptr peer = m_peer.lock();
+		if (peer) peer->authorize(user, lang);
+	}
+
 	// get tcp connection remote client ip.
-	inline eco::String get_ip() const
+	inline eco::String ip() const
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer == nullptr)
@@ -123,9 +129,22 @@ public:
 			ECO_THROW(e_peer_expired)
 				<< "get_ip fail peer has expired, it has been closed.";
 		}
-		return std::move(peer->get_ip());
+		return std::move(peer->ip());
 	}
 
+	// get user name.
+	inline const char* user() const
+	{
+		TcpPeer::ptr peer = m_peer.lock();
+		return peer ? peer->user() :  "";
+	}
+	inline const char* lang() const
+	{
+		TcpPeer::ptr peer = m_peer.lock();
+		return peer ? peer->lang() : "";
+	}
+
+	// cast connection data.
 	template<typename ConnectionDataT>
 	inline ConnectionDataPtr<ConnectionDataT> cast() const
 	{
@@ -159,98 +178,64 @@ public:
 		}
 	}
 
-	inline void send(IN Codec* codec, IN MessageOption& opt)
+	inline void send(IN Codec& cdc, IN int type, IN bool is_last)
 	{
-		send(MessageMeta(codec, opt));
-	}
-
-	inline void send(IN Codec* codec, IN uint32_t type, IN bool is_last)
-	{
-		send(codec, MessageOption(type, 0, is_last));
+		MessageMeta meta;
+		meta.codec(cdc).message_type(type).last(is_last);
+		send(meta);
 	}
 
 	// response message.
-	inline void response(IN Codec* codec, MessageOption& opt, const Context& c)
+	inline void response(MessageMeta& meta, const Context& c)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			peer->response(MessageMeta(codec, opt), *m_prot, c);
+			peer->response(meta, *m_prot, c);
 		}
 	}
 
 	// async response message.
-	inline void response(
-		IN Codec* codec,
-		IN uint32_t msg_type,
-		IN uint32_t error_id,
-		IN bool	is_last,
-		IN const Context& context)
+	inline void response(Codec& cdc, int type, bool is_last, const Context& c)
 	{
-		response(codec, MessageOption(msg_type, error_id, is_last), context);
+		MessageMeta meta;
+		meta.codec(cdc).message_type(type).last(is_last);
+		response(meta, c);
 	}
 
 #ifndef ECO_NO_PROTOBUF
 	// async send protobuf.
 	inline void send(
 		IN const google::protobuf::Message& msg,
-		IN MessageOption& opt)
+		IN int  type, IN bool last_)
 	{
-		send(&ProtobufCodec(msg), opt);
-	}
-
-	// async send protobuf.
-	inline void send(
-		IN const google::protobuf::Message& msg,
-		IN uint32_t msg_type,
-		IN bool is_last)
-	{
-		send(&ProtobufCodec(msg), msg_type, is_last);
+		send(ProtobufCodec(&msg), type, last_);
 	}
 
 	// async send response by context.
 	inline void response(
 		IN const google::protobuf::Message& msg,
-		IN MessageOption& opt,
-		IN const Context& context)
+		IN int type, bool last_, const Context& c)
 	{
-		response(&ProtobufCodec(msg), opt, context);
-	}
-
-	// async send response by context.
-	inline void response(
-		IN const google::protobuf::Message& msg,
-		IN uint32_t msg_type,
-		IN uint32_t error_id,
-		IN bool is_last,
-		IN const Context& context)
-	{
-		response(&ProtobufCodec(msg), msg_type, error_id, is_last, context);
+		response(ProtobufCodec(&msg), type, last_, c);
 	}
 
 	// async publish protobuf.
 	inline void publish(
 		IN const google::protobuf::Message& msg,
-		IN MessageOption& opt)
+		IN int type, IN char snap_)
 	{
-		send(&ProtobufCodec(msg), opt);
+		MessageMeta meta;
+		ProtobufCodec cdc(&msg);
+		meta.codec(cdc).message_type(type).snap(snap_);
+		send(meta);
 	}
-
-	// async publish protobuf.
-	inline void publish(
-		IN const google::protobuf::Message& msg,
-		IN uint32_t msg_type,
-		IN uint8_t  snap_meta)
-	{
-		send(&ProtobufCodec(msg), MessageOption(msg_type).snap(snap_meta));
-	}
-	
 #endif
 
 private:
 	TcpPeer::wptr	m_peer;
 	Protocol*		m_prot;
-	size_t			m_id;
+	SessionId		m_id;
 	friend class TcpConnectionOuter;
 };
 
@@ -266,24 +251,6 @@ public:
 	// #.event: after server connection close.
 	virtual ~ConnectionData() = 0 {}
 
-	// whether this connection has authorized.
-	virtual bool authorized() const
-	{
-		return false;
-	}
-
-	// get user id.
-	virtual const uint64_t get_user_id() const
-	{
-		return 0;
-	}
-
-	// get user name.
-	virtual const char* get_user_name() const
-	{
-		return nullptr;
-	}
-
 	// get connection object.
 	inline TcpConnection& connection()
 	{
@@ -294,9 +261,9 @@ public:
 		return m_conn;
 	}
 
-	inline const ConnectionId get_id() const
+	inline const SessionId id() const
 	{
-		return m_conn.get_id();
+		return m_conn.id();
 	}
 
 private:
@@ -308,8 +275,7 @@ private:
 inline bool TcpConnection::authorized() const
 {
 	TcpPeer::ptr peer = m_peer.lock();
-	return peer != nullptr && peer->data() != nullptr
-		&& peer->data()->authorized();
+	return peer != nullptr && peer->authorized();
 }
 
 // default connection factory function.
@@ -324,14 +290,15 @@ typedef ConnectionData* (*MakeConnectionDataFunc)();
 
 ////////////////////////////////////////////////////////////////////////////////
 // tcp client on connect/close event.
-typedef std::function<void(const eco::Error* e)> ClientOpenFunc;
-typedef std::function<void(const eco::Error& e)> ClientCloseFunc;
+typedef std::function<void(const eco::Error*)> ClientOpenFunc;
+typedef std::function<void(const eco::Error&)> ClientCloseFunc;
+typedef std::function<void(eco::atomic::State& state)> OnLoadDataFunc;
 
 // tcp server on accept/close tcp connection(tcp peer) event.
-typedef std::function<void(ConnectionId id)> ServerAcceptFunc;
-typedef std::function<void(ConnectionId id)> ServerCloseFunc;
+typedef std::function<void(SessionId)> ServerAcceptFunc;
+typedef std::function<void(SessionId)> ServerCloseFunc;
 typedef std::function<void(TcpPeer::ptr&, DataContext&)> OnRecvDataFunc;
-typedef std::function<bool(MessageHead&, const char*, uint32_t)>
+typedef std::function<bool(MessageHead&, const char*, uint32_t)> 
 OnDecodeHeadFunc;
 
 

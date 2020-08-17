@@ -25,7 +25,7 @@ void TcpPeer::Impl::make_connection_data(
 {
 	m_data.reset(make_func());
 	TcpConnectionOuter conn(m_data->connection());
-	conn.set_id(get_id());
+	conn.set_id(id());
 	conn.set_peer(m_peer_observer);
 	if (prot != nullptr) conn.set_protocol(*prot);
 }
@@ -60,7 +60,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	{
 		eco::Error e(e_websocket_shakehand_get,
 			"websocket shakehand req find 'GET ' fail.");
-		ECO_INFO << NetLog(get_id(), __func__) <= e;
+		ECO_INFO << NetLog(id(), __func__) <= e;
 		close_and_notify(e, true);
 		return;
 	}
@@ -70,7 +70,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	{
 		eco::Error e(e_websocket_shakehand_req, 
 			"websocket req shakehand invalid.");
-		ECO_INFO << NetLog(get_id(), __func__) <= e;
+		ECO_INFO << NetLog(id(), __func__) <= e;
 		close_and_notify(e, true);
 		return;
 	}
@@ -88,7 +88,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
 	{
 		eco::Error e(e_websocket_shakehand_http,
 			"websocket shakehand rsp find 'HTTP ' fail.");
-		ECO_INFO << NetLog(get_id(), __func__) <= e;
+		ECO_INFO << NetLog(id(), __func__) <= e;
 		close_and_notify(e, true);
 		return;
 	}
@@ -97,7 +97,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
 	{
 		eco::Error e(e_websocket_shakehand_rsp,
 			"websocket rsp shakehand invalid.");
-		ECO_INFO << NetLog(get_id(), __func__) <= e;
+		ECO_INFO << NetLog(id(), __func__) <= e;
 		close_and_notify(e, true);
 		return;
 	}
@@ -106,11 +106,13 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpPeer::Impl::on_accept_state()
+void TcpPeer::Impl::on_accept_state(uint64_t id)
 {
+	m_id = id;
 	m_state.set_connected();
 	m_state.set_peer_live(true);
 	m_state.set_server();
+	m_data_state.none();
 }
 void TcpPeer::Impl::on_accept(const TcpOption& opt)
 {
@@ -139,6 +141,7 @@ void TcpPeer::Impl::on_connect(bool is_connected, const eco::Error* e)
 	}
 
 	m_state.set_connected();					// set peer state.
+	m_data_state.none();
 	if (option().websocket())
 	{
 		send_websocket_shakehand();
@@ -157,7 +160,7 @@ void TcpPeer::Impl::on_read(
 {
 	if (e != nullptr)	// if peer occur error, release it.
 	{
-		ECO_DEBUG << NetLog(get_id(), __func__) <= *e;
+		ECO_DEBUG << NetLog(id(), __func__) <= *e;
 		close_and_notify(*e, true);
 		return;
 	}
@@ -185,7 +188,7 @@ void TcpPeer::Impl::on_write(IN const uint32_t size, IN const eco::Error* e)
 {
 	if (e != nullptr)
 	{
-		ECO_DEBUG << NetLog(get_id(), __func__) <= *e;
+		ECO_DEBUG << NetLog(id(), __func__) <= *e;
 		close_and_notify(*e, true);
 		return;
 	}
@@ -256,7 +259,7 @@ TcpPeer::ptr TcpPeer::make(IoWorker* io_srv, void* msg_srv, TcpPeerHandler* hdl)
 }
 void TcpPeer::init_option(const TcpOption& opt)
 {
-	Impl().init_option(opt);
+	impl().init_option(opt);
 }
 TcpPeerHandler& TcpPeer::handler()
 {
@@ -266,19 +269,19 @@ ConnectionData* TcpPeer::data()
 {
 	return impl().m_data.get();
 }
-size_t TcpPeer::get_id() const
+SessionId TcpPeer::id() const
 {
-	return impl().get_id();
+	return impl().id();
 }
-eco::String TcpPeer::get_ip() const
+eco::String TcpPeer::ip() const
 {
-	return impl().m_connector.get_ip();
+	return impl().m_connector.ip();
 }
-uint32_t TcpPeer::get_port() const
+uint32_t TcpPeer::port() const
 {
-	return impl().m_connector.get_port();
+	return impl().m_connector.port();
 }
-const TcpState& TcpPeer::get_state() const
+const TcpState& TcpPeer::state() const
 {
 	return impl().get_state();
 }
@@ -286,9 +289,26 @@ eco::atomic::State& TcpPeer::data_state()
 {
 	return impl().m_data_state;
 }
-const eco::atomic::State& TcpPeer::get_data_state() const
+void TcpPeer::authorize(IN const char* user, IN const char* lang)
 {
-	return impl().m_data_state;
+	std::lock_guard<std::mutex> lock(impl().m_server->mutex());
+	impl().m_user = user;
+	impl().m_lang = lang;
+}
+bool TcpPeer::authorized() const
+{
+	std::lock_guard<std::mutex> lock(impl().m_server->mutex());
+	return !impl().m_user.empty();
+}
+const char* TcpPeer::user() const
+{
+	std::lock_guard<std::mutex> lock(impl().m_server->mutex());
+	return impl().m_user.c_str();
+}
+const char* TcpPeer::lang() const
+{
+	std::lock_guard<std::mutex> lock(impl().m_server->mutex());
+	return impl().m_lang.c_str();
 }
 
 
@@ -312,6 +332,8 @@ void TcpPeer::response(MessageMeta& meta, IN Protocol& p, const Context& c)
 		eco::add(meta.m_category, category_sync);
 	if (eco::has(c.m_meta.m_category, category_authority))
 		eco::add(meta.m_category, category_authority);
+	if (eco::has(c.m_meta.m_option, option_data))
+		eco::add(meta.m_option, option_data);
 
 	if (eco::has(c.m_meta.m_option, option_req1))
 		eco::add(meta.m_option, option_req1);
@@ -321,7 +343,7 @@ void TcpPeer::response(MessageMeta& meta, IN Protocol& p, const Context& c)
 		eco::add(meta.m_option, option_req4);
 	if (eco::has(c.m_meta.m_option, option_req8))
 		eco::add(meta.m_option, option_req8);
-	meta.m_request_data = c.m_meta.m_request_data;
+	meta.m_option_data = c.m_meta.m_option_data;
 	impl().send(meta, p);
 }
 
