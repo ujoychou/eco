@@ -31,36 +31,42 @@ namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 // message handled by "handler", suguest using in server.
-template<typename Handler>
+template<typename handler_t>
 inline void handle_context(IN Context& c)
 {
-	const TcpConnection& conn = c.m_session.get_connection();
+	const TcpConnection& conn = c.m_session.connection();
 
 	// 1.filter request
 	const char* e = nullptr;
 	// sessesion auth or session request after authed.
-	if (Handler::auth() != MessageHandler::auth_none)
+	if (handler_t::auth() != MessageHandler::auth_none)
 	{
 		if (eco::has(c.m_meta.m_category, category_session))
 		{
-			if (Handler::auth() && !c.m_session.authorized())
+			if (handler_t::auth() && !c.m_session.authorized())
 				e = "session isn't authed when recv";
-			if (!Handler::auth() && c.m_session.authorized())
+			if (!handler_t::auth() && c.m_session.authorized())
 				e = "session is authed when recv";
 		}
 		else
 		{
-			if (Handler::auth() && !conn.authorized())
+			if (handler_t::auth() && !conn.authorized())
 				e = "connection isn't authed when recv";
-			if (!Handler::auth() && conn.authorized())
+			if (!handler_t::auth() && conn.authorized())
 				e = "connection is authed when recv";
 		}
 	}
-	
 	if (e != nullptr)
 	{
-		ECO_ERROR << Log(c.m_session, c.m_meta.m_message_type,
-			Handler::name())(eco::net::req) <= e;
+		ECO_ERROR << Log(conn, c.type(), handler_t::name())(req) <= e;
+		return;
+	}
+
+	// 2.when app is unready, return.
+	if (!eco::App::get()->ready())
+	{
+		ECO_ERROR << Log(conn, c.type(), handler_t::name())(req)
+			<= "app system is unready.";
 		return;
 	}
 	
@@ -68,60 +74,96 @@ inline void handle_context(IN Context& c)
 	{
 		// 2.decode message by a newer handler.
 		// heap is used to be passed by deriving from "enable_shared_from_this".
-		std::shared_ptr<Handler> hdl(new Handler);
-		if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
+		std::shared_ptr<handler_t> hdl(new handler_t);
+		if (TypeId<handler_t::request_t>() != TypeId<eco::net::NullRequest>())
 		{
-			ECO_ERROR << Log(c.m_session, c.m_meta.m_message_type,
-				Handler::name())(eco::net::req) <= "decode message fail";
-			return;
+			if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
+			{
+				ECO_ERROR << Log(conn, c.type(), handler_t::name())(req)
+					<= "decode message fail";
+				return;
+			}
 		}
 		// release io raw data to save memory.
 		c.release_data();
 		hdl->context() = std::move(c);
 
 		// 3.handle request.
+		hdl->to_request();
 		hdl->on_request();
 	} 
 	catch (std::exception& e)
 	{
-		ECO_LOGX(error) << e.what();
+		ECO_LOG(error, handler_t::name()) << e.what();
 	}
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // message handled by "functor", suguest using in client.
-template<typename Message>
-inline void* handle_context_make(std::auto_ptr<Message>& obj)
+template<typename rsp_t>
+inline void* handle_context_make(std::auto_ptr<rsp_t>& obj)
 {
-	obj.reset(new Message());
+	obj.reset(new rsp_t());
 	return obj.get();
 }
-template<typename Message>
-inline void* handle_context_make(std::shared_ptr<Message>& obj)
+template<typename rsp_t>
+inline void* handle_context_make(std::shared_ptr<rsp_t>& obj)
 {
-	obj.reset(new Message());
+	obj.reset(new rsp_t());
 	return obj.get();
 }
-template<typename Message>
-inline void* handle_context_make(Message& obj)
+template<typename rsp_t>
+inline void* handle_context_make(rsp_t& obj)
 {
 	return &obj;
+}
+template<typename rsp_t>
+inline void* handle_context_make(rsp_t* obj)
+{
+	return new rsp_t();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Message, typename Codec>
+template<typename err_t, typename codec_t>
 inline void handle_context(
-	IN std::function<void(IN Message&, IN Context&)>& func,
-	IN Context& c)
+	std::function<void(err_t*, Context&)>& func, Context& c)
 {
-	Codec codec;
-	Message object;
-	codec.set_message(handle_context_make(object));
-	codec.decode(c.m_message.m_data, c.m_message.m_size);
-	func(object, c);
+	codec_t codec;
+	if (c.has_error())
+	{
+		err_t err;
+		codec.set_message(handle_context_make(err));
+		codec.decode(c.m_message.m_data, c.m_message.m_size);
+		func(&err, c);
+		return;
+	}
+	func(nullptr, c);
 }
+template<typename err_t, typename rsp_t, typename codec_t>
+inline void handle_context(
+	std::function<void(err_t*, rsp_t*, Context&)>& func, Context& c)
+{
+	codec_t codec;
+	if (c.has_error())
+	{
+		err_t err;
+		codec.set_message(handle_context_make(err));
+		codec.decode(c.m_message.m_data, c.m_message.m_size);
+		func(&err, nullptr, c);
+	}
+	else
+	{
+		rsp_t obj;
+		codec.set_message(handle_context_make(obj));
+		codec.decode(c.m_message.m_data, c.m_message.m_size);
+		func(nullptr, &obj, c);
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 inline void handle_context(
 	IN std::function<void(IN eco::Bytes&, IN Context&)>& func,
 	IN Context& c)
@@ -138,40 +180,53 @@ inline void handle_context_default(
 
 ////////////////////////////////////////////////////////////////////////////////
 // message array handled by "functor", suguest using in client.
-template<typename Array>
+template<typename err_t, typename rsp_set_t>
 struct ArrayHandler
 {
-	typedef std::function<void(Array&, Context&)> Func;
-	Array m_array;
-	Func  m_func;
+	typedef std::shared_ptr<rsp_set_t> rsp_set_ptr_t;
+	typedef std::function<void(err_t*, rsp_set_ptr_t&, Context&)> Func;
+	inline ArrayHandler() : m_array(new rsp_set_t)
+	{}
 
-	inline ArrayHandler() {}
-	inline ArrayHandler(Func&& func) : m_func(func) {}
+	inline ArrayHandler(Func&& func) : m_array(new rsp_set_t), m_func(func)
+	{}
+
 	inline ArrayHandler(ArrayHandler&& h)
 		: m_array(std::move(h.m_array))
-		, m_func(std::move(h.m_func)) {}
+		, m_func(std::move(h.m_func))
+	{}
+
 	inline ArrayHandler(const ArrayHandler& h)
-		: m_array((h.m_array))
-		, m_func(h.m_func) {}
+		: m_array(h.m_array), m_func(h.m_func)
+	{}
+
+	Func m_func;
+	rsp_set_ptr_t m_array;
 };
-template<typename Message, typename Array, typename Codec>
-inline void handle_context_array(ArrayHandler<Array>& handler, Context& c)
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename err_t, typename rsp_set_t, typename codec_t>
+inline void handle_context_array(ArrayHandler<err_t, rsp_set_t>& h, Context& c)
 {
-	// 1.deccode message.
-	typedef typename Array::value_type value_type;
-
-	Codec codec;
-	Message* msg(new Message);
-	codec.set_message(msg);
-	codec.decode(c.m_message.c_str(), c.m_message.size());
-	handler.m_array.push_back(value_type(msg));
-
-	// 2.handle message.
-	if (c.is_last())
+	codec_t codec;
+	if (c.has_error())
 	{
-		// 3.call functor.
-		handler.m_func(handler.m_array, c);
-		handler.m_array.clear();
+		err_t err;
+		codec.set_message(handle_context_make(err));
+		h.m_func(&err, nullptr, c);
+	}
+	else
+	{
+		typename rsp_set_t::value_type rsp;
+		codec.set_message(handle_context_make(rsp));
+		codec.decode(c.m_message.c_str(), c.m_message.size());
+		h.m_array.push_back(rsp);
+		if (c.is_last())
+		{
+			h.m_func(nullptr, h.m_array, c);
+			h.m_array.reset(new rsp_set_t);
+		}
 	}
 }
 
@@ -188,7 +243,7 @@ public:
 	virtual void register_handler(IN uint64_t id, IN HandlerFunc hdl) = 0;
 
 	/*@ register message default handler.*/
-	virtual void register_default_handler(IN HandlerFunc hdl) = 0;
+	virtual void register_default(IN HandlerFunc hdl) = 0;
 
 public:
 	/*@ register message and message handler, and message dedicated by typeid.
@@ -208,7 +263,7 @@ public:
 	template<typename Handler>
 	inline void dispatch_default()
 	{
-		register_default_handler(
+		register_default(
 			std::bind(&handle_context<Handler>, std::placeholders::_1));
 	}
 
@@ -219,33 +274,14 @@ public:
 	}
 
 	/*@ register message and message handler function.*/
-#ifndef ECO_NO_FUNCTION_TEMPLATE_DEFAULT
-	// dispatch message with message object.
-	template<typename Message, typename Codec = net::ProtobufCodec>
+	template<typename err_t, typename rsp_t, typename codec_t>
 	inline void dispatch(
 		IN uint64_t id,
-		IN std::function<void(IN Message&, IN Context&)> func)
+		IN std::function<void(IN err_t*, IN rsp_t*, IN Context&)> func)
 	{
-		register_handler(id, std::bind(&handle_context<Message, Codec>,
+		register_handler(id, std::bind(&handle_context<err_t, rsp_t, codec_t>,
 			func, std::placeholders::_1));
 	}
-	template<typename Message, typename Codec = eco::net::ProtobufCodec,
-		typename Object, typename Func>
-	inline void dispatch(IN uint64_t id, IN Object& obj, IN Func func)
-	{
-		dispatch<Message, Codec>(id, std::bind(
-			func, &obj, std::placeholders::_1, std::placeholders::_2));
-	}
-#else
-	template<typename Message, typename Codec>
-	inline void dispatch(
-		IN uint64_t id,
-		IN std::function<void(IN Message&, IN Context&)> func)
-	{
-		register_handler(id, std::bind(&handle_context<Message, Codec>,
-			func, std::placeholders::_1));
-	}
-#endif
 
 	/*@ register message default handler func.*/
 	inline void dispatch(
@@ -260,37 +296,51 @@ public:
 	inline void dispatch_default(
 		IN std::function<void(IN eco::Bytes&, IN Context&)> func)
 	{
-		register_default_handler(std::bind(&handle_context_default, 
+		register_default(std::bind(&handle_context_default,
 			func, std::placeholders::_1));
 	}
 
-	
-
-#ifndef ECO_NO_FUNCTION_TEMPLATE_DEFAULT
 	/*@ register message and message handler function.*/
-	template<typename Message, 
-		typename Array = std::vector<std::auto_ptr<Message>>,
-		typename Codec = net::ProtobufCodec>
+	template<typename err_t, typename rsp_set_t, typename codec_t>
 	inline void dispatch_array(
 		IN uint64_t id,
-		IN typename ArrayHandler<Array>::Func f)
+		IN typename ArrayHandler<err_t, rsp_set_t>::Func f)
 	{
-		ArrayHandler<Array> handler(std::move(f));
+		ArrayHandler<rsp_set_t> handler(std::move(f));
 		register_handler(id, std::bind(
-			&handle_context_array<Message, Array, Codec>,
+			&handle_context_array<err_t, rsp_set_t, codec_t>,
 			std::move(handler), std::placeholders::_1));
 	}
-#else
+
+#ifndef ECO_NO_PROTOBUF
 	/*@ register message and message handler function.*/
-	template<typename Message, typename Array, typename Codec>
+	template<typename err_t, typename rsp_t>
+	inline void dispatch(
+		IN uint64_t id,
+		IN std::function<void(err_t*, rsp_t*, Context&)> func)
+	{
+		register_handler(id, std::bind(
+			&handle_context<err_t, rsp_t, ProtobufCodec>,
+			func, std::placeholders::_1));
+	}
+
+	template<typename err_t, typename rsp_t, typename object_t, typename func_t>
+	inline void dispatch(IN uint64_t id, IN object_t& obj, IN func_t func)
+	{
+		dispatch<err_t, rsp_t, ProtobufCodec>(id, std::bind(
+			func, &obj, std::placeholders::_1,
+			std::placeholders::_2, std::placeholders::_3));
+	}
+
+	template<typename err_t, typename rsp_set_t>
 	inline void dispatch_array(
 		IN uint64_t id,
-		IN typename ArrayHandler<Array>::Func f)
+		IN typename ArrayHandler<err_t, rsp_set_t>::Func f)
 	{
-		ArrayHandler<Array> handler(std::move(f));
-		register_handler(id,
-			std::bind(&handle_context_array<Message, Array, Codec>,
-				handler, std::placeholders::_1));
+		ArrayHandler<rsp_set_t> handler(std::move(f));
+		register_handler(id, std::bind(
+			&handle_context_array<err_t, rsp_set_t, ProtobufCodec>,
+			std::move(handler), std::placeholders::_1));
 	}
 #endif
 };
