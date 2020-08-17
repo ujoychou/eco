@@ -69,17 +69,16 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 class Subscriber;
-class Dispatcher;
 class ECO_API TopicUidMap
 {
 private:
-	// ×¢²á·¢²¼Ö÷Ìâ£ºSubscriber
+	// ×¢ï¿½á·¢ï¿½ï¿½ï¿½ï¿½ï¿½â£ºSubscriber
 	friend class Subscriber;
 	static Publisher::ptr get(const TopicUid& id);
 	static void sub(IN const TopicUid& id, IN Publisher::ptr& pub);
 	static void erase(IN const TopicUid& id);
 
-	// ×¢²á·¢²¼Ö÷Ìâ£ºDispatcher
+	// ×¢ï¿½á·¢ï¿½ï¿½ï¿½ï¿½ï¿½â£ºDispatcher
 	friend class Dispatcher;
 	static Publisher::ptr get(const TopicUid& id, uint32_t type_id);
 	static void set(IN uint32_t type_id, IN Publisher::ptr& pub);
@@ -91,6 +90,31 @@ private:
 class Subscriber : public eco::net::ConnectionData, public eco::Subscriber
 {
 public:
+	// dispatch mode: register type id when app.on_init. thread-unsafe.
+	template<typename object_t>
+	inline static void publish(
+		IN uint32_t pub_type,
+		IN const char* log_name = nullptr)
+	{
+		Publisher::ptr pub(new Publisher(pub_type, log_name));
+		pub->register_func<object_t*>();
+		TopicUidMap::set(eco::TypeId<object_t>(), pub);
+	}
+
+	// dispatch mode: register topic id when app.on_init. thread-unsafe.
+	template<typename object_t, typename topic_server_t, typename topic_id_t>
+	inline static void publish(
+		IN topic_server_t& server,
+		IN const topic_id_t& topic_id,
+		IN uint32_t pub_type,
+		IN const char* log_name = nullptr)
+	{
+		Publisher::ptr pub(new Publisher(pub_type, log_name));
+		pub->register_func<object_t*>();
+		TopicUidMap::set(TopicUid(topic_id, &server), pub);
+	}
+
+public:
 	// subscribe mode: topic and register map. thread-safe.
 	template<
 		typename topic_t,
@@ -101,92 +125,31 @@ public:
 		IN topic_server_t& server,
 		IN const topic_id_t& topic_id,
 		IN uint32_t pub_type,
-		IN TopicEvent::ptr event = nullptr,
 		IN const char* log_name = nullptr)
 	{
 		Publisher::ptr pub(new Publisher(pub_type, log_name));
-		pub->register_func<eco::Raw<object_t>::pointer>();
+		pub->register_func<object_t*>();
 		TopicUidMap::sub(TopicUid(topic_id, &server), pub);
-		server.subscribe<topic_t>(topic_id, this, event);
+		server.subscribe<topic_t>(topic_id, this);
 	}
 
 	// subscribe mode: unregister map. thread-safe.
 	template<typename topic_server_t, typename topic_id_t>
 	inline void unsubscribe(
 		IN topic_server_t& server,
-		IN const topic_id_t& topic_id,
-		IN TopicEvent::ptr event = nullptr)
+		IN const topic_id_t& topic_id)
 	{
-		int res = server.unsubscribe(topic_id, this, event);
+		int res = server.unsubscribe(topic_id, this);
 		if (res == 2) TopicUidMap::erase(TopicUid(topic_id, &server));
 	}
 
 protected:
 	virtual void on_default(IN eco::Topic& topic, IN eco::Content& c) {};
 
-	// eco::Subscriber on_publish£ºdispatch by tuid.
+	// eco::Subscriber on_publishï¿½ï¿½dispatch by tuid.
 	virtual void on_publish(IN eco::Topic& topic, IN eco::Content& c) override
 	{
-		auto pub = TopicUidMap::get(topic.get_uid());
-		if (pub != nullptr)
-		{
-			pub->m_func(c, connection());
-			return;
-		}
-		on_default(topic, c);
-	}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class Dispatcher : public eco::net::ConnectionData, public eco::Subscriber
-{
-public:
-	// dispatch mode: register topic id when app.on_init. thread-unsafe.
-	template<typename object_t, typename topic_server_t, typename topic_id_t>
-	inline static void publish(
-		IN topic_server_t& server,
-		IN const topic_id_t& topic_id,
-		IN uint32_t pub_type,
-		IN const char* log_name = nullptr)
-	{
-		Publisher::ptr pub(new Publisher(pub_type, log_name));
-		pub->register_func<eco::Raw<object_t>::pointer>();
-		TopicUidMap::set(TopicUid(topic_id, &server), pub);
-	}
-
-	// dispatch mode: register type id when app.on_init. thread-unsafe.
-	template<typename object_t>
-	inline static void publish(
-		IN uint32_t pub_type,
-		IN const char* log_name = nullptr)
-	{
-		Publisher::ptr pub(new Publisher(pub_type, log_name));
-		pub->register_func<eco::Raw<object_t>::pointer>();
-		TopicUidMap::set(eco::TypeId<object_t>(), pub);
-	}
-
-	// subscribe mode: topic and register map. thread-safe.
-	template<
-		typename topic_t,
-		typename object_t = topic_t::object,
-		typename topic_server_t,
-		typename topic_id_t>
-		inline void subscribe(
-			IN topic_server_t& server,
-			IN const topic_id_t& topic_id,
-			IN TopicEvent::ptr event = nullptr)
-	{
-		server.subscribe<topic_t>(topic_id, this, event);
-	}
-
-protected:
-	virtual void on_default(IN eco::Topic& topic, IN eco::Content& c) {};
-
-	// eco::Subscriber on_publish.
-	virtual void on_publish(IN eco::Topic& topic, IN eco::Content& c) override
-	{
-		Publisher::ptr pub = TopicUidMap::get(topic.get_uid(), c.type_id());
+		Publisher::ptr pub = TopicUidMap::get(topic.get_uid(), c.object_id());
 		if (pub != nullptr)
 		{
 			pub->m_func(c, connection());
