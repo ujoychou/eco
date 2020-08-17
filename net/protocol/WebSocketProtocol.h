@@ -342,14 +342,7 @@ private:
 		uint32_t size = size_model + size_option;
 		if (eco::has(meta.m_option, option_type))
 			size += size_type;
-		if (eco::has(meta.m_option, option_req1))
-			size += sizeof(uint8_t);
-		else if (eco::has(meta.m_option, option_req2))
-			size += sizeof(uint16_t);
-		else if (eco::has(meta.m_option, option_req4))
-			size += sizeof(uint32_t);
-		else if (eco::has(meta.m_option, option_req8))
-			size += sizeof(uint64_t);
+		size += size_req(meta);
 		return size;
 	}
 
@@ -365,10 +358,9 @@ private:
 	}
 
 public:
-	WebSocketProtocol(IN const bool mask) : m_mask(mask)
+	WebSocketProtocol(IN bool mask) : m_mask(mask)
 	{
 		set_version(1);
-		// set_max_size();	// no limited.
 	}
 
 	virtual uint32_t version_size() const override
@@ -400,14 +392,7 @@ public:
 		if (eco::has(meta.m_option, option_type))
 			append_hton(bytes, static_cast<uint16_t>(meta.m_message_type));
 		// 3.1.optional data: request data.
-		if (eco::has(meta.m_option, option_req1))
-			bytes.append(static_cast<uint8_t>(meta.m_request_data));
-		else if (eco::has(meta.m_option, option_req2))
-			append_hton(bytes, static_cast<uint16_t>(meta.m_request_data));
-		else if (eco::has(meta.m_option, option_req4))
-			append_hton(bytes, static_cast<uint32_t>(meta.m_request_data));
-		else if (eco::has(meta.m_option, option_req8))
-			append_hton(bytes, meta.m_request_data);
+		encode_req(bytes, meta);
 
 		// 4.encode message object.
 		meta.m_codec->encode_append(bytes, code_siz);
@@ -489,7 +474,7 @@ public:
 			return false;
 		}
 		meta.m_model = MessageModel(bytes[head_size]);
-		meta.m_option = MessageOptionMeta(bytes[head_size + size_model]);
+		meta.m_option = MessageOption(bytes[head_size + size_model]);
 
 		// get option data.
 		uint32_t meta_end = head_size + meta_size(meta);
@@ -507,26 +492,7 @@ public:
 			meta.m_message_type = msg_type;
 		}
 		// option data: request data.
-		if (eco::has(meta.m_option, option_req1))
-		{
-			meta.m_request_data = bytes[pos++];
-		}
-		else if (eco::has(meta.m_option, option_req2))
-		{
-			uint16_t req2 = 0;
-			ntoh(req2, pos, &bytes[pos]);
-			meta.m_request_data = req2;
-		}
-		else if (eco::has(meta.m_option, option_req4))
-		{
-			uint32_t req4 = 0;
-			ntoh(req4, pos, &bytes[pos]);
-			meta.m_request_data = req4;
-		}
-		else if (eco::has(meta.m_option, option_req8))
-		{
-			ntoh(meta.m_request_data, pos, &bytes[pos]);
-		}
+		pos += decode_req(meta, &bytes[pos]);
 
 		// message data bytes.
 		data.m_data = &bytes[pos];
@@ -536,6 +502,46 @@ public:
 
 private:
 	uint32_t m_mask;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class WebSocketProtocol2 : public WebSocketProtocol
+{
+public:
+	inline WebSocketProtocol2(IN bool mask) : WebSocketProtocol(mask)
+	{
+		set_version(2);
+	}
+
+	virtual uint8_t size_req(const MessageMeta& meta) const override
+	{
+		if (eco::has(meta.m_option, option_data))
+		{
+			return size_size(meta.m_option_data);
+		}
+		return 0;
+	}
+
+	virtual uint8_t decode_req(
+		OUT MessageMeta& meta,
+		IN  const char* bytes) const override
+	{
+		if (eco::has(meta.m_option, option_data))
+		{
+			return size_decode(meta.m_option_data, bytes);
+		}
+		return 0;
+	}
+
+	virtual void encode_req(
+		eco::String& bytes, const MessageMeta& meta) const override
+	{
+		if (eco::has(meta.m_option, option_data))
+		{
+			size_encode(bytes, meta.m_option_data);
+		}
+	}
 };
 
 

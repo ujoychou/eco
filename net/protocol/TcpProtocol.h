@@ -64,7 +64,7 @@ protected:
 		uint16_t	m_type;
 
 		// optional field: the request data from client.
-		uint64_t	m_request_data;
+		uint64_t	m_option_data;
 	};
 
 	// "message data" value
@@ -74,7 +74,6 @@ protected:
 		pos_version			= 0,
 		pos_category		= 1,
 		pos_size			= 2,
-		size_size			= 2,
 
 		// #.parameter head
 		size_model			= 1,
@@ -82,12 +81,11 @@ protected:
 		// #.parameter option data.
 		size_session_id		= 4,
 		size_type			= 2,
-		size_error			= 4,
 	};
 
 	inline uint32_t head_size() const
 	{
-		return pos_size + size_size;
+		return pos_size + sizeof(uint16_t);
 	}
 
 	inline uint32_t meta_size() const
@@ -102,16 +100,7 @@ protected:
 			pos += size_session_id;
 		if (eco::has(meta.m_option, option_type))
 			pos += size_type;
-		if (eco::has(meta.m_option, option_error))
-			pos += size_error;
-		if (eco::has(meta.m_option, option_req1))
-			pos += sizeof(uint8_t);
-		else if (eco::has(meta.m_option, option_req2))
-			pos += sizeof(uint16_t);
-		else if (eco::has(meta.m_option, option_req4))
-			pos += sizeof(uint32_t);
-		else if (eco::has(meta.m_option, option_req8))
-			pos += sizeof(uint64_t);
+		pos += size_req(meta);
 		return pos;
 	}
 
@@ -162,7 +151,8 @@ public:
 		// 1.init bytes size.
 		uint32_t head_siz = encode_head_size();			// encode head size.
 		uint32_t byte_siz = meta_size(meta);			// meta size.
-		uint32_t code_siz = meta.m_codec ? meta.m_codec->byte_size() : 0;
+		uint32_t code_siz = !meta.m_codec->empty()
+			? meta.m_codec->byte_size() : 0;
 		byte_siz += code_siz;							// message size.
 		if (eco::has(meta.m_category, category_encrypted) && m_crypt.get())
 		{
@@ -193,20 +183,10 @@ public:
 		if (eco::has(meta.m_option, option_type))
 			append_hton(bytes, static_cast<uint16_t>(meta.m_message_type));
 		// 3.1.optional data: request data.
-		if (eco::has(meta.m_option, option_req1))
-			bytes.append(static_cast<uint8_t>(meta.m_request_data));
-		else if (eco::has(meta.m_option, option_req2))
-			append_hton(bytes, static_cast<uint16_t>(meta.m_request_data));
-		else if (eco::has(meta.m_option, option_req4))
-			append_hton(bytes, static_cast<uint32_t>(meta.m_request_data));
-		else if (eco::has(meta.m_option, option_req8))
-			append_hton(bytes, meta.m_request_data);
-		// 3.2.optional data: error.
-		if (eco::has(meta.m_option, option_error))
-			append_hton(bytes, meta.m_error_id);
+		encode_req(bytes, meta);
 
 		// 5.encode message object.
-		if (meta.m_codec)
+		if (!meta.m_codec->empty())
 			meta.m_codec->encode_append(bytes, code_siz);
 
 		// 6.encrypt message.
@@ -309,7 +289,7 @@ public:
 			return false;
 		}
 		meta.m_model = MessageModel(bytes[head_size]);
-		meta.m_option = MessageOptionMeta(bytes[head_size + size_model]);
+		meta.m_option = MessageOption(bytes[head_size + size_model]);
 
 		// get meta option data.
 		uint32_t data_pos = head_size + meta_size(meta);
@@ -332,32 +312,7 @@ public:
 		}
 
 		// option data: request data.
-		if (eco::has(meta.m_option, option_req1))
-		{
-			meta.m_request_data = bytes[pos++];
-		}
-		else if (eco::has(meta.m_option, option_req2))
-		{
-			uint16_t req2 = 0;
-			ntoh(req2, pos, &bytes[pos]);
-			meta.m_request_data = req2;
-		}
-		else if (eco::has(meta.m_option, option_req4))
-		{
-			uint32_t req4 = 0;
-			ntoh(req4, pos, &bytes[pos]);
-			meta.m_request_data = req4;
-		}
-		else if (eco::has(meta.m_option, option_req8))
-		{
-			ntoh(meta.m_request_data, pos, &bytes[pos]);
-		}
-
-		// option data: error id.
-		if (eco::has(meta.m_option, option_error))
-		{
-			ntoh(meta.m_error_id, pos, &bytes[pos]);
-		}
+		pos += decode_req(meta, &bytes[pos]);
 
 		// message data bytes.
 		data.m_data = &bytes[pos];

@@ -26,25 +26,26 @@
 *******************************************************************************/
 #include <eco/net/protocol/Codec.h>
 #include <google/protobuf/message.h>
+#include <google/protobuf/util/json_util.h>
 
 #ifndef ECO_AUTO_LINK_NO
 #	pragma comment(lib, "libprotobuf.lib")
 #endif
 
-namespace eco{;
-namespace net{;
 
-
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(net);
+class NullRequest;
 ////////////////////////////////////////////////////////////////////////////////
 class ProtobufCodec : public eco::net::Codec
 {
 public:
-	inline ProtobufCodec() : m_msg(nullptr)
+	inline ProtobufCodec(const void* msg = nullptr) : eco::net::Codec(msg)
 	{}
 
-	inline explicit ProtobufCodec(IN const google::protobuf::Message& msg)
+	const google::protobuf::Message& message() const
 	{
-		m_msg = const_cast<google::protobuf::Message*>(&msg);
+		return *(google::protobuf::Message*)m_msg;
 	}
 
 	virtual void set_message(void* message) override
@@ -54,25 +55,43 @@ public:
 
 	virtual uint32_t byte_size() const override
 	{
-		return m_msg->ByteSize();
+		return message().ByteSize();
 	}
 
 	virtual void encode(OUT char* bytes, IN uint32_t size) const override
 	{
-		m_msg->SerializeToArray(bytes, (int)size);
+		message().SerializeToArray(bytes, (int)size);
 	}
 
 	virtual void* decode(IN const char* bytes, IN uint32_t size) override
 	{
-		return m_msg->ParseFromArray(bytes, (int)size) ? m_msg : nullptr;
+		auto& msg = *(google::protobuf::Message*)m_msg;
+		return msg.ParseFromArray(bytes, (int)size) ? m_msg : nullptr;
 	}
 
-protected:
-	google::protobuf::Message* m_msg;
+	inline static std::string to_json(const google::protobuf::Message& msg)
+	{
+		std::string json;
+		google::protobuf::util::MessageToJsonString(msg, &json);
+		return std::move(json);
+	}
+
+	inline static std::string to_json(const NullRequest&)
+	{
+		return eco::empty_str;
+	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
+inline std::string to_json(const google::protobuf::Message& msg)
+{
+	std::string json;
+	google::protobuf::util::MessageToJsonString(msg, &json);
+	return std::move(json);
+}
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(net);
+ECO_NS_END(eco);
 #endif
 #endif

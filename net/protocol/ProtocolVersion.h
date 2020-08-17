@@ -91,7 +91,7 @@ public:
 	}
 	inline static uint32_t max_uint32()
 	{
-		return 0xFFFFffff;	// 4294836225;
+		return 0xFFFFffff;	// 4294967295;
 	}
 
 	/*@ get message head size. check same protocol cluster.*/

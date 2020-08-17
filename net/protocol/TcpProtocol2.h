@@ -45,22 +45,14 @@ private:
 	// "message data" value
 	enum
 	{
-		// 1byte: "<=253"
-		// 3byte=1+2: ">253"
+		// 1byte: "<253"
+		// 3byte=1+2: ">=253"
 		// 5byte=1+4: ">65535"
 		size_byte1			= 1,
 		size_byte2			= 2,
 		size_byte4			= 4,
 		size_encode_size	= 5,	// 4 + 1;
 	};
-
-	inline uint32_t get_size_size(IN uint8_t size) const
-	{
-		if (size < 254) return 0;
-		else if (size == 254) return 2;
-		else if (size == 255) return 4;
-		return 0;
-	}
 
 	virtual uint32_t encode_head_size() const override
 	{
@@ -69,28 +61,13 @@ private:
 
 	virtual uint32_t encode_size(eco::String& bytes) const override
 	{
-		uint32_t pos = size_byte4;	// bytes start pos.
 		uint32_t data_size = bytes.size() - encode_head_size();
-		if (data_size < 254)
-		{
-			bytes[pos + pos_size] = uint8_t(data_size);
-		}
-		else if (data_size <= max_uint16())
-		{
-			pos -= size_byte2;
-			bytes[pos + pos_size] = char(254);
-			hton(&bytes[pos + pos_size + size_byte1], uint16_t(data_size));
-		}
-		else if (data_size <= max_uint32())
-		{
-			pos -= size_byte4;
-			bytes[pos + pos_size] = char(255);
-			hton(&bytes[pos + pos_size + size_byte1], data_size);
-		}
+		uint32_t pos = size_encode_size - size_size(data_size);
 
 		// move "head version category" to pos.
 		bytes[pos] = bytes[0];
 		bytes[pos + 1] = bytes[1];
+		size_encode(&bytes[pos + pos_size], data_size);
 		return pos;
 	}
 
@@ -128,16 +105,10 @@ public:
 		if (size >= pos + size_byte1)
 		{
 			head.m_data_size = uint8_t(bytes[pos]);	// note: cast to uint8_t.
-			pos += size_byte1;
-			head.m_head_size = pos + get_size_size(head.m_data_size);
+			head.m_head_size = pos_size + size_size(head.m_data_size);
 			if (size >= head.m_head_size)
 			{
-				if (head.m_data_size == 254)
-					head.m_data_size = ntoh16(&bytes[pos]);
-				else if (head.m_data_size == 255)
-					head.m_data_size = ntoh32(&bytes[pos]);
-				/*else if (head.m_data_size == 0)
-					head.m_data_size = ntoh64(&bytes[pos]); */
+				size_decode(head.m_data_size, &bytes[pos]);
 				return true;
 			}
 		}
@@ -145,6 +116,35 @@ public:
 	}
 
 private:
+	virtual uint8_t size_req(const MessageMeta& meta) const override
+	{
+		if (eco::has(meta.m_option, option_data))
+		{
+			return size_size(meta.m_option_data);
+		}
+		return 0;
+	}
+
+	virtual uint8_t decode_req(
+		OUT MessageMeta& meta,
+		IN  const char* bytes) const override
+	{
+		if (eco::has(meta.m_option, option_data))
+		{
+			return size_decode(meta.m_option_data, bytes);
+		}
+		return 0;
+	}
+
+	virtual void encode_req(
+		eco::String& bytes, const MessageMeta& meta) const override
+	{
+		if (eco::has(meta.m_option, option_data))
+		{
+			size_encode(bytes, meta.m_option_data);
+		}
+	}
+
 	std::auto_ptr<Crypt> m_crypt;
 	std::auto_ptr<Check> m_check;
 };

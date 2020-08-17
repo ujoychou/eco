@@ -65,54 +65,38 @@ enum
 	option_req8				= 0x08,
 	option_req1				= 0x10,
 	option_req2				= 0x20,
-	// option: error id response.
+	// option: error response.
 	option_error			= 0x40,
+	// option: request data that server will send back.
+	option_data				= 0x08,
 	// option: message has a session id.
 	option_sess				= 0x80,
 };
-typedef uint8_t MessageOptionMeta;
+typedef uint8_t MessageOption;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class MessageOption
+class MessageMeta
 {
 public:
 	MessageCategory	m_category;
+	MessageModel	m_model;
+	MessageOption   m_option;
 
 	// meta option data.
-	uint32_t		m_error_id;
-	uint32_t		m_session_id;
 	uint32_t		m_message_type;
-	uint64_t		m_request_data;
-
-	MessageOptionMeta	m_option;
+	uint64_t		m_option_data;
+	SessionId		m_session_id;
+	Codec*			m_codec;
 
 public:
-	inline MessageOption()
-		: m_category(category_message)
-		, m_error_id(0)
-		, m_session_id(none_session)
-		, m_message_type(0)
-		, m_request_data(0)
-		, m_option(0)
-	{}
-
-	inline MessageOption(
-		IN uint32_t msg_type,
-		IN uint32_t err_id = 0,
-		IN bool     last_msg = true,
-		IN uint32_t sess_id = none_session)
+	inline MessageMeta()
 	{
+		memset(this, 0, sizeof(*this));
 		m_category = category_message;
-		m_request_data = 0;
-		m_option = 0;
-		last(last_msg);
-		error_id(err_id);
-		session_id(sess_id);
-		message_type(msg_type);
 	}
 
-	inline MessageOption& sync(IN bool is = true)
+	inline MessageMeta& sync(IN bool is = true)
 	{
 		eco::set(m_category, category_sync, is);
 		return *this;
@@ -122,32 +106,32 @@ public:
 		return eco::has(m_category, category_sync);
 	}
 
-	inline MessageOption& category(IN MessageCategory v)
+	inline MessageMeta& category(IN MessageCategory v)
 	{
 		eco::add(m_category, v);
 		return *this;
 	}
 
-	inline MessageOption& encrypt(IN bool is = true)
+	inline MessageMeta& encrypt(IN bool is = true)
 	{
 		eco::set(m_category, category_encrypted, is);
 		return *this;
 	}
 
-	inline MessageOption& check_sum(IN bool is = true)
+	inline MessageMeta& check_sum(IN bool is = true)
 	{
 		eco::set(m_category, category_checksum, is);
 		return *this;
 	}
 
-	inline MessageOption& session_id(IN uint32_t id)
+	inline MessageMeta& session_id(IN SessionId id)
 	{
 		m_session_id = id;
 		eco::set(m_option, option_sess, m_session_id != none_session);
 		return *this;
 	}
 
-	inline MessageOption& message_type(IN uint32_t v)
+	inline MessageMeta& message_type(IN uint32_t v)
 	{
 		m_message_type = v;
 		eco::set(m_option, option_type, v != 0);
@@ -156,17 +140,16 @@ public:
 
 	inline bool has_error() const
 	{
-		return m_error_id != 0;
+		return eco::has(m_option, option_error);
 	}
 
-	inline MessageOption& error_id(IN uint32_t v)
+	inline MessageMeta& error(IN bool v)
 	{
-		m_error_id = v;
-		eco::set(m_option, option_error, v != 0);
+		eco::set(m_option, option_error, v);
 		return *this;
 	}
 
-	inline MessageOption& last(IN bool is = true)
+	inline MessageMeta& last(IN bool is = true)
 	{
 		eco::set(m_option, option_last, is);
 		return *this;
@@ -176,7 +159,7 @@ public:
 		return eco::has(m_option, option_last);
 	}
 
-	inline MessageOption& option(IN const void* data)
+	inline MessageMeta& option(IN const void* data)
 	{
 		if (sizeof(void*) == 4)
 			set_request_data((uint32_t)(uint64_t)(data));
@@ -185,73 +168,11 @@ public:
 		return *this;
 	}
 
-	inline MessageOption& snap(IN uint8_t v)
+	inline MessageMeta& snap(IN uint8_t v)
 	{
 		set_request_data(v);
 		return *this;
 	}
-
-public:
-	inline void set_request_data(IN const uint8_t req_data)
-	{
-		m_request_data = req_data;
-		eco::add(m_option, option_req1);
-	}
-	inline void set_request_data(IN const uint16_t req_data)
-	{
-		m_request_data = req_data;
-		eco::add(m_option, option_req2);
-	}
-	inline void set_request_data(IN const uint32_t req_data)
-	{
-		m_request_data = req_data;
-		eco::add(m_option, option_req4);
-	}
-	inline void set_request_data(IN const uint64_t req_data)
-	{
-		m_request_data = req_data;
-		eco::add(m_option, option_req8);
-	}
-	inline void set_request_data(
-		IN const uint64_t req_data,
-		IN const MessageOptionMeta opt)
-	{
-		m_request_data = req_data;
-		eco::add(m_option, opt);
-	}
-	inline const uint8_t get_req1() const
-	{
-		return static_cast<uint8_t>(m_request_data);
-	}
-	inline const uint16_t get_req2() const
-	{
-		return static_cast<uint16_t>(m_request_data);
-	}
-	inline const uint32_t get_req4() const
-	{
-		return static_cast<uint32_t>(m_request_data);
-	}
-	inline const uint64_t get_req8() const
-	{
-		return m_request_data;
-	}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class MessageMeta : public MessageOption
-{
-public:
-	MessageModel		m_model;
-	Codec*				m_codec;
-	
-public:
-	inline MessageMeta() : m_model(0), m_codec(0)
-	{}
-
-	inline MessageMeta(IN Codec* c, const MessageOption& opt)
-		: MessageOption(opt), m_model(0), m_codec(c)
-	{}
 
 	inline MessageMeta& codec(IN Codec& cdc)
 	{
@@ -259,10 +180,53 @@ public:
 		return *this;
 	}
 
-	inline MessageMeta& operator=(IN const MessageOption& opt)
+public:
+	inline void set_request_data(IN const uint8_t req_data)
 	{
-		((MessageOption&)*this) = opt;
-		return *this;
+		m_option_data = req_data;
+		eco::add(m_option, option_req1);
+		eco::add(m_option, option_data);
+	}
+	inline void set_request_data(IN const uint16_t req_data)
+	{
+		m_option_data = req_data;
+		eco::add(m_option, option_req2);
+		eco::add(m_option, option_data);
+	}
+	inline void set_request_data(IN const uint32_t req_data)
+	{
+		m_option_data = req_data;
+		eco::add(m_option, option_req4);
+		eco::add(m_option, option_data);
+	}
+	inline void set_request_data(IN const uint64_t req_data)
+	{
+		m_option_data = req_data;
+		eco::add(m_option, option_req8);
+		eco::add(m_option, option_data);
+	}
+	inline void set_request_data(
+		IN const uint64_t req_data,
+		IN const MessageOption opt)
+	{
+		m_option_data = req_data;
+		eco::add(m_option, opt);
+	}
+	inline const uint8_t get_req1() const
+	{
+		return static_cast<uint8_t>(m_option_data);
+	}
+	inline const uint16_t get_req2() const
+	{
+		return static_cast<uint16_t>(m_option_data);
+	}
+	inline const uint32_t get_req4() const
+	{
+		return static_cast<uint32_t>(m_option_data);
+	}
+	inline const uint64_t get_req8() const
+	{
+		return m_option_data;
 	}
 };
 
@@ -307,6 +271,144 @@ public:
 		IN  eco::String& bytes,
 		IN  uint32_t head_size,
 		IN  eco::Error& e) = 0;
+
+public:
+	// get size of data size.
+	inline static uint8_t size_size(uint64_t size)
+	{
+		if (size < 253)
+			return 1;
+		else if (size <= max_uint16())
+			return 1 + 2;
+		else if (size <= max_uint32())
+			return 1 + 4;
+		return 1 + 8;
+	}
+
+	// decode size from bytes, and return size.
+	template<typename int_t>
+	inline static uint8_t size_decode(int_t& size, const char* bytes)
+	{
+		uint8_t flag = bytes[0];
+		if (flag < 253)
+		{
+			size = flag;
+			return 1;
+		}
+		else if (flag == 253)
+		{
+			size = (int_t)ntoh16(&bytes[1]);
+			return 3;
+		}
+		else if (flag == 254)
+		{
+			size = (int_t)ntoh32(&bytes[1]);
+			return 5;
+		}
+		size = (int_t)ntoh64(&bytes[1]);
+		return 9;
+	}
+
+	// encode size to bytes.
+	inline static void size_encode(eco::String& bytes, uint64_t size)
+	{
+		if (size < 253)
+		{
+			bytes.append(static_cast<uint8_t>(size));
+		}
+		else if (size <= max_uint16())
+		{
+			bytes.append(static_cast<uint8_t>(253));
+			append_hton(bytes, static_cast<uint16_t>(size));
+		}
+		else if (size <= max_uint32())
+		{
+			bytes.append(static_cast<uint8_t>(254));
+			append_hton(bytes, static_cast<uint32_t>(size));
+		}
+		else
+		{
+			bytes.append(static_cast<uint8_t>(255));
+			append_hton(bytes, static_cast<uint64_t>(size));
+		}
+	}
+
+	// encode size to bytes.
+	inline static void size_encode(char* bytes, uint64_t size)
+	{
+		if (size < 253)
+		{
+			bytes[0] = static_cast<uint8_t>(size);
+		}
+		else if (size <= max_uint16())
+		{
+			bytes[0] = static_cast<uint8_t>(253);
+			hton(&bytes[1], static_cast<uint16_t>(size));
+		}
+		else if (size <= max_uint32())
+		{
+			bytes[0] = static_cast<uint8_t>(254);
+			hton(&bytes[1], static_cast<uint32_t>(size));
+		}
+		else
+		{
+			bytes[0] = static_cast<uint8_t>(255);
+			hton(&bytes[1], static_cast<uint64_t>(size));
+		}
+	}
+
+protected:
+	virtual void encode_req(eco::String& bytes, const MessageMeta& meta) const
+	{
+		if (eco::has(meta.m_option, option_req1))
+			bytes.append(static_cast<uint8_t>(meta.m_option_data));
+		else if (eco::has(meta.m_option, option_req2))
+			append_hton(bytes, static_cast<uint16_t>(meta.m_option_data));
+		else if (eco::has(meta.m_option, option_req4))
+			append_hton(bytes, static_cast<uint32_t>(meta.m_option_data));
+		else if (eco::has(meta.m_option, option_req8))
+			append_hton(bytes, meta.m_option_data);
+	}
+
+	virtual uint8_t decode_req(
+		OUT MessageMeta& meta,
+		IN  const char* bytes) const
+	{
+		if (eco::has(meta.m_option, option_req1))
+		{
+			meta.m_option_data = bytes[0];
+			return 1;
+		}
+		else if (eco::has(meta.m_option, option_req2))
+		{
+			meta.m_option_data = ntoh16(&bytes[0]);
+			return sizeof(uint16_t);
+		}
+		else if (eco::has(meta.m_option, option_req4))
+		{
+			meta.m_option_data = ntoh32(&bytes[0]);
+			return sizeof(uint32_t);
+		}
+		else if (eco::has(meta.m_option, option_req8))
+		{
+			meta.m_option_data = ntoh64(&bytes[0]);
+			return sizeof(uint64_t);
+		}
+		return 0;
+	}
+
+	virtual uint8_t size_req(const MessageMeta& meta) const
+	{
+		if (eco::has(meta.m_option, option_req1))
+			return sizeof(uint8_t);
+		else if (eco::has(meta.m_option, option_req2))
+			return sizeof(uint16_t);
+		else if (eco::has(meta.m_option, option_req4))
+			return sizeof(uint32_t);
+		else if (eco::has(meta.m_option, option_req8))
+			return  sizeof(uint64_t);
+		return 0;
+	}
 };
 
 

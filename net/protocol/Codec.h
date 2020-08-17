@@ -30,12 +30,17 @@
 
 namespace eco{;
 namespace net{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class Codec
 {
 public:
+	inline Codec(const void* msg) : m_msg((void*)msg)
+	{}
+	inline bool empty() const
+	{
+		return (m_msg == nullptr);
+	}
+
 	/*@ set message data to be encoded or to be decoded.*/
 	virtual void set_message(void* message) = 0;
 
@@ -63,11 +68,14 @@ public:
 	{
 		return nullptr;
 	}
+
+protected:
+	void* m_msg;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class WrapCodec : public eco::net::Codec
+class WrapCodec : public Codec
 {
 public:
 	typedef void* (*MakeFunc)();
@@ -78,34 +86,42 @@ public:
 		return new type_t();
 	}
 
-public:
-	inline explicit WrapCodec(IN Codec& codec, IN MakeFunc func)
-		: m_make(func), m_codec(codec)
+	// constructor.
+	inline explicit WrapCodec(Codec& c, MakeFunc f) : m_make(f), Codec(&c)
 	{}
 
-	virtual void set_message(void* message) override
+	// codec object.
+	inline Codec& get_message() 
 	{
-		m_codec.set_message(message);
+		return *(Codec*)m_msg;
+	}
+	inline const Codec& message() const
+	{
+		return *(Codec*)m_msg;
+	}
+
+	virtual void set_message(void* v) override
+	{
+		get_message().set_message(v);
 	}
 
 	virtual uint32_t byte_size() const override
 	{
-		return m_codec.byte_size();
+		return message().byte_size();
 	}
 
 	virtual void encode(OUT char* bytes, IN uint32_t size) const override
 	{
-		m_codec.encode(bytes, size);
+		message().encode(bytes, size);
 	}
 
 	virtual void* decode(IN const char* bytes, IN uint32_t size) override
 	{
-		m_codec.set_message(m_make());
-		return m_codec.decode(bytes, size);
+		get_message().set_message(m_make());
+		return get_message().decode(bytes, size);
 	}
 
 private:
-	Codec& m_codec;
 	MakeFunc m_make;
 };
 

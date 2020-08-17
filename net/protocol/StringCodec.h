@@ -34,12 +34,12 @@ namespace net{;
 class StringCodec : public eco::net::Codec
 {
 public:
-	inline StringCodec() : m_msg(nullptr)
+	inline StringCodec(void* msg = nullptr) : eco::net::Codec(msg)
 	{}
 
-	inline explicit StringCodec(IN const std::string& msg)
+	const std::string& message() const
 	{
-		m_msg = const_cast<std::string*>(&msg);
+		return *(std::string*)m_msg;
 	}
 
 	virtual void set_message(void* message) override
@@ -49,22 +49,20 @@ public:
 
 	virtual uint32_t byte_size() const override
 	{
-		return (uint32_t)m_msg->size();
+		return (uint32_t)message().size();
 	}
 
 	virtual void encode(OUT char* bytes, IN uint32_t size) const override
 	{
-		memcpy(bytes, m_msg->c_str(), size);
+		memcpy(bytes, message().c_str(), size);
 	}
 
 	virtual void* decode(IN const char* bytes, IN uint32_t size) override
 	{
-		m_msg->assign(bytes, size);
+		auto& msg = *(std::string*)m_msg;
+		msg.assign(bytes, size);
 		return m_msg;
 	}
-
-protected:
-	std::string* m_msg;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
