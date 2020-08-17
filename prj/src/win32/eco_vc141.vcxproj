@@ -205,6 +205,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\..\codec\Codec.cpp" />
     <ClCompile Include="..\..\..\codec\md5.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -239,6 +240,7 @@
     <ClCompile Include="..\DllObject.cpp" />
     <ClCompile Include="..\DllObjectWin.cpp" />
     <ClCompile Include="..\HeapOperators.cpp" />
+    <ClCompile Include="..\loc\Locale.cpp" />
     <ClCompile Include="..\log\Core.cpp" />
     <ClCompile Include="..\log\FileSink.cpp" />
     <ClCompile Include="..\media\MediaWin.cpp" />
@@ -388,6 +390,7 @@
     <ClInclude Include="..\..\..\cmd\Context.h" />
     <ClInclude Include="..\..\..\cmd\Engine.h" />
     <ClInclude Include="..\..\..\cmd\Group.h" />
+    <ClInclude Include="..\..\..\codec\Codec.h" />
     <ClInclude Include="..\..\..\codec\Ip.h" />
     <ClInclude Include="..\..\..\Config.h" />
     <ClInclude Include="..\..\..\date_time\Date.h" />
@@ -402,6 +405,7 @@
     <ClInclude Include="..\..\..\filesystem\Path.h" />
     <ClInclude Include="..\..\..\HeapOperators.h" />
     <ClInclude Include="..\..\..\Implement.h" />
+    <ClInclude Include="..\..\..\loc\Locale.h" />
     <ClInclude Include="..\..\..\log\Core.h" />
     <ClInclude Include="..\..\..\log\Log.h" />
     <ClInclude Include="..\..\..\log\Pusher.h" />
@@ -510,6 +514,7 @@
     <ClInclude Include="..\..\..\thread\detail\ConditionVariableWin.h" />
     <ClInclude Include="..\..\..\thread\detail\MutexWin.h" />
     <ClInclude Include="..\..\..\thread\DispatchServer.h" />
+    <ClInclude Include="..\..\..\thread\Error.h" />
     <ClInclude Include="..\..\..\thread\ExclusiveData.h" />
     <ClInclude Include="..\..\..\thread\ExclusiveMonitor.h" />
     <ClInclude Include="..\..\..\thread\ExclusiveWorker.h" />
@@ -537,6 +542,7 @@
     <ClInclude Include="..\..\..\xml\Reader.h" />
     <ClInclude Include="..\Impl.h" />
     <ClInclude Include="..\cmd\Inner.h" />
+    <ClInclude Include="..\loc\Language.h" />
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
     <ClInclude Include="..\log\FileSink.h" />
@@ -552,7 +558,7 @@
     <ClInclude Include="..\xml\Impl.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\log\Pusher.inl" />
+    <None Include="..\..\..\net\TcpClient.inl" />
     <None Include="..\..\..\net\TcpSession.inl" />
     <None Include="..\..\..\proto\Object.proto" />
     <None Include="..\..\..\proto\proto.bat" />

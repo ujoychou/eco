@@ -139,6 +139,12 @@
     <Filter Include="src\sys">
       <UniqueIdentifier>{7003d1d1-e5d7-410a-b47a-11c85240d7b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\loc">
+      <UniqueIdentifier>{31ea4e52-ce24-46a7-96e5-b8ffd3941f00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\loc">
+      <UniqueIdentifier>{803a38fc-1a2f-4360-af64-def87158d81f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Config.cpp">
@@ -303,6 +309,9 @@
     <ClCompile Include="..\net\Protocol.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
+    <ClCompile Include="..\loc\Locale.cpp">
+      <Filter>src\loc</Filter>
+    </ClCompile>
     <ClCompile Include="..\sys\Sys.cpp">
       <Filter>src\sys</Filter>
     </ClCompile>
@@ -314,6 +323,9 @@
     </ClCompile>
     <ClCompile Include="..\sys\WinDump.cpp">
       <Filter>src\sys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\codec\Codec.cpp">
+      <Filter>lib\codec</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -800,6 +812,18 @@
     <ClInclude Include="..\..\..\Algorithm.h">
       <Filter>lib\app</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\filesystem\Path.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\loc\Locale.h">
+      <Filter>lib\loc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\loc\Language.h">
+      <Filter>src\loc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\thread\Error.h">
+      <Filter>lib\thread</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\sys\Sys.h">
       <Filter>lib\sys</Filter>
     </ClInclude>
@@ -817,6 +841,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\filesystem\Path.h">
       <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\codec\Codec.h">
+      <Filter>lib\codec</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -850,9 +877,6 @@
     <None Include="..\..\..\proto\proto.bat">
       <Filter>lib\proto</Filter>
     </None>
-    <None Include="..\..\..\log\Pusher.inl">
-      <Filter>lib\log</Filter>
-    </None>
     <None Include="..\..\..\net\TcpSession.inl">
       <Filter>lib\net</Filter>
     </None>
@@ -864,6 +888,9 @@
     </None>
     <None Include="..\Eco.ipp">
       <Filter>src\app</Filter>
+    </None>
+    <None Include="..\..\..\net\TcpClient.inl">
+      <Filter>lib\net</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
