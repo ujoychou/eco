@@ -75,6 +75,11 @@ public:
 		m_prop_name = prop_name;
 		return *this;
 	}
+	inline PropertyMapping& prop(IN const char* prop_name)
+	{
+		m_prop_name = prop_name;
+		return *this;
+	}
 
 	inline PropertyMapping& pk(IN bool is = true)
 	{

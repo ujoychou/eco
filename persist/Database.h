@@ -22,10 +22,25 @@
 #include <eco/persist/JoinMapping.h>
 #include <eco/persist/DatabaseConfig.h>
 #include <eco/persist/Address.h>
+#ifndef ECO_NO_PROTOBUF
+#include <eco/proto/Object.pb.h>
+#endif
 
 
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-namespace eco{;
+// database exception from mysql/sqlite...
+class DataException : public std::exception
+{
+public:
+	inline explicit DataException(char const* const msg)
+		:	std::exception(msg)
+	{}
+
+	inline explicit DataException(char const* const msg, int)
+		: std::exception(msg, 0)
+	{}
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +88,7 @@ public:
 		m_commited = true;
 	}
 
-	inline DatabaseT& get_db()
+	inline DatabaseT& db()
 	{
 		return m_db;
 	}
@@ -248,23 +263,8 @@ public:
 	inline uint64_t save(
 		IN const object_t& obj,
 		IN const ObjectMapping& mapping,
-		IN const char* table = nullptr)
-	{
-		meta_t meta;
-		meta.attach(obj);
-		uint64_t rows = save<meta_t>(obj, mapping, meta.stamp(), table);
-		// update and insert object will reset stamp to original.
-		eco::meta::clean(meta.stamp());
-		return rows;
-	}
-
-	// save data to database.
-	template<typename meta_t, typename object_t>
-	inline uint64_t save(
-		IN const object_t& obj,
-		IN const ObjectMapping& mapping,
 		IN const eco::meta::Stamp stamp,
-		IN  const char* table = nullptr)
+		IN const char* table = nullptr)
 	{
 		std::string sql;
 		if (eco::meta::is_clean(stamp))		// origin object.
@@ -293,6 +293,41 @@ public:
 		return rows;
 	}
 
+	// save data to database.
+	template<typename meta_t, typename object_t>
+	inline uint64_t save(
+		IN const object_t& obj,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		meta_t meta;
+		meta.attach(obj);
+		uint64_t rows = save<meta_t>(obj, mapping, meta.stamp(), table);
+		// update and insert object will reset stamp to original.
+		eco::meta::clean(meta.stamp());
+		return rows;
+	}
+
+	// insert data to database.
+	template<typename meta_t, typename object_t>
+	inline uint64_t insert(
+		IN const object_t& obj,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		return save<meta_t>(obj, mapping, eco::meta::stamp_insert, table);
+	}
+
+	// update data to database.
+	template<typename meta_t, typename object_t>
+	inline uint64_t update(
+		IN const object_t& obj,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		return save<meta_t>(obj, mapping, eco::meta::stamp_update, table);
+	}
+
 	// update object property value.
 	template<typename meta_t, typename object_t>
 	inline uint64_t update(
@@ -300,12 +335,12 @@ public:
 		IN const char* prop,
 		IN const char* value,
 		IN const ObjectMapping& mapping,
-		IN  const char* table = nullptr)
+		IN const char* table = nullptr)
 	{
 		auto* p = mapping.find_property(prop);
 		if (p == nullptr)
 		{
-			ECO_THROW << "property isn't exist: " << prop;
+			ECO_THROW(eco::error) << "property isn't exist: " << prop;
 		}
 
 		meta_t meta;
@@ -317,13 +352,14 @@ public:
 		sql += " set ";
 		sql += p->get_field();
 		sql += "='";
-		sql += value;
+		sql += (value != nullptr) ? value : meta.get_value(prop, eco_db);
 		sql += "'";
 		// condition sql: "where pk='v'"
 		std::string cond_sql;
 		mapping.get_condition_sql(cond_sql, meta);
 		sql += cond_sql;
 		uint64_t rows = execute_sql(sql.c_str());
+		if (value != nullptr && rows > 0) meta.set_value(prop, value);
 		return rows;
 	}
 	template<typename meta_t, typename object_t>
@@ -332,10 +368,59 @@ public:
 		IN const std::string& prop,
 		IN const std::string& value,
 		IN const ObjectMapping& mapping,
-		IN  const char* table)
+		IN const char* table = nullptr)
 	{
 		return update<meta_t, object_t>(
 			obj, prop.c_str(), value.c_str(), mapping, table);
+	}
+#ifndef ECO_NO_PROTOBUF
+	template<typename meta_t, typename object_t>
+	inline uint64_t update(
+		IN object_t& obj,
+		IN const eco::proto::Property& prop,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		return update<meta_t, object_t>(
+			obj, prop.name(), prop.value(), mapping, table);
+	}
+#endif
+
+	// update object property value set.
+	template<typename meta_t, typename object_t>
+	inline uint64_t update(
+		IN object_t& obj,
+		IN const ObjectMapping& mapping,
+		IN const std::vector<std::string>& props,
+		IN const char* table = nullptr)
+	{
+		meta_t meta;
+		meta.attach(obj);
+		// sql: "update set prop='value' where pk='v'"
+		std::string sql("update ");
+		sql.reserve(128);
+		sql += mapping.get_table(table);
+		sql += " set ";
+		for (const std::string& it : props)
+		{
+			const PropertyMapping* p = mapping.find_property(it.c_str());
+			if (p == nullptr)
+			{
+				ECO_THROW(eco::error) << "property isn't exist: " << it;
+			}
+			sql += p->get_field();
+			sql += "='";
+			sql += meta.get_value(p->get_property(), eco_db);
+			sql += "',";
+		}
+		sql.pop_back();
+		
+		// condition sql: "where pk='v'"
+		std::string cond_sql;
+		mapping.get_condition_sql(cond_sql, meta);
+		sql += cond_sql;
+		uint64_t rows = execute_sql(sql.c_str());
+		return rows;
 	}
 
 	// removed all data from table.
@@ -466,5 +551,5 @@ public:
 
 ECO_API eco::Database* create_database(IN const persist::SourceType v);
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

@@ -159,10 +159,12 @@ void Persist::Impl::on_live()
 				// upgrade fail, transaction will rollback it's operation.
 				eco::Database::Transaction trans(*m_master);
 				it->m_func();
+				eco::persist::Version ver = version;
 				m_master->save<persist::VersionMeta>(
-					version.value(it->m_version),
+					ver.value(it->m_version),
 					m_orm_version, eco::meta::stamp_insert);
 				trans.commit();
+				version = ver;
 			}
 		}
 		m_state.add(state_init);

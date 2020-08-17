@@ -45,7 +45,7 @@ public:
 	inline Version() : m_value(0)
 	{}
 
-	inline Version(IN const char* name) : m_value(0), m_module(name)
+	inline Version(IN const char* name_) : m_value(0), m_module(name_)
 	{}
 
 	inline operator const uint32_t() const
@@ -112,7 +112,7 @@ public:
 	const persist::Address& get_address() const;
 
 	// get persist name.
-	inline const char* get_name() const
+	inline const char* name() const
 	{
 		return get_address().get_name();
 	}

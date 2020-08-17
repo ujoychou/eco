@@ -278,7 +278,8 @@ public:
 			{
 				cond_sql += cond_sql.empty() ? " where " : " and ";
 				cond_sql += it->get_field();
-				cond_sql += "='" + meta.get_value(*it, eco_db);
+				cond_sql += "='";
+				cond_sql += meta.get_value(*it, eco_db);
 				cond_sql += "'";
 			}
 		}
