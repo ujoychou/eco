@@ -36,24 +36,14 @@ public:
 
 	Result();
 
-	inline void Success()
+	inline void set_state(State v)
 	{
-		m_state = success;
+		m_state = v;
 	}
 
-	inline void Failed()
+	inline uint32_t state() const
 	{
-		m_state = failed;
-	}
-
-	inline void Timeout()
-	{
-		m_state = timeout;
-	}
-
-	inline void Unknown()
-	{
-		m_state = unknown;
+		return m_state;
 	}
 
 private:
@@ -69,13 +59,13 @@ class ResultSet
 public:
 	ResultSet()
 	{
-		Reset();
+		reset();
 	}
 
-	inline void Reset()
+	inline void reset()
 	{
-		ResetCase();
-		ResetScene();
+		reset_case();
+		reset_scene();
 		ResetTest();
 	}
 
@@ -86,14 +76,14 @@ public:
 		m_checked_test = 0;
 	}
 
-	inline void ResetCase()
+	inline void reset_case()
 	{
 		m_total_case = 0;
 		m_failed_case = 0;
 		m_checked_case = 0;
 	}
 
-	inline void ResetScene()
+	inline void reset_scene()
 	{
 		m_total_scene = 0;
 		m_failed_scene = 0;
@@ -102,121 +92,121 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
-	inline void Fail(uint32_t failed_test = 1)
+	inline void add_fail(uint32_t v = 1)
 	{
-		m_checked_test += failed_test;
-		m_failed_test += failed_test;
-		m_total_test += failed_test;
+		m_checked_test += v;
+		m_failed_test += v;
+		m_total_test += v;
 	}
 
-	inline void Success(uint32_t success_test = 1)
+	inline void add_success(uint32_t v = 1)
 	{
-		m_checked_test += success_test;
-		m_total_test += success_test;
+		m_checked_test += v;
+		m_total_test += v;
 	}
 	
-	inline bool IsOk() const
+	inline bool ok() const
 	{
 		return m_failed_test == 0;
 	}
 
-	inline uint32_t GetTotalTest() const
+	inline uint32_t total_test() const
 	{
 		return m_total_test;
 	}
 
-	inline uint32_t GetCheckedTest() const
+	inline uint32_t checked_test() const
 	{
 		return m_checked_test;
 	}
 
-	inline uint32_t GetFailedTest() const
+	inline uint32_t failed_test() const
 	{
 		return m_failed_test;
 	}
 
-	inline uint32_t GetSuccessTest() const
+	inline uint32_t success_test() const
 	{
 		return m_total_test - m_failed_test;
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
-	inline void SetTotalCase(uint32_t total_case)
+	inline void set_total_case(uint32_t v)
 	{
-		m_total_case = total_case;
+		m_total_case = v;
 	}
 
-	inline void SetCheckedCase(uint32_t checked_case)
+	inline void set_checked_case(uint32_t v)
 	{
-		m_checked_case = checked_case;
+		m_checked_case = v;
 	}
 
-	inline void SetFailedCase(uint32_t failed_case)
+	inline void set_failed_case(uint32_t v)
 	{
-		m_failed_case = failed_case;
+		m_failed_case = v;
 	}
 
-	inline uint32_t GetTotalCase() const
+	inline uint32_t total_case() const
 	{
 		return m_total_case;
 	}
 
-	inline uint32_t GetCheckedCase() const
+	inline uint32_t checked_case() const
 	{
 		return m_checked_case;
 	}
 
-	inline uint32_t GetFailedCase() const
+	inline uint32_t failed_case() const
 	{
 		return m_failed_case;
 	}
 
-	inline uint32_t GetSuccessCase() const
+	inline uint32_t success_case() const
 	{
 		return m_total_case - m_failed_case;
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
-	inline void SetTotalScene(uint32_t total_scene)
+	inline void set_total_scene(uint32_t v)
 	{
-		m_total_scene = total_scene;
+		m_total_scene = v;
 	}
 
-	inline void SetCheckedScene(uint32_t checked_scene)
+	inline void set_checked_scene(uint32_t v)
 	{
-		m_checked_scene = checked_scene;
+		m_checked_scene = v;
 	}
 
-	inline void SetFailedScene(uint32_t failed_scene)
+	inline void set_failed_scene(uint32_t v)
 	{
-		m_failed_scene = failed_scene;
+		m_failed_scene = v;
 	}
 
-	inline uint32_t GetCheckedScene() const
+	inline uint32_t checked_scene() const
 	{
 		return m_checked_scene;
 	}
 
-	inline uint32_t GetFailedChildScene() const
+	inline uint32_t failed_child_scene() const
 	{
 		return (m_failed_scene == 0) ? 0 : m_failed_scene - 1;
 	}
 
-	inline uint32_t GetTotalChildScene() const
+	inline uint32_t total_child_scene() const
 	{
 		return (m_total_scene == 0) ? 0 : m_total_scene - 1;
 	}
 
-	inline uint32_t GetCheckedChildScene() const
+	inline uint32_t checked_child_scene() const
 	{
 		return (m_checked_scene == 0) ? 0 : m_checked_scene - 1;
 	}
 
-	inline uint32_t GetSuccessChildScene() const
+	inline uint32_t success_child_scene() const
 	{
-		return GetTotalChildScene() - GetFailedChildScene();
+		return total_child_scene() - failed_child_scene();
 	}
 	
 ////////////////////////////////////////////////////////////////////////////////

@@ -40,9 +40,9 @@ ECO_PROPERTY_STR_IMPL(Address, host);
 ECO_PROPERTY_STR_IMPL(Address, user);
 ECO_PROPERTY_STR_IMPL(Address, database);
 ECO_PROPERTY_STR_IMPL(Address, password);
-ECO_PROPERTY_VAV_IMPL(Address, uint32_t, port);
-ECO_PROPERTY_VAV_IMPL(Address, SourceType, type);
-ECO_PROPERTY_VAV_IMPL(Address, Charset, charset);
+ECO_PROPERTY_VAR_IMPL(Address, uint32_t, port);
+ECO_PROPERTY_VAR_IMPL(Address, SourceType, type);
+ECO_PROPERTY_VAR_IMPL(Address, Charset, charset);
 ECO_SHARED_IMPL(AddressSet);
 ECO_PROPERTY_SET_IMPL(AddressSet, Address);
 
@@ -55,7 +55,7 @@ void Address::set_type(const char* type)
 	else if (strcmp(type, "sqlite") == 0)
 		set_type(source_sqlite);
 }
-const char* Address::get_type_name() const
+const char* Address::type_name() const
 {
 	if (impl().m_type == source_mysql)
 		return "mysql";

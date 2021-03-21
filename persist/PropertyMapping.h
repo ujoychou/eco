@@ -21,21 +21,21 @@
 #include <eco/persist/DatabaseConfig.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-enum DataType
+enum FieldType
 {
-	dtype_int,
-	dtype_bigint,
-	dtype_char,
-	dtype_char_array,
-	dtype_varchar,
-	dtype_double,
-	dtype_text,
-	dtype_blob,
+	field_int,
+	field_bigint,
+	field_char,
+	field_char_array,
+	field_varchar,
+	field_double,
+	field_text,
+	field_blob,
 
 	// database relative datatype.
-	dtype_date_time,		// 2017-08-29 09:56:30
+	field_date_time,		// 2017-08-29 09:56:30
 };
 
 
@@ -113,7 +113,7 @@ public:
 
 	inline PropertyMapping& int_type()
 	{
-		m_field_type = dtype_int;
+		m_field_type = field_int;
 		m_field_size = 0;
 		return *this;
 	}
@@ -124,7 +124,7 @@ public:
 
 	inline PropertyMapping& big_int()
 	{
-		m_field_type = dtype_bigint;
+		m_field_type = field_bigint;
 		m_field_size = 0;
 		return *this;
 	}
@@ -135,7 +135,7 @@ public:
 
 	inline PropertyMapping& double_type()
 	{
-		m_field_type = dtype_double;
+		m_field_type = field_double;
 		m_field_size = 0;
 		return *this;
 	}
@@ -144,42 +144,42 @@ public:
 		IN const uint32_t field_size = 0)
 	{
 		m_field_size = field_size;
-		m_field_type = field_size == 0 ? dtype_char : dtype_char_array;
+		m_field_type = field_size == 0 ? field_char : field_char_array;
 		return *this;
 	}
 
 	inline PropertyMapping& varchar(
 		IN const uint32_t field_size)
 	{
-		m_field_type = dtype_varchar;
+		m_field_type = field_varchar;
 		m_field_size = field_size;
 		return *this;
 	}
 
 	inline PropertyMapping& vchar_small()
 	{
-		m_field_type = dtype_varchar;
+		m_field_type = field_varchar;
 		m_field_size = 255;
 		return *this;
 	}
 
 	inline PropertyMapping& vchar_middle()
 	{
-		m_field_type = dtype_varchar;
+		m_field_type = field_varchar;
 		m_field_size = 8192;	// detail in mysql limited.
 		return *this;
 	}
 
 	inline PropertyMapping& text()
 	{
-		m_field_type = dtype_text;
+		m_field_type = field_text;
 		m_field_size = 65535;		// sqlite/mysql defined.
 		return *this;
 	}
 
 	inline PropertyMapping& blob()
 	{
-		m_field_type = dtype_blob;
+		m_field_type = field_blob;
 		m_field_size = 65535;		// sqlite/mysql defined.
 		return *this;
 	}
@@ -201,18 +201,24 @@ public:
 
 	inline PropertyMapping& date_time_t()
 	{
-		m_field_type = dtype_date_time;
+		m_field_type = field_date_time;
 		m_field_size = 0;
 		return *this;
 	}
 
+	inline PropertyMapping& field_index(uint32_t i)
+	{
+		m_field_index = i;
+		return *this;
+	}
+
 public:
-	inline const char* get_field() const
+	inline const char* field() const
 	{
 		return m_field_name.c_str();
 	}
 
-	inline const char* get_property() const
+	inline const char* property() const
 	{
 		return m_prop_name.c_str();
 	}
@@ -260,12 +266,12 @@ public:
 		return eco::has(m_constraint, v);
 	}
 
-	inline uint32_t get_field_index() const
+	inline uint32_t field_index() const
 	{
 		return m_field_index;
 	}
 
-	inline uint32_t get_field_type() const
+	inline uint32_t field_type() const
 	{
 		return m_field_type;
 	}
@@ -277,32 +283,32 @@ public:
 	{
 		switch (field_type)
 		{
-		case dtype_int:
+		case field_int:
 			field_sql = "INT";
 			break;
-		case dtype_bigint:
+		case field_bigint:
 			field_sql = "BIGINT";
 			break;
-		case dtype_char:
+		case field_char:
 			field_sql = "CHAR";
 			break;
-		case dtype_char_array:
+		case field_char_array:
 			field_sql = "CHAR(";
 			field_sql += eco::cast<std::string>(field_size);
 			field_sql += ")";
 			break;
-		case dtype_varchar:
+		case field_varchar:
 			field_sql = "VARCHAR(";
 			field_sql += eco::cast<std::string>(field_size);
 			field_sql += ")";
 			break;
-		case dtype_text:
+		case field_text:
 			field_sql = "TEXT";
 			break;
-		case dtype_blob:
+		case field_blob:
 			field_sql = "BLOB";
 			break;
-		case dtype_double:
+		case field_double:
 			field_sql = "DOUBLE";
 			break;
 		}
@@ -321,12 +327,12 @@ public:
 		}
 		if (temp.empty())
 		{
-			ECO_THROW(0, "invalid database field type") << m_field_type;
+			ECO_THROW("invalid database field type") < m_field_type;
 		}
 		return temp;
 	}
 
-	inline std::string get_index_name() const
+	inline std::string index_name() const
 	{
 		return std::string("_index_") + m_field_name;
 	}
@@ -348,7 +354,7 @@ public:
 
 		if (!sql.empty())
 		{
-			sql += get_index_name();
+			sql += index_name();
 			sql += " (";
 			sql += m_field_name;
 			sql += ")";
@@ -361,12 +367,12 @@ private:
 	std::string		m_prop_name;	// data object property.
 	std::string		m_field_name;	// db field name.
 	uint32_t		m_field_index;	// db field index.
-	DataType		m_field_type;	// field type.
+	FieldType		m_field_type;	// field type.
 	uint32_t		m_field_size;	// field size.
 	Constraint		m_constraint;	// field constraint.
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

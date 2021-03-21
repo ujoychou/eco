@@ -113,7 +113,9 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN int type, IN char snap_)
 	{
-		send(ProtobufCodec(&msg), type, snap_);
+		MessageMeta meta;
+		ProtobufCodec cdc(&msg);
+		send(meta.codec(cdc).message_type(type).snap(snap_));
 	}
 #endif
 
@@ -136,10 +138,9 @@ inline static SessionData* make_session_data(
 }
 
 // set session factory to create session of tcp server peer.
-typedef SessionData* (*MakeSessionDataFunc)(
+typedef SessionData* (*MakeSessionData)(
 	IN const SessionId session_id,
 	IN const TcpConnection& connection);
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -166,9 +167,6 @@ class Context;
 class TcpSession
 {
 public:
-	// open session.
-	inline bool authorize();
-
 	// close session, release session data.
 	inline void close();
 

@@ -31,11 +31,11 @@
 namespace eco{;
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
-class DispatchHandler : public eco::DispatchHandler<uint64_t, Context>
+class DispatchHandler : public eco::DispatchHandler<int, Context>
 {
 public:
 	// set receive mode: recv event.
-	inline void set_event(std::function<void(TcpPeer::ptr&, DataContext&)>& f)
+	inline void set_event(std::function<void(TcpPeer::ptr&, DataContext&)>&& f)
 	{
 		m_recv = f;
 	}
@@ -52,23 +52,15 @@ public:
 		return (bool)m_recv;
 	}
 
-	// set thread tracer.
-	inline void dispatch(IN const uint64_t& type, IN Context& msg)
-	{
-		eco::DispatchHandler<uint64_t, Context>::dispatch(type, msg);
-	}
-
 	/*@ dispatch message to message handler.
 	* @ para.dc: message to be dispatched.
 	*/
 	void operator()(IN DataContext& dc);
 	void handle_client(OUT Context& c, IN  TcpPeer& peer);
-	void handle_server(OUT Context& c, IN  TcpPeer& peer, IN Protocol* prot);
-	bool handle_server_topic(OUT Context& c, IN void*);
-	bool handle_client_topic(OUT Context& c, IN void*);
+	void handle_server(OUT Context& c, IN  TcpPeer& peer);
 
 public:
-	// receive mode event. 
+	// receive mode event.
 	std::function<void(TcpPeer::ptr&, DataContext&)> m_recv;
 };
 
@@ -79,7 +71,7 @@ class DispatchServer : public eco::MessageServer<DataContext, DispatchHandler>
 {
 public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
-	inline void register_handler(IN uint64_t id, IN HandlerFunc&& hf)
+	inline void register_handler(IN int id, IN HandlerFunc&& hf)
 	{
 		message_handler().set_dispatch(id, hf);
 	}
@@ -98,7 +90,7 @@ class DispatchServerPool :
 {
 public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
-	inline void register_handler(IN uint64_t id, IN HandlerFunc&& hf)
+	inline void register_handler(IN int id, IN HandlerFunc&& hf)
 	{
 		message_handler().set_dispatch(id, hf);
 	}

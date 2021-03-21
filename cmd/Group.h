@@ -51,22 +51,22 @@ public:
 
 	/*@ group name.*/
 	Group& name(IN const char* name);
-	const char* get_name() const;
+	const char* name() const;
 
 	/*@ group alias.*/
 	Group& alias(IN const char* name);
-	const char* get_alias() const;
+	const char* alias() const;
 
 	/*@ group name.*/
 	Group& help_info(IN const char* name);
-	const char* get_help_info() const;
+	const char* help_info() const;
 
 	/*@ context mode: where command can be revoke and resume.*/
 	Group& open_context(IN const bool = false);
 	const bool context_openned() const;
 
 	/*@ get parent group.*/
-	Group get_parent() const;
+	Group parent() const;
 
 	/*@ has parent group.*/
 	bool has_parent() const;
@@ -76,12 +76,12 @@ public:
 		IN const char* name) const;
 
 	// get command set.
-	CommandSet& command_set();
-	const CommandSet& get_command_set() const;
+	CommandSet& get_command_set();
+	const CommandSet& command_set() const;
 
 	// get group set.
-	GroupSet& group_set();
-	const GroupSet& get_group_set() const;
+	GroupSet& get_group_set();
+	const GroupSet& group_set() const;
 
 public:
 	// add command.

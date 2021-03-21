@@ -59,17 +59,17 @@ public:
 
 	/*@ command name which can be executed from command line.*/
 	void set_name(IN const char*);
-	const char* get_name() const;
+	const char* name() const;
 	Class& name(IN const char*);
 
 	/*@ command alias which can be executed from command line.*/
 	void set_alias(IN const char*);
-	const char* get_alias() const;
+	const char* alias() const;
 	Class& alias(IN const char*);
 
 	/*@ help info.*/
 	void set_help_info(IN const char*);
-	const char* get_help_info() const;
+	const char* help_info() const;
 	Class& help_info(IN const char*);
 
 private:

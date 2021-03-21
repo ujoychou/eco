@@ -26,7 +26,7 @@ std::string get_dump_file_name()
 	if (!boost::filesystem::exists(path, ec) &&
 		!boost::filesystem::create_directory(path, ec))
 	{
-		ECO_THROW(ec.value()) << ec.message();
+		ECO_THROW(ec.value()) < ec.message();
 	}
 
 	// file name: \dump\eco.20180708121212.dump
@@ -34,7 +34,7 @@ std::string get_dump_file_name()
 	file += "\\";
 	file += eco::sys::GetAppName();
 	file += '.';
-	file += ts.get_value();
+	file += ts.value();
 	file += ".dmp";
 	return file;
 }

@@ -55,14 +55,13 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+ECO_SHARED_IMPL(Group);
 ECO_SHARED_IMPL(GroupSet);
 ECO_PROPERTY_SET_IMPL(GroupSet, Group);
-ECO_SHARED_IMPL(Group);
-
 ////////////////////////////////////////////////////////////////////////////////
 void ListCommand::execute(IN eco::cmd::Context& context)
 {
-	Group::Impl& data = get_engine().current().impl();
+	Group::Impl& data = engine().get_current().impl();
 
 	// group info.
 	char fmt[512] = {0};
@@ -72,7 +71,7 @@ void ListCommand::execute(IN eco::cmd::Context& context)
 		for (; it!=data.m_group_set.end(); ++it)
 		{
 			snprintf(fmt, sizeof(fmt), "{g} %-10s %-20s: %s",
-				it->get_alias(), it->get_name(), it->get_help_info());
+				it->alias(), it->name(), it->help_info());
 			EcoCout << fmt;
 		}
 	}
@@ -84,7 +83,7 @@ void ListCommand::execute(IN eco::cmd::Context& context)
 		for (; it != data.m_command_set.end(); ++it)
 		{
 			snprintf(fmt, sizeof(fmt), "(c) %-10s %-20s: %s",
-				it->get_alias(), it->get_name(), it->get_help_info());
+				it->alias(), it->name(), it->help_info());
 			EcoCout << fmt;
 		}
 	}
@@ -112,10 +111,10 @@ void run_command(IN Context& context, OUT Group::Impl& data)
 	std::vector<int>::iterator its;
 	// find command class.
 	auto it = std::find_if(data.m_command_set.begin(), data.m_command_set.end(),
-		std::bind(&equal, std::placeholders::_1, context.get_command()));
+		std::bind(&equal, std::placeholders::_1, context.command()));
 	if (it == data.m_command_set.end())
 	{
-		EcoCout << "can't find command: " << context.get_command();
+		EcoCout << "can't find command: " << context.command();
 		return ;
 	}
 
@@ -124,10 +123,6 @@ void run_command(IN Context& context, OUT Group::Impl& data)
 	{
 		std::shared_ptr<Command> command(it->create_command());
 		command->execute(context);
-	}
-	catch (eco::Error& e)
-	{
-		ECO_ERROR << "execute command error: " << e;
 	}
 	catch (std::exception& e)
 	{
@@ -156,7 +151,7 @@ Group& Group::name(IN const char* name)
 	impl().m_name = name;
 	return *this;
 }
-const char* Group::get_name() const
+const char* Group::name() const
 {
 	return impl().m_name.c_str();
 }
@@ -165,7 +160,7 @@ Group& Group::alias(IN const char* alias)
 	impl().m_alias = alias;
 	return *this;
 }
-const char* Group::get_alias() const
+const char* Group::alias() const
 {
 	return impl().m_alias.c_str();
 }
@@ -174,7 +169,7 @@ Group& Group::help_info(IN const char* name)
 	impl().m_help_info = name;
 	return *this;
 }
-const char* Group::get_help_info() const
+const char* Group::help_info() const
 {
 	return impl().m_help_info.c_str();
 }
@@ -187,7 +182,7 @@ const bool Group::context_openned() const
 {
 	return impl().m_open_context;
 }
-Group Group::get_parent() const
+Group Group::parent() const
 {
 	return impl().m_parent;
 }
@@ -202,37 +197,37 @@ Group Group::find_group(IN const char* name) const
 		std::bind(&equal_group, std::placeholders::_1, name));
 	return (it != impl().m_group_set.end()) ? *it : Group(eco::null);
 }
-CommandSet& Group::command_set()
+CommandSet& Group::get_command_set()
 {
 	return impl().m_command_set;
 }
-const CommandSet& Group::get_command_set() const
+const CommandSet& Group::command_set() const
 {
 	return impl().m_command_set;
 }
-GroupSet& Group::group_set()
+GroupSet& Group::get_group_set()
 {
 	return impl().m_group_set;
 }
-const GroupSet& Group::get_group_set() const
+const GroupSet& Group::group_set() const
 {
 	return impl().m_group_set;
 }
 Class& Group::add_command()
 {
-	return command_set().add();
+	return get_command_set().add();
 }
 void Group::add_command(Class& c)
 {
-	return command_set().add(c);
+	return get_command_set().add(c);
 }
 Group& Group::add_group()
 {
-	return group_set().add_group();
+	return get_group_set().add_group();
 }
 void Group::add_group(Group& c)
 {
-	return group_set().add(c);
+	return get_group_set().add(c);
 }
 ////////////////////////////////////////////////////////////////////////////////
 }}

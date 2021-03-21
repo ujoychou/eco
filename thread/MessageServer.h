@@ -136,10 +136,13 @@ public:
 	/*@ stop message server: stop message queue and thread pool. and this
 	function is not thread safe.
 	*/
-	inline void stop()
+	inline void stop(bool release = false)
 	{
 		// stop receive message.
-		m_message_queue.close();
+		if (release)
+			m_message_queue.release();
+		else
+			m_message_queue.close();
 		
 		// stop server thread.
 		join();
@@ -170,7 +173,7 @@ public:
 	{
 		return m_message_queue;
 	}
-	inline std::mutex& mutex()
+	inline std_mutex& mutex()
 	{
 		return m_message_queue.mutex();
 	}
@@ -178,30 +181,20 @@ public:
 	/*@ post message to message server, using template is for parameter of 
 	message and const message.
 	*/
-	inline void post(IN const Message& msg)
-	{
-		m_message_queue.post(Message(msg));
-	}
 	inline void post(IN Message&& msg)
 	{
 		m_message_queue.post(msg);
 	}
-	template<typename UniqueChecker>
-	inline void post(IN const Message& msg, IN UniqueChecker&& check)
+	inline void post(IN const Message& msg)
 	{
-		m_message_queue.post(Message(msg), check);
-	}
-	template<typename UniqueChecker>
-	inline void post(IN Message&& msg, IN UniqueChecker&& check)
-	{
-		m_message_queue.post(msg, check);
+		m_message_queue.post(Message(msg));
 	}
 
 protected:
 	uint32_t	m_thread_size;
+	ThreadPool	m_thread_pool;
 	Queue		m_message_queue;
 	Handler		m_message_handler;
-	ThreadPool	m_thread_pool;
 	MessageQueueFlow m_flow;
 };
 

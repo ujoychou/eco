@@ -32,9 +32,9 @@ const StringAny* Context::find(IN const char* key) const
 	auto it = impl().m_items.begin();
 	for (; it != impl().m_items.end(); ++it)
 	{
-		if (strcmp(it->get_name(), key) == 0)
+		if (strcmp(it->name(), key) == 0)
 		{
-			return &it->get_value();
+			return &it->value();
 		}
 	}
 	return nullptr;
@@ -44,7 +44,7 @@ const StringAny& Context::at(IN const char* key) const
 	auto v = find(key);
 	if (!v)
 	{
-		ECO_THROW(0, "find parameter fail: key=") << key;
+		ECO_THROW("find parameter fail: key=") << key;
 	}
 	return *v;
 }
@@ -66,7 +66,7 @@ const StringAny& ContextNode::at(IN const char* key) const
 {
 	auto* any = find(key);
 	if (any == nullptr)
-		ECO_THROW(0, "get context node key value fail: ") << key;
+		ECO_THROW("get context node key value fail: ") << key;
 	return *any;
 }
 const StringAny ContextNode::get(IN const char* key) const
@@ -95,9 +95,9 @@ void merge_impl(ContextNode::Impl& a, ContextNode::Impl& b)
 		auto ita = a.m_property_set.begin();
 		for (; ita != a.m_property_set.end(); ++ita)
 		{
-			if (eco::equal(ita->get_name(), itb->get_name()))
+			if (eco::equal(ita->name(), itb->name()))
 			{
-				ita->set_value(itb->get_value());
+				ita->set_value(itb->value());
 				break;
 			}
 		}
@@ -152,8 +152,8 @@ const StringAny* ContextNode::find(IN const char* key) const
 		auto it = impl().m_property_set.begin();
 		for (; it != impl().m_property_set.end(); ++it)
 		{
-			if (strcmp(key, it->get_name()) == 0)
-				return &it->get_value();
+			if (strcmp(key, it->name()) == 0)
+				return &it->value();
 		}
 	}
 	else
@@ -162,7 +162,7 @@ const StringAny* ContextNode::find(IN const char* key) const
 		auto it = impl().m_children.begin();
 		for (; it != impl().m_children.end(); ++it)
 		{
-			if (strncmp(it->get_name(), key, node_end) == 0)
+			if (strncmp(it->name(), key, node_end) == 0)
 			{
 				return it->find(&key[node_end + 1]);
 			}
@@ -184,7 +184,7 @@ eco::ContextNode ContextNode::get_child(const char* key) const
 		auto it = impl().m_children.begin();
 		for (; it != impl().m_children.end(); ++it)
 		{
-			if (strcmp(key, it->get_name()) == 0)
+			if (strcmp(key, it->name()) == 0)
 				return *it;
 		}
 	}
@@ -194,7 +194,7 @@ eco::ContextNode ContextNode::get_child(const char* key) const
 		auto it = impl().m_children.begin();
 		for (; it != impl().m_children.end(); ++it)
 		{
-			if (strncmp(it->get_name(), key, node_end) == 0)
+			if (strncmp(it->name(), key, node_end) == 0)
 				return it->get_child(&key[node_end + 1]);
 		}
 	}
@@ -214,7 +214,7 @@ eco::ContextNodeSet ContextNode::get_children(IN const char* key) const
 		auto it = impl().m_children.begin();
 		for (; it != impl().m_children.end(); ++it)
 		{
-			if (strcmp(key, it->get_name()) == 0)
+			if (strcmp(key, it->name()) == 0)
 				result.add(*it);
 		}
 		return !result.empty() ? result : eco::null;
@@ -225,7 +225,7 @@ eco::ContextNodeSet ContextNode::get_children(IN const char* key) const
 		auto it = impl().m_children.begin();
 		for (; it != impl().m_children.end(); ++it)
 		{
-			if (strncmp(it->get_name(), key, node_end) == 0)
+			if (strncmp(it->name(), key, node_end) == 0)
 				return it->get_children(&key[node_end + 1]);
 		}
 	}
@@ -239,7 +239,7 @@ bool ContextNode::get_property_set(eco::Context& result, const char* key) const
 	auto node = get_child(key);
 	if (!node.null())
 	{
-		result = node.get_property_set();
+		result = node.property_set();
 	}
 	return !node.null();
 }

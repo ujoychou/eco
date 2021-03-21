@@ -26,7 +26,6 @@
 #include <eco/net/TcpPeer.h>
 #include <eco/net/TcpConnector.h>
 #include <eco/net/Context.h>
-#include <eco/net/Log.h>
 #include <eco/net/protocol/ProtocolFamily.h>
 #include "DispatchServer.h"
 
@@ -40,7 +39,6 @@ class TcpPeer::Impl : public TcpConnectorHandler
 public:
 	
 	TcpState			m_state;			// peer socket state.
-	eco::atomic::State	m_data_state;		// peer data state.
 	TcpPeer::wptr		m_peer_observer;	// this peer.
 	TcpPeerHandler*		m_handler;			// peer handler.
 	TcpConnector		m_connector;		// socket io.
@@ -50,6 +48,8 @@ public:
 	eco::String			m_user;				// user name.
 	eco::String			m_lang;				// lang name.
 	std::auto_ptr<ConnectionData> m_data;	// connection data.
+	TimingWheel::Timer m_timer_recv;		// tcp peer recv heartbeat timer.
+	TimingWheel::Timer m_timer_send;		// tcp peer send heartbeat timer.
 
 public:
 	// never be called, this is just for complie success.
@@ -77,21 +77,11 @@ public:
 		release();
 	}
 
-	// ready to receive data head.
-	inline void restart(IN MessageWorker* worker, IN TcpPeer::ptr& peer)
-	{
-		m_server = worker;
-		m_user.clear();
-		m_lang.clear();
-		prepare(peer);
-	}
-
 	inline void release()
 	{
 		m_data.reset();
 		m_peer_observer.reset();
 		m_state.set_closed();
-		m_data_state.none();
 		m_user.clear();
 		m_lang.clear();
 		m_connector.release();
@@ -102,9 +92,10 @@ public:
 		}
 	}
 
-	inline void set_protocol(Protocol* p)
+	// set protocol.
+	inline void set_protocol(IN Protocol* prot)
 	{
-		if (m_protocol != p) m_protocol = p;
+		if (m_protocol != prot) m_protocol = prot;
 	}
 
 	// peer must be created in the heap(by new).
@@ -119,9 +110,7 @@ public:
 		m_state.set_self_live(false);
 	}
 
-	void make_connection_data(
-		IN MakeConnectionDataFunc make_func,
-		IN Protocol* prot);
+	void make_connection_data(const MakeConnectionData& make_func);
 
 	// handler objects.
 	inline TcpPeerHandler& handler()
@@ -145,17 +134,23 @@ public:
 	eco::Result on_decode_head(
 		OUT MessageHead& head, 
 		IN  const char* buff, 
-		IN  const uint32_t size,
-		OUT eco::Error& err);
+		IN  const uint32_t size);
 
 	inline void init_option(const TcpOption& opt)
 	{
-		m_connector.set_no_delay(opt.no_delay());
-		m_connector.set_send_capacity(opt.get_send_capacity());
-		m_connector.set_send_buffer_size(opt.get_send_buffer_size());
-		m_connector.set_recv_buffer_size(opt.get_recv_buffer_size());
-		//m_connector.set_send_low_watermark(opt.get_send_low_watermark());
-		//m_connector.set_recv_low_watermark(opt.get_recv_low_watermark());
+		try
+		{
+			m_connector.set_no_delay(opt.no_delay());
+			m_connector.set_send_capacity(opt.send_capacity());
+			m_connector.set_send_buffer_size(opt.send_buffer_size());
+			m_connector.set_recv_buffer_size(opt.recv_buffer_size());
+			//m_connector.set_send_low_watermark(opt.send_low_watermark());
+			//m_connector.set_recv_low_watermark(opt.recv_low_watermark());
+		}
+		catch (std::exception& e)
+		{
+			ECO_FUNC(error) < id() <= e.what();
+		}
 	}
 
 	// raw io socket related by the net framework: exp boost::asio\libevent.
@@ -181,11 +176,11 @@ public:
 	}
 
 	// tcp peer connection state.
-	inline TcpState& state()
+	inline TcpState& get_state()
 	{
 		return m_state;
 	}
-	inline const TcpState& get_state() const
+	inline const TcpState& state() const
 	{
 		return m_state;
 	}
@@ -208,9 +203,9 @@ public:
 	}
 
 	// ready to receive data head.
-	inline void async_connect(IN const Address& addr)
+	inline bool async_connect(IN const Address& addr)
 	{
-		m_connector.async_connect(addr);
+		return m_connector.async_connect(addr);
 	}
 
 	// async recv.
@@ -220,7 +215,7 @@ public:
 	inline void async_recv_by_client()
 	{
 		m_state.set_ready();
-		m_handler->m_on_connect(nullptr);
+		m_handler->m_on_connect(false);
 		async_recv();
 	}
 	
@@ -251,17 +246,17 @@ public:
 		}
 	}
 
-	inline void send(IN const MessageMeta& meta, IN Protocol& prot)
+	inline void send(IN const MessageMeta& meta)
 	{
-		eco::Error e;
 		eco::String data;
 		uint32_t start = 0;
-		if (!prot.encode(data, start, meta, e))
+		if (!m_protocol->encode(data, start, meta))
 		{
-			ECO_ERROR << NetLog(id(), __func__,
-				meta.m_session_id) <= e;
+			ECO_ERROR << NetLog(id(), __func__,	meta.m_session_id)
+				<= eco::this_thread::error();
 			return;
 		}
+		m_state.set_self_live(true);
 		send(data, start);
 	}
 
@@ -272,7 +267,12 @@ public:
 		{
 			eco::String data;
 			m_protocol->encode_heartbeat(data);
-			send(data, 0);
+			// don't call send(data, start), because of it will
+			// set "state.set_self_live(true);"
+			if (m_state.connected())
+			{
+				m_connector.async_write(data, 0);
+			}
 		}
 	}
 	// send live heartbeat.
@@ -283,7 +283,7 @@ public:
 			// during send tick, if connection itself send a message.
 			// indicated it is alive, and no need to send heartbeat.
 			if (get_state().self_live())
-				state().set_self_live(false);
+				get_state().set_self_live(false);
 			else
 				send_heartbeat();
 		}
@@ -292,7 +292,6 @@ public:
 	// close peer.
 	inline bool close()
 	{
-		m_data_state.none();
 		if (!m_state.closed())
 		{
 			// 1.close state.
@@ -304,16 +303,21 @@ public:
 			// 3.clear data by the release function in acceptor thread.
 			// this is for protect user connection data safe release.
 			// release();
+
+			// 4.cancel timer.
+			m_timer_recv.cancel();
+			m_timer_send.cancel();
+			ECO_FUNC(debug) < id();
 			return true;
 		}
 		return false;
 	}
 
 	// close peer and notify peer handler.
-	inline bool close_and_notify(const eco::Error& e, IN bool erase_peer)
+	inline bool close_and_notify()
 	{
 		if (!close()) return false;
-		m_handler->m_on_close(id(), e, erase_peer);
+		m_handler->m_on_close(this);
 		return true;
 	}
 
@@ -345,19 +349,16 @@ public:
 
 	// when peer has connected to server.(tcp client)
 	virtual void on_connect(
-		IN bool is_connected,
-		IN const eco::Error* error) override;
+		IN bool err) override;
 
 	// when the peer has received data.
 	virtual void on_read(
 		IN MessageHead& head,
-		IN eco::String& data,
-		IN const eco::Error* error) override;
+		IN eco::String& data, bool err) override;
 
 	// the peer has send data.
 	virtual void on_write(
-		IN const uint32_t write_size,
-		IN const eco::Error* error) override;
+		IN uint32_t size, bool err) override;
 };
 
 

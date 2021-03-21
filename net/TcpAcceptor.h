@@ -37,11 +37,10 @@ class TcpAcceptor
 public:
 	// network server.
 	void set_server(TcpServer& server);
+	TcpServer& server();
 
 	// register tcp acceptor handler.
-	typedef std::function<void(
-		IN TcpPeer::ptr& peer,
-		IN const eco::Error* error)> TcpOnAccept;
+	typedef std::function<void(TcpPeer::ptr& peer, bool error)> TcpOnAccept;
 	void register_on_accept(IN TcpOnAccept handler);
 
 	// get io service

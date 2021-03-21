@@ -43,15 +43,15 @@ public:
 	Protocol* protocol_latest() const;
 
 public:
-	inline bool on_decode_head(
+	inline eco::Result on_decode_head(
 		MessageHead& head, const char* buff, uint32_t size) const
 	{
-		/*@ check the message edge.
+		/*@ eco::fail: check the message edge.
 		1.if message bytes not enough to check, need read more bytes.
 		--A.version bytes not enough.
 		--B.size bytes not enough.
 
-		2.return false:
+		2.eco::error:
 		if message is error message:
 		--A.category invalid.
 		--B.get protocol invalid by version.
@@ -64,35 +64,42 @@ public:
 
 		// #.get message version & category.
 		Protocol* prot = protocol_latest();
-		if (!prot->decode_version(head, buff, size))		// (1.A)
-		{
-			return false;
-		}
+		auto res = prot->decode_version(head, buff, size);	// (1.A)
+		if (res != eco::ok) return res;
+
 		if (!is_heartbeat(head.m_category) &&
 			!eco::has(head.m_category, category_message))	// (2.A)
 		{
-			ECO_THROW(e_message_category) << "category error: "
-				<< head.m_category;
+			ECO_THIS_ERROR(e_message_category)
+				< "category error: " < head.m_category;
+			return eco::error;
 		}
 
 		// #.get protocol by head version.
 		head.m_protocol = protocol(head.m_version);
 		if (head.m_protocol == nullptr)	// (2.B)
 		{
-			ECO_THROW(e_protocol_invalid) << "protocol ver error: "
-				<< head.m_version;
+			ECO_THIS_ERROR(e_protocol_invalid)
+				< "protocol ver error: " < head.m_version;
+			return eco::error;
 		}
 		// message size = head_size + size_size + data_size.
 		if (!head.m_protocol->decode_size(head, buff, size))	// (1.B)
 		{
-			return false;
+			return eco::fail;
+		}
+		if (head.message_size() > size)							// (1.B)
+		{
+			return eco::fail;
 		}
 		if (head.message_size() > head.m_protocol->max_size())	// (2.C)
 		{
-			ECO_THROW(e_message_overszie) << "message size over max size: "
-				<< head.message_size() < '>' < prot->max_size();
+			ECO_THIS_ERROR(e_message_overszie)
+				< "message size over max size: "
+				< head.message_size() < '>' < prot->max_size();
+			return eco::error;
 		}
-		return true;		// (3.A/B)
+		return eco::ok;		// (3.A/B)
 	}
 };
 

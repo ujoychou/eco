@@ -56,49 +56,49 @@ public:
 
 	// data source type.
 	void set_type(IN const SourceType);
-	const SourceType get_type() const;
-	SourceType type();
+	const SourceType type() const;
+	SourceType& get_type();
 	Address& type(IN const SourceType);
 	// type string: mysql/sqlite/.
 	void set_type(IN const char* type);
-	const char* get_type_name() const;
+	const char* type_name() const;
 
 	// data source char set.
 	void set_charset(IN const Charset = charset_gbk);
-	const Charset get_charset() const;
-	Charset charset();
+	const Charset charset() const;
+	Charset& get_charset();
 	Address& charset(IN const Charset = charset_gbk);
 	void set_charset(IN const char* v = "gbk");
 
 	// host name
 	void set_name(IN const char*);
-	const char* get_name() const;
+	const char* name() const;
 	Address& name(IN const char*);
 
 	// host ip
 	void set_host(IN const char*);
-	const char* get_host() const;
+	const char* host() const;
 	Address& host(IN const char*);
 
 	// port
 	void set_port(IN const uint32_t);
-	uint32_t port();
-	const uint32_t get_port() const;
+	uint32_t& get_port();
+	const uint32_t port() const;
 	Address& port(IN const uint32_t);
 
 	// database
 	void set_database(IN const char*);
-	const char* get_database() const;
+	const char* database() const;
 	Address& database(IN const char*);
 
 	// user
 	void set_user(IN const char*);
-	const char* get_user() const;
+	const char* user() const;
 	Address& user(IN const char*);
 
 	// password
 	void set_password(IN const char*);
-	const char* get_password() const;
+	const char* password() const;
 	Address& password(IN const char*);
 };
 

@@ -38,8 +38,8 @@ public:
 	void init(IN const char* text, IN const uint32_t size);
 
 	/*@ get import file by index.*/
-	uint32_t get_import_file_size() const;
-	const char* get_import_file(IN uint32_t index) const;
+	uint32_t import_file_size() const;
+	const char* import_file(IN uint32_t index) const;
 
 	/*@ find key return true, else false.*/
 	bool find(

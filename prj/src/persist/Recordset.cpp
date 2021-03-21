@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/persist/Recordset.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <vector>
 
 
 namespace eco{;
@@ -14,7 +13,7 @@ public:
 
 	void init(Record&){}
 };
-ECO_SHARED_IMPL(Record);
+ECO_OBJECT_IMPL(Record);
 ////////////////////////////////////////////////////////////////////////////////
 void Record::reserve(IN const size_t size)
 {
@@ -51,7 +50,7 @@ public:
 
 	void init(Recordset&){}
 };
-ECO_SHARED_IMPL(Recordset);
+ECO_OBJECT_IMPL(Recordset);
 ////////////////////////////////////////////////////////////////////////////////
 void Recordset::reserve(IN const size_t size)
 {
@@ -64,7 +63,7 @@ const size_t Recordset::size() const
 Record& Recordset::add_item()
 {
 	Record item;
-	impl().m_record_set.push_back(item);
+	impl().m_record_set.push_back(std::move(item));
 	return impl().m_record_set.back();
 }
 Record& Recordset::at(IN const size_t index)

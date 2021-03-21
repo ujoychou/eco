@@ -165,28 +165,22 @@ const char* Integer<int_t>::s_zero = s_digits + 9;
 class Double
 {
 public:
-	Double(double v, int precision = -1)
+	inline Double(double v, int precision = -1, bool percent = false)
 	{
-		m_size = convert(m_buf, v, precision, false);
-	}
-
-	Double(double v, int precision, bool percent)
-	{
-		m_size = convert(m_buf, v, precision, percent);
+		m_size = (uint32_t)convert(m_buf, v, precision, percent);
 	}
 
 	static int convert(char buf[], double v, int precision, bool percent)
 	{
-		if (percent) {
-			v *= 100;
-		}
+		if (percent) v *= 100;
 
-		int size = 0;
-		if (precision > -1) {
-			size = snprintf(buf, 64, "%.*f", precision, v);
-		}
-		else {
-			size = snprintf(buf, 64, "%f", v);
+		int size = (precision > -1)
+			? snprintf(buf, 64, "%.*f", precision, v)
+			: snprintf(buf, 64, "%f", v);
+		if (size == -1)		// convert fail, set buf empty.
+		{
+			size = 0;
+			buf[size] = '\0';
 		}
 
 		if (percent)
@@ -208,14 +202,14 @@ public:
 		return m_buf;
 	}
 
-	inline int size() const
+	inline uint32_t size() const
 	{
 		return m_size;
 	}
 
 private:
 	char m_buf[64];
-	int m_size;
+	uint32_t m_size;
 };
 ////////////////////////////////////////////////////////////////////////////////
 inline int64_t atoi64(IN const char* sv)
@@ -341,19 +335,19 @@ inline void cast(OUT uint64_t& v, IN const char* sv, IN const uint32_t len)
 {
 #ifdef ECO_WIN
 	char* end = nullptr;
-	v = _strtoui64(get_char<32>(sv, len), &end, 10);
+	v = _strtoui64(get_char<24>(sv, len), &end, 10);
 #else
 	char* end = nullptr;
-	v = strtoull(get_char<32>(sv, len).str, &end, 10);
+	v = strtoull(get_char<24>(sv, len).str, &end, 10);
 #endif
 }
 inline void cast(OUT int64_t& v, IN const char* sv, IN const uint32_t len)
 {
 #ifdef ECO_WIN
-	v = _atoi64(get_char<32>(sv, len));
+	v = _atoi64(get_char<24>(sv, len));
 #else
 	char* end = nullptr;
-	v = strtoll(get_char<32>(sv, len).str, &end, 10);
+	v = strtoll(get_char<24>(sv, len).str, &end, 10);
 #endif
 }
 inline void cast(OUT int16_t& v, IN const char* sv, IN const uint32_t len)

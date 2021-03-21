@@ -66,7 +66,7 @@ public:
 
 		// ok flag.
 		_no = 0x0000,
-		_ok = 0x1000,
+		_ok = _a,
 	};
 
 public:
@@ -74,13 +74,9 @@ public:
 
 	inline State(IN const uint32_t v);
 
-	inline void none();
+	inline bool none1() const;
 
-	inline void ok();
-
-	inline bool is_none() const;
-
-	inline bool is_ok() const;
+	inline bool ok1() const;
 
 	// set ok state.
 	inline void set_ok(IN bool is);
@@ -133,21 +129,13 @@ State::State(IN const uint32_t v) : m_value(v)
 {}
 void State::set_ok(IN bool is)
 {
-	m_value = is ? _ok : _no;
+	is ? add(_ok) : del(_ok);
 }
-void State::none()
-{
-	m_value = _no;
-}
-bool State::is_none() const
+bool State::none1() const
 {
 	return (m_value == _no);
 }
-void State::ok()
-{
-	add(_ok);
-}
-bool State::is_ok() const
+bool State::ok1() const
 {
 	return has(_ok);
 }

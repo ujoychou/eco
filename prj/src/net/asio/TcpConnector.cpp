@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/net/TcpConnector.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <mutex>
 #include <deque>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -106,7 +105,7 @@ public:
 
 public:
 	std::deque<String> m_deque;
-	std::mutex m_mutex;
+	std_mutex m_mutex;
 	uint32_t m_capacity;
 	MessageMonitor m_monitor;
 };
@@ -154,26 +153,27 @@ public:
 		return m_socket.remote_endpoint().port();
 	}
 
-	inline void async_connect(IN const Address& addr)
+	inline bool async_connect(IN const Address& addr)
 	{
 		using namespace boost::asio::ip;
 		close();
 
 		// parse server address.
 		boost::system::error_code ec;
-		tcp::resolver resolver(m_socket.get_io_service());
-		tcp::resolver::query query(
-			addr.get_host_name(), addr.get_service_name());
+		tcp::resolver resolver(*m_worker->get_io_service());
+		tcp::resolver::query query(addr.host_name(), addr.service_name());
 		tcp::resolver::iterator it_endpoint = resolver.resolve(query, ec);
 		if (ec)		// parse addr error.
 		{
-			ECO_THROW(ec.value()) << ec.message();
+			ECO_THIS_ERROR(ec.value()) < ec.message();
+			return false;
 		}
 
 		// connect to server.
 		boost::asio::async_connect(m_socket, it_endpoint,
 			boost::bind(&Impl::on_connect, this, m_peer_observer,
 			boost::asio::placeholders::error));
+		return true;
 	}
 
 	inline void on_connect(
@@ -189,12 +189,15 @@ public:
 
 		if (ec) 
 		{
-			eco::Error e(ec.value(), ec.message());
-			m_handler->on_connect(false, &e);
+			ECO_THIS_ERROR(ec.value()) < ec.message();
+			m_handler->on_connect(true);
 			return;
 		}
-		m_handler->on_connect(true, nullptr);
+		m_handler->on_connect(false);
 	}
+
+	// release connector data.
+	inline void release();
 
 	// close socket.
 	inline void close()
@@ -202,6 +205,7 @@ public:
 		boost::system::error_code ec;
 		m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 		m_socket.close(ec);
+		release();	// release buffer when client closed.
 	}
 
 public:
@@ -214,9 +218,9 @@ public:
 		}
 	}
 
-	inline void close_error_peer(MessageHead& head, String& buff, Error& e)
+	inline void close_error_peer(MessageHead& head, String& buff)
 	{
-		m_handler->on_read(head, buff, &e);
+		m_handler->on_read(head, buff, true);
 	}
 
 	inline std::shared_ptr<TcpPeer> check_error(
@@ -231,8 +235,8 @@ public:
 		}
 		if (ec)		// error tcp peer will close this socket.
 		{
-			eco::Error e(ec.value(), ec.message());
-			close_error_peer(MessageHead(), m_buffer, e);
+			ECO_THIS_ERROR(ec.value()) < ec.message();
+			close_error_peer(MessageHead(), m_buffer);
 			peer.reset();
 		}
 		return peer;
@@ -280,7 +284,7 @@ public:
 		{
 			eco::String buff(m_buffer.c_str(), pos + delimiter.size());
 			m_buffer.erase(0, buff.size());
-			m_handler->on_read(MessageHead(), buff, nullptr);
+			m_handler->on_read(MessageHead(), buff, false);
 		}
 	}
 
@@ -325,19 +329,18 @@ public:
 		for (uint32_t start = 0; true; )
 		{
 			uint32_t size = m_buffer.size() - start;
-			if (size == 0)	// (3/4)
+			if (size == 0)				// (3/4)
 			{
 				m_buffer.clear();
 				break;
 			}
 
-			eco::Error e;
 			MessageHead head;
-			auto result = peer->impl().on_decode_head(
-				head, &m_buffer[start], size, e);
+			eco::Result result = peer->impl().on_decode_head(
+				head, &m_buffer[start], size);
 			if (result == eco::error)	// (6/7)
 			{
-				close_error_peer(head, m_buffer, e);
+				close_error_peer(head, m_buffer);
 				return;
 			}
 			if (result == eco::fail)	// (5) uncomplete
@@ -348,7 +351,7 @@ public:
 			}
 			// (3/4)
 			eco::String buff(&m_buffer[start], head.message_size());
-			m_handler->on_read(head, buff, nullptr);	// notify handler
+			m_handler->on_read(head, buff, false);	// notify handler
 			start += head.message_size();	// check tcp size of next messge.
 		}
 		
@@ -396,11 +399,11 @@ public:
 		{
 			if (ec)
 			{
-				eco::Error e(ec.value(), ec.message());
-				m_handler->on_write((uint32_t)bytes_transferred, &e);
+				ECO_THIS_ERROR(ec.value()) < ec.message();
+				m_handler->on_write((uint32_t)bytes_transferred, true);
 				return;
 			}
-			m_handler->on_write((uint32_t)bytes_transferred, nullptr);
+			m_handler->on_write((uint32_t)bytes_transferred, false);
 		}
 	}
 
@@ -408,7 +411,7 @@ public:
 	inline void async_write(IN eco::String& data, IN const uint32_t start)
 	{
 		// if io is idle, send message.
-		std::lock_guard<std::mutex> lock(m_send_msg.m_mutex);
+		std_lock_guard lock(m_send_msg.m_mutex);
 		m_send_msg.push_back(data, start, get_id());
 		if (m_send_msg.m_deque.size() == 1)
 		{
@@ -431,14 +434,14 @@ public:
 		{
 			if (ec)
 			{
-				eco::Error e(ec.message(), ec.value());
-				m_handler->on_write((uint32_t)bytes_transferred, &e);
+				ECO_THIS_ERROR(ec.value()) < ec.message();
+				m_handler->on_write((uint32_t)bytes_transferred);
 				return;
 			}
-			m_handler->on_write((uint32_t)bytes_transferred, nullptr);
+			m_handler->on_write((uint32_t)bytes_transferred);
 
 			// release sended data and send next msg.
-			std::lock_guard<std::mutex> lock(m_send_msg.m_mutex);
+			std_lock_guard lock(m_send_msg.m_mutex);
 			m_send_msg.m_deque.pop_front();
 			if (!m_send_msg.m_deque.empty())
 			{
@@ -556,11 +559,10 @@ void TcpConnector::register_handler(
 {
 	impl().m_handler = &handler;
 	impl().m_peer_observer = peer;
-	impl().m_buffer.clear();
 }
-void TcpConnector::async_connect(IN const Address& addr)
+bool TcpConnector::async_connect(IN const Address& addr)
 {
-	impl().async_connect(addr);
+	return impl().async_connect(addr);
 }
 void TcpConnector::close()
 {
@@ -588,14 +590,23 @@ void TcpConnector::set_send_capacity(IN int capacity)
 	impl().m_send_msg.set_capacity(capacity);
 #endif
 }
+void TcpConnector::Impl::release()
+{
+	/*@ clear buffer when:
+	1.tcp server close and destroy tcp peer:
+	clear buffer by (TcpPeer.release in TcpAccepter)
+	2.tcp client close tcp peer: (fix bugs)
+	clear buffer by (TcpPeer.close -> TcpConnector.close)
+	*/
+#ifndef ECO_WIN
+	m_send_msg.reset();
+#endif
+	m_buffer.clear();
+}
 void TcpConnector::release()
 {
-#ifndef ECO_WIN
-	impl().m_send_msg.reset();
-#endif
-	impl().m_buffer.clear();
+	impl().release();
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 eco::String TcpConnector::ip() const

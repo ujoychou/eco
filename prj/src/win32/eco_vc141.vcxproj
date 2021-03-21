@@ -70,31 +70,33 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(ProjectDir)..\..\obj\vc141\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(ProjectDir)..\..\..\..\lib_vc141\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\obj\lib_vc141\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\..\lib\eco3.1.0\lib_vc141\$(Configuration)\</OutDir>
+    <TargetName>eco3.1.0</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(ProjectDir)..\..\..\..\lib_vc141_x64\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\obj\vc141_x64\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\..\lib\eco3.1.0\lib_vc141_x64\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\obj\lib_vc141_x64\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(ProjectDir)..\..\obj\vc141\$(ProjectName)\$(Configuration)\</IntDir>
-    <OutDir>$(ProjectDir)..\..\..\..\lib_vc141\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\obj\lib_vc141\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\..\lib\eco3.1.0\lib_vc141\$(Configuration)\</OutDir>
+    <TargetName>eco3.1.0</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(ProjectDir)..\..\..\..\lib_vc141_x64\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\obj\vc141_x64\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\..\lib\eco3.1.0\lib_vc141_x64\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\obj\lib_vc141_x64\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ECO_EXPORT;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ECO_EXPORT;WIN32;BOOST_BIND_GLOBAL_PLACEHOLDERS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\api;$(SolutionDir)..\..\..\lib\eco3.1.0;$(SolutionDir)..\..\..\com\zlib1.2.11;$(SolutionDir)..\..\..\com\boost1.74;$(SolutionDir)..\..\..\com\protobuf3.5.1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996;4146;</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -103,8 +105,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\..\..\contrib\zlib\lib_vc141;$(ProjectDir)..\..\..\..\..\..\..\contrib\boost\lib_vc141;$(ProjectDir)..\..\..\..\..\..\..\contrib\google\protobuf\lib_vc141\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\com\boost1.74\lib_vc141;$(SolutionDir)..\..\..\com\zlib1.2.11\lib_vc141;$(SolutionDir)..\..\..\com\protobuf3.5.1\lib_vc141\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImportLibrary>$(OutDir)eco3.1.0.lib</ImportLibrary>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -119,8 +122,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ECO_EXPORT;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ECO_EXPORT;WIN32;BOOST_BIND_GLOBAL_PLACEHOLDERS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\api;$(SolutionDir)..\..\..\lib\eco3.1.0;$(SolutionDir)..\..\..\com\zlib1.2.11;$(SolutionDir)..\..\..\com\boost1.74;$(SolutionDir)..\..\..\com\protobuf3.5.1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996;4146;</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -129,7 +132,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\..\..\contrib\zlib\lib_vc141_x64;$(ProjectDir)..\..\..\..\..\..\..\contrib\boost\lib_vc141_x64;$(ProjectDir)..\..\..\..\..\..\..\contrib\google\protobuf\lib_vc141_x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\com\boost1.74\lib_vc141_x64;$(SolutionDir)..\..\..\com\zlib1.2.11\lib_vc141_x64;$(SolutionDir)..\..\..\com\protobuf3.5.1\lib_vc141_x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -147,8 +150,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>ECO_EXPORT;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ECO_EXPORT;WIN32;BOOST_BIND_GLOBAL_PLACEHOLDERS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\api;$(SolutionDir)..\..\..\lib\eco3.1.0;$(SolutionDir)..\..\..\com\zlib1.2.11;$(SolutionDir)..\..\..\com\boost1.74;$(SolutionDir)..\..\..\com\protobuf3.5.1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996;4146;</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -158,8 +161,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\..\..\contrib\zlib\lib_vc141;$(ProjectDir)..\..\..\..\..\..\..\contrib\boost\lib_vc141;$(ProjectDir)..\..\..\..\..\..\..\contrib\google\protobuf\lib_vc141\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\com\boost1.74\lib_vc141;$(SolutionDir)..\..\..\com\zlib1.2.11\lib_vc141;$(SolutionDir)..\..\..\com\protobuf3.5.1\lib_vc141\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImportLibrary>$(OutDir)eco3.1.0.lib</ImportLibrary>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -176,8 +180,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>ECO_EXPORT;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\;$(ProjectDir)..\..\..\..\;$(ProjectDir)..\..\..\..\..\api;$(ProjectDir)..\..\..\..\..\..\..\contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ECO_EXPORT;WIN32;BOOST_BIND_GLOBAL_PLACEHOLDERS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\api;$(SolutionDir)..\..\..\lib\eco3.1.0;$(SolutionDir)..\..\..\com\zlib1.2.11;$(SolutionDir)..\..\..\com\boost1.74;$(SolutionDir)..\..\..\com\protobuf3.5.1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>precheader.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4996;4146;</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -187,7 +191,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\..\..\..\contrib\zlib\lib_vc141_x64;$(ProjectDir)..\..\..\..\..\..\..\contrib\boost\lib_vc141_x64;$(ProjectDir)..\..\..\..\..\..\..\contrib\google\protobuf\lib_vc141_x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\com\boost1.74\lib_vc141_x64;$(SolutionDir)..\..\..\com\zlib1.2.11\lib_vc141_x64;$(SolutionDir)..\..\..\com\protobuf3.5.1\lib_vc141_x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -199,32 +203,42 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\codec\base64.cpp">
+    <ClCompile Include="..\..\..\..\lib\eco3.1.0\eco\eco\Eco.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\..\codec\Codec.cpp" />
-    <ClCompile Include="..\..\..\codec\md5.cpp">
+    <ClCompile Include="..\..\..\..\lib\eco3.1.0\eco\ops\Monitor.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\..\codec\sha1.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    <ClCompile Include="..\codec\base64.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\..\..\proto\Object.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\codec\Codec.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\codec\md5.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\Being.cpp" />
+    <ClCompile Include="..\codec\sha1.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\data_time\DateTime.cpp" />
     <ClCompile Include="..\Eco.cpp" />
     <ClCompile Include="..\App.cpp">
@@ -257,12 +271,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\net\asio\TcpConnector.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\net\asio\IoTimer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -372,174 +380,22 @@
     <ClCompile Include="..\sys\WinConsoleEvent.cpp" />
     <ClCompile Include="..\sys\WinDump.cpp" />
     <ClCompile Include="..\test\Timing.cpp" />
+    <ClCompile Include="..\thread\Error.cpp" />
     <ClCompile Include="..\thread\Thread.cpp" />
-    <ClCompile Include="..\thread\Timer.cpp" />
     <ClCompile Include="..\Type.cpp" />
     <ClCompile Include="..\web\Html.cpp" />
     <ClCompile Include="..\web\Json.cpp" />
     <ClCompile Include="..\xml\Reader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\Algorithm.h" />
-    <ClInclude Include="..\..\..\Any.h" />
-    <ClInclude Include="..\..\..\App.h" />
-    <ClInclude Include="..\..\..\Being.h" />
-    <ClInclude Include="..\..\..\Cast.h" />
-    <ClInclude Include="..\..\..\cmd\Class.h" />
-    <ClInclude Include="..\..\..\cmd\Command.h" />
-    <ClInclude Include="..\..\..\cmd\Context.h" />
-    <ClInclude Include="..\..\..\cmd\Engine.h" />
-    <ClInclude Include="..\..\..\cmd\Group.h" />
-    <ClInclude Include="..\..\..\codec\Codec.h" />
-    <ClInclude Include="..\..\..\codec\Ip.h" />
-    <ClInclude Include="..\..\..\Config.h" />
-    <ClInclude Include="..\..\..\date_time\Date.h" />
-    <ClInclude Include="..\..\..\date_time\DateTime.h" />
-    <ClInclude Include="..\..\..\date_time\Time.h" />
-    <ClInclude Include="..\..\..\DllObject.h" />
-    <ClInclude Include="..\..\..\Eco.h" />
-    <ClInclude Include="..\..\..\Export.h" />
-    <ClInclude Include="..\..\..\ExportApi.h" />
-    <ClInclude Include="..\..\..\filesystem\File.h" />
-    <ClInclude Include="..\..\..\filesystem\Operations.h" />
-    <ClInclude Include="..\..\..\filesystem\Path.h" />
-    <ClInclude Include="..\..\..\HeapOperators.h" />
-    <ClInclude Include="..\..\..\Implement.h" />
-    <ClInclude Include="..\..\..\loc\Locale.h" />
-    <ClInclude Include="..\..\..\log\Core.h" />
-    <ClInclude Include="..\..\..\log\Log.h" />
-    <ClInclude Include="..\..\..\log\Pusher.h" />
-    <ClInclude Include="..\..\..\log\Type.h" />
-    <ClInclude Include="..\..\..\media\Media.h" />
-    <ClInclude Include="..\..\..\Memory.h" />
-    <ClInclude Include="..\..\..\MemoryPool.h" />
-    <ClInclude Include="..\..\..\meta\Meta.h" />
-    <ClInclude Include="..\..\..\meta\Stamp.h" />
-    <ClInclude Include="..\..\..\codec\base64.h" />
-    <ClInclude Include="..\..\..\codec\md5.h" />
-    <ClInclude Include="..\..\..\codec\NullByteCoder.h" />
-    <ClInclude Include="..\..\..\codec\sha1.h" />
-    <ClInclude Include="..\..\..\codec\Zlib.h" />
-    <ClInclude Include="..\..\..\codec\ZlibFlate.h" />
-    <ClInclude Include="..\..\..\codec\ZlibFlateUnk.h" />
-    <ClInclude Include="..\..\..\net\Address.h" />
-    <ClInclude Include="..\..\..\net\asio\IoTimer.h" />
-    <ClInclude Include="..\..\..\net\asio\Worker.h" />
-    <ClInclude Include="..\..\..\net\asio\WorkerPool.h" />
-    <ClInclude Include="..\..\..\net\Context.h" />
-    <ClInclude Include="..\..\..\net\Ecode.h" />
-    <ClInclude Include="..\..\..\net\IoTimer.h" />
-    <ClInclude Include="..\..\..\net\Log.h" />
-    <ClInclude Include="..\..\..\net\Net.h" />
-    <ClInclude Include="..\..\..\net\ProtobufHandler.h" />
-    <ClInclude Include="..\..\..\net\protocol\Check.h" />
-    <ClInclude Include="..\..\..\net\protocol\Codec.h" />
-    <ClInclude Include="..\..\..\net\protocol\Crypt.h" />
-    <ClInclude Include="..\..\..\net\protocol\ProtobufCodec.h" />
-    <ClInclude Include="..\..\..\net\protocol\Protocol.h" />
-    <ClInclude Include="..\..\..\net\protocol\ProtocolFamily.h" />
-    <ClInclude Include="..\..\..\net\protocol\ProtocolVersion.h" />
-    <ClInclude Include="..\..\..\net\protocol\StringCodec.h" />
-    <ClInclude Include="..\..\..\net\protocol\TcpProtocol.h" />
-    <ClInclude Include="..\..\..\net\protocol\TcpProtocol2.h" />
-    <ClInclude Include="..\..\..\net\protocol\WebSocketProtocol.h" />
-    <ClInclude Include="..\..\..\net\protocol\WebSocketShakeHand.h" />
-    <ClInclude Include="..\..\..\net\RequestHandler.h" />
-    <ClInclude Include="..\..\..\net\StringHandler.h" />
-    <ClInclude Include="..\..\..\net\Subscriber.h" />
-    <ClInclude Include="..\..\..\net\TcpAcceptor.h" />
-    <ClInclude Include="..\..\..\net\TcpClient.h" />
-    <ClInclude Include="..\..\..\net\TcpConnection.h" />
-    <ClInclude Include="..\..\..\net\TcpConnector.h" />
-    <ClInclude Include="..\..\..\net\TcpDispatch.h" />
-    <ClInclude Include="..\..\..\net\TcpOption.h" />
-    <ClInclude Include="..\..\..\net\TcpPeer.h" />
-    <ClInclude Include="..\..\..\net\TcpServer.h" />
-    <ClInclude Include="..\..\..\net\TcpSession.h" />
-    <ClInclude Include="..\..\..\net\TcpState.h" />
-    <ClInclude Include="..\..\..\net\Worker.h" />
-    <ClInclude Include="..\..\..\Object.h" />
-    <ClInclude Include="..\..\..\persist\Address.h" />
-    <ClInclude Include="..\..\..\persist\CsvSource.h" />
-    <ClInclude Include="..\..\..\persist\Database.h" />
-    <ClInclude Include="..\..\..\persist\DatabaseConfig.h" />
-    <ClInclude Include="..\..\..\persist\JoinMapping.h" />
-    <ClInclude Include="..\..\..\persist\Json.h" />
-    <ClInclude Include="..\..\..\persist\Model.h" />
-    <ClInclude Include="..\..\..\persist\MySql.h" />
-    <ClInclude Include="..\..\..\persist\ObjectMapping.h" />
-    <ClInclude Include="..\..\..\persist\Persist.h" />
-    <ClInclude Include="..\..\..\persist\PropertyMapping.h" />
-    <ClInclude Include="..\..\..\persist\Recordset.h" />
-    <ClInclude Include="..\..\..\persist\Sqlite.h" />
-    <ClInclude Include="..\..\..\process\Process.h" />
-    <ClInclude Include="..\..\..\Project.h" />
-    <ClInclude Include="..\..\..\proto\Object.pb.h" />
-    <ClInclude Include="..\..\..\proto\Proto.h" />
-    <ClInclude Include="..\..\..\RtObject.h" />
-    <ClInclude Include="..\..\..\RxApp.h" />
-    <ClInclude Include="..\..\..\service\Cluster.h" />
-    <ClInclude Include="..\..\..\service\Deployment.h" />
-    <ClInclude Include="..\..\..\service\dev\Cluster.h" />
-    <ClInclude Include="..\..\..\service\dev\Ecode.h" />
-    <ClInclude Include="..\..\..\service\dev\Horizontal.h" />
-    <ClInclude Include="..\..\..\service\DidProtocol.h" />
-    <ClInclude Include="..\..\..\service\Machine.h" />
-    <ClInclude Include="..\..\..\service\Service.h" />
-    <ClInclude Include="..\..\..\service\ServiceRuntime.h" />
-    <ClInclude Include="..\..\..\Store.h" />
-    <ClInclude Include="..\..\..\sys\Sys.h" />
-    <ClInclude Include="..\..\..\sys\Win.h" />
-    <ClInclude Include="..\..\..\sys\WinAutoHandler.h" />
-    <ClInclude Include="..\..\..\sys\WinConsoleEvent.h" />
-    <ClInclude Include="..\..\..\sys\WinDump.h" />
-    <ClInclude Include="..\..\..\test\Case.h" />
-    <ClInclude Include="..\..\..\test\Check.h" />
-    <ClInclude Include="..\..\..\test\Context.h" />
-    <ClInclude Include="..\..\..\test\Object.h" />
-    <ClInclude Include="..\..\..\test\Result.h" />
-    <ClInclude Include="..\..\..\test\Runner.h" />
-    <ClInclude Include="..\..\..\test\Scene.h" />
-    <ClInclude Include="..\..\..\test\Suite.h" />
-    <ClInclude Include="..\..\..\test\Testing.h" />
-    <ClInclude Include="..\..\..\test\Timing.h" />
-    <ClInclude Include="..\..\..\test\Trace.h" />
-    <ClInclude Include="..\..\..\thread\Atomic.h" />
-    <ClInclude Include="..\..\..\thread\AtomicImpl.h" />
-    <ClInclude Include="..\..\..\thread\AutoRef.h" />
-    <ClInclude Include="..\..\..\thread\Bobject.h" />
-    <ClInclude Include="..\..\..\thread\Btask.h" />
-    <ClInclude Include="..\..\..\thread\CallOnce.h" />
-    <ClInclude Include="..\..\..\thread\ConditionVariable.h" />
-    <ClInclude Include="..\..\..\thread\detail\ConditionVariableWin.h" />
-    <ClInclude Include="..\..\..\thread\detail\MutexWin.h" />
-    <ClInclude Include="..\..\..\thread\DispatchServer.h" />
-    <ClInclude Include="..\..\..\thread\Error.h" />
-    <ClInclude Include="..\..\..\thread\ExclusiveData.h" />
-    <ClInclude Include="..\..\..\thread\ExclusiveMonitor.h" />
-    <ClInclude Include="..\..\..\thread\ExclusiveWorker.h" />
-    <ClInclude Include="..\..\..\thread\Index.h" />
-    <ClInclude Include="..\..\..\thread\Map.h" />
-    <ClInclude Include="..\..\..\thread\MessageQueue.h" />
-    <ClInclude Include="..\..\..\thread\MessageServer.h" />
-    <ClInclude Include="..\..\..\thread\Monitor.h" />
-    <ClInclude Include="..\..\..\thread\Mutex.h" />
-    <ClInclude Include="..\..\..\thread\Set.h" />
-    <ClInclude Include="..\..\..\thread\State.h" />
-    <ClInclude Include="..\..\..\thread\Task.h" />
-    <ClInclude Include="..\..\..\thread\TaskServer.h" />
-    <ClInclude Include="..\..\..\thread\Thread.h" />
-    <ClInclude Include="..\..\..\thread\Timer.h" />
-    <ClInclude Include="..\..\..\thread\TimerWheel.h" />
-    <ClInclude Include="..\..\..\thread\topic\Role.h" />
-    <ClInclude Include="..\..\..\thread\topic\Subscription.h" />
-    <ClInclude Include="..\..\..\thread\topic\Topic.h" />
-    <ClInclude Include="..\..\..\thread\topic\TopicServer.h" />
-    <ClInclude Include="..\..\..\Type.h" />
-    <ClInclude Include="..\..\..\Type.inl" />
-    <ClInclude Include="..\..\..\web\Html.h" />
-    <ClInclude Include="..\..\..\web\Json.h" />
-    <ClInclude Include="..\..\..\xml\Reader.h" />
+    <ClInclude Include="..\..\..\..\lib\eco3.1.0\eco\eco\Eco.pb.h" />
+    <ClInclude Include="..\..\..\..\lib\eco3.1.0\eco\eco\Proto.h" />
+    <ClInclude Include="..\..\..\..\lib\eco3.1.0\eco\ops\Monitor.pb.h" />
+    <ClInclude Include="..\..\..\..\lib\eco3.1.0\eco\ops\Ops.h" />
+    <ClInclude Include="..\codec\base64.h" />
+    <ClInclude Include="..\codec\Codec.h" />
+    <ClInclude Include="..\codec\md5.h" />
+    <ClInclude Include="..\codec\sha1.h" />
     <ClInclude Include="..\Impl.h" />
     <ClInclude Include="..\cmd\Inner.h" />
     <ClInclude Include="..\loc\Language.h" />
@@ -547,7 +403,9 @@
     <ClInclude Include="..\log\Server.h" />
     <ClInclude Include="..\log\FileSink.h" />
     <ClInclude Include="..\net\DispatchServer.h" />
-    <ClInclude Include="..\net\TcpPeerSet.h" />
+    <ClInclude Include="..\net\protocol\WebSocketProtocol.h" />
+    <ClInclude Include="..\net\protocol\WebSocketShakeHand.h" />
+    <ClInclude Include="..\net\TcpStatistics.h" />
     <ClInclude Include="..\PrecHeader.h" />
     <ClInclude Include="..\service\Impl.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -558,13 +416,38 @@
     <ClInclude Include="..\xml\Impl.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\net\TcpClient.inl" />
-    <None Include="..\..\..\net\TcpSession.inl" />
-    <None Include="..\..\..\proto\Object.proto" />
-    <None Include="..\..\..\proto\proto.bat" />
-    <None Include="..\..\..\proto\Service.proto" />
-    <None Include="..\..\..\web\html.ut.html" />
-    <None Include="..\..\..\web\json.ut.json" />
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Debug\eco.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Release\eco.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Debug\eco.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Release\eco.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\..\..\lib\eco3.1.0\eco\eco\Eco.proto" />
+    <None Include="..\..\..\..\lib\eco3.1.0\eco\eco\Eco_pb.js" />
+    <None Include="..\..\..\..\lib\eco3.1.0\eco\eco\proto.bat" />
+    <None Include="..\..\..\..\lib\eco3.1.0\eco\ops\Monitor.proto" />
+    <None Include="..\..\..\..\lib\eco3.1.0\eco\ops\Monitor_pb.js" />
+    <None Include="..\..\..\..\lib\eco3.1.0\eco\ops\proto.bat" />
+    <None Include="..\..\pak\locale\en-us\error.json" />
+    <None Include="..\..\pak\locale\zh-cn\error.json" />
     <None Include="..\cmd\Engine.ipp" />
     <None Include="..\Eco.ipp" />
     <None Include="..\net\TcpClient.ipp" />
@@ -585,9 +468,41 @@
     <None Include="..\web\JsonClassFinder.ipp" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\..\..\sys\compatibility.xml" />
-    <Xml Include="..\..\pak\eco.sys.xml" />
+    <Xml Include="..\..\pak\eco.sys.xml">
+      <SubType>Designer</SubType>
+    </Xml>
     <Xml Include="..\..\pak\eco.xml" />
+    <Xml Include="..\..\pak\locale\en-us\error.xml" />
+    <Xml Include="..\..\pak\locale\zh-cn\error.xml">
+      <SubType>Designer</SubType>
+    </Xml>
+    <Xml Include="..\..\pak\locale\zh-cn\word.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Debug\eco.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Release\eco.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Debug\eco.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Release\eco.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Library>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -80,7 +80,7 @@ public:
 
 	inline void open()
 	{
-		m_state.ok();
+		m_state.set_ok(true);
 	}
 
 	/*@ when close logging, it should log all the data in queue.
@@ -88,10 +88,17 @@ public:
 	*/
 	inline void close()
 	{
-		m_state.none();
+		m_state.set_ok(false);
 
 		m_avail_cond_var.notify_all();
 		m_logging_cond_var.notify_all();
+	}
+
+	// please call close() instead of release(), as close() will wait all 
+	// message to be logged.
+	inline void release()
+	{
+		assert(false);
 	}
 
 	template<typename Text>
@@ -156,7 +163,7 @@ public:
 
 	inline int is_open()
 	{
-		return m_state.is_ok();
+		return m_state.ok1();
 	}
 
 	inline int is_close()
@@ -179,8 +186,7 @@ private:
 		}
 
 		// allocate new buffer.
-		PackPtr pack(new Pack);
-		m_avail.push_back(pack.release());
+		m_avail.push_back(new Pack);
 		m_cur_size += Pack::capacity();
 		return &m_avail.back();
 	}

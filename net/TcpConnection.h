@@ -63,21 +63,20 @@ private:
 class TcpConnection
 {
 public:
-	inline TcpConnection() : m_prot(nullptr), m_id(0)
+	inline TcpConnection() : m_id(0)
 	{}
 
-	inline TcpConnection(TcpPeer::wptr& wptr, Protocol& prot, size_t id_)
-		: m_peer(wptr), m_prot(&prot), m_id(id_)
+	inline TcpConnection(TcpPeer::wptr& wptr, size_t id_)
+		: m_peer(wptr), m_id(id_)
 	{}
 
 	inline TcpConnection(IN const TcpConnection& other)
-		: m_peer(other.m_peer), m_prot(other.m_prot), m_id(other.m_id)
+		: m_peer(other.m_peer), m_id(other.m_id)
 	{}
 
 	inline void move(IN TcpConnection& other)
 	{
 		m_peer = std::move(other.m_peer);
-		m_prot = other.m_prot;
 		m_id = other.m_id;
 	}
 
@@ -87,15 +86,14 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			eco::Error e(e_peer_server_close, "server close this peer.");
-			peer->close_and_notify(e);
+			ECO_THIS_ERROR(e_peer_server_close) < "server close this peer.";
+			peer->close_and_notify();
 		}
 	}
 
 	inline void clear()
 	{
 		m_peer.reset();
-		m_prot = nullptr;
 		m_id = 0;
 	}
 
@@ -117,7 +115,7 @@ public:
 	inline void authorize(const char* user, const char* lang)
 	{
 		TcpPeer::ptr peer = m_peer.lock();
-		if (peer) peer->authorize(user, lang);
+		if (peer) peer->authorize(user, lang, peer);
 	}
 
 	// get tcp connection remote client ip.
@@ -127,7 +125,7 @@ public:
 		if (peer == nullptr)
 		{
 			ECO_THROW(e_peer_expired)
-				<< "get_ip fail peer has expired, it has been closed.";
+				< "get_ip fail peer has expired, it has been closed.";
 		}
 		return std::move(peer->ip());
 	}
@@ -152,7 +150,7 @@ public:
 		if (peer == nullptr)
 		{
 			ECO_THROW(e_peer_expired)
-				<< "cast data fail peer has expired, it has been closed.";
+				< "cast data fail peer has expired, it has been closed.";
 		}
 		return ConnectionDataPtr<ConnectionDataT>(peer);
 	}
@@ -174,7 +172,7 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			peer->send(meta, *m_prot);
+			peer->send(meta);
 		}
 	}
 
@@ -191,7 +189,7 @@ public:
 		TcpPeer::ptr peer = m_peer.lock();
 		if (peer != nullptr)
 		{
-			peer->response(meta, *m_prot, c);
+			peer->response(meta, c);
 		}
 	}
 
@@ -234,7 +232,6 @@ public:
 
 private:
 	TcpPeer::wptr	m_peer;
-	Protocol*		m_prot;
 	SessionId		m_id;
 	friend class TcpConnectionOuter;
 };
@@ -266,6 +263,16 @@ public:
 		return m_conn.id();
 	}
 
+	inline const char* user() const
+	{
+		return m_conn.user();
+	}
+
+	inline const char* lang() const
+	{
+		return m_conn.lang();
+	}
+
 private:
 	TcpConnection m_conn;
 };
@@ -285,21 +292,22 @@ inline static ConnectionData* make_connection_data()
 	return new ConnectionDataT();
 }
 // set connection factory to create connection of tcp server peer.
-typedef ConnectionData* (*MakeConnectionDataFunc)();
-
+typedef ConnectionData* (*MakeConnectionData)();
 
 ////////////////////////////////////////////////////////////////////////////////
 // tcp client on connect/close event.
-typedef std::function<void(const eco::Error*)> ClientOpenFunc;
-typedef std::function<void(const eco::Error&)> ClientCloseFunc;
-typedef std::function<void(eco::atomic::State& state)> OnLoadDataFunc;
+typedef std::function<void(bool error)> OnConnect;
+typedef std::function<void(void)> OnDisconnect;
+// tcp client on load data event.
+typedef std::function<void(void)> OnLoadFinish;
+typedef std::function<void(OnLoadFinish)> OnLoadEvent;
+typedef std::function<void(eco::atomic::State& state)> OnLoadState;
 
 // tcp server on accept/close tcp connection(tcp peer) event.
-typedef std::function<void(SessionId)> ServerAcceptFunc;
-typedef std::function<void(SessionId)> ServerCloseFunc;
-typedef std::function<void(TcpPeer::ptr&, DataContext&)> OnRecvDataFunc;
-typedef std::function<bool(MessageHead&, const char*, uint32_t)> 
-OnDecodeHeadFunc;
+typedef std::function<void(SessionId)> OnAccept;
+typedef std::function<void(SessionId)> OnClose;
+typedef std::function<void(TcpPeer::ptr&, DataContext&)> OnRecvData;
+typedef std::function<eco::Result(MessageHead&, const char*, uint32_t)> OnDecodeHead;
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -57,12 +57,14 @@ public:
 	inline Worker()
 	{
 		m_state.add(eco::atomic::State::_a);
+		m_io_service.reset(new boost::asio::io_service());
+		m_work.reset(new boost::asio::io_service::work(*m_io_service));
 	}
 	
 	// get work stopped state.
 	inline bool stopped() const
 	{
-		return m_state.is_none();
+		return m_state.none1();
 	}
 	inline bool running() const
 	{
@@ -76,16 +78,11 @@ public:
 	// io service run.
 	inline void run(const char* name)
 	{
-		m_io_service.reset(new boost::asio::io_service());
-		m_work.reset(new boost::asio::io_service::work(*m_io_service));
 		m_thread.run([=]() {
 			boost::system::error_code ec;
 			m_io_service->run(ec);
-			m_state.none();
-			if (ec)		// log error.
-			{
-				ECO_ERROR << name <= ec.value() <= ec.message();
-			}
+			m_state.set_ok(false);
+			if (!!ec) ECO_ERROR << name <= ec.value() <= ec.message();
 		}, name);
 		m_state.add(eco::atomic::State::_b);
 	}
@@ -98,6 +95,7 @@ public:
 	inline void stop()
 	{
 		// stop io service to stop receive request.
+		m_work.reset();
 		if (m_io_service != nullptr)
 		{
 			m_io_service->stop();
@@ -105,8 +103,6 @@ public:
 
 		// wait to handle all request left.
 		join();
-
-		m_work.reset();
 		m_io_service.reset();
 	}
 

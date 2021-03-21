@@ -1,0 +1,90 @@
+syntax = "proto2";
+package eco.net.proto;
+////////////////////////////////////////////////////////////////////////////////
+/*
+统计原理
+1.统计数据都是通过基础数据统计而来的。
+2.统计数据都是基于某个时间段的，时间粒度越小，实时统计数据越精准，但开销越大。
+3.统计对象：A.IO数据-连接数据/请求数据；B.服务数据-机器数据/服务数据/日志数据。
+
+统计方法
+1.基础数据统计法：服务记录基础数据，发送给守护程序，再发送给运维程序。
+由运维程序进行单独统计，并且运维程序可以设置统计参数，根据不同的参数显示视图。
+如：日活跃用户可定义为每日发送20次请求，也可修改为每日发送30次请求。
+2.分片时间统计法：不记录基础数据，有服务本身统计需要的统计数据，可设置时间精度。
+守护程序与运维程序没有基础数据信息，只能从服务本身订阅，订阅时间分片精度由服务
+决定，若服务本身提供不了的精度，则就不能统计。
+
+方法1：数据最全，能够从任意维度进行统计，但是基础数据量太大，会影响到程序的性能，
+基本上可能会占到整个服务性能的10%以上。同时服务本身不能单独提供统计数据。
+(目前不采用)
+方法2：每隔一段时间，进行一次切片统计，且切片的精度由系统配置文件控制。服务可独
+立提供统计数据。(目前采用)技术实现，使用每隔一段时间发布一次数据。
+*/
+
+
+////////////////////////////////////////////////////////////////////////////////
+// 会话信息
+message Session
+{
+	optional uint64 id			= 1;	// session id.
+	optional uint32 owner		= 2;	// owned by peer."owner=0" as a peer.
+	optional string user		= 5;	// user login.
+	optional string lang		= 6;	// user language.
+	optional string ip			= 10;	// tcp peer ip-v4/v6.
+	optional uint32 port		= 11;	// tcp peer port.
+	optional uint32 state		= 15;	// tcp peer state.(born/live/active)
+	optional uint64 stamp_open	= 16;	// open timestamp.
+	optional uint64 stamp_close	= 17;	// close timestamp.
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// 统计结果：会话与连接信息
+message SessionCount
+{
+	optional uint64 stamp		= 1;	// 时间戳（每隔时间N切片）
+	optional uint32 sess_size	= 2;	// 会话数量
+	optional uint32 conn_size	= 3;	// 连接数量
+	optional uint32 ddos_size	= 4;	// DOS连接数量
+	//optional uint32 live_size = 5;	// 正常连接
+}
+// 统计结果：异常IP统计-DOS攻击/弱网络
+message SessionExcept
+{
+	optional string ip			= 1;	// 异常IP
+	optional uint64 stamp		= 2;	// 时间戳（每隔时间N切片）
+	optional uint32 except_mode	= 5;	// 异常类型
+	optional uint32 except_total= 6;	// 累计-心跳断开
+	optional uint32 except_size	= 7;	// 当前-心跳断开(模式-秒/分钟/小时/天)
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// 服务监控：吞吐量-今日请求数/分钟请求数/秒请求数/流量统计。
+// 服务监控：吞吐量-今日回报数/分钟回报数/秒回报数/流量统计。
+// 统计结果：流量总计。
+message NetworkCount
+{
+	optional uint64 session		= 1;	// session id; "sess==0"表示总流量。
+	optional uint64 stamp		= 2;	// 时间戳（每隔时间N切片）
+	optional uint32 req_size	= 10;	// 当日请求总量
+	optional uint32 rsp_size	= 11;	// 当日请求总量
+	optional uint64 req_kbyte	= 20;	// 当日请求kbyte-包含TCP头
+	optional uint64 rsp_kbyte	= 21;	// 当日请求kbyte-包含TCP头
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// 服务监控：服务状态-服务状态/持久化/消费者/服务者/死锁/线程数
+message Service
+{
+	optional uint64 stamp		= 1;	// 时间戳（每隔时间N切片）
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// 服务监控：日志分析-按配置级别统计日志。
+message Logging
+{
+}

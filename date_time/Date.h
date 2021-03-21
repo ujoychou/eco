@@ -58,17 +58,36 @@ enum
 typedef uint32_t WeekDay;
 
 // time unit type.
-enum TimeUnitType
+enum TimeUnit
 {
-	ttype_second		= 1,
-	ttype_minute		= 2,
-	ttype_hour			= 3,
-	ttype_day			= 4,
-	ttype_week			= 5,
-	ttype_month			= 6,
-	ttype_season		= 7,
-	ttype_year			= 8,
+	tunit_second		= 1,
+	tunit_minute		= 2,
+	tunit_hour			= 3,
+	tunit_day			= 4,
+	tunit_week			= 5,
+	tunit_month			= 6,
+	tunit_season		= 7,
+	tunit_year			= 8,
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline int get_season(int month)
+{
+	return (month - 1) / 3 + 1;
+}
+inline int get_season_start_month(int month)
+{
+	return (get_season(month) - 1) * 3 + 1;
+}
+inline uint32_t year_days()
+{
+	return 365;
+}
+inline uint32_t month_days()
+{
+	return 30;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +102,7 @@ public:
 
 		inline int season() const
 		{
-			return Date::season(month);
+			return get_season(month);
 		}
 
 		inline int months() const
@@ -144,15 +163,10 @@ public:
 		return (week_day == week_sunday || week_day == week_saturday);
 	}
 
-	inline static int get_day_start()
+	inline static int epoch()
 	{
 		return get_day(1970, 1, 1);
 	}
-
-    inline static int season(IN int month)
-    {
-        return (month - 1) / 3 + 1;
-    }
 
 ////////////////////////////////////////////////////////////////////////////////
 public:
@@ -162,6 +176,11 @@ public:
 	inline Date(int year, int month, int day)
 	{
 		m_days = get_day(year, month, day);
+	}
+
+	inline Date(struct std::tm* t)
+	{
+		m_days = get_day(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
 	}
 
 	inline explicit Date(const Ymd& v)
@@ -235,7 +254,8 @@ public:
 	{
 		char buf[32];
 		Ymd ymd = get_ymd(m_days);
-		snprintf(buf, sizeof(buf), "%4d%02d%02d", ymd.year, ymd.month, ymd.day);
+		snprintf(buf, sizeof(buf), "%4d%02d%02d",
+			ymd.year, ymd.month, ymd.day);
 		return buf;
 	}
 
@@ -244,7 +264,8 @@ public:
 	{
 		char buf[32];
 		Ymd ymd = get_ymd(m_days);
-		snprintf(buf, sizeof(buf), "%4d-%02d-%02d", ymd.year, ymd.month, ymd.day);
+		snprintf(buf, sizeof(buf), "%4d-%02d-%02d",
+			ymd.year, ymd.month, ymd.day);
 		return buf;
 	}
 
@@ -273,8 +294,8 @@ public:
 
 	// get julian day.
 	inline int days() const
-	{ 
-		return m_days; 
+	{
+		return m_days;
 	}
 
 	// get monday.
@@ -296,17 +317,6 @@ inline bool operator<(Date x, Date y)
 inline bool operator==(Date x, Date y)
 {
 	return x.days() == y.days();
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-inline int get_season(int month)
-{
-	return (month - 1) / 3 + 1;
-}
-inline int get_season_start_month(int month)
-{
-	return (get_season(month) - 1) * 3 + 1;
 }
 
 

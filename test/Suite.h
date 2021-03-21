@@ -20,60 +20,55 @@
 #include <eco/test/Scene.h>
 
 
-
-
-namespace eco{;
-namespace test{;
-
-
+ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(test);
 ////////////////////////////////////////////////////////////////////////////////
 class Suite : public eco::test::Scene
 {
 	ECO_SINGLETON(Suite);
 protected:
 	// event: begin
-	virtual void OnBegin()
+	virtual void on_begin() override
 	{
-		Runner::OnBegin();
+		Runner::on_begin();
 
-		eco::Stream<> fmt;
+		eco::String fmt;
 		fmt << "[##########] ";
 		fmt << "suite: ";
-		fmt << GetResultSet().m_total_case << " case, ";
-		fmt << GetResultSet().m_total_scene << " scene.";
-		EcoTrace << fmt.c_str();
+		fmt << result_set().m_total_case << " case, ";
+		fmt << result_set().m_total_scene << " scene.";
+		ECO_INFO << fmt.c_str();
 	}
 
 	// event: end
-	virtual void OnEnd()
+	virtual void on_end() override
 	{
-		Scene::OnSceneEnd();
+		Scene::on_scene_end();
 
-		eco::Stream<> fmt;
+		eco::String fmt;
 		fmt << "[##########] ";
 		fmt << "suite: ";
 		fmt << "scene ";
-		fmt << GetResultSet().GetTotalChildScene() << "-";
-		fmt << GetResultSet().GetCheckedChildScene() << "-";
-		fmt << GetResultSet().GetFailedChildScene() << "-";
-		fmt << GetResultSet().GetSuccessChildScene() << ", ";
+		fmt << result_set().total_child_scene() << "-";
+		fmt << result_set().checked_child_scene() << "-";
+		fmt << result_set().failed_child_scene() << "-";
+		fmt << result_set().success_child_scene() << ", ";
 		fmt << "case ";
-		fmt << GetResultSet().GetTotalCase() << "-";
-		fmt << GetResultSet().GetCheckedCase() << "-";
-		fmt << GetResultSet().GetFailedCase() << "-";
-		fmt << GetResultSet().GetSuccessCase() << ", ";
+		fmt << result_set().total_case() << "-";
+		fmt << result_set().checked_case() << "-";
+		fmt << result_set().failed_case() << "-";
+		fmt << result_set().success_case() << ", ";
 		fmt << "test ";
-		fmt << GetResultSet().GetTotalTest() << "-";
-		fmt << GetResultSet().GetCheckedTest() << "-";
-		fmt << GetResultSet().GetFailedTest() << "-";
-		fmt << GetResultSet().GetSuccessTest() << ".";
-		EcoTrace << fmt.c_str();
+		fmt << result_set().total_test() << "-";
+		fmt << result_set().checked_test() << "-";
+		fmt << result_set().failed_test() << "-";
+		fmt << result_set().success_test() << ".";
+		ECO_INFO << fmt.c_str();
 	}
 };
-ECO_SINGLETON_NAME(Suite, GetSuite);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::test
-}// ns::eco
+ECO_NS_END(test);
+ECO_NS_END(eco);
 #endif

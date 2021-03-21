@@ -17,45 +17,39 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/thread/Timer.h>
 #include <eco/thread/Btask.h>
 #include <eco/thread/MessageServer.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class TaskHandler
 {
 public:
-	inline void operator()(IN TaskUnit& task)
+	// set post func.
+	typedef std::function<void(const Closure&)> PostFunc;
+	inline void set_post(PostFunc&& func)
 	{
-		// execute this task.
-		bool result = true;
+		m_post_func = func;
+	}
+
+	// restart seconds if fail.
+	inline void operator()(const Closure& task, int restart_sec_if_fail = 0)
+	{
 		try
 		{
 			task();
 		}
 		catch (std::exception& e)
 		{
-			result = false;
-			ECO_LOG(error, "task") << task.get_type_name() << ": " << e.what();
-		}
-
-		if (!result && m_post_func)
-		{
-			Eco::get().timer().add(task.restart_secs() * 1000, false,
-				[this, task] () mutable {
-				m_post_func(std::move(task));
-			});
-			return;
-		}
-	}
-
-	// set post func
-	typedef std::function<void(TaskUnit&&)> PostFunc;
-	inline void set_post(PostFunc&& func)
-	{
-		m_post_func = func;
+			ECO_LOG(error, "task") < e.what();
+			if (m_post_func && restart_sec_if_fail)
+			{
+				Eco::get().timer().run_after(
+					[=]() mutable {	m_post_func(std::move(task)); },
+					restart_sec_if_fail * 1000, false);
+			}
+		}// end try/catch;
 	}
 
 private:
@@ -64,47 +58,22 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class TaskServer : public MessagePool<TaskUnit, TaskHandler>
+class TaskServer : public MessagePool<Closure, TaskHandler>
 {
 public:
 	inline TaskServer()
 	{
-		void(T::*func)(TaskUnit&&) = &T::post;
-		m_message_handler.set_post(
-			std::bind(func, this, std::placeholders::_1));
+		m_message_handler.set_post(std::bind(
+			&TaskServer::post, this, std::placeholders::_1));
 	}
 
-	inline void post(IN Closure&& task)
+	inline void post(const Closure& task)
 	{
-		T::post(TaskUnit(std::forward<Closure>(task)));
-	}
-
-	inline void post(IN Task::ptr& task)
-	{
-		T::post(TaskUnit(task));
-	}
-	inline void post(IN Task::ptr&& task)
-	{
-		T::post(TaskUnit(task));
-	}
-
-private:
-	inline void post(IN TaskUnit&& task)
-	{
-		T::post(std::forward<TaskUnit>(task));
+		T::post(task);
 	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-struct ClosureHandler
-{
-	inline void operator()(IN Closure& task) {	task(); }
-};
-typedef MessageServerPool<Closure, ClosureHandler> ClosureServerPool;
-typedef ClosureServerPool::MessageWorker ClosureWorker;
-
-
-////////////////////////////////////////////////////////////////////////////////
-}
+ECO_NS_END(eco);
 #endif

@@ -49,7 +49,12 @@ namespace eco{}
 #ifdef ECO_VC100
 #define ECO_NO_VARIADIC_TEMPLATE
 #define ECO_NO_FUNCTION_TEMPLATE_DEFAULT
+#define ECO_NO_STD_THREAD
+#define ECO_NO_STD_CHRONO
+#define ECO_NO_STD_MOVE
+#define ECO_PROTOBUF2
 #define __func__ eco::func(__FUNCTION__)
+#define thread_local __declspec(thread)
 #endif
 
 /*@ include protobuf.*/

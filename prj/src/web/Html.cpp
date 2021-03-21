@@ -187,7 +187,7 @@ HtmlObject HtmlObject::AddChild(
 	HtmlClass child_class = impl().m_class.FindChild(class_name);
 	if (child_class.null())
 	{
-		ECO_THROW(0) << "find child class fail:" << class_name;
+		ECO_THROW("find child class fail:") < class_name;
 	}
 	HtmlObject child;
 	child.impl().m_pos_mode = pos_mode;

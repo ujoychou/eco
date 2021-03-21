@@ -31,14 +31,15 @@ public:
 	}
 	inline static const char* scale_upper()
 	{
-		return "0123456789abcdefghijklmnopqrstuvwxyz";
+		return "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	}
 	inline static const char* scale_all()
 	{
 		return "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	}
 
-	inline static std::string encode(const char* ip, const char* scale = scale_all())
+	inline static std::string encode(
+		const char* ip, const char* scale = scale_all())
 	{
 		const uint32_t digit = strlen(scale);
 
@@ -71,7 +72,8 @@ public:
 		return result;
 	}
 
-	inline static std::string decode(const char* code, const char* scale = scale_all())
+	inline static std::string decode(
+		const char* code, const char* scale = scale_all())
 	{
 		const uint32_t digit = strlen(scale);
 
@@ -105,3 +107,4 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(codec);
 ECO_NS_END(eco);
+#endif

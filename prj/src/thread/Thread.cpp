@@ -2,25 +2,37 @@
 #include <eco/thread/Thread.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <set>
-#include <mutex>
-#include <thread>
 #include <sstream>
-#include <chrono>
-#include <eco/Cast.h>
-#include <eco/log/log.h>
+#include <eco/cpp/Thread.h>
 
 
+////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
-std::atomic_int		 s_thread_count = 0;
+std_atomic_uint32_t	 s_thread_count;
 thread_local size_t	 t_nid = 0;
 thread_local char	 t_sid[16] = { 0 };
 thread_local char	 t_name[32] = { 0 };
-thread_local Thread::Impl* t_thread = 0;
-// thread local error.
-thread_local eco::Format<> t_format;
-thread_local eco::proto::Error t_error;
-thread_local eco::this_thread::Error t_terror;
-thread_local eco::log::PusherT<eco::StreamX> t_logbuf;
+thread_local Thread::Impl*	t_thread = 0;
+// thread local error logging and format.
+thread_local eco::Error* t_error = 0;
+thread_local eco::FormatX* t_format = 0;
+thread_local eco::log::PusherT<eco::String>* t_logbuf = 0;
+
+////////////////////////////////////////////////////////////////////////////////
+inline eco::Error& local_error() {
+	if (t_error == 0) t_error = new eco::Error();
+	return *t_error;
+}
+inline eco::FormatX& local_format() {
+	if (t_format == 0) t_format = new eco::FormatX();
+	return *t_format;
+}
+inline eco::log::PusherT<eco::String>& local_logbuf() {
+	if (t_logbuf == 0) t_logbuf = new eco::log::PusherT<eco::String>;
+	return *t_logbuf;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 class ThreadLockGuard
 {
@@ -46,7 +58,7 @@ public:
 	size_t m_nid;
 	std::string m_sid;
 	std::string m_name;
-	std::thread m_thread;
+	std_thread  m_thread;
 	eco::ThreadLock	m_lock;
 
 public:
@@ -65,17 +77,18 @@ public:
 	}
 
 	// get and format std thread id.
-	static void this_thread_init(IN const std::thread::id& id)
+	inline static const char* this_thread_init(IN const std_thread::id& id)
 	{
 		std::stringstream ss;
 		ss << id;
 		t_nid = eco::cast<size_t>(ss.str());
 		eco_cpyc(t_sid, eco::Integer<size_t>(t_nid, eco::dec, 8).c_str());
+		return t_sid;
 	}
-	inline static void this_thread_init()
+	inline static const char* this_thread_init()
 	{
-		if (eco::empty(t_sid))
-			this_thread_init(std::this_thread::get_id());
+		return !eco::empty(t_sid) ? t_sid
+			: this_thread_init(std_this_thread::get_id());
 	}
 
 	inline void run(
@@ -83,14 +96,14 @@ public:
 		IN const char* name_)
 	{
 		m_name = name_;
-		m_thread = std::thread([=] {
+		m_thread = std_thread([=] {
 			t_thread = m_lock.m_thread;
 			eco_cpys(t_name, m_name);
-			this_thread_init();
+			m_sid = this_thread_init();
 			ThreadLockGuard lg(m_lock);
 			func();
 		});
-		this_thread_init(m_thread.get_id());
+		m_sid = this_thread_init(m_thread.get_id());
 	}
 };
 
@@ -126,88 +139,6 @@ void Thread::join()
 
 ECO_NS_BEGIN(this_thread);
 ////////////////////////////////////////////////////////////////////////////////
-void Error::set_id(int id)
-{
-	t_error.set_id(id);
-	t_error.mutable_path()->clear();
-	t_error.mutable_message()->clear();
-}
-Error& Error::id(int id)
-{
-	t_error.set_id(id);
-	t_error.mutable_path()->clear();
-	t_error.mutable_message()->clear();
-	return *this;
-}
-void Error::set_path(const char* v)
-{
-	t_error.clear_id();
-	t_error.set_path(v);
-	t_error.mutable_message()->clear();
-}
-Error& Error::path(const char* v)
-{
-	t_error.clear_id();
-	t_error.set_path(v);
-	t_error.mutable_message()->clear();
-	return *this;
-}
-Error& Error::key(int id)
-{
-	t_error.set_id(id);
-	t_error.mutable_path()->clear();
-	t_error.mutable_message()->clear();
-	return *this;
-}
-Error& Error::key(const char* v)
-{
-	t_error.clear_id();
-	t_error.set_path(v);
-	t_error.mutable_message()->clear();
-	return *this;
-}
-eco::proto::Error& Error::data() const
-{
-	return t_error;
-}
-bool Error::has_error() const
-{
-	return t_error.id() != 0 || !t_error.path().empty();
-}
-Error::operator bool() const
-{
-	return t_error.id() != 0 || !t_error.path().empty();
-}
-void Error::clear()
-{
-	t_error.clear_id();
-	t_error.mutable_path()->clear();
-	t_error.mutable_message()->clear();
-}
-Error& Error::operator / (const char* v)
-{
-	*t_error.mutable_path() += '/';
-	*t_error.mutable_path() += v;
-	return *this;
-}
-Error& Error::operator < (const char v)
-{
-	*t_error.mutable_message() += v;
-	return *this;
-}
-Error& Error::operator < (const char* v)
-{
-	*t_error.mutable_message() += v;
-	return *this;
-}
-Error& Error::append(const char* v, uint32_t n)
-{
-	t_error.mutable_message()->append(v, n);
-	return *this;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 size_t id()
 {
 	Thread::Impl::this_thread_init();
@@ -226,25 +157,23 @@ ThreadLock& lock()
 {
 	return t_thread->m_lock;
 }
-eco::this_thread::Error& error()
+eco::Error& error()
 {
-	t_error.mutable_path();
-	t_error.mutable_message();
-	return t_terror;
+	return local_error();
 }
-eco::Format<>& format()
+eco::FormatX& format()
 {
-	return t_format;
+	return local_format();
 }
-eco::Format<>& format(const char* msg)
+eco::FormatX& format(const char* msg)
 {
-	t_format.reset(msg);
-	return t_format;
+	local_format().reset(msg);
+	return local_format();
 }
-eco::log::PusherT<eco::StreamX>& logbuf()
+eco::log::PusherT<eco::String>& logbuf()
 {
-	t_logbuf.stream().clear();
-	return t_logbuf;
+	local_logbuf().stream().clear();
+	return local_logbuf();
 }
 void init()
 {
@@ -256,27 +185,24 @@ ECO_NS_END(this_thread);
 class ThreadCheck::Impl
 {
 public:
-	std::mutex m_mutex;
-	std::atomic_int64_t  m_time;
+	std_mutex m_mutex;
+	std_atomic_int64_t  m_time;
 	std::set<ThreadLock*> m_lock;
 
 	inline void init(ThreadCheck&)
 	{
-		set_time();
+		m_time = 0;
 	}
 
-	inline void set_time()
+	inline void set_time(uint64_t now_sec)
 	{
-		using namespace std::chrono;
-		auto d = steady_clock::now().time_since_epoch();
-		seconds t = duration_cast<seconds>(d);
-		m_time = t.count();
+		m_time = now_sec;
 	}
 
-	inline void on_timer()
+	inline void on_timer(uint64_t now_sec)
 	{
-		set_time();
-		std::lock_guard<std::mutex> lg(m_mutex);
+		set_time(now_sec);
+		std_lock_guard lg(m_mutex);
 		for (auto it = m_lock.begin(); it != m_lock.end(); ++it)
 		{
 			// timeout thread has locked.
@@ -285,7 +211,7 @@ public:
 			{
 				ECO_ERROR << "thread lock " << lock.m_thread->m_sid
 					<= lock.m_thread->m_name <= lock.m_object
-					<= lock.m_stamp <= lock.m_timeout;
+					<= lock.m_stamp.load() <= lock.m_timeout;
 			}
 		}// end for.
 	}
@@ -296,29 +222,29 @@ public:
 ECO_SINGLETON_IMPL(ThreadCheck);
 ThreadCheck& ThreadCheck::get()
 {
-	return eco::Singleton<ThreadCheck>::instance();
+	return eco::Singleton<ThreadCheck>::get();
 }
 void ThreadCheck::add_lock(ThreadLock* lock)
 {
-	std::lock_guard<std::mutex> lg(impl().m_mutex);
+	std_lock_guard lg(impl().m_mutex);
 	impl().m_lock.insert(lock);
 }
 void ThreadCheck::del_lock(ThreadLock* lock)
 {
-	std::lock_guard<std::mutex> lg(impl().m_mutex);
+	std_lock_guard lg(impl().m_mutex);
 	impl().m_lock.erase(lock);
 }
 int64_t ThreadCheck::get_time() const
 {
 	return impl().m_time;
 }
-void ThreadCheck::set_time()
+void ThreadCheck::set_time(uint64_t now_sec)
 {
-	impl().set_time();
+	impl().set_time(now_sec);
 }
-void ThreadCheck::on_timer()
+void ThreadCheck::on_timer(uint64_t now_sec)
 {
-	impl().on_timer();
+	impl().on_timer(now_sec);
 }
 
 

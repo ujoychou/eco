@@ -23,7 +23,7 @@
 #include <eco/persist/DatabaseConfig.h>
 #include <eco/persist/Address.h>
 #ifndef ECO_NO_PROTOBUF
-#include <eco/proto/Object.pb.h>
+#include <eco/eco/Proto.h>
 #endif
 
 
@@ -228,34 +228,37 @@ public:
 
 	// save data to database.
 	template<typename meta_t, typename object_set_t>
-	inline void save_all(
-		IN const object_set_t& obj_set,
+	inline uint64_t save_all(
+		IN const object_set_t& set,
 		IN const ObjectMapping& mapping,
 		IN const char* table = nullptr)
 	{
+		uint64_t siz = 0;
 		Transaction trans(*this);
-		object_set_t::const_iterator it = obj_set.begin();
-		for (; it != obj_set.end(); ++it)
+		for (auto it = set.begin(); it != set.end(); ++it)
 		{
-			save<meta_t>(*it, mapping, table);
+			siz += save<meta_t>(*it, mapping, table);
 		}
 		trans.commit();
+		return siz;
 	}
+
 	// save data to database.
 	template<typename meta_t, typename object_set_t>
-	inline void save_all(
-		IN const object_set_t& obj_set,
+	inline uint64_t save_all(
+		IN const object_set_t& set,
 		IN const ObjectMapping& mapping,
 		IN const eco::meta::Stamp s,
 		IN const char* table = nullptr)
 	{
+		uint64_t siz = 0;
 		Transaction trans(*this);
-		object_set_t::const_iterator it = obj_set.begin();
-		for (; it != obj_set.end(); ++it)
+		for (auto it = set.begin(); it != set.end(); ++it)
 		{
-			save<meta_t>(*it, mapping, s, table);
+			siz += save<meta_t>(*it, mapping, s, table);
 		}
 		trans.commit();
+		return siz;
 	}
 
 	// save data to database.
@@ -285,7 +288,7 @@ public:
 		}
 		else
 		{
-			ECO_THROW(0) << "save object failed, stamp is invalid.";
+			ECO_THROW("save object failed, stamp is invalid.");
 		}
 
 		// execute sql to save data.
@@ -318,6 +321,23 @@ public:
 		return save<meta_t>(obj, mapping, eco::meta::stamp_insert, table);
 	}
 
+	// remove object set by pk.
+	template<typename meta_t, typename object_set_t>
+	inline uint64_t insert_all(
+		IN const object_set_t& obj_set,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		Transaction trans(*this);
+		uint64_t siz = 0;
+		for (auto it = set.begin(); it != set.end(); ++it)
+		{
+			siz += insert<meta_t>(*it, mapping, table);
+		}
+		trans.commit();
+		return siz;
+	}
+
 	// update data to database.
 	template<typename meta_t, typename object_t>
 	inline uint64_t update(
@@ -337,11 +357,8 @@ public:
 		IN const ObjectMapping& mapping,
 		IN const char* table = nullptr)
 	{
-		auto* p = mapping.find_property(prop);
-		if (p == nullptr)
-		{
-			ECO_THROW(eco::error) << "property isn't exist: " << prop;
-		}
+		auto* p = mapping.find(prop);
+		if (!p) ECO_THROW("property isn't exist: ") << prop;
 
 		meta_t meta;
 		meta.attach(obj);
@@ -350,7 +367,7 @@ public:
 		sql.reserve(128);
 		sql += mapping.get_table(table);
 		sql += " set ";
-		sql += p->get_field();
+		sql += p->field();
 		sql += "='";
 		sql += (value != nullptr) ? value : meta.get_value(prop, eco_db);
 		sql += "'";
@@ -403,14 +420,11 @@ public:
 		sql += " set ";
 		for (const std::string& it : props)
 		{
-			const PropertyMapping* p = mapping.find_property(it.c_str());
-			if (p == nullptr)
-			{
-				ECO_THROW(eco::error) << "property isn't exist: " << it;
-			}
-			sql += p->get_field();
+			const PropertyMapping* p = mapping.find(it.c_str());
+			if (!p) ECO_THROW("property isn't exist: ") < it;
+			sql += p->field();
 			sql += "='";
-			sql += meta.get_value(p->get_property(), eco_db);
+			sql += meta.get_value(p->property(), eco_db);
 			sql += "',";
 		}
 		sql.pop_back();
@@ -421,6 +435,57 @@ public:
 		sql += cond_sql;
 		uint64_t rows = execute_sql(sql.c_str());
 		return rows;
+	}
+
+	// remove object by pk.
+	inline uint64_t remove(
+		IN const char* value,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		// sql: "delete table where pk='value'
+		auto* p = mapping.find_pk();
+		if (!p) ECO_THROW("pk property isn't exist.");
+		std::string sql("delete from ");
+		sql += mapping.get_table(table);
+		sql += " where ";
+		sql += p->field();
+		sql += "='";
+		sql += value;
+		sql += "'";
+		uint64_t rows = execute_sql(sql.c_str());
+		return rows;
+	}
+	inline uint64_t remove(
+		IN const uint64_t value,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		return remove(eco::Integer<uint64_t>(value).c_str(), mapping, table);
+	}
+	inline uint64_t remove(
+		IN const std::string& value,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		return remove(value.c_str(), mapping, table);
+	}
+
+	// remove object set by pk.
+	template<typename id_set_t>
+	inline uint64_t remove_all(
+		IN const id_set_t& set,
+		IN const ObjectMapping& mapping,
+		IN const char* table = nullptr)
+	{
+		Transaction trans(*this);
+		uint64_t siz = 0;
+		for (auto it = set.begin(); it != set.end(); ++it)
+		{
+			siz += remove(*it, mapping, table);
+		}
+		trans.commit();
+		return siz;
 	}
 
 	// removed all data from table.
@@ -494,7 +559,7 @@ public:
 		OUT object_set_t& obj_set,
 		IN  const JoinMapping<object_t>& join_map,
 		IN  const char* cond_sql = "")
-	{	
+	{
 		std::string sql;
 		join_map.get_select_join_sql(sql, cond_sql);
 		Recordset rd_set;
@@ -525,6 +590,20 @@ public:
 		return rows;
 	}
 
+	// is exist object in table.
+	template<typename meta_t, typename object_t>
+	inline bool has_object(
+		IN const object_t& obj,
+		IN const ObjectMapping& mapping)
+	{
+		meta_t meta;
+		meta.attach(obj);
+		// condition sql: "where pk='v'"
+		std::string cond_sql;
+		mapping.get_condition_sql(cond_sql, meta);
+		return has_record(mapping.get_table(), cond_sql.c_str());
+	}
+
 public:
 	inline uint64_t get_max_id(
 		IN const ObjectMapping& mapping,
@@ -532,12 +611,9 @@ public:
 	{
 		// sql: "select max(id) from table".
 		auto* pk = mapping.find_pk();
-		if (pk == nullptr)
-		{
-			ECO_THROW(0) << "get max id fail, pk isn't exist.";
-		}
+		if (!pk) ECO_THROW("get max id fail, pk isn't exist.");
 		std::string sql("select max(");
-		sql += pk->get_property();
+		sql += pk->property();
 		sql += ") from ";
 		sql += mapping.get_table(table);
 

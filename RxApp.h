@@ -82,7 +82,7 @@ public:
 		return m_entry_point(RxMessageId(m_rx_msg), nullptr);
 	}
 
-	inline int get_cur_message() const
+	inline int message() const
 	{
 		return m_rx_msg;
 	}
@@ -138,9 +138,9 @@ public:
 	}
 
 	// get app config.
-	const eco::Config& get_config() const
+	const eco::Config& config() const
 	{
-		return get_app().get_config();
+		return get_app().config();
 	}
 
 	// erx dll entry point.

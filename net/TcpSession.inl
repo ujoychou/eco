@@ -49,10 +49,6 @@ private:
 
 	void close();
 
-	bool authorize();
-
-	void authorize(IN const MessageMeta& meta);
-
 	void response(MessageMeta& meta, const Context& c);
 
 	friend class TcpSession;
@@ -66,14 +62,9 @@ void TcpSession::close()
 	TcpSessionInner inner(m_impl);
 	return inner.close();
 }
-bool TcpSession::authorize()
-{
-	TcpSessionInner inner(m_impl);
-	return inner.authorize();
-}
 bool TcpSession::authorized() const
 {
-	return !m_impl.m_session_wptr.expired();
+	return true;
 }
 TcpConnection& TcpSession::connection() const
 {
@@ -105,11 +96,6 @@ void TcpSession::response(MessageMeta& meta, const Context& c)
 {
 	TcpSessionInner inner(m_impl);
 	return inner.response(meta, c);
-}
-void TcpSession::authorize(IN const MessageMeta& meta)
-{
-	TcpSessionInner inner(m_impl);
-	return inner.authorize(meta);
 }
 void TcpSession::send(IN const MessageMeta& meta)
 {

@@ -3,7 +3,6 @@
 #include <boost/bind.hpp>
 #include <eco/net/TcpAcceptor.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <mutex>
 #include <eco/net/asio/WorkerPool.h>
 #include "../TcpServer.ipp"
 
@@ -17,84 +16,55 @@ public:
 	inline TcpPeerPool() : m_server(0)
 	{}
 
-	inline void start(TcpServer::Impl* server)
+	inline void start(TcpServer* server)
 	{
-		m_server = server;
+		m_server = &server->impl();
 		m_recycle = std::bind(&TcpPeerPool::recycle, 
 			this, std::placeholders::_1);
-		m_queue.run("peer_pool", 1);
-		m_queue.set_message_handler(std::bind(
+		m_destroyer.run("peer_pool", 1);
+		m_destroyer.set_message_handler(std::bind(
 			&TcpPeerPool::release, this, std::placeholders::_1));
 	}
 
-	inline void clear()
+	inline void stop()
 	{
-		std::lock_guard<std::mutex> lock(m_queue.mutex());
-		m_buffer.clear();
+		m_destroyer.stop();
 	}
 
 	TcpPeer::ptr make(asio::Worker* io_srv, void* msg_srv)
 	{
-		std::lock_guard<std::mutex> lock(m_queue.mutex());
-		// release io stopped peer.
-		while (!m_buffer.empty() && m_buffer.back()->stopped())
-		{
-			m_buffer.pop_back();
-		}
-
-		// create new peer.
-		if (m_buffer.empty())
-		{
-			auto* io = (IoWorker*)io_srv;
-			std::auto_ptr<TcpPeer> ptr(new TcpPeer(
-				io, msg_srv, &m_server->m_peer_handler));
-			m_buffer.push_back(std::move(ptr));
-		}
-		TcpPeer::ptr peer(m_buffer.back().release(), m_recycle);
-		peer->impl().restart((MessageWorker*)msg_srv, peer);
-		m_buffer.pop_back();
+		TcpPeer::ptr peer(new TcpPeer((IoWorker*)io_srv,
+			msg_srv, &m_server->m_peer_handler), m_recycle);
+		peer->impl().prepare(peer);
 		return peer;
 	}
 
 	inline void recycle(IN TcpPeer* peer)
 	{
-		m_queue.post(peer);
+		m_destroyer.post(peer);
 	}
 
 	inline void release(IN TcpPeer* peer)
 	{
+		auto id = peer->id();
+		ECO_LOG(key, "recycle_peer") < id;
+
 		// release peer user defined data.
-		std::auto_ptr<TcpPeer> ptr(peer);
 		try
 		{
-			eco::this_thread::lock().set_object(ptr->impl().id());
-			ptr->impl().release();
+			eco::this_thread::lock().set_object(id);
+			delete peer;	// std::auto_ptr<TcpPeer>
 		}
 		catch (std::exception& e)
 		{
-			ECO_ERROR << NetLog(ptr->id(), __func__) <= ptr->ip() <= e.what();
-		}
-		
-		// release buffer peer algorithm.
-		// b_size = max(c_size / 10, 5);
-		if (!ptr->stopped())
-		{
-			auto size = m_server->get_peer_size() / 10;
-			if (size < 5) size = 5;
-			std::lock_guard<std::mutex> lock(m_queue.mutex());
-			m_buffer.push_back(std::move(ptr));
-			while (m_buffer.size() > size)
-			{
-				m_buffer.pop_back();
-			}
+			ECO_ERROR < NetLog(id, __func__) <= e.what();
 		}
 	}
 
 public:
 	// connecntion pool.
 	TcpServer::Impl* m_server;
-	std::vector<std::auto_ptr<TcpPeer> > m_buffer;
-	eco::MessageServer<TcpPeer*> m_queue;
+	eco::MessageServer<TcpPeer*> m_destroyer;
 	std::function<void(TcpPeer*)> m_recycle;
 };
 
@@ -115,7 +85,7 @@ public:
 	TcpOnAccept m_on_accept;
 
 	// tcp server;
-	TcpServer::Impl* m_server;
+	TcpServer* m_server;
 
 public:
 	inline void init(IN TcpAcceptor&)
@@ -128,8 +98,8 @@ public:
 	{
 		TcpPeer::ptr pr(m_peer_pool.make(
 			m_worker_pool.get_io_worker(),
-			m_server->m_dispatch_pool.attach()));
-		pr->impl().m_id = m_server->make_session_id();
+			m_server->impl().m_dispatch_pool.attach()));
+		pr->impl().m_id = m_server->impl().make_session_id();
 		m_acceptor->async_accept(
 			*(boost::asio::ip::tcp::socket*)(pr->impl().socket()),
 			boost::bind(&Impl::on_accept, this,
@@ -169,7 +139,7 @@ public:
 			m_acceptor.reset();
 		}
 		// stop worker.
-		m_peer_pool.clear();
+		m_peer_pool.stop();
 		m_worker.stop();
 		m_worker_pool.stop();
 	}
@@ -187,12 +157,12 @@ public:
 	{
 		if (ec)
 		{
-			eco::Error e(ec.value(), ec.message());
-			m_on_accept(pr, &e);
+			ECO_THIS_ERROR(ec.value()) << ec.message();
+			m_on_accept(pr, true);
 		}
 		else
 		{
-			m_on_accept(pr, nullptr);
+			m_on_accept(pr, false);
 			async_accept();		// accept next tcp_connection.
 		}
 	}
@@ -229,7 +199,11 @@ void TcpAcceptor::join()
 }
 void TcpAcceptor::set_server(TcpServer& server)
 {
-	impl().m_server = &server.impl();
+	impl().m_server = &server;
+}
+TcpServer& TcpAcceptor::server()
+{
+	return *impl().m_server;
 }
 void TcpAcceptor::register_on_accept(IN TcpOnAccept v)
 {

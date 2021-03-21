@@ -18,66 +18,147 @@ convert types.
 
 *******************************************************************************/
 #include <eco/Export.h>
+#include <eco/cpp/Chrono.h>
+#include <ctime>
 
 
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(date_time);
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API Time
+inline uint32_t day_seconds()
 {
-public:
-	// get daily total seconds.
-	static uint32_t today_seconds();
-
-    inline static uint32_t day_seconds()
+	return 86400;	// 60 * 60 * 24
+}
+inline uint32_t get_minute(IN const char* time)
+{
+	uint32_t h = eco::cast<uint16_t>(&time[0], 2);
+	uint32_t m = eco::cast<uint16_t>(&time[3], 2);
+	return h * 60 + m;
+}
+inline uint32_t get_minute(IN const uint32_t sec)
+{
+	return sec / 60;
+}
+inline uint32_t get_second(IN const char* time)
+{
+	uint32_t v = 0;
+	v = eco::cast<uint16_t>(&time[0], 2);  v *= 60;
+	v += eco::cast<uint16_t>(&time[3], 2); v *= 60;
+	return v += eco::cast<uint16_t>(&time[6], 2);
+}
+inline uint32_t get_second(IN const std::string& time)
+{
+	return get_second(time.c_str());
+}
+inline static uint32_t get_second_miss(IN const char* time)
+{
+	uint32_t v = 0;
+	size_t size = strlen(time);
+	if (size >= 2) v = eco::cast<uint16_t>(&time[0], 2);
+	v *= 60;
+	if (size >= 5) v += eco::cast<uint16_t>(&time[3], 2);
+	v *= 60;
+	if (size >= 8) v += eco::cast<uint16_t>(&time[6], 2);
+	return v;
+}
+inline static uint32_t get_second_miss(IN const std::string& time)
+{
+	return get_second_miss(time.c_str());
+}
+inline bool timeout(uint32_t now_t, uint32_t last_t, int timeout_sec)
+{
+	// whether current is timeout.
+	int day_sec = day_seconds();
+	int diff = now_t - last_t;
+	if (diff <= timeout_sec - day_sec)	// when cross day
 	{
-		return 86400;	// 60 * 60 * 24
+		diff += day_sec;
 	}
+	return diff >= timeout_sec;
+}
 
-    inline static uint32_t get_minute(IN const char* time)
-    {
-        uint32_t h = eco::cast<uint16_t>(time, 2);
-        uint32_t m = eco::cast<uint16_t>(&time[3], 2);
-        return h * 60 + m;
-    }
 
-    inline static uint32_t get_minute(IN const uint32_t sec)
-    {
-        return sec / 60;
-    }
+////////////////////////////////////////////////////////////////////////////////
+inline uint32_t now_time()
+{
+	std_chrono::system_clock::time_point tp = std_chrono::system_clock::now();
+	std::time_t tt = std_chrono::system_clock::to_time_t(tp);
+	struct std::tm* t = std::localtime(&tt);
+	return t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec;
+}
 
-    inline static uint32_t get_second(IN const char* time)
-    {
-        uint32_t s = eco::cast<uint16_t>(&time[6], 2);
-        return get_minute(time) * 60 + s;
-    }
 
-	inline static uint32_t get_second(IN const std::string& time)
+////////////////////////////////////////////////////////////////////////////////
+inline std_chrono::system_clock::time_point make_time_point(
+	int year, int mon, int day, int hour, int min, int sec)
+{
+	struct std::tm t;
+	t.tm_sec = sec;
+	t.tm_min = min;
+	t.tm_hour = hour;
+	t.tm_mday = day;
+	t.tm_mon = mon - 1;
+	t.tm_year = year - 1900;
+	t.tm_isdst = -1;
+	std::time_t tt = std::mktime(&t);
+	if (tt == -1)
 	{
-		return get_second(time.c_str());
+		ECO_THROW("no valid system time.");
 	}
+	return std_chrono::system_clock::from_time_t(tt);
+}
+inline std_chrono::system_clock::time_point make_time_point(const char* tp)
+{
+	size_t len = strlen(tp);
+	int year = 0, mon = 0, day = 0;
+	int hour = 0, min = 0, sec = 0;
+	if (len == 17)			// 20201025 15:30:00
+	{
+		year = eco::cast<int>(&tp[0], 4);
+		mon = eco::cast<int>(&tp[4],  2);
+		day = eco::cast<int>(&tp[6],  2);
+		hour = eco::cast<int>(&tp[9], 2);
+		min = eco::cast<int>(&tp[12], 2);
+		sec = eco::cast<int>(&tp[15], 2);
+	}
+	else if (len == 19)		// 2020-10-25 15:30:00
+	{
+		year = eco::cast<int>(&tp[0], 4);
+		mon = eco::cast<int>(&tp[5],  2);
+		day = eco::cast<int>(&tp[8],  2);
+		hour = eco::cast<int>(&tp[11], 2);
+		min = eco::cast<int>(&tp[14], 2);
+		sec = eco::cast<int>(&tp[17], 2);
+	}
+	return make_time_point(year, mon, day, hour, min, sec);
+}
 
-    // get intacted time second.
-    inline static uint32_t get_second_miss(IN const char* time)
-    {
-        uint32_t v = 0;
-        size_t size = strlen(time);
-        if (size > 0) v = eco::cast<uint16_t>(&time[0], 2);
-        v *= 60;
-        if (size > 3) v += eco::cast<uint16_t>(&time[3], 2);
-        v *= 60;
-        if (size > 6) v += eco::cast<uint16_t>(&time[6], 2);
-        return v;
-    }
-    inline static uint32_t get_second_miss(IN const std::string& time)
-    {
-        return get_second_miss(time.c_str());
-    }
 
+////////////////////////////////////////////////////////////////////////////////
+class Time
+{
 public:
 	inline Time(bool set = true)
 	{
-		m_time = set ? today_seconds() : 0;
+		m_time = set ? now_time() : 0;
+	}
+
+	inline Time(const uint32_t v) : m_time(v)
+	{}
+
+	inline Time(const char* now_t)
+	{
+		m_time = get_second(now_t);
+	}
+
+	inline Time(struct tm* t)
+	{
+		m_time = t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec;
+	}
+
+	inline void set_value(const uint32_t v)
+	{
+		m_time = v;
 	}
 
 	inline operator uint32_t() const
@@ -87,7 +168,7 @@ public:
 
 	inline uint32_t seconds() const
 	{
-		return m_time;
+		return (uint32_t)m_time;
 	}
 
 	inline uint32_t diff_end(uint32_t end) const
@@ -97,28 +178,17 @@ public:
 
 	inline uint32_t diff_start(uint32_t start) const
 	{
-		return start > m_time ? m_time + day_seconds() - start : m_time - start;
-	}
-
-	// whether current is timeout.
-	static inline bool timeout(uint32_t now_t, uint32_t last_t, int timeout_sec)
-	{
-		int day_sec = day_seconds();
-		int diff = now_t - last_t;
-		if (diff <= timeout_sec - day_sec)	// when cross day
-		{
-			diff += day_sec;
-		}
-		return diff >= timeout_sec;
-	}
-	static inline bool timeout(uint32_t last_t, uint32_t timeout_sec)
-	{
-		return timeout(Time(), last_t, timeout_sec);
+		return start > m_time ?
+			m_time + day_seconds() - start : m_time - start;
 	}
 
 private:
 	uint32_t m_time;
 };
+inline bool timeout(uint32_t last_t, uint32_t timeout_sec)
+{
+	return timeout(Time(), last_t, timeout_sec);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -42,7 +42,7 @@ ECO_PROPERTY_STR_IMPL(Address, service_name);
 ECO_SHARED_IMPL(AddressSet);
 ECO_PROPERTY_SET_IMPL(AddressSet, Address);
 ECO_PROPERTY_STR_IMPL(AddressSet, name);
-ECO_PROPERTY_VAV_IMPL(AddressSet, ServiceMode, mode);
+ECO_PROPERTY_VAR_IMPL(AddressSet, ServiceMode, mode);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,15 +79,14 @@ void Address::set(IN const char* ip, IN const uint32_t port)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-const uint32_t Address::get_port() const
+const uint32_t Address::port() const
 {
 	return eco::cast<uint32_t>(impl().m_service_name);
 }
-const eco::String Address::get_value() const
+const eco::String Address::value() const
 {
 	eco::String temp(impl().m_host_name);
-	temp.append(':');
-	temp.append(impl().m_host_name);
+	temp << ':' << impl().m_service_name;
 	return temp;
 }
 
@@ -95,7 +94,7 @@ const eco::String Address::get_value() const
 ////////////////////////////////////////////////////////////////////////////////
 bool Address::ip_format() const
 {
-	return get_port() > 0 && !impl().m_host_name.empty();
+	return port() > 0 && !impl().m_host_name.empty();
 }
 bool Address::empty() const
 {

@@ -44,13 +44,13 @@ public:
 	inline bool open(
 		IN const char* file_path,
 		IN const char* open_mode,
-		IN eco::Error& e)
+		IN eco::String& e)
 	{
 		close();
 		m_fp = ::fopen(file_path, open_mode);
 		if (null())
 		{
-			e.id(-1) << "open file fail: " << file_path;
+			e << "open file fail: " << file_path;
 			return false;
 		}
 		return true;
@@ -64,7 +64,7 @@ public:
 		m_fp = ::fopen(file_path, open_mode);
 		if (null())
 		{
-			ECO_THROW(0, "open file fail: ") << file_path;
+			ECO_THROW("open file fail: ") << file_path;
 		}
 	}
 
@@ -114,7 +114,7 @@ public:
 		int result = ::stat(file_path, &buf);
 		if (result != 0)
 		{
-			ECO_THROW(0) << "get file size by ::stat() fail.";
+			ECO_THROW("get file size by ::stat() fail.");
 		}
 		return buf.st_size;
 	}

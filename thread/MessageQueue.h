@@ -21,9 +21,8 @@
 #include <eco/thread/ConditionVariable.h>
 #include <eco/date_time/Time.h>
 #include <eco/log/Log.h>
+#include <eco/cpp/Thread.h>
 #include <deque>
-#include <mutex>
-#include <atomic>
 
 
 ECO_NS_BEGIN(eco);
@@ -104,8 +103,12 @@ public:
 	{
 		return m_open;
 	}
+	inline bool is_close() const
+	{
+		return !m_open;
+	}
 
-	/*@ close message queue so that it stop to recv message. but it will wait 
+	/*@ close message queue so that it stop to recv message. but it will wait
 	all message be handled.
 	*/
 	inline void close()
@@ -113,18 +116,27 @@ public:
 		if (is_close()) return;
 		m_open = false;
 
+		// notify all thread to exit message queue.
+		m_empty_cond_var.notify_all();
+		m_full_cond_var.notify_all();
+	}
+
+	/*@ close message queue so that it stop to recv message. and it won't wait
+	all message to be handled.
+	*/
+	inline void release()
+	{
+		if (is_close()) return;
+		m_open = false;
+
 		{
-			std::lock_guard<std::mutex> lock(m_mutex);
+			std_lock_guard lock(m_mutex);
 			m_deque.clear();
 		}
 
 		// notify all thread to exit message queue.
 		m_empty_cond_var.notify_all();
 		m_full_cond_var.notify_all();
-	}
-	inline bool is_close() const
-	{
-		return !m_open;
 	}
 
 	/*@ post message to message queue.
@@ -134,29 +146,7 @@ public:
 	inline void post(IN Message& msg)
 	{
 		{
-			std::unique_lock<std::mutex> lock(m_mutex);
-			m_full_cond_var.wait(lock, [=] { return !is_full(); });
-			m_deque.push_back(std::move(msg));
-			m_flow.count(m_deque.size(), m_name, m_capacity);
-		}
-		m_empty_cond_var.notify_one();
-	}
-
-	/*@ post message to message queue and ensure that this message is unique.
-	if this message is exist, replace it.
-	std::function<bool(const Message& m1, const Message& m2)>
-	*/
-	template<typename UniqueChecker>
-	inline void post(IN Message& msg, IN UniqueChecker& check)
-	{
-		{
-			std::unique_lock<std::mutex> lock(m_mutex);
-			auto it = std::find_if(m_deque.begin(), m_deque.end(), check);
-			if (it != m_deque.end())
-			{
-				*it = std::move(msg);
-				return;
-			}
+			std_unique_lock lock(m_mutex);
 			m_full_cond_var.wait(lock, [=] { return !is_full(); });
 			m_deque.push_back(std::move(msg));
 			m_flow.count(m_deque.size(), m_name, m_capacity);
@@ -169,9 +159,9 @@ public:
 	{
 		size_t size = 0;
 		{
-			std::unique_lock<std::mutex> lk(m_mutex);
+			std_unique_lock lk(m_mutex);
 			m_empty_cond_var.wait(lk, [=] {
-				return !is_empty() || is_close();
+				return !this->is_empty() || this->is_close();
 			});
 			if (is_close()) return -1;
 			msg = std::move(m_deque.front());
@@ -185,19 +175,19 @@ public:
 	// is message queue empty.
 	inline bool empty() const
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		return m_deque.empty();
 	}
 
 	// is message queue empty.
 	inline uint32_t size() const
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		return (uint32_t)m_deque.size();
 	}
 
 	// message queue mutex.
-	inline std::mutex& mutex()
+	inline std_mutex& mutex()
 	{
 		return m_mutex;
 	}
@@ -225,12 +215,12 @@ private:
 	std::deque<Message> m_deque;
 
 	// message queue state.
-	std::atomic<bool> m_open;
+	std_atomic_uint32_t m_open;
 
 	// when message queue is full and empty, synchronous notify.
-	mutable std::mutex m_mutex;
-	std::condition_variable m_full_cond_var;
-	std::condition_variable m_empty_cond_var;
+	mutable std_mutex m_mutex;
+	std_condition_variable m_full_cond_var;
+	std_condition_variable m_empty_cond_var;
 };
 
 

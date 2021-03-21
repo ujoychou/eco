@@ -15,16 +15,16 @@ class SeqTopic;
 // topic content snap type.
 enum
 {
-	snap_none = 0,		// new content.
 	snap_head = 1,		// head snap.
 	snap_last = 2,		// last snap.
+	snap_none = 4,		// new content.
 };
 typedef uint8_t Snap;
 
 // whether it is a snap.
 inline bool is_newc(IN const Snap v)
 {
-	return v == 0;
+	return v == snap_none;
 }
 inline bool is_snap(IN const Snap v)
 {
@@ -42,7 +42,26 @@ inline bool is_snap_head(IN const Snap v)
 
 //##############################################################################
 //##############################################################################
-class TopicId
+class TopicId_
+{
+public:
+	inline bool operator==(IN const TopicId_& tid) const
+	{
+		return m_value == tid.m_value && m_type == tid.m_type;
+	}
+
+	// for std::map.
+	inline bool operator<(IN const TopicId_& tid) const
+	{
+		return (m_type != tid.m_type)
+			? m_type < tid.m_type : m_value < tid.m_value;
+	}
+
+protected:
+	uint32_t m_type;
+	uint64_t m_value;
+};
+class TopicId : public TopicId_
 {
 public:
 	inline explicit TopicId(
@@ -132,13 +151,12 @@ public:
 	}
 	inline bool operator==(IN const TopicId& tid) const
 	{
-		return m_value == tid.m_value && m_type == tid.m_type;
+		return TopicId_::operator==(tid);
 	}
 	// for std::map.
 	inline bool operator<(IN const TopicId& tid) const
 	{
-		return (m_type != tid.m_type)
-			? m_type < tid.m_type : m_value < tid.m_value;
+		return TopicId_::operator<(tid);
 	}
 
 	inline bool equal(
@@ -148,23 +166,25 @@ public:
 	{
 		return *this == TopicId(type, prop, value);
 	}
-
-public:
-	// for std::unorder_map.
-	struct Hash
-	{
-		inline std::size_t operator()(IN const TopicId& v) const
-		{
-			return v.hash_value();
-		}
-	};
-
-private:
-	uint32_t m_type;
-	uint64_t m_value;
 };
+ECO_NS_END(eco);
 
 
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_BEGIN(std);
+template<>
+class hash<eco::TopicId>
+{
+public:
+	inline std::size_t operator()(IN const eco::TopicId& v) const
+	{
+		return v.hash_value();
+	}
+};
+ECO_NS_END(std);
+
+
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class ContentData
 {
@@ -178,17 +198,19 @@ public:
 	{}
 
 	// set topic content object_t.
-	virtual void* get_object() { return nullptr; }
+	virtual void* get_object() = 0;
 
 	// set topic content value_t. 
-	virtual void* get_value() { return nullptr; }
-
-	// set topic id.
-	virtual void* get_id() { return nullptr; }
+	virtual void* get_value() = 0;
 
 	// content type.
-	virtual const uint32_t get_type_id() const { return 0; }
-	virtual const uint32_t get_object_id() const { return 0; }
+	virtual const uint32_t get_type_id() const = 0;
+	virtual const uint32_t get_object_id() const = 0;
+
+	virtual void* get_id()
+	{
+		return nullptr;
+	}
 
 	// get content object.
 	template<typename value_t>
@@ -249,8 +271,24 @@ public:
 		return &eco::get_object<object_t>(m_value);
 	}
 
-private:
+protected:
 	value_t m_value;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename object_id_t>
+class IdContentDataT : public eco::ContentDataT<object_id_t, object_id_t>
+{
+public:
+	inline IdContentDataT(IN const object_id_t& id, IN eco::meta::Stamp ts)
+		: eco::ContentDataT<object_id_t, object_id_t>(id, ts)
+	{}
+
+	virtual void* get_id() override
+	{
+		return &m_value;
+	}
 };
 
 
@@ -385,12 +423,6 @@ public:
 	// erase topic and clear content.
 	virtual void on_erase(IN eco::Topic& t)
 	{}
-
-	// get snap seq size to publish snap.
-	virtual size_t get_snap_seq(IN eco::SeqTopic& topic, IN void* data)
-	{
-		return 0;	// publish all snap.
-	}
 };
 
 
@@ -545,7 +577,7 @@ private:
 	union Data
 	{
 		uint64_t iid;
-		TopicId  tid;
+		TopicId_ tid;
 		char*    sid;
 
 		inline Data()
@@ -570,7 +602,7 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-typedef eco::CreateRtObject CreateTopic;
+typedef eco::MakeRtObject MakeTopic;
 #define ECO_TOPIC(topic_t, parent_t) ECO_RTX(topic_t, parent_t)
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -601,24 +633,6 @@ protected:
 public:
 	inline Topic() {}
 	virtual ~Topic() {}
-
-	// topic type: PopTopic(Topic)/OneTopic/SeqTopic/SetTopic.
-	inline bool pop_topic_type() const
-	{
-		return get_type_name() == ECO_TYPE_NAME(Topic);
-	}
-	inline bool one_topic_type() const
-	{
-		return get_type_name() == ECO_TYPE_NAME(OneTopic);
-	}
-	inline bool seq_topic_type() const
-	{
-		return get_type_name() == ECO_TYPE_NAME(SeqTopic);
-	}
-	inline bool set_topic_type() const
-	{
-		return get_type_name() == ECO_TYPE_NAME(SetTopic);
-	}
 
 	// topic identity.
 	inline const TopicUid& get_uid() const

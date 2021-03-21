@@ -21,7 +21,7 @@
 #include <eco/persist/ObjectMapping.h>
 
 
-namespace eco {;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API CsvSource
 {
@@ -34,6 +34,45 @@ public:
 
 	/*@ read data to csv file.*/
 	virtual void read(OUT std::string& data) {}
+
+public:
+	// get csv head.
+	inline void get_head(
+		OUT std::string& data,
+		IN  const ObjectMapping& mapping)
+	{
+		if (mapping.map().empty()) return;
+
+		// csv head.
+		auto it = mapping.map().begin();
+		for (; it != mapping.map().end(); ++it)
+		{
+			data += it->field();
+			data += ',';					// tab
+		}
+		data.at(data.size() - 1) = '\n';	// enter
+	}
+
+	// get csv data of object.
+	template<typename meta_t, typename object_t>
+	inline void get_data(
+		OUT std::string& data,
+		IN const object_t& obj,
+		IN const ObjectMapping& mapping)
+	{
+		if (mapping.get_map().empty()) return;
+
+		// csv data.
+		meta_t meta;
+		meta.attach(obj);
+		auto it = mapping.get_map().begin();
+		for (; it != mapping.get_map().end(); ++it)
+		{
+			data += meta.get_value(it->get_property(), "eco_csv");
+			data += ',';					// tab
+		}
+		data.at(data.size() - 1) = '\n';	// enter
+	}
 
 public:
 	/*@ save object set to csv source.*/
@@ -79,109 +118,111 @@ public:
 	/*@ read object set from csv source.*/
 	template<typename meta_t, typename object_set_t>
 	inline void read_all(
-		IN const std::string& x,
-		IN const ObjectMapping& mapping,
-		OUT object_set_t& obj_set)
+		OUT object_set_t& obj_set,
+		IN const std::string& data,
+		IN const ObjectMapping& mapping)
 	{
 		std::vector<const eco::PropertyMapping*> prop_set;
-		uint32_t index = 0;
-		uint32_t find = eco::find_first(&x[index], '\n');
-		if (find != -1)
+		// parse header field.
+		auto row_end = parse_property(prop_set, data.c_str(), mapping);
+		if (row_end == nullptr) return;
+
+		// parse row data.
+		const char* row_start = row_end + 1;
+		for (uint32_t row = eco::find_first(row_start, '\n'); row != -1; )
 		{
-			std::string head = x.substr(index, find);
-			uint32_t pos = eco::find_first(&head[index], ',');
-			while (pos != -1) {
-				const eco::PropertyMapping* pm = mapping.find_property(
-					head.substr(index, pos).c_str());
-				index += (pos + 1);
-				pos = eco::find_first(&head[index], ',');
-				if (pm == nullptr)
-					continue;
+			row_end = row_start + row;
+			parse_object<meta_t>(obj_set, row_start, row_end, prop_set);
 
-				prop_set.push_back(pm);
-			}
+			// parse next object by row.
+			row_start = row_end + 1;
+			row = eco::find_first(row_start, '\n');
+		}
+		// parse row 
+		row_end = data.c_str() + data.size();
+		parse_object<meta_t>(obj_set, row_start, row_end, prop_set);
+	}
 
-			pos = head.size() - index - 1;
-			const eco::PropertyMapping* pm = mapping.find_property(
-				head.substr(index, pos).c_str());
+	/*@ read object set from csv source.*/
+	template<typename meta_t, typename object_set_t>
+	inline void read_all_by_file(
+		OUT object_set_t& obj_set,
+		IN const std::string& file,
+		IN const ObjectMapping& mapping)
+	{}
+
+private:
+	inline const char* parse_property(
+		OUT std::vector<const eco::PropertyMapping*>& prop_set,
+		IN  const char* row_start,
+		IN  const ObjectMapping& mapping)
+	{
+		// parse header field.
+		const char* fdata = row_start;
+		uint32_t row = eco::find_first(fdata, '\n');
+		if (row == -1) return nullptr;
+
+		int fi = 0;
+		const char* row_end = fdata + row;
+		uint32_t pos = eco::find_first(fdata, ',');
+		for (; pos != -1 && fdata + pos < row_end; ++fi)
+		{
+			PropertyMapping* pm = mapping.find_field_n(fdata, pos);
 			if (pm != nullptr)
-				prop_set.push_back(pm);
-
-			index += (pos + 1);
-		}
-
-		do
-		{
-			index += 1;
-			find = eco::find_first(&x[index], '\n');
-			if (find == -1)
-				break;
-
-			meta_t meta;
-			auto obj = meta.create();
-			meta.attach(obj);
-
-			uint32_t pos = eco::find_first(&x[index], ',');
-			for (size_t i = 0; pos != -1 && i < prop_set.size(); ++i)
 			{
-				eco::Bytes val(&x[index], pos);
-				index += (pos + 1);
-
-				if (i == prop_set.size() - 2)
-					pos = eco::find_first(&x[index], '\r');
-				else
-					pos = eco::find_first(&x[index], ',');
-
-				meta.set_value(prop_set[i]->get_field_index(), val, "");
+				pm->field_index(fi);
+				prop_set.push_back(pm);
 			}
-			obj_set.push_back(obj);
-		} while (1);
+			fdata = &fdata[pos + 1];
+			pos = eco::find_first(fdata, ',');
+		}
+		// parse header field: last.
+		auto pm = mapping.find_field_n(fdata, row_end - fdata);
+		if (pm != nullptr)
+		{
+			pm->field_index(fi);
+			prop_set.push_back(pm);
+		}
+		return row_end;
 	}
 
-public:
-	// get csv head.
-	inline void get_head(
-		OUT std::string& data,
-		IN const ObjectMapping& mapping)
+	template<typename meta_t, typename object_set_t>
+	inline void parse_object(
+		OUT object_set_t& obj_set,
+		IN  const char* row_start,
+		IN  const char* row_end,
+		IN  const std::vector<const eco::PropertyMapping*>& prop_set)
 	{
-		if (mapping.get_map().empty())
-		{
-			return;
-		}
+		// parse object property.
+		const char* fdata = row_start;
+		uint32_t pos = eco::find_first(fdata, ',');
+		if (pos == -1) return;
 
-		// csv head.
-		auto it = mapping.get_map().begin();
-		for (; it != mapping.get_map().end(); ++it)
-		{
-			data += it->get_field();
-			data += ',';					// tab
-		}
-		data.at(data.size() - 1) = '\n';	// enter
-	}
-
-	// get csv data of object.
-	template<typename meta_t, typename object_t>
-	inline void get_data(
-		OUT std::string& data,
-		IN const object_t& obj,
-		IN const ObjectMapping& mapping)
-	{
+		// create object.
+		typename object_set_t::value_type obj;
 		meta_t meta;
-		meta.attach(obj);
-
-		if (mapping.get_map().empty())
+		meta.make_attach(obj);
+		uint32_t fi = 0;
+		uint32_t pi = 0;
+		for (; pos != -1 && pi < prop_set.size() && fdata + pos < row_end; ++fi)
 		{
-			return;
+			eco::Bytes val(fdata, pos);
+			if (prop_set[pi]->get_field_index() == fi)
+			{
+				meta.set_value(*prop_set[pi++], val, "eco_csv");
+			}
+			fdata = &fdata[pos + 1];
+			pos = eco::find_first(fdata, ',');
 		}
-
-		// csv data.
-		auto it = mapping.get_map().begin();
-		for (; it != mapping.get_map().end(); ++it)
+		if (pi < prop_set.size())
 		{
-			data += meta.get_value(it->get_property(), "eco_csv");
-			data += ',';					// tab
+			eco::Bytes val(fdata, row_end - fdata);
+			if (prop_set[pi]->get_field_index() == fi)
+			{
+				meta.set_value(*prop_set[pi++], val, "eco_csv");
+			}
 		}
-		data.at(data.size() - 1) = '\n';	// enter
+		obj_set.push_back(obj);
 	}
 };
 
@@ -203,5 +244,5 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}//ns
+ECO_NS_END(eco);
 #endif

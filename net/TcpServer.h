@@ -48,8 +48,8 @@ public:
 
 	// network server option.
 	void set_option(IN const TcpServerOption&);
-	TcpServerOption& option();
-	const TcpServerOption& get_option() const;
+	TcpServerOption& get_option();
+	const TcpServerOption& option() const;
 	TcpServer& option(IN const TcpServerOption&);
 
 	// protocol
@@ -70,7 +70,7 @@ public:
 	{
 		set_connection_data(&make_connection_data<connection_data_t>);
 	}
-	void set_connection_data(IN MakeConnectionDataFunc make);
+	void set_connection_data(IN MakeConnectionData&& make);
 
 	// set session data class and tcp session mode.
 	template<typename session_data_t>
@@ -78,21 +78,21 @@ public:
 	{
 		set_session_data(&make_session_data<session_data_t>);
 	}
-	void set_session_data(IN MakeSessionDataFunc make);
+	void set_session_data(IN MakeSessionData&& make);
 
 	// make session id.
 	uint64_t make_object_id(uint32_t& ts, uint32_t& seq, int ver = 1);
 
 	// register dispatch handler.
-	virtual void register_default(IN HandlerFunc hf) override;
-	virtual void register_handler(IN uint64_t id, IN HandlerFunc hf) override;
+	virtual void register_default(IN HandlerFunc&& hf) override;
+	virtual void register_handler(IN int id, IN HandlerFunc&& hf) override;
 
 public:
 	// set connection open close event
-	void set_event(ServerCloseFunc on_open, ServerAcceptFunc on_close);
+	void set_event(OnAccept&&, OnClose&&);
 
 	// set receive callback event.
-	void set_recv_event(OnRecvDataFunc on_recv, OnDecodeHeadFunc on_decode);
+	void set_recv_event(OnRecvData&&, OnDecodeHead&&);
 
 	// is receive mode: using recv callback event to handle message.
 	bool receive_mode() const;

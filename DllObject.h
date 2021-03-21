@@ -40,10 +40,10 @@ public:
 		IN const char* dll_path,
 		IN const char* dll_name = "");
 
-	const char* get_path() const;
+	const char* path() const;
 
 	void set_name(IN const char* name);
-	const char* get_name() const;
+	const char* name() const;
 	DllObject& name(IN const char*);
 	
 	DllFunc get_function(IN const char* func_name);

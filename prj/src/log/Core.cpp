@@ -90,13 +90,13 @@ public:
 ECO_SINGLETON_IMPL(Core);
 ECO_PROPERTY_STR_IMPL(Core, file_path);
 ECO_PROPERTY_BOL_IMPL(Core, async);
-ECO_PROPERTY_VAV_IMPL(Core, SinkOption, sink_option);
-ECO_PROPERTY_VAV_IMPL(Core, uint32_t, capacity);
-ECO_PROPERTY_VAV_IMPL(Core, uint32_t, async_flush);
-ECO_PROPERTY_VAV_IMPL(Core, uint32_t, file_roll_size);
-ECO_API Core& get_core()
+ECO_PROPERTY_VAR_IMPL(Core, SinkOption, sink_option);
+ECO_PROPERTY_VAR_IMPL(Core, uint32_t, capacity);
+ECO_PROPERTY_VAR_IMPL(Core, uint32_t, async_flush);
+ECO_PROPERTY_VAR_IMPL(Core, uint32_t, file_roll_size);
+ECO_API Core& core()
 {
-	return eco::Singleton<Core>::instance();
+	return eco::Singleton<Core>::get();
 }
 
 
@@ -222,7 +222,7 @@ void Core::set_severity_level(IN const SeverityLevel v, IN const int flag)
 	if (flag == 0 || flag == 2)
 		impl().m_console_sev = v;
 }
-const SeverityLevel Core::get_severity_level() const
+const SeverityLevel Core::severity_level() const
 {
 	return (impl().m_file_sev < impl().m_console_sev)
 		? impl().m_file_sev : impl().m_console_sev;
@@ -287,27 +287,28 @@ const char* const g_sev_name[] =
 	"trace",
 	"debug",
 	"info",
+	"key",
 	"warn",
 	"error",
 	"fatal",
-	"none",
 };
 const char* const g_sev_display[] =
 {
 	"[trace]",
 	"[debug]",
 	"[info ]",
+	"[key  ]",
 	"[warn ]",
 	"[error]",
 	"[fatal]",
 };
 SeverityLevel Severity::get_level(IN const char* sev_name)
 {
-	for (size_t i = 0; i<sizeof(g_sev_name) / sizeof(char*); ++i)
+	for (size_t i = 0; i < sizeof(g_sev_name) / sizeof(char*); ++i)
 	{
 		if (strcmp(g_sev_name[i], sev_name) == 0)
 		{
-			return static_cast<SeverityLevel>(i);
+			return static_cast<SeverityLevel>(i + eco::log::trace);
 		}
 	}
 	return eco::log::info;	// default logging level.
@@ -317,15 +318,15 @@ SeverityLevel Severity::get_level(IN const char* sev_name)
 ////////////////////////////////////////////////////////////////////////////////
 const char* Severity::get_name(IN const SeverityLevel sev_level)
 {
-	if (sev_level > eco::log::fatal || sev_level < 0)
+	if (sev_level > eco::log::fatal || sev_level < eco::log::trace)
 		return "unknown";
-	return g_sev_name[sev_level];
+	return g_sev_name[sev_level - eco::log::trace];
 }
 const char* Severity::get_display(IN const SeverityLevel sev_level)
 {
-	if (sev_level > eco::log::fatal || sev_level < 0)
+	if (sev_level > eco::log::fatal || sev_level < eco::log::trace)
 		return "[unknown]";
-	return g_sev_display[sev_level];
+	return g_sev_display[sev_level - eco::log::trace];
 }
 
 

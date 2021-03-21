@@ -139,8 +139,8 @@ public:
 		rapidjson::Value& jsv = (child_prop == nullptr) ? doc : doc[child_prop];
 		for (auto vit = jsv.Begin(); vit != jsv.End(); ++vit)
 		{
-			object_set_t::value_type obj(meta.create());
-			meta.attach(obj);
+			object_set_t::value_type obj;
+			meta.make_attach(obj);
 
 			auto it = obj_mapping.get_map().begin();
 			for (; it != obj_mapping.get_map().end(); ++it)

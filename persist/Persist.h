@@ -109,13 +109,16 @@ class ECO_API Persist
 public:
 	// set address set.
 	void set_address(IN const persist::Address&);
-	const persist::Address& get_address() const;
+	const persist::Address& address() const;
 
 	// get persist name.
 	inline const char* name() const
 	{
-		return get_address().get_name();
+		return address().name();
 	}
+
+	// set live seconds.
+	void set_live_interval(uint16_t sec);
 
 	// get persist state.
 	bool ready() const;

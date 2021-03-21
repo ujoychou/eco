@@ -27,9 +27,36 @@ ECO_NS_BEGIN(eco)
 ////////////////////////////////////////////////////////////////////////////////
 // make object.
 template<typename T>
-inline static void make(T&) {}
+inline void* make(std::auto_ptr<T>& obj)
+{
+	obj.reset(new T());
+	return obj.get();
+}
 template<typename T>
-inline static void make(std::shared_ptr<T>& ptr) { ptr.reset(new T()); }
+inline void* make(std::unique_ptr<T>& obj)
+{
+	obj.reset(new rsp_t());
+	return obj.get();
+}
+template<typename T>
+inline void* make(std::shared_ptr<T>& obj)
+{
+	obj = std::make_shared<T>();
+	return obj.get();
+}
+template<typename T>
+inline void* make(T& obj)
+{
+	return &obj;
+}
+template<typename T>
+inline void* make(T* obj)
+{
+	return new T();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 // get object type.
 template<typename T>
 inline T& get_object() { return *(T*)nullptr; }
@@ -42,6 +69,8 @@ inline const T& object(const T& obj) { return obj; }
 template<typename T>
 inline const T& object(const std::shared_ptr<T>& ptr) { return *ptr; }
 
+
+////////////////////////////////////////////////////////////////////////////////
 // get T when type is shared_ptr<T>, else return T when type is T.
 template<typename T>
 class Raw
@@ -104,7 +133,7 @@ class Singleton
 {
 	ECO_OBJECT(Singleton);
 public:
-	inline static object_t& instance()
+	inline static object_t& get()
 	{
 		return s_object;
 	}
@@ -119,8 +148,8 @@ object_t Singleton<object_t>::s_object;
 #define ECO_SINGLETON_1(object_t)\
 	ECO_NONCOPYABLE(object_t);\
 public:\
-	inline static object_t& instance() {\
-		return eco::Singleton<object_t>::instance();\
+	inline static object_t& get() {\
+		return eco::Singleton<object_t>::get();\
 	}\
 private:\
 	friend class eco::Singleton<object_t>;\
@@ -129,8 +158,8 @@ private:\
 #define ECO_SINGLETON_2(object_t, init)\
 	ECO_NONCOPYABLE(object_t);\
 public:\
-	inline static object_t& instance() {\
-		return eco::Singleton<object_t>::instance();\
+	inline static object_t& get() {\
+		return eco::Singleton<object_t>::get();\
 	}\
 private:\
 	friend class eco::Singleton<object_t>;\
@@ -151,7 +180,7 @@ private:\
 #define ECO_SINGLETON_NAME(object_t, method)\
 inline object_t& method()\
 {\
-	return eco::Singleton<object_t>::instance();\
+	return eco::Singleton<object_t>::get();\
 }
 #define ECO_NAME(object_t, method)\
 inline object_t& method()\

@@ -64,10 +64,10 @@ public:
 	// post message to server or queue.
 	inline void pop()
 	{
-		if (m_severity < get_core().get_severity_level()) return;
+		if (m_severity < core().severity_level()) return;
 
 		const char* t_name = eco::this_thread::name();
-		if (m_severity > eco::log::info)
+		if (m_severity >= eco::log::warn)
 		{
 			// logging thread name.
 			if (!eco::empty(t_name))
@@ -78,23 +78,23 @@ public:
 		}
 
 		// turn line '\n' must input into the string.
-		m_stream.buffer().force_append('\n');
-		get_core().append(m_stream.get_bytes(), m_severity);
+		m_stream.force_append(1, '\n');
+		core().append(m_stream.bytes(), m_severity);
 	}
 
 	/*@ logging collector. domain has 'logging', 'monitor', 'report'
 	*/
 	inline PusherT& set(
-		IN const char* func_name,
+		IN const eco::Bytes& func_name,
 		IN const char* file_name,
 		IN int file_line,
 		IN SeverityLevel sev_level)
 	{
-		assert(sev_level >= get_core().get_severity_level());
+		assert(sev_level >= core().severity_level());
 		m_severity = sev_level;
 
 		// info< logging no need to save source file info.
-		if (sev_level > eco::log::info)
+		if (sev_level >= eco::log::warn)
 		{
 			uint32_t pos = -1;
 			m_file_name = (
@@ -111,10 +111,9 @@ public:
 
 		// default domain is empty string.
 		eco::date_time::Timestamp now(eco::date_time::fmt_std_m);
-		m_stream << now.get_value() <= eco::this_thread::get_id()
+		m_stream << now.value() <= eco::this_thread::get_id()
 			<= Severity::get_display(sev_level) < ' ';
-		if (func_name != nullptr)
-			m_stream << eco::group(func_name) < ' ';
+		if (!func_name.null()) m_stream << eco::group(func_name) < ' ';
 		return *this;
 	}
 
@@ -130,7 +129,7 @@ protected:
 	uint32_t	m_file_line;
 	const char* m_file_name;
 };
-typedef eco::log::PusherT<eco::StreamX> Pusher;
+typedef eco::log::PusherT<eco::String> Pusher;
 
 
 ////////////////////////////////////////////////////////////////////////////////

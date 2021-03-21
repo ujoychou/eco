@@ -33,8 +33,7 @@ public:
 	{}
 
 	// constructor.
-	inline Case(IN const std::string& name) 
-		: Runner(name)
+	inline Case(IN const std::string& name) : Runner(name)
 	{}
 
 	virtual ~Case()
@@ -44,32 +43,31 @@ protected:
 	virtual void operator()(void)
 	{}
 
-	virtual uint32_t CountCase() const
+	virtual uint32_t count_case() const override
 	{
 		return 1;
 	}
 
-	virtual void OnBegin() override
+	virtual void on_begin() override
 	{
-		Runner::OnBegin();
-		GetResultSet().ResetTest();
-
-		EcoTrace << "[run       ] " << GetFullName() << ".";
+		Runner::on_begin();
+		result_set().ResetTest();
+		ECO_INFO << "[run       ] " << fullname() << ".";
 	}
 
-	virtual void OnEnd() override
+	virtual void on_end() override
 	{
-		Runner::OnEnd();
+		Runner::on_end();
 
 		// update case info.
-		if (!GetResultSet().IsOk())
+		if (!result_set().ok())
 		{
-			GetResultSet().m_failed_case = 1;
+			result_set().m_failed_case = 1;
 		}
-		GetResultSet().m_checked_case = 1;
+		result_set().m_checked_case = 1;
 
-		eco::Stream<> fmt;
-		if (GetResultSet().IsOk())
+		eco::String fmt;
+		if (result_set().ok())
 		{
 			fmt << "[        ok] ";
 		}
@@ -78,17 +76,17 @@ protected:
 			fmt << "[       bad] ";
 		}
 		fmt << "test ";
-		fmt << GetResultSet().GetTotalTest() << "-";
-		fmt << GetResultSet().GetCheckedTest() << "-";
-		fmt << GetResultSet().GetFailedTest() << "-";
-		fmt << GetResultSet().GetSuccessTest() << ".";
-		EcoTrace << fmt.c_str();
+		fmt << result_set().total_test() << "-";
+		fmt << result_set().checked_test() << "-";
+		fmt << result_set().failed_test() << "-";
+		fmt << result_set().success_test() << ".";
+		ECO_INFO << fmt.c_str();
 
-		if (!GetResultSet().IsOk())
+		if (!result_set().ok())
 		{
-			fmt.buffer().clear();
-			fmt << "[~~~~~~~~~~] " << GetFullName() << ".";
-			EcoTrace << fmt.c_str();
+			fmt.clear();
+			fmt << "[~~~~~~~~~~] " << fullname() << ".";
+			ECO_INFO << fmt.c_str();
 		}// end if.
 	}
 };
@@ -108,13 +106,13 @@ public:
 
 	virtual void operator()(void) override
 	{
-		m_object->SetContext(GetContext());
-		m_object->GetResultSet() = GetResultSet();
-		m_object->SetName(GetName());
+		m_object->set_context(get_context());
+		m_object->result_set() = result_set();
+		m_object->set_name(name());
 
 		m_case_run();	// run work.
 
-		GetResultSet() = m_object->GetResultSet();
+		result_set() = m_object->result_set();
 	}
 
 private:

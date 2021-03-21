@@ -35,14 +35,15 @@ namespace log{;
 enum
 {
 	none	= 0,
-	debug	= 1,
-	info	= 2,
-	warn	= 3,
-	error	= 4,
-	fatal	= 5,
-	max
+	trace	= 1,
+	debug	= 2,
+	info	= 3,
+	key		= 4,
+	warn	= 5,
+	error	= 6,
+	fatal	= 7,
 };
-typedef uint16_t SeverityLevel;
+typedef uint8_t SeverityLevel;
 
 
 ////////////////////////////////////////////////////////////////////////////////

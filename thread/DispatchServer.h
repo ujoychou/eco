@@ -31,7 +31,7 @@ namespace eco{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename MessageType, typename Message>
+template<typename type_t, typename msg_t>
 class DispatchHandler
 {
 	ECO_OBJECT(DispatchHandler);
@@ -41,19 +41,19 @@ public:
 		inline Wrap()
 		{}
 
-		inline Wrap(const MessageType& type, const Message& msg)
+		inline Wrap(const type_t& type, const msg_t& msg)
 			: m_type(type), m_msg(msg)
 		{}
 
-		inline Wrap(const MessageType& type, Message&& msg)
+		inline Wrap(const type_t& type, msg_t&& msg)
 			: m_type(type), m_msg(msg)
 		{}
 
-		Message		m_msg;
-		MessageType m_type;
+		msg_t		m_msg;
+		type_t m_type;
 	};
-	typedef std::function<void(IN Message&)> HandlerFunc;
-	typedef std::unordered_map<MessageType, HandlerFunc> HandlerMap;
+	typedef std::function<void(IN msg_t&)> HandlerFunc;
+	typedef std::unordered_map<type_t, HandlerFunc> HandlerMap;
 
 	// message and message handler map.
 	HandlerMap	m_handler_map;
@@ -73,7 +73,7 @@ public:
 		dispatch(wrap.m_type, wrap.m_msg);
 	}
 
-	inline void dispatch(IN const MessageType& type, IN Message& msg) const
+	inline bool dispatch(IN const type_t& type, IN msg_t& msg) const
 	{
 		eco::this_thread::lock().set_object(type);
 
@@ -89,12 +89,13 @@ public:
 		}
 		else
 		{
-			ECO_ERROR << "dispatch unknown message type: " << type;
+			return false;
 		}
+		return true;
 	}
 	
 	/*@ add message and handler map.*/
-	void set_dispatch(IN const MessageType& type, IN HandlerFunc handler)
+	void set_dispatch(IN const type_t& type, IN HandlerFunc handler)
 	{
 		m_handler_map[type] = handler;
 	}
@@ -109,17 +110,17 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 template<
-	typename MessageType, typename Message,
-	typename MessageWrap = DispatchHandler<MessageType, Message>::Wrap >
+	typename type_t, typename msg_t,
+	typename MessageWrap = DispatchHandler<type_t, msg_t>::Wrap >
 class DispatchServer :
-	public eco::MessageServer<MessageWrap, DispatchHandler<MessageType, Message> >
+	public eco::MessageServer<MessageWrap, DispatchHandler<type_t, msg_t> >
 {
 public:
-	typedef DispatchHandler<MessageType, Message> ThisType;
+	typedef DispatchHandler<type_t, msg_t> ThisType;
 	typedef typename ThisType::HandlerFunc HandlerFunc;
 
 	/*@ add message and handler map.*/
-	inline void set_dispatch(IN const MessageType& type, IN HandlerFunc func)
+	inline void set_dispatch(IN const type_t& type, IN HandlerFunc func)
 	{
 		message_handler().set_dispatch(type, func);
 	}
@@ -130,12 +131,12 @@ public:
 		message_handler().set_default(func);
 	}
 
-	inline void dispatch(IN const MessageType& type, IN Message&& msg)
+	inline void dispatch(IN const type_t& type, IN msg_t&& msg)
 	{
 		post(MessageWrap(type, msg));
 	}
 
-	inline void dispatch(IN const MessageType& type, IN const Message& msg)
+	inline void dispatch(IN const type_t& type, IN const msg_t& msg)
 	{
 		post(MessageWrap(type, msg));
 	}

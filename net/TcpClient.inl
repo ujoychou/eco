@@ -36,7 +36,7 @@ inline void TcpClient::call_reject(
 {
 	err_t err;
 	codec_t codec;
-	codec.set_message(handle_context_make(err));
+	codec.set_message(eco::make(err));
 	if (codec.decode(c.m_message.m_data, c.m_message.m_size))
 	{
 		reject(err, c);
@@ -55,7 +55,7 @@ inline bool TcpClient::call_resolve(
 	std::function<void(err_t&, eco::net::Context&)>& reject)
 {
 	codec_t codec;
-	codec.set_message(handle_context_make(rsp));
+	codec.set_message(eco::make(rsp));
 	if (!codec.decode(c.m_message.m_data, c.m_message.m_size))
 	{
 		ECO_LOG(error, name_) < "parse object fail "
@@ -89,14 +89,16 @@ TcpClient::ResponseFunc TcpClient::context_func(
 	std::function<void(err_t&, eco::net::Context&)>& reject,
 	std::function<void(rsp_t&, eco::net::Context&)>& resolve)
 {
+	auto* f_reject = &TcpClient::call_reject<codec_t, err_t>;
+	auto* f_resolve = &TcpClient::call_resolve<codec_t, err_t, rsp_t>;
 	return [=](eco::net::Context& c) mutable {
 		if (c.has_error()) {
-			call_reject<codec_t, err_t>("async", c, reject);
+			f_reject("async", c, reject);
 			return;
 		}
 
 		rsp_t rsp;
-		if (call_resolve<codec_t, err_t>("async", c, rsp, reject)) {
+		if (f_resolve("async", c, rsp, reject)) {
 			resolve(rsp, c);
 		}
 	};
@@ -118,7 +120,7 @@ TcpClient::ResponseFunc TcpClient::context_func(
 
 		typename rsp_set_t::value_type rsp;
 		if (call_resolve<codec_t, err_t>("async_set", c, rsp, reject)) {
-			rsp_set->push_back(rsp);	// add data to response array.
+			rsp_set->push_back(std::move(rsp));	// add data to response array.
 			if (c.is_last()) resolve(rsp_set);
 		}
 	};

@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/cmd/Context.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <vector>
 
 
 namespace eco{;
@@ -37,7 +36,7 @@ void Context::Impl::set_command_line(IN const char* cmd_line, IN Context& wrap)
 	// ½âÎö²ÎÊý: para1, para2, para3
 	for (size_t i = 1; i < set.size(); i++)
 	{
-		wrap.add().value() = set[i].c_str();
+		wrap.add().get_value() = set[i].c_str();
 	}
 }
 

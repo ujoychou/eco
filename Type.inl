@@ -156,10 +156,7 @@ bool StringAny::operator==(IN const char* v) const
 {
 	return m_value == v;
 }
-inline double StringAny::to_double(int precision) const
-{
-	return eco::cast<double>(m_value, precision);
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 void Parameter::set_name(IN const char* val)
@@ -171,7 +168,7 @@ Parameter& Parameter::name(IN const char* val)
 	impl().m_name = val;
 	return *this;
 }
-const char* Parameter::get_name() const
+const char* Parameter::name() const
 {
 	return impl().m_name.c_str();
 }
@@ -187,11 +184,11 @@ Parameter& Parameter::value(IN const StringAny& val)
 	impl().m_value = val;
 	return *this;
 }
-StringAny& Parameter::value()
+StringAny& Parameter::get_value()
 {
 	return impl().m_value;
 }
-const StringAny& Parameter::get_value() const
+const StringAny& Parameter::value() const
 {
 	return impl().m_value;
 }

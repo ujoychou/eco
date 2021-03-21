@@ -62,7 +62,7 @@ bool Reader::Impl::get_node(
 			// <key value="xxx"/>
 			if (itc->first == "value")
 			{
-				if (eco::empty(node.get_name()))
+				if (eco::empty(node.name()))
 					node.set_name(node_name.c_str());
 				node.set_value(itc->second.data().c_str());
 			}
@@ -81,7 +81,7 @@ bool Reader::Impl::get_node(
 			}
 			else if (itc->first != "note")
 			{
-				auto& param = node.property_set().add();
+				auto& param = node.get_property_set().add();
 				param.set_name(itc->first.c_str());
 				param.set_value(itc->second.data().c_str());
 			}
@@ -90,7 +90,7 @@ bool Reader::Impl::get_node(
 	// it->first = key. (node name)
 	else if (xml_it->second.size() == 0)	// leaf children.
 	{
-		node.property_set().add().name(xml_it->first.c_str()).
+		node.get_property_set().add().name(xml_it->first.c_str()).
 			value(xml_it->second.data().c_str());
 	}
 	else									// node children.
@@ -102,13 +102,13 @@ bool Reader::Impl::get_node(
 			// change this value node as a parent's property.
 			if (!child.has_children() && child.get_property_set().empty())
 			{
-				auto& param = node.property_set().add();
-				param.set_name(child.get_name());
-				param.set_value(child.get_value());
+				auto& param = node.get_property_set().add();
+				param.set_name(child.name());
+				param.set_value(child.value());
 			}
 			else
 			{
-				node.children().add(child);
+				node.get_children().add(child);
 			}
 		}
 	}

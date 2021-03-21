@@ -13,21 +13,21 @@ namespace cmd{;
 //##############################################################################
 void CdCommand::execute(IN eco::cmd::Context& context)
 {
-	Engine::Impl* impl = &get_engine().impl();
+	Engine::Impl* impl = &engine().impl();
 
 	// app group: default home group.
 	if (context.size() == 0)
 	{
-		if (impl->m_curr_group != get_engine().root().group_set().at(1))
+		if (impl->m_curr_group != engine().root().group_set().at(1))
 		{
 			m_group = impl->m_curr_group;
-			impl->m_curr_group = get_engine().root().group_set().at(1);
+			impl->m_curr_group = engine().root().group_set().at(1);
 		}
 	}
 	// parent group
 	else if (strcmp(context.at(0), "..") == 0)
 	{
-		Group parent = get_engine().current().get_parent();
+		Group parent = engine().current().parent();
 		if (!parent.null())
 		{
 			m_group = impl->m_curr_group;
@@ -38,7 +38,7 @@ void CdCommand::execute(IN eco::cmd::Context& context)
 	else
 	{
 		const char* param = context.at(0);
-		Group chd = get_engine().current().find_group(param);
+		Group chd = engine().current().find_group(param);
 		if (chd.null())
 		{
 			EcoCout << "this is not a command: " << param;
@@ -52,14 +52,14 @@ void CdCommand::revoke()
 {
 	if (!m_group.null())
 	{
-		std::swap(get_engine().impl().m_curr_group, m_group);
+		std::swap(engine().impl().m_curr_group, m_group);
 	}
 }
 void CdCommand::resume()
 {
 	if (!m_group.null())
 	{
-		std::swap(get_engine().impl().m_curr_group, m_group);
+		std::swap(engine().impl().m_curr_group, m_group);
 	}
 }
 
@@ -72,7 +72,7 @@ void PwdCommand::execute(IN eco::cmd::Context& context)
 	// app group: default home group.
 	if (context.size() == 0)
 	{
-		std::string dir = pwd(get_engine().current());
+		std::string dir = pwd(engine().get_current());
 		EcoCout << dir;
 	}
 }
@@ -93,7 +93,7 @@ std::string PwdCommand::pwd(IN Group& group)
 		{
 			break;
 		}
-		temp = temp.get_parent();
+		temp = temp.parent();
 	}
 
 	// format string.
@@ -101,7 +101,7 @@ std::string PwdCommand::pwd(IN Group& group)
 	std::vector<Group>::reverse_iterator it;
 	for (it = vec.rbegin(); it != vec.rend(); ++it)
 	{
-		msg += it->get_name();
+		msg += it->name();
 		msg += "/";
 	}
 	return msg;
@@ -113,7 +113,7 @@ std::string PwdCommand::pwd(IN Group& group)
 //##############################################################################
 void HelpCommand::execute(IN eco::cmd::Context& context)
 {
-	std::vector<Class>& inner_cmds = get_engine().impl().m_inner_cmds;
+	std::vector<Class>& inner_cmds = engine().impl().m_inner_cmds;
 
 	char fmt[512] = {0};
 	if (!inner_cmds.empty())
@@ -122,7 +122,7 @@ void HelpCommand::execute(IN eco::cmd::Context& context)
 		for (; it != inner_cmds.end(); ++it)
 		{
 			snprintf(fmt, sizeof(fmt), "(c) %-10s %-20s: %s",
-				it->get_alias(), it->get_name(), it->get_help_info());
+				it->alias(), it->name(), it->help_info());
 			EcoCout << fmt;
 		}
 	}

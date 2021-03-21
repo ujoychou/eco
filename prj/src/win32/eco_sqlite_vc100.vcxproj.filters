@@ -19,12 +19,6 @@
     <Filter Include="src\persist">
       <UniqueIdentifier>{82864439-74b4-43a9-a788-ad364a9885e1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="contrib">
-      <UniqueIdentifier>{9677a784-6ebe-4a61-8d4b-7963e4af39c6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="contrib\sqlite">
-      <UniqueIdentifier>{00e18af0-2aba-4a2a-ab63-4cefc2713241}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\persist\Recordset.cpp">
@@ -39,19 +33,19 @@
     <ClCompile Include="..\persist\PersistAddress.cpp">
       <Filter>src\persist</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3.c">
-      <Filter>contrib\sqlite</Filter>
+    <ClCompile Include="..\..\..\..\com\sqlite3.13.0\sqlite\sqlite3.c">
+      <Filter>lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\PrecHeader.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3.h">
-      <Filter>contrib\sqlite</Filter>
+    <ClInclude Include="..\..\..\..\com\sqlite3.13.0\sqlite\sqlite3.h">
+      <Filter>lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\..\contrib\sqlite\sqlite3ext.h">
-      <Filter>contrib\sqlite</Filter>
+    <ClInclude Include="..\..\..\..\com\sqlite3.13.0\sqlite\sqlite3ext.h">
+      <Filter>lib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

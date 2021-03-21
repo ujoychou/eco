@@ -40,8 +40,6 @@ enum
 	category_heartbeat			= 0x00,
 	// category: context message.
 	category_message			= 0x01,
-	// category: authority message.
-	category_authority			= 0x04,
 	// category: message with a check sum.
 	category_checksum			= 0x08,
 	// category: encrypted message.
@@ -100,7 +98,7 @@ public:
 	/*@ decode message head.
 	* @ para.bytes: message head bytes.
 	*/
-	virtual bool decode_version(
+	virtual eco::Result decode_version(
 		OUT eco::net::MessageHead& head,
 		IN const char* bytes,
 		IN const uint32_t size) const = 0;

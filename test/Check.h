@@ -21,12 +21,11 @@
 
 namespace eco{;
 namespace test{;
-
 ////////////////////////////////////////////////////////////////////////////////
 class TestCheck
 {
 public:
-	virtual std::string Format() const = 0;
+	virtual eco::String format() const = 0;
 };
 
 
@@ -38,20 +37,19 @@ public:
 	eco::test::Trace m_tracer;
 
 public:
-	inline void SetDetail(
-		IN const std::string& expr_detail)
+	inline void set_detail(IN const std::string& expr_detail)
 	{
 		m_detail = expr_detail;
 	}
 
-	virtual std::string Format() const
+	virtual eco::String format() const override
 	{
-		eco::FixStream fmt;
+		eco::String fmt;
 		fmt << "[   fail   ] ";
 		fmt << "false = expect : actual ";
 		fmt << "{" << m_detail << "}";
-		fmt << "{" << m_tracer.Format() << "}";
-		return fmt.c_str();
+		fmt << "{" << m_tracer.format() << "}";
+		return std::move(fmt);
 	}
 };
 
@@ -64,21 +62,23 @@ public:
 	std::string m_actual;
 
 public:
-	inline void SetDetail(
+	inline void set_detail(
 		IN const std::string& expect_detail,
 		IN const std::string& actual_detail)
 	{
-		m_detail = EcoFix << expect_detail << "!=" << actual_detail;
+		eco::Buffer<> buf;
+		buf << expect_detail << "!=" << actual_detail;
+		m_detail = buf;
 	}
 
-	virtual std::string Format() const
+	virtual eco::String format() const override
 	{
-		eco::Stream<> buf;
+		eco::String buf;
 		buf << "[   fail   ] " << m_expect
 		<< " = expect : actual = " << m_actual << " "
 		<< "{" << m_detail << "}"
-		<< "{" << m_tracer.Format() << "}";
-		return buf.c_str();
+		<< "{" << m_tracer.format() << "}";
+		return std::move(buf);
 	}
 };
 
@@ -88,11 +88,11 @@ public:
 class TestLogicSuccess : public TestCheck
 {
 public:
-	virtual std::string Format() const
+	virtual eco::String format() const override
 	{
-		eco::Stream<> fmt;
+		eco::String fmt;
 		fmt << "[   pass   ] " << "true  = expect : actual";
-		return fmt.c_str();
+		return std::move(fmt);
 	}
 };
 
@@ -103,11 +103,11 @@ public:
 	std::string m_expect;
 
 public:
-	virtual std::string Format() const
+	virtual eco::String format() const override
 	{
-		eco::Stream<> fmt;
+		eco::String fmt;
 		fmt << "[   pass   ] " << m_expect << " = expect : actual";
-		return fmt.c_str();
+		return std::move(fmt);
 	}
 };
 
@@ -169,7 +169,7 @@ public:
 {\
 	std::shared_ptr<eco::test::TestCheck> test_res; \
 	ECO_EXPECT_LOGIC_GET_RESULT(test_res, logic_expr);\
-	AfwTest << test_res->Format();\
+	ECO_INFO << test_res->Format();\
 }
 
 
@@ -178,7 +178,7 @@ public:
 {\
 	std::shared_ptr<eco::test::TestCheck> test_res; \
 	ECO_EXPECT_EQUAL_GET_RESULT(test_res, expect, actual);\
-	AfwTest << test_res->Format();\
+	ECO_INFO << test_res->Format();\
 }
 
 

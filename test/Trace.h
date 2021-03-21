@@ -32,8 +32,7 @@ public:
 	inline Trace() : m_file_line(-1)
 	{}
 
-	inline explicit Trace(IN const std::string& trace_msg) :
-	m_file_line(-1)
+	inline explicit Trace(IN const std::string& trace_msg) : m_file_line(-1)
 	{}
 
 	inline Trace(
@@ -55,19 +54,19 @@ public:
 	{}
 
 	// get file name where exception throwed.
-	inline const std::string& GetFilePath() const
+	inline const std::string& filepath() const
 	{
 		return m_file_path;
 	}
 
 	// get file line where exception throwed.
-	inline const long GetFileLine() const
+	inline const long fileline() const
 	{
 		return m_file_line;
 	}
 
 	// get function name where exception throwed.
-	inline const std::string& GetFuncName() const
+	inline const std::string& func() const
 	{
 		return m_func_name;
 	}
@@ -75,11 +74,11 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 public:
 	// get trace format string.
-	inline std::string Format() const
+	inline eco::String format() const
 	{
-		eco::Stream<> fmt;
+		eco::String fmt;
 		fmt << m_file_path << ", " << m_func_name << ", " << m_file_line;
-		return fmt.c_str();
+		return std::move(fmt);
 	}
 
 ////////////////////////////////////////////////////////////////////////////////

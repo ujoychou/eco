@@ -6,8 +6,6 @@
 
 namespace eco{ ;
 namespace meta{ ;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // stamp state.
 enum
@@ -76,14 +74,6 @@ inline const char* get_text(IN const Stamp v)
 		return "remove";
 	}
 	return "none";
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-inline eco::meta::Stamp& stamp()
-{
-	static Stamp v = stamp_clean;
-	return v;
 }
 
 

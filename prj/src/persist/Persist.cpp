@@ -1,7 +1,6 @@
 #include "PrecHeader.h"
 #include <eco/persist/Persist.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Being.h>
 #include <eco/meta/Meta.h>
 #include <eco/DllObject.h>
 #include <eco/persist/Database.h>
@@ -51,7 +50,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Persist::Impl : public eco::Being
+class Persist::Impl
 {
 public:
 	enum
@@ -68,33 +67,33 @@ public:
 		uint64_t& m_load_thread_id;
 	};
 
+	TimingWheel::Timer		m_timer;
 	PersistHandler*			m_handler;
 	eco::Database::ptr		m_master;
+	persist::Address		m_address;
 	std::vector<Upgrade>	m_upgrade_seq;
 	eco::ObjectMapping		m_orm_version;
 	eco::atomic::State		m_state;
-	persist::Address		m_address;
 	uint64_t				m_load_thread_id;
+	uint32_t				m_live_interval;
 
-	inline Impl() : m_handler(nullptr), m_load_thread_id(0)
-	{
-		eco::Being::set_name("persist");
-	}
+	inline Impl() : m_handler(nullptr), m_load_thread_id(0), m_live_interval(5)
+	{}
 
 	inline void init(IN Persist& parent)
 	{
-		set_live_seconds(5);
 		m_orm_version.id("version").table("_version");
 		m_orm_version.add().property("value").field("version").pk().int_type().index();
 		m_orm_version.add().property("module").field("module").pk().varchar(150).index();
 		m_orm_version.add().property("timestamp").field("timestamp").date_time();
 	}
 
-	virtual bool on_born() override;
-	virtual void on_live() override;
+	bool on_init();
+	void on_live();
+	void on_live_raw();
 };
 ////////////////////////////////////////////////////////////////////////////////
-bool Persist::Impl::on_born()
+bool Persist::Impl::on_init()
 {
 	if (m_handler != nullptr)
 	{
@@ -111,13 +110,13 @@ bool Persist::Impl::on_born()
 
 	// 4.create database config in "sys.xml".
 	eco::persist::Address& addr = m_address;
-	m_master.reset(create_database(addr.get_type()));
+	m_master.reset(create_database(addr.type()));
 	return (m_master != nullptr);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Persist::Impl::on_live()
+void Persist::Impl::on_live_raw()
 {
 	// 4.connect to database server.
 	if (!m_master->is_open())
@@ -128,9 +127,9 @@ void Persist::Impl::on_live()
 		// logging persist detail info.
 		char log[128] = { 0 };
 		sprintf(log, "\n+[persist %s %s]\n""-open %s by %s(%s) at %s:%d\n",
-			addr.get_type_name(), addr.get_name(),
-			addr.get_database(), addr.get_user(), addr.get_password(),
-			addr.get_host(), addr.get_port());
+			addr.type_name(), addr.name(),
+			addr.database(), addr.user(), addr.password(),
+			addr.host(), addr.port());
 		ECO_INFO << log;
 	}
 
@@ -141,10 +140,10 @@ void Persist::Impl::on_live()
 
 		// get database version.
 		char cond_sql[64] = { 0 };
-		const char* app_name = eco::App::get()->get_name();
+		const char* app_name = eco::App::get()->name();
 		sprintf(cond_sql, "where %s='%s' order by %s desc",
-			m_orm_version.find_property("module")->get_field(), app_name,
-			m_orm_version.find_property("value")->get_field());
+			m_orm_version.find("module")->field(), app_name,
+			m_orm_version.find("value")->field());
 		eco::persist::Version version(app_name);
 		m_master->create_table(m_orm_version);
 		m_master->read<eco::persist::VersionMeta>(
@@ -186,6 +185,17 @@ void Persist::Impl::on_live()
 		}
 	}
 }
+void Persist::Impl::on_live()
+{
+	try
+	{
+		on_live_raw();
+	}
+	catch (std::exception& e)
+	{
+		ECO_LOG(error, m_address.name()) < "live" <= e.what();
+	}
+}
 
 
 ECO_SHARED_IMPL(Persist);
@@ -193,19 +203,31 @@ ECO_SHARED_IMPL(Persist);
 void Persist::set_address(IN const persist::Address& v)
 {
 	impl().m_address = v;
-	impl().set_name(v.get_name());
 }
-const persist::Address& Persist::get_address() const
+const persist::Address& Persist::address() const
 {
 	return impl().m_address;
 }
 void Persist::start()
 {
-	impl().live();
+	// 1.init class.
+	if (!impl().on_init())
+		return;
+
+	// 2.run live.
+	impl().on_live();
+
+	// 3.live timer.
+	impl().m_timer = eco::App::get()->timer().run_after(
+		std::bind(&Persist::Impl::on_live, &impl()),
+		std_chrono::seconds(impl().m_live_interval), true);
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 void Persist::set_field(IN const char* prop, IN const char* field)
 {
-	auto* map = impl().m_orm_version.find_property(prop);
+	PropertyMapping* map = impl().m_orm_version.find(prop);
 	if (map != nullptr)
 	{
 		map->field(field);
@@ -227,12 +249,13 @@ eco::Database& Persist::master()
 	{
 		// only persist is unready and not in "on_load".
 		// "on_load": load_thread_id == current thread id.
-		ECO_THROW(eco::error) << "persist is unready, unload data.";
+		ECO_THROW("persist is unready, unload data.");
 	}
 	return *impl().m_master;
 }
 void Persist::close()
 {
+	impl().m_timer.cancel();
 	if (impl().m_handler != nullptr)
 	{
 		impl().m_handler->to_exit();
@@ -249,7 +272,18 @@ void Persist::close()
 }
 bool Persist::ready() const
 {
-	return impl().m_state.has(Impl::state_load);
+	if (!impl().m_state.has(Impl::state_load))
+	{
+		ECO_THIS_ERROR(name()) < impl().m_address.host()
+			< ":" < impl().m_address.port();
+		return false;
+	}
+	return true;
+}
+void Persist::set_live_interval(uint16_t sec)
+{
+	if (sec != 0)
+		impl().m_live_interval = sec;
 }
 
 

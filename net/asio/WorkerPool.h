@@ -106,12 +106,13 @@ public:
 	{
 		// get the io service that has less connections and less workload.
 		WorkLoad* get = nullptr;
-		for (WorkLoad& it : m_balancer)
+		for (auto it = m_balancer.begin(); it != m_balancer.end(); ++it)
 		{
-			if (!it.m_worker->stopped() &&
-				(!get || get->m_work_load > it.m_work_load))
+			WorkLoad& wl = *it;
+			if (!wl.m_worker->stopped() &&
+				(!get || get->m_work_load > wl.m_work_load))
 			{
-				get = &it;
+				get = &wl;
 			}
 		}
 		if (!get)

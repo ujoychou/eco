@@ -61,8 +61,7 @@ public:
 	virtual eco::String decode(
 		IN eco::String& encode_str,
 		IN const uint32_t start_pos,
-		IN const uint32_t encode_size,
-		IN eco::Error& e)
+		IN const uint32_t encode_size)
 	{
 		return std::move(encode_str);
 	}
@@ -93,10 +92,9 @@ public:
 	*/
 	inline eco::String decode(
 		IN eco::String& encode_str,
-		IN const uint32_t start_pos,
-		IN eco::Error& e)
+		IN const uint32_t start_pos)
 	{
-		return decode(encode_str, start_pos, encode_str.size() - start_pos, e);
+		return decode(encode_str, start_pos, encode_str.size() - start_pos);
 	}
 };
 
@@ -149,13 +147,13 @@ public:
 	virtual eco::String decode(
 		IN eco::String& encode_str,
 		IN const uint32_t start_pos,
-		IN const uint32_t encode_size,
-		IN eco::Error& e) override
+		IN const uint32_t encode_size) override
 	{
 		const int sol = sizeof(uint32_t);	// size of original data length.
 		if (encode_size <= sol)				// original data length
 		{
-			e.id(e_message_decode) << "message has no 'original data length'";
+			ECO_THIS_ERROR(e_message_decode)
+				< "message has no 'original data length'";
 			return eco::String();
 		}
 
@@ -164,8 +162,8 @@ public:
 		uint32_t encode_data_size = encode_size - sol;
 		if (origin_size < 1 || encode_data_size < 1)
 		{
-			e.id(e_message_decode) << "message original data length "
-				"or encoded data length = 0.";
+			ECO_THIS_ERROR(e_message_decode)
+				< "message original data length or encoded data length = 0.";
 			return eco::String();
 		}
 
@@ -176,7 +174,7 @@ public:
 		if (!Coder::append_decode(origin_str,
 			&encode_str[start_pos + sol], encode_data_size, origin_size))
 		{
-			e.id(e_message_decode) << "coder append decode error.";
+			ECO_THIS_ERROR(e_message_decode) < "coder append decode error.";
 			return eco::String();
 		}
 		return std::move(origin_str);

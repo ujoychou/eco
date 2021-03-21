@@ -23,7 +23,7 @@ log server.
 *******************************************************************************/
 #include <eco/Object.h>
 #include <eco/Config.h>
-#include <eco/proto/Object.pb.h>
+#include <eco/eco/Proto.h>
 #include <eco/filesystem/Path.h>
 #include <eco/thread/Thread.h>
 
@@ -79,8 +79,8 @@ public:
 			eco::proto::Error* e = obj.add_error();
 			e->set_id(err.id());
 			e->set_path(key);
-			e->set_message(err.message());
-			m_error_map[key] = err.message();
+			e->set_value(err.value());
+			m_error_map[key] = err.value();
 		}
 	}
 
@@ -118,17 +118,17 @@ public:
 	inline void make_error(eco::proto::Error& e,
 		const char* n, const char* v, const std::string& path)
 	{
-		e.set_message(v);
+		e.set_value(v);
 		std::string name = get_node_name(n);
 		if (path.empty() && eco::is_number(name.c_str()))
 		{
 			e.set_id(eco::cast<int>(name));
-			m_ecode_map[e.id()] = e.message();
+			m_ecode_map[e.id()] = e.value();
 		}
 		else
 		{
 			e.set_path(path.empty() ? name : path + name);
-			m_error_map[e.path()] = e.message();
+			m_error_map[e.path()] = e.value();
 		}
 	}
 
@@ -139,27 +139,29 @@ public:
 		const std::string& path)
 	{
 		// property set is error object.
-		const eco::Context& errs = node.get_property_set();
-		for (const eco::Parameter& param : errs)
+		const eco::Context& errs = node.property_set();
+		for (auto ite = errs.begin(); ite != errs.end(); ++ite)
 		{
+			const eco::Parameter& param = *ite;
 			eco::proto::Error* e = lang.add_error();
-			make_error(*e, param.get_name(), param.get_value(), path);
+			make_error(*e, param.name(), param.value(), path);
 		}
 
 		// recursively context node to get leaf error.
-		eco::ContextNodeSet node_set = node.get_children();
+		eco::ContextNodeSet node_set = node.children();
 		if (!node_set.null())
 		{
-			for (eco::ContextNode& node : node_set)
+			for (auto itn = node_set.begin(); itn != node_set.end(); ++itn)
 			{
-				if (!eco::empty(node.get_value()))
+				eco::ContextNode& node = *itn;
+				if (!eco::empty(node.value()))
 				{
 					eco::proto::Error* e = lang.add_error();
-					make_error(*e, node.get_name(), node.get_value(), path);
+					make_error(*e, node.name(), node.value(), path);
 				}
 
 				std::string path_cur = path;
-				path_cur += node.get_name();
+				path_cur += get_node_name(node.name());
 				path_cur += '/';
 				add_error_node(lang, node, path_cur);
 			}
@@ -184,27 +186,29 @@ public:
 		const std::string& path)
 	{
 		// property set is error object.
-		const eco::Context& errs = node.get_property_set();
-		for (const eco::Parameter& param : errs)
+		const eco::Context& errs = node.property_set();
+		for (auto ite = errs.begin(); ite != errs.end(); ++ite)
 		{
+			const eco::Parameter& param = *ite;
 			eco::proto::Word* w = lang.add_word();
-			make_word(*w, param.get_name(), param.get_value(), path);
+			make_word(*w, param.name(), param.value(), path);
 		}
 
 		// recursively context node to get leaf error.
-		eco::ContextNodeSet node_set = node.get_children();
+		eco::ContextNodeSet node_set = node.children();
 		if (!node_set.null())
 		{
-			for (eco::ContextNode& node : node_set)
+			for (auto itn = node_set.begin(); itn != node_set.end(); ++itn)
 			{
-				if (!eco::empty(node.get_value()))
+				eco::ContextNode& node = *itn;
+				if (!eco::empty(node.value()))
 				{
 					eco::proto::Word* w = lang.add_word();
-					make_word(*w, node.get_name(), node.get_value(), path);
+					make_word(*w, node.name(), node.value(), path);
 				}
 
 				std::string path_cur = path;
-				path_cur += node.get_name();
+				path_cur += get_node_name(node.name());
 				path_cur += '/';
 				add_word_node(lang, node, path_cur);
 			}
@@ -219,7 +223,7 @@ public:
 		const char* msg = (it != m_ecode_map.end())	? it->second.c_str() : "";
 		if (eco::empty(para)) return msg;
 
-		auto& fmt = this_thread::format(msg);
+		eco::FormatX& fmt = this_thread::format(msg);
 		fmt.arg(';', para);
 		return fmt.c_str();
 	}

@@ -22,7 +22,7 @@ log server.
 
 *******************************************************************************/
 #include <eco/ExportApi.h>
-#include <eco/proto/Object.pb.h>
+#include <eco/eco/Proto.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -38,7 +38,7 @@ public:
 		IN const char* mdl);
 
 	// set locale language.
-	void set_default(
+	void set_default_(
 		IN const char* lang);
 
 	// set locale default language info.
@@ -60,42 +60,30 @@ public:
 		IN const char* mdl);
 
 public:
-	// get locale language proto data.
-	const char* language() const;
+	// get default language.
+	const char* default_() const;
 
 	// get error message by error id.
 	const char* get_error(
 		IN int eid,
 		IN const char* lang = "");
-	eco::Format<>& get_error_format(
+	eco::FormatX& get_error_format(
 		IN int eid,
-		IN const char* lang = "");
-
-	// get error message by error id and module.
-	// @when module api callback.
-	const char* get_error(
-		IN int eid,
-		IN const char* para,
-		IN const char* mdl,
 		IN const char* lang = "");
 
 	// get error message by string path.
-	// @when module api callback.
-	const char* get_error(
-		IN const char* path,
-		IN const char* para = "",
-		IN const char* mdl = "",
-		IN const char* lang = "");
-	eco::Format<>& get_error_format(
+	eco::FormatX& get_error_format(
 		IN const char* path,
 		IN const char* lang = "");
 
 	// get word view.
 	const char* get_word(
 		IN const char* path,
+		IN const char* mdl = "",
 		IN const char* lang = "");
-	eco::Format<>& get_word_format(
+	eco::FormatX& get_word_format(
 		IN const char* path,
+		IN const char* mdl = "",
 		IN const char* lang = "");
 
 	// get variable view.
@@ -104,24 +92,19 @@ public:
 		IN const char* var,
 		IN const char* mdl = "",
 		IN const char* lang = "");
-	eco::Format<>& get_variable_format(
+	eco::FormatX& get_variable_format(
 		IN const char* var,
 		IN const char* mdl = "",
 		IN const char* lang = "");
 
-	// find locale node.
+	// find locale node value.
 	bool find(
 		OUT eco::StringAny& result,
 		IN  const char* key,
 		IN  const char* lang) const;
 
-	// get locale node.
+	// get locale node value.
 	eco::StringAny get(
-		IN  const char* key,
-		IN  const char* lang) const;
-
-	// get locale file path of language.
-	eco::StringAny get_path(
 		IN  const char* key,
 		IN  const char* lang) const;
 
@@ -129,11 +112,45 @@ public:
 	const eco::proto::Locale& data() const;
 
 	// get locale language proto data.
-	const proto::Language* language(IN const char* lang = "") const;
+	const proto::Language* language(
+		IN const char* lang = "") const;
+
+public:
+	// front server: return parse error message, and return to product client.
+	const char* parse_error(
+		IN const char* path,
+		IN const char* para,
+		IN const char* mdl,
+		IN const char* lang = "");
+	const char* parse_error(
+		IN int eid,
+		IN const char* para,
+		IN const char* mdl,
+		IN const char* lang = "");
+
+	// front server: parse error from background services.
+	inline const char* parse_error(
+		OUT eco::proto::Error& e,
+		IN  const char* mdl,
+		IN  const char* lang)
+	{
+		const char* msg = e.path().empty()
+			? parse_error(e.id(), e.value().c_str(), mdl, lang)
+			: parse_error(e.path().c_str(), e.value().c_str(), mdl, lang);
+		if (!eco::empty(msg)) e.set_value(msg);
+		return e.value().c_str();
+	}
+
+	// front server: parse error from background services.
+	inline const char* parse_error(const char* mdl, const char* lang)
+	{
+		eco::proto::Error& e = eco::this_thread::proto::error();
+		return parse_error(e, mdl, lang);
+	}
 };
 
 
-ECO_API Locale& locale();
+eco::loc::Locale& app_locale();
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(loc);
 ECO_NS_END(eco);

@@ -50,7 +50,7 @@ inline void get_files_if_impl(
 	OUT std::vector<boost::filesystem::path>& files,
 	IN  const boost::filesystem::path& sour_dir,
 	IN  const bool recursive,
-	IN  std::function<bool(const boost::filesystem::path& file)>& filter)
+	IN  const std::function<bool(const boost::filesystem::path& file)>& filter)
 {
 	using namespace boost::filesystem;
 
@@ -75,7 +75,7 @@ inline void get_files_if(
 	OUT std::vector<boost::filesystem::path>& files,
 	IN  const boost::filesystem::path& sour_dir,
 	IN  const bool recursive,
-	IN  std::function<bool(const boost::filesystem::path& file)> filter)
+	IN  const std::function<bool(const boost::filesystem::path& file)>& filter)
 {
 	if (!exists(sour_dir)) return;
 	get_files_if_impl(files, sour_dir, recursive, filter);
@@ -135,7 +135,7 @@ inline void copy_files(
 inline bool remove_files_if_impl(
 	IN  const boost::filesystem::path& sour_dir,
 	IN  const Option option,
-	IN  std::function<bool(const boost::filesystem::path& file)>& filter)
+	IN  const std::function<bool(const boost::filesystem::path& file)>& filter)
 {
 	using namespace boost::filesystem;
 
@@ -165,7 +165,7 @@ inline bool remove_files_if_impl(
 inline bool remove_files_if(
 	IN  const boost::filesystem::path& sour_dir,
 	IN  const Option option,
-	IN  std::function<bool(const boost::filesystem::path& file)> filter)
+	IN  const std::function<bool(const boost::filesystem::path& file)>& filter)
 {
 	if (!exists(sour_dir)) return false;
 	return remove_files_if_impl(sour_dir, option, filter);

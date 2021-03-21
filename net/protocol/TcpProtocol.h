@@ -112,7 +112,7 @@ protected:
 	{
 		bytes.append(head_siz, 0);
 		bytes[pos_version] = version;
-		bytes[pos_category] = static_cast<char>(category);
+		bytes[pos_category] = static_cast<uint8_t>(category);
 	}
 
 	virtual uint32_t encode_head_size() const
@@ -145,8 +145,7 @@ public:
 	virtual bool encode(
 		OUT eco::String& bytes,
 		OUT uint32_t& start,
-		IN  const eco::net::MessageMeta& meta,
-		OUT eco::Error& e) override
+		IN  const eco::net::MessageMeta& meta) override
 	{
 		// 1.init bytes size.
 		uint32_t head_siz = encode_head_size();			// encode head size.
@@ -164,7 +163,8 @@ public:
 		}
 		if (byte_siz > max_size())
 		{
-			e.id(e_message_overszie) < "message is too large to send="
+			ECO_THIS_ERROR(e_message_overszie)
+				< "message is too large to send="
 				< byte_siz < '>' < max_size();
 			return false;
 		}
@@ -176,8 +176,8 @@ public:
 		encode_append_head(bytes, head_siz, version(), meta.m_category);
 
 		// 3.init message type and optional data.
-		bytes.append(static_cast<char>(meta.m_model));
-		bytes.append(static_cast<char>(meta.m_option));
+		bytes.append(meta.m_model);
+		bytes.append(meta.m_option);
 		if (eco::has(meta.m_option, option_sess))
 			append_hton(bytes, meta.m_session_id);
 		if (eco::has(meta.m_option, option_type))
@@ -195,7 +195,7 @@ public:
 			bytes = m_crypt->encode(bytes, head_siz);
 			if (bytes.null())
 			{
-				e.id(e_message_encode) << "crypt message fail.";
+				ECO_THIS_ERROR(e_message_encode) < "crypt message fail.";
 				return false;
 			}
 		}
@@ -218,7 +218,7 @@ public:
 	}
 
 	/*@get version/category/version_size.*/
-	virtual bool decode_version(
+	virtual eco::Result decode_version(
 		OUT eco::net::MessageHead& head,
 		IN const char* bytes,
 		IN const uint32_t size) const override
@@ -227,9 +227,9 @@ public:
 		{
 			head.m_version = bytes[pos_version];
 			head.m_category = bytes[pos_category];
-			return true;
+			return eco::ok;
 		}
-		return false;
+		return eco::fail;
 	}
 
 	virtual bool decode_size(
@@ -253,8 +253,7 @@ public:
 		OUT eco::net::MessageMeta& meta,
 		OUT eco::Bytes& data,
 		IN  eco::String& bytes,
-		IN  uint32_t head_size,
-		IN  eco::Error& e) override
+		IN  uint32_t head_size) override
 	{
 		// check sum message.
 		uint32_t check_sum_size = 0;
@@ -262,7 +261,8 @@ public:
 		{
 			if (!m_check->decode(bytes))
 			{
-				e.id(e_message_checksum) << "checksum bytes size error.";
+				ECO_THIS_ERROR(e_message_checksum)
+					< "checksum bytes size error.";
 				return false;
 			}
 			check_sum_size = m_check->byte_size();
@@ -273,7 +273,7 @@ public:
 		{
 			uint32_t crypt_size = bytes.size();
 			crypt_size -= (head_size + check_sum_size);
-			bytes = m_crypt->decode(bytes, head_size, crypt_size, e);
+			bytes = m_crypt->decode(bytes, head_size, crypt_size);
 			if (bytes.null())
 			{
 				return false;
@@ -284,7 +284,8 @@ public:
 		uint32_t option_pos = head_size + meta_size();
 		if (bytes.size() < option_pos)
 		{
-			e.id(e_protocol_parameter) < "message size have no meta: "
+			ECO_THIS_ERROR(e_protocol_parameter)
+				< "message size have no meta: "
 				< bytes.size() < '<' < option_pos;
 			return false;
 		}
@@ -295,7 +296,8 @@ public:
 		uint32_t data_pos = head_size + meta_size(meta);
 		if (bytes.size() < data_pos)
 		{
-			e.id(e_protocol_parameter) < "message size have no meta option: "
+			ECO_THIS_ERROR(e_protocol_parameter)
+				< "message size have no meta option: "
 				< bytes.size() < '<' < data_pos;
 			return false;
 		}

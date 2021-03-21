@@ -46,7 +46,7 @@ public:
 		}
 		catch (const std::exception& e)
 		{
-			ECO_THROW(0, "init config fail:") << e.what();
+			ECO_THROW("init config fail:") < e.what();
 		}
 	}
 
@@ -56,7 +56,7 @@ public:
 		OUT eco::Context& result,
 		IN  const char* node_key) const
 	{
-		eco::Mutex::ScopeLock lock(m_data.mutex());
+		std_lock_guard lock(m_data.mutex());
 		m_root.get_property_set(result, node_key);
 	}
 
@@ -64,7 +64,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////
 	inline eco::ContextNodeSet get_children(IN  const char* parent_key) const
 	{
-		eco::Mutex::ScopeLock lock(m_data.mutex());
+		std_lock_guard lock(m_data.mutex());
 		auto node = get_node_raw(parent_key);
 		return !node.null() ? node.get_children() : eco::null;
 	}
@@ -73,7 +73,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////
 	inline eco::ContextNode get_node(IN  const char* node_key) const
 	{
-		eco::Mutex::ScopeLock lock(m_data.mutex());
+		std_lock_guard lock(m_data.mutex());
 		return get_node_raw(node_key);
 	}
 	inline eco::ContextNode get_node_raw(IN  const char* node_key) const
@@ -92,26 +92,26 @@ public:
 	{
 		// node name.
 		std::string node_name(parent_name);
-		eco::xml::sub_path(node_name, node.get_name());
+		eco::xml::sub_path(node_name, node.name());
 		if (!node_name.empty())
 		{
-			m_data.set(node_name, node.get_value());
+			m_data.set(node_name, node.value());
 		}
 	
 		// node attribute.
-		auto att = node.get_property_set().begin();
-		for (; att != node.get_property_set().end(); ++att)
+		auto att = node.property_set().begin();
+		for (; att != node.property_set().end(); ++att)
 		{
 			std::string attr_name(node_name);
-			eco::xml::sub_path(attr_name, att->get_name());
-			m_data.set(attr_name, att->get_value());
+			eco::xml::sub_path(attr_name, att->name());
+			m_data.set(attr_name, att->value());
 		}
 
 		// node children
 		if (node.has_children())
 		{
-			auto it = node.get_children().begin();
-			for (; it != node.get_children().end(); ++it)
+			auto it = node.children().begin();
+			for (; it != node.children().end(); ++it)
 			{
 				setup_index(*it, node_name);
 			}
@@ -140,7 +140,7 @@ const eco::StringAny Config::at(IN const char* key) const
 	eco::StringAny v;
 	if (!impl().m_data.find(v, key))
 	{
-		ECO_THROW(0, "config can't find key:") << key;
+		ECO_THROW("config can't find key:") < key;
 	}
 	return v;
 }
@@ -155,11 +155,11 @@ void Config::add(IN const char* key, IN const char* value)
 	StringAny v;
 	impl().m_data.set(key, (v = value));
 }
-uint32_t Config::get_import_file_size() const
+uint32_t Config::import_file_size() const
 {
 	return (uint32_t)impl().m_imports.size();
 }
-const char* Config::get_import_file(IN uint32_t index) const
+const char* Config::import_file(IN uint32_t index) const
 {
 	return impl().m_imports[index].c_str();
 }
@@ -176,7 +176,7 @@ eco::ContextNodeSet Config::get_children(IN const char* parent_key) const
 	if (result.null())
 	{
 		if (parent_key == nullptr) parent_key = "root";
-		ECO_THROW(0, "get config node children fail ") << parent_key;
+		ECO_THROW("get config node children fail ") < parent_key;
 	}
 	return result;
 }
@@ -198,7 +198,7 @@ eco::ContextNode Config::get_node(IN const char* node_key) const
 	if (result.null())
 	{
 		if (node_key == nullptr) node_key = "root";
-		ECO_THROW(0, "get config node child fail ") << node_key;
+		ECO_THROW("get config node child fail ") < node_key;
 	}
 	return result;
 }

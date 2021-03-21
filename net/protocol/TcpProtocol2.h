@@ -105,7 +105,7 @@ public:
 		if (size >= pos + size_byte1)
 		{
 			head.m_data_size = uint8_t(bytes[pos]);	// note: cast to uint8_t.
-			head.m_head_size = pos_size + size_size(head.m_data_size);
+			head.m_head_size = pos_size + size_size_byte(head.m_data_size);
 			if (size >= head.m_head_size)
 			{
 				size_decode(head.m_data_size, &bytes[pos]);

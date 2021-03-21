@@ -24,12 +24,11 @@
 
 *******************************************************************************/
 #include <eco/Eco.h>
-#include <eco/net/Log.h>
 #include <eco/net/Ecode.h>
 #include <eco/net/Context.h>
 #include <eco/loc/Locale.h>
 #include <eco/thread/Map.h>
-#include <eco/proto/Proto.h>
+#include <eco/eco/Proto.h>
 
 
 namespace eco{;
@@ -39,56 +38,19 @@ class NullRequest {};
 class MessageHandler : public std::enable_shared_from_this<MessageHandler>
 {
 	ECO_OBJECT(MessageHandler);
-public:
-	// logging.
-	class Log : public eco::net::Log
-	{
-	public:
-		inline Log(
-			IN MessageHandler& h,
-			IN const uint32_t type = 0)
-			: eco::net::Log(h.connection(),
-			(type ? type : h.request_type()), h.get_name())
-		{}
-
-		inline Log(
-			IN MessageHandler& h,
-			IN const std::string& user) 
-			: eco::net::Log(h.connection().id(), h.session().id(),
-				h.request_type(), h.get_name(), user.c_str())
-		{}
-
-		inline Log(
-			IN Context& c,
-			IN const char* name,
-			IN const uint32_t type = 0)
-			: eco::net::Log(c, c.type(), name)
-		{}
-
-		inline Log(
-			IN Context& c,
-			IN const char* name,
-			IN const std::string& user,
-			IN const uint32_t type = 0)
-			: eco::net::Log(c.connection().id(), c.m_session.id(),
-				(type == 0 ? c.type() : type), name, user.c_str())
-		{}
-
-		inline Log& operator()(uint8_t mode)
-		{
-			m_mode = mode;
-			return *this;
-		}
-	};
-
-	enum AuthMode
-	{
-		auth_none		= -1,
-		unauthorized	=  0,
-		authorized		=  1,
-	};
+protected:
+	Context m_context;
 
 public:
+	// authorized data info.
+	enum
+	{
+		auth_false	= 0,	// unauthorized.
+		auth_true	= 1,	// authorized.
+		auth_none	= 2,	// no need to authorize, all request can be passed.
+	};
+	typedef uint8_t AuthMode;
+
 	inline MessageHandler() {}
 	virtual ~MessageHandler() = 0 {}
 
@@ -97,38 +59,70 @@ public:
 		IN const char* bytes, IN uint32_t size);
 
 	// default option.
-	inline int to_request() {}
+	inline void to_request() {}
 
 	// receiving request notify, and handle request object.
-	virtual void on_request() {}
+	inline void on_request();
 
 	// default option.
-	inline static int auth()
+	virtual AuthMode get_auth()
 	{
 		return auth_none;
 	}
 
 	// default logging severity.
-	inline static int req_sev()
+	virtual eco::log::SeverityLevel get_req_sev()
 	{
-		return eco::log::debug;
+		return req_sev();
 	}
-	inline static int rsp_sev()
+	virtual eco::log::SeverityLevel get_rsp_sev()
 	{
-		return eco::log::debug;
+		return rsp_sev();
 	}
-	inline static int err_sev()
+	virtual eco::log::SeverityLevel get_err_sev()
 	{
-		return eco::log::error;
+		return err_sev();
 	}
 
 	// message name.
-	virtual const char* get_name() = 0;
-
-	// message type.
-	inline const uint32_t request_type()
+	virtual const char* get_name()
 	{
-		return m_context.m_meta.m_message_type;
+		return eco::empty_str.c_str();
+	}
+	// request/response type.
+	virtual const uint32_t get_req_type()
+	{
+		return 0;
+	}
+	virtual const uint32_t get_rsp_type()
+	{
+		return 0;
+	}
+
+	// handler implement those static method.
+	inline static AuthMode auth()
+	{
+		return auth_none;
+	}
+	inline static eco::log::SeverityLevel rsp_sev()
+	{
+		return eco::log::debug;
+	}
+	inline static eco::log::SeverityLevel req_sev()
+	{
+		return eco::log::debug;
+	}
+	inline static eco::log::SeverityLevel err_sev()
+	{
+		return eco::log::error;
+	}
+	inline static const uint32_t req_type()
+	{
+		return 0;
+	}
+	inline static const uint32_t rsp_type()
+	{
+		return 0;
 	}
 
 	// context/session/connection receive from peer.
@@ -176,9 +170,109 @@ public:
 	{
 		return Eco::get().pop_async(req_id, last);
 	}
+	
+#ifndef ECO_NO_PROTOBUF
+public:
+	inline void send(
+		IN int type,
+		IN const google::protobuf::Message* msg,
+		IN bool last_, IN bool err)
+	{
+		int sev = err ? get_err_sev() : get_rsp_sev();
+		if (!last_)
+			context().send(type, msg, false, err);
+		else
+			context().send(type, msg, get_name(), sev, err);
+	}
 
-protected:
-	Context m_context;
+	// response message to client.
+	inline void resolve(
+		IN const google::protobuf::Message* msg = nullptr,
+		IN bool last_ = true)
+	{
+		send(get_rsp_type(), msg, last_, false);
+	}
+	// response message set to client.
+	template<typename object_t, typename set_t>
+	inline void resolve_set(IN const set_t& set)
+	{
+		if (set.empty()) return resolve(nullptr);
+		for (auto it = set.begin(); it != set.end(); )
+		{
+			const object_t& obj = eco::object(*it);
+			resolve(&obj, ++it == set.end());
+		}
+	}
+
+	// response error message to client.
+	inline void reject()
+	{
+		app_locale().parse_error("", connection().lang());
+		reject(&eco::this_thread::proto::error());
+	}
+	inline void reject(eco::proto::Error& e, const char* mdl = "")
+	{
+		app_locale().parse_error(e, "", connection().lang());
+		reject(&e);
+	}
+	inline void reject(uint32_t eid)
+	{
+		eco::this_thread::error().key(eid);
+		reject();
+	}
+	inline void reject(const std::string& path_)
+	{
+		eco::this_thread::error().key(path_.c_str());
+		reject();
+	}
+	inline void reject(IN const google::protobuf::Message* msg)
+	{
+		send(get_rsp_type(), msg, true, true);
+	}
+
+public:
+	inline static void send(
+		IN int async_id,
+		IN const google::protobuf::Message* msg,
+		IN int type, IN bool last_, IN bool err)
+	{
+		auto h = pop_async(async_id, last_);
+		if (h) h->send(type, msg, last_, err);
+	}
+	inline static void resolve(
+		IN int async_id,
+		IN const google::protobuf::Message* msg = nullptr,
+		IN bool last_ = true)
+	{
+		auto h = pop_async(async_id, last_);
+		if (h) h->resolve(msg, last_);
+	}
+	inline static void reject(
+		IN int async_id,
+		IN const google::protobuf::Message* msg)
+	{
+		auto h = pop_async(async_id, true);
+		if (h) h->reject(msg);
+	}
+	inline static void reject(
+		IN int async_id,
+		IN eco::proto::Error& e,
+		IN const char* mdl = "")
+	{
+		auto h = pop_async(async_id, true);
+		if (h) h->reject(e, mdl);
+	}
+	inline static void reject(IN int async_id, uint32_t eid)
+	{
+		auto h = pop_async(async_id, true);
+		if (h) h->reject(eid);
+	}
+	inline static void reject(IN int async_id, const char* path)
+	{
+		auto h = pop_async(async_id, true);
+		if (h) h->reject(path);
+	}
+#endif
 };
 
 
@@ -186,6 +280,10 @@ protected:
 template<typename request_t, typename handler_t>
 class RequestHandler : public MessageHandler
 {
+protected:
+	request_t m_request;
+	static const char* s_handler_name;
+
 public:
 	typedef request_t request_t;
 	typedef std::shared_ptr<handler_t> ptr;
@@ -198,13 +296,11 @@ public:
 	// get name of this class type.
 	inline static const char* name()
 	{
-		static const char* v = eco::clss(typeid(handler_t).name());
-		return v;
+		return s_handler_name;
 	}
-
 	virtual const char* get_name() override
 	{
-		return name();
+		return s_handler_name;
 	}
 
 	// request that recv from remote peer.
@@ -222,6 +318,29 @@ public:
 	{
 		return m_request;
 	}
+	// request/response type.
+	virtual const uint32_t get_req_type() override
+	{
+		return handler_t::req_type();
+	}
+	virtual const uint32_t get_rsp_type() override
+	{
+		return handler_t::rsp_type();
+	}
+
+	// logging severity level.
+	virtual eco::log::SeverityLevel get_req_sev()
+	{
+		return handler_t::req_sev();
+	}
+	virtual eco::log::SeverityLevel get_rsp_sev()
+	{
+		return handler_t::rsp_sev();
+	}
+	virtual eco::log::SeverityLevel get_err_sev()
+	{
+		return handler_t::err_sev();
+	}
 
 	// handler_t method.
 	typedef std::shared_ptr<handler_t> handler_ptr;
@@ -233,18 +352,15 @@ public:
 
 	inline static handler_ptr pop_async(uint32_t req_id, bool last = true)
 	{
-		auto hdl = eco::net::MessageHandler::pop_async(req_id, last);
-		if (hdl == 0)
-		{
-			auto type = handler_t::response_type();
-			ECO_LOG(warn) << eco::net::Log(0, type, handler_t::name())(rsp);
-		}
-		return std::dynamic_pointer_cast<handler_t>(hdl);
+		return std::dynamic_pointer_cast<handler_t>(
+			MessageHandler::pop_async(req_id, last));
 	}
-
-protected:
-	request_t m_request;
 };
+
+// default handler name.
+template<typename request_t, typename handler_t>
+const char* RequestHandler<request_t, handler_t>::s_handler_name
+= eco::clss(typeid(handler_t).name());
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -255,24 +371,24 @@ if don't need to check authorized, set -1.
 #define ECO_HANDLE_OPTION(auth_v) \
 public: inline static int auth() { return auth_v; }
 
-#define ECO_HANDLE_LOGGING(req_sev_, rsp_sev_, err_sev_) \
+#define ECO_HANDLE_LOG(req_sev_, rsp_sev_, err_sev_) \
 public:\
 inline static int req_sev() { return eco::log::##req_sev_; }\
 inline static int rsp_sev() { return eco::log::##rsp_sev_; }\
 inline static int err_sev() { return eco::log::##err_sev_; }
 
-#define ECO_HANDLE_1(req_type) ECO_HANDLE_2(req_type, 0)
-#define ECO_HANDLE_2(req_type, rsp_type)\
+#define ECO_HANDLE_1(reqtype) ECO_HANDLE_2(reqtype, 0)
+#define ECO_HANDLE_2(reqtype, rsptype)\
 public:\
-inline static const uint32_t request_type() { return req_type;}\
-inline static const uint32_t response_type(){ return rsp_type;}
-#define ECO_HANDLE_3(req_type, rsp_type, name_v)\
-ECO_HANDLE_2(req_type, rsp_type)\
+inline static const uint32_t req_type() { return reqtype;}\
+inline static const uint32_t rsp_type() { return rsptype;}
+#define ECO_HANDLE_3(reqtype, rsptype, name_v)\
+ECO_HANDLE_2(reqtype, rsptype)\
 inline static const char* name() { return name_v; }\
 virtual const char* get_name() override { return name_v;}
-#define ECO_HANDLE_4(req_type, rsp_type, name_v, auth_v)\
+#define ECO_HANDLE_4(reqtype, rsptype, name_v, auth_v)\
 ECO_HANDLE_OPTION(auth_v)\
-ECO_HANDLE_3(req_type, rsp_type, name_v)
+ECO_HANDLE_3(reqtype, rsptype, name_v)
 #define ECO_HANDLE(...) ECO_MACRO(ECO_HANDLE_,__VA_ARGS__)
 
 

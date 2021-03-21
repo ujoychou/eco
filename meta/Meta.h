@@ -6,7 +6,15 @@
 #include <string>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
+////////////////////////////////////////////////////////////////////////////////
+template<typename int_t>
+struct MetaStampDefault
+{
+	static eco::meta::Stamp s_get;
+};
+template<typename int_t>
+eco::meta::Stamp MetaStampDefault<int_t>::s_get = eco::meta::stamp_clean;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -28,13 +36,21 @@ public:
 	// get stamp.
 	inline eco::meta::Stamp& stamp()
 	{
-		return eco::meta::stamp();
+		return MetaStampDefault<int>::s_get;
 	}
 
 	// create new object: value\raw_ptr\shared_ptr.
 	inline void* create()
 	{
 		return nullptr;
+	}
+
+	template<typename T>
+	inline void* make_attach(T& obj)
+	{
+		void* ptr = eco::make(obj);
+		attach(obj);
+		return ptr;
 	}
 
 public:
@@ -64,6 +80,14 @@ public:
 		m_object = (object_t*)obj.get();
 	}
 	inline void attach(const std::shared_ptr<object_t>& obj)
+	{
+		m_object = (object_t*)obj.get();
+	}
+	inline void attach(std::auto_ptr<object_t>& obj)
+	{
+		m_object = (object_t*)obj.get();
+	}
+	inline void attach(const std::auto_ptr<object_t>& obj)
 	{
 		m_object = (object_t*)obj.get();
 	}
@@ -135,5 +159,5 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns
+ECO_NS_END(eco);
 #endif

@@ -13,7 +13,7 @@ namespace dev { ;
 ////////////////////////////////////////////////////////////////////////////////
 Cluster& get_cluster()
 {
-	return eco::Singleton<Cluster>::instance();
+	return eco::Singleton<Cluster>::get();
 }
 
 

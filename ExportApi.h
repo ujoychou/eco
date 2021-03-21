@@ -45,7 +45,7 @@ dll export api.
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef ECO_AUTO_LINK_NO
 #	if !defined(ECO_EXPORT)
-#		pragma comment(lib, "eco.lib")
+#		pragma comment(lib, "eco3.1.0.lib")
 #	endif
 #endif
 

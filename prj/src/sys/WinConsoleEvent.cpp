@@ -35,7 +35,7 @@ BOOL OnConsole(DWORD msg)
 bool ConsoleEvent::init()
 {
 	// register windows consle handler.
-	return SetConsoleCtrlHandler((PHANDLER_ROUTINE)OnConsole, true);
+	return SetConsoleCtrlHandler((PHANDLER_ROUTINE)OnConsole, true) == TRUE;
 }
 
 

@@ -20,15 +20,11 @@
 #include <eco/ExportApi.h>
 
 
-
-////////////////////////////////////////////////////////////////////////////////
 namespace eco{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Record
 {
-	ECO_SHARED_API(Record);
+	ECO_OBJECT_API(Record);
 public:
 	// reserve data size.
 	void reserve(IN const size_t size);
@@ -53,7 +49,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Recordset
 {
-	ECO_SHARED_API(Recordset);
+	ECO_OBJECT_API(Recordset);
 public:
 	// reserve data size.
 	void reserve(IN const size_t size);

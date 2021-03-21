@@ -26,7 +26,9 @@
 *******************************************************************************/
 #include <eco/net/protocol/Codec.h>
 #include <google/protobuf/message.h>
+#ifndef ECO_PROTOBUF2
 #include <google/protobuf/util/json_util.h>
+#endif
 
 #ifndef ECO_AUTO_LINK_NO
 #	pragma comment(lib, "libprotobuf.lib")
@@ -68,18 +70,6 @@ public:
 		auto& msg = *(google::protobuf::Message*)m_msg;
 		return msg.ParseFromArray(bytes, (int)size) ? m_msg : nullptr;
 	}
-
-	inline static std::string to_json(const google::protobuf::Message& msg)
-	{
-		std::string json;
-		google::protobuf::util::MessageToJsonString(msg, &json);
-		return std::move(json);
-	}
-
-	inline static std::string to_json(const NullRequest&)
-	{
-		return eco::empty_str;
-	}
 };
 
 
@@ -87,9 +77,17 @@ public:
 inline std::string to_json(const google::protobuf::Message& msg)
 {
 	std::string json;
+#ifndef ECO_PROTOBUF2
 	google::protobuf::util::MessageToJsonString(msg, &json);
+#endif
 	return std::move(json);
 }
+inline std::string to_json(const NullRequest&)
+{
+	return eco::empty_str;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(net);
 ECO_NS_END(eco);

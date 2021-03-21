@@ -24,7 +24,7 @@
 #include <algorithm>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 const char* const eco_db = "eco_db";	// using by meta, get/set object value.
 ////////////////////////////////////////////////////////////////////////////////
 class ObjectMapping : public eco::Object<ObjectMapping>
@@ -81,7 +81,7 @@ public:
 		auto it = m_prop_map.begin();
 		for (int i = 0; it != m_prop_map.end(); ++it, ++i)
 		{
-			sql += it->get_field();
+			sql += it->field();
 			sql += " ";
 			sql += it->get_field_type_sql(cfg);
 			sql += ",";
@@ -93,7 +93,7 @@ public:
 		{
 			if (it->is_pk())
 			{
-				temp += it->get_field();
+				temp += it->field();
 				temp += ",";
 			}
 		}
@@ -134,7 +134,7 @@ public:
 		std::string value_sql;
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
-			field_sql += it->get_field();
+			field_sql += it->field();
 			field_sql += ',';
 			value_sql += '\'';
 			value_sql += meta.get_value(*it, eco_db);
@@ -184,7 +184,7 @@ public:
 		{
 			if (!it->is_pk())
 			{
-				sql += it->get_field();
+				sql += it->field();
 				sql += "='";
 				sql += meta.get_value(*it, eco_db);
 				sql += "',";
@@ -277,7 +277,7 @@ public:
 			if (it->is_pk())
 			{
 				cond_sql += cond_sql.empty() ? " where " : " and ";
-				cond_sql += it->get_field();
+				cond_sql += it->field();
 				cond_sql += "='";
 				cond_sql += meta.get_value(*it, eco_db);
 				cond_sql += "'";
@@ -306,11 +306,11 @@ public:
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
 			// not main table pk.
-			if (main_table == nullptr || !main_table->find_property(
-				it->get_property(), constraint_pk | constraint_fk))
+			if (main_table == nullptr || !main_table->find(
+				it->property(), constraint_pk | constraint_fk))
 			{
 				get_field_alias(field_sql, table_lias);
-				field_sql += it->get_field();
+				field_sql += it->field();
 				field_sql += ',';
 			}
 		}
@@ -329,7 +329,7 @@ public:
 		cond_sql.reserve(64);
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
-			auto* main_prop = main_table.find_property(it->get_property(),
+			auto* main_prop = main_table.find(it->property(),
 				constraint_pk | constraint_fk);
 			if (main_prop != nullptr)
 			{
@@ -337,9 +337,9 @@ public:
 					cond_sql += " and ";
 				cond_sql += table_alias;
 				cond_sql += '.';
-				cond_sql += it->get_field();
+				cond_sql += it->field();
 				cond_sql += "=A.";
-				cond_sql += main_prop->get_field();
+				cond_sql += main_prop->field();
 			}
 		}
 
@@ -401,8 +401,8 @@ public:
 		for (size_t oi = 0; oi < record_set.size(); ++oi)
 		{
 			// create object.
-			object_set_t::value_type obj(meta.create());
-			meta.attach(obj);
+			object_set_t::value_type obj;
+			meta.make_attach(obj);
 
 			// set object property value.
 			auto it = m_prop_map.begin();
@@ -468,7 +468,7 @@ public:
 	{
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
-			if (strcmp(it->get_property(), prop) == 0)
+			if (strcmp(it->property(), prop) == 0)
 			{
 				m_prop_map.erase(it); break;
 			}
@@ -481,33 +481,42 @@ public:
 		auto it = std::find(m_prop_map.begin(), m_prop_map.end(), field);
 		return (it != m_prop_map.end()) ? &*it : nullptr;
 	}
-	inline PropertyMapping* find_field(IN const char* field)
+	inline PropertyMapping* find_field_n(
+		IN const char* field, IN const size_t size) const
 	{
-		const ObjectMapping* that = this;
-		const PropertyMapping* map = that->find_field(field);
-		return const_cast<PropertyMapping*>(map);
+		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
+		{
+			if (strncmp(it->field(), field, size) == 0)
+				return (PropertyMapping*)&*it;
+		}
+		return nullptr;
 	}
 
 	// find pk property mapping.
-	inline const PropertyMapping* find_property(
+	inline PropertyMapping* find(
 		IN const char* prop,
 		IN const uint16_t constraint = 0) const
 	{
 		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
 		{
 			if ((constraint == 0 || it->has_constraint(constraint)) &&
-				strcmp(it->get_property(), prop) == 0)
-				return &*it;
+				strcmp(it->property(), prop) == 0)
+				return (PropertyMapping*)&*it;
 		}
 		return nullptr;
 	}
-	inline PropertyMapping* find_property(
+	inline PropertyMapping* find_n(
 		IN const char* prop,
-		IN const uint16_t constraint = 0)
+		IN const size_t size,
+		IN const uint16_t constraint = 0) const
 	{
-		const ObjectMapping* that = this;
-		const PropertyMapping* map = that->find_property(prop, constraint);
-		return const_cast<PropertyMapping*>(map);
+		for (auto it = m_prop_map.begin(); it != m_prop_map.end(); ++it)
+		{
+			if ((constraint == 0 || it->has_constraint(constraint)) &&
+				strncmp(it->property(), prop, size) == 0)
+				return (PropertyMapping*)&*it;
+		}
+		return nullptr;
 	}
 
 	// get pk property
@@ -533,11 +542,11 @@ public:
 	}
 
 	// get property mapping list.
-	inline std::vector<PropertyMapping>& map()
+	inline std::vector<PropertyMapping>& get_map()
 	{
 		return m_prop_map;
 	}
-	inline const std::vector<PropertyMapping>& get_map() const
+	inline const std::vector<PropertyMapping>& map() const
 	{
 		return m_prop_map;
 	}
@@ -563,5 +572,5 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

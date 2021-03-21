@@ -41,7 +41,7 @@ public:
 
 	/*@ command name.*/
 	void set_command(IN const char*);
-	const char* get_command() const;
+	const char* command() const;
 	Context& command(IN const char*);
 
 	/*@ is empty.*/

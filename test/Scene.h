@@ -25,11 +25,10 @@
 
 namespace eco{;
 namespace test{;
-
 ////////////////////////////////////////////////////////////////////////////////
 class Scene : public Runner
 {
-////////////////////////////////////////////////////////////////////////////////
+	ECO_OBJECT(Scene);
 public:
 	typedef std::list<std::shared_ptr<Runner> >::iterator iterator;
 
@@ -38,44 +37,43 @@ public:
 	{}
 
 	// constructor.
-	inline Scene(IN const std::string& name) 
-		: Runner(name)
+	inline Scene(IN const std::string& name) : Runner(name)
 	{}
 
 	virtual ~Scene()
 	{}
 
-	virtual uint32_t CountScene() const
+	virtual uint32_t count_scene() const override
 	{
 		uint32_t count = 1;		// current scene.
-		RunnerChildren::const_iterator it = GetChildren().begin();
-		for (; it!=GetChildren().end(); ++it)
+		if (!has_child()) return count;
+		for (auto it = children()->begin(); it!= children()->end(); ++it)
 		{
-			count += it->get()->CountScene();
+			count += it->get()->count_scene();
 		}
 		return count;
 	}
 
-	virtual const RunnerChildren& GetChildren() const override
+	virtual const RunnerChildren* children() const override
 	{
-		return m_runner_list;
+		return &m_runner_list;
 	}
 
 	// add test case.
 	template<typename case_type>
-	inline case_type* AddCase(
+	inline case_type* add_case(
 		IN const std::string& case_name)
 	{
 		case_type* new_case = NULL;
 		std::shared_ptr<Runner> case_obj(new_case = new case_type());
-		new_case->SetName(case_name);
-		new_case->SetOwner(*this);
+		new_case->set_name(case_name);
+		new_case->set_owner(*this);
 		m_runner_list.push_back(case_obj);
 		return new_case;
 	}
 
 	// add test case.
-	inline Case* AddCase(
+	inline Case* add_case(
 		IN const std::string& case_name,
 		IN RunnerFunc case_func,
 		IN std::shared_ptr<Object> obj)
@@ -83,24 +81,21 @@ public:
 		Case* new_case = NULL;
 		std::shared_ptr<Runner> case_obj(
 			new_case = new CaseImpl(case_name, case_func, obj));
-		new_case->SetOwner(*this);
+		new_case->set_owner(*this);
 		m_runner_list.push_back(case_obj);
 		return new_case;
 	}
 
 	// find exist scene in runner tree.
-	inline Case* FindCase(
-		IN const std::string& case_name)
+	inline Case* find_case(IN const std::string& case_name)
 	{
-		std::list<std::shared_ptr<Runner>>::iterator it;
-		it = m_runner_list.begin();
-		for (; it!=m_runner_list.end(); ++it)
+		for (auto it = m_runner_list.begin(); it!=m_runner_list.end(); ++it)
 		{
 			std::shared_ptr<Scene> scene =
 				std::dynamic_pointer_cast<Scene>(*it);
 			if (scene != nullptr)
 			{
-				Case* case_obj = scene->FindCase(case_name);
+				Case* case_obj = scene->find_case(case_name);
 				if (case_obj != nullptr)
 				{
 					return case_obj;
@@ -115,28 +110,25 @@ public:
 	}
 
 	// get or create new a scene.
-	inline std::shared_ptr<Scene> GetChild(
-		IN const std::string& scene_name)
+	inline Scene::ptr get_child(IN const std::string& scene_name)
 	{
-		std::shared_ptr<Scene> scene = FindChild(scene_name);
+		std::shared_ptr<Scene> scene = find_child(scene_name);
 		if (scene == nullptr)
 		{
 			scene.reset(new Scene(scene_name));
-			AddScene(scene);
+			add_scene(scene);
 		}
 		return scene;
 	}
 	// get or create new a scene.
-	inline void AddScene(
-		IN std::shared_ptr<Scene>& scene)
+	inline void add_scene(IN std::shared_ptr<Scene>& scene)
 	{
-		scene->SetOwner(*this);
+		scene->set_owner(*this);
 		m_runner_list.push_back(scene);
 	}
 
 	// get or create new a scene.
-	inline std::shared_ptr<Scene> FindChild(
-		IN const std::string& scene_name)
+	inline Scene::ptr find_child(IN const std::string& scene_name)
 	{
 		iterator it = m_runner_list.begin();
 		for (; it!=m_runner_list.end(); ++it)
@@ -152,8 +144,7 @@ public:
 	}
 
 	// find exist scene in runner tree.
-	inline std::shared_ptr<Scene> FindScene(
-		IN const std::string& scene_name)
+	inline Scene::ptr find_scene(IN const std::string& scene_name)
 	{
 		std::shared_ptr<Scene> scene;
 		iterator it = m_runner_list.begin();
@@ -168,7 +159,7 @@ public:
 				}
 				else
 				{
-					scene = scene->FindScene(scene_name);
+					scene = scene->find_scene(scene_name);
 					if (scene != nullptr)
 					{
 						return scene;
@@ -180,59 +171,59 @@ public:
 	}
 
 	// release runner and it's resource.
-	inline void Release()
+	inline void release()
 	{
 		m_runner_list.clear();
 	}
 
-	inline void OnSceneEnd()
+	inline void on_scene_end()
 	{
-		Runner::OnEnd();
+		Runner::on_end();
 
 		// update scene info.
-		if (!GetResultSet().IsOk())
+		if (!result_set().ok())
 		{
-			GetResultSet().m_failed_scene += 1;
+			result_set().m_failed_scene += 1;
 		}
-		GetResultSet().m_checked_scene += 1;
+		result_set().m_checked_scene += 1;
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 protected:
-	virtual void OnBegin() override
+	virtual void on_begin() override
 	{
-		Runner::OnBegin();
+		Runner::on_begin();
 
-		eco::Stream<> fmt;
-		fmt << "[==========] " << GetFullName() << ": ";
-		fmt << GetResultSet().m_total_case << " case, ";
-		fmt << GetResultSet().m_total_scene << " scene.";
-		EcoTrace << fmt.c_str();
+		eco::String fmt;
+		fmt << "[==========] " << fullname() << ": ";
+		fmt << result_set().m_total_case << " case, ";
+		fmt << result_set().m_total_scene << " scene.";
+		ECO_INFO << fmt.c_str();
 	}
 
-	virtual void OnEnd() override
+	virtual void on_end() override
 	{
-		OnSceneEnd();
+		on_scene_end();
 		
 		// show count info.
-		eco::Stream<> fmt;
-		fmt << "[==========] " << GetFullName() << ": ";
+		eco::String fmt;
+		fmt << "[==========] " << fullname() << ": ";
 		fmt << "scene ";
-		fmt << GetResultSet().GetTotalChildScene() << "-";
-		fmt << GetResultSet().GetCheckedChildScene() << "-";
-		fmt << GetResultSet().GetFailedChildScene() << "-";
-		fmt << GetResultSet().GetSuccessChildScene() << ", ";
+		fmt << result_set().total_child_scene() << "-";
+		fmt << result_set().checked_child_scene() << "-";
+		fmt << result_set().failed_child_scene() << "-";
+		fmt << result_set().success_child_scene() << ", ";
 		fmt << "case ";
-		fmt << GetResultSet().GetTotalCase() << "-";
-		fmt << GetResultSet().GetCheckedCase() << "-";
-		fmt << GetResultSet().GetFailedCase() << "-";
-		fmt << GetResultSet().GetSuccessCase() << ", ";
+		fmt << result_set().total_case() << "-";
+		fmt << result_set().checked_case() << "-";
+		fmt << result_set().failed_case() << "-";
+		fmt << result_set().success_case() << ", ";
 		fmt << "test ";
-		fmt << GetResultSet().GetTotalTest() << "-";
-		fmt << GetResultSet().GetCheckedTest() << "-";
-		fmt << GetResultSet().GetFailedTest() << "-";
-		fmt << GetResultSet().GetSuccessTest() << ".";
-		EcoTrace << fmt.c_str();
+		fmt << result_set().total_test() << "-";
+		fmt << result_set().checked_test() << "-";
+		fmt << result_set().failed_test() << "-";
+		fmt << result_set().success_test() << ".";
+		ECO_INFO << fmt.c_str();
 	}
 
 private:
@@ -243,7 +234,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 // add case to scene.
 #define ECO_ADD_CASE(scene, case_name, bind_func, obj) \
-scene->AddCase(case_name, std::bind(bind_func, obj), \
+scene->add_case(case_name, std::bind(bind_func, obj), \
 	std::dynamic_pointer_cast<eco::test::Object>(obj))
 
 ////////////////////////////////////////////////////////////////////////////////

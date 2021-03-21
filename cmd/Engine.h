@@ -45,19 +45,19 @@ public:
 	void join();
 
 	/*@ get command root group.*/
-	Group root();
-	const Group get_root() const;
+	Group get_root();
+	const Group root() const;
 
 	/*@ get current command group.*/
-	Group current();
-	const Group get_current() const;
+	Group get_current();
+	const Group current() const;
 
 	/*@ get home.*/
 	Group home();
 };
 
 
-ECO_API Engine& get_engine();
+ECO_API Engine& engine();
 ////////////////////////////////////////////////////////////////////////////////
 }}
 #endif

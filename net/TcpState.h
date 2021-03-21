@@ -40,6 +40,11 @@ public:
 	inline TcpState() : m_state(eco::atomic::State::_no)
 	{}
 
+	inline uint32_t value() const
+	{
+		return m_state.value();
+	}
+
 	// set server state.
 	inline void set_server()
 	{

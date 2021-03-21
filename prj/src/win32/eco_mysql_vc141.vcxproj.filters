@@ -1,23 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="lib">
-      <UniqueIdentifier>{c32a2368-9d91-4d56-9ef3-a4cfdf709dfe}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{f550f197-2dda-47b8-b385-90e557cfa7ce}</UniqueIdentifier>
     </Filter>
-    <Filter Include="bin">
-      <UniqueIdentifier>{a5264100-52cf-45e4-a714-9dc5c9e5c56f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="bin\debug_win32">
-      <UniqueIdentifier>{fb8abe3c-2245-43b6-9836-5d1f0ff03d9c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="bin\release_win32">
-      <UniqueIdentifier>{d04e5327-6997-4e85-9f18-f445e582f301}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\persist">
       <UniqueIdentifier>{bbed05e7-727b-4d0b-bfe3-1e0cbd4cf390}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin">
+      <UniqueIdentifier>{c32a2368-9d91-4d56-9ef3-a4cfdf709dfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin\win32_debug">
+      <UniqueIdentifier>{9bb8a563-2444-4638-9502-1966589715b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin\win32_release">
+      <UniqueIdentifier>{d0d5b6d3-3fc3-4d6d-b84b-ff0b853113e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin\win64_debug">
+      <UniqueIdentifier>{27041d7e-5218-4c73-8b1d-ce20272a8eaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bin\win64_release">
+      <UniqueIdentifier>{095ed6f9-df0a-4c13-a33c-a1a4eca18753}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -38,5 +41,33 @@
     <ClInclude Include="..\PrecHeader.h">
       <Filter>src</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Debug\eco_mysql.dll">
+      <Filter>bin\win32_debug</Filter>
+    </None>
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Debug\eco_mysql.dll">
+      <Filter>bin\win64_debug</Filter>
+    </None>
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Release\eco_mysql.dll">
+      <Filter>bin\win64_release</Filter>
+    </None>
+    <None Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Release\eco_mysql.dll">
+      <Filter>bin\win32_release</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Debug\eco_mysql.lib">
+      <Filter>bin\win32_debug</Filter>
+    </Library>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Debug\eco_mysql.lib">
+      <Filter>bin\win64_debug</Filter>
+    </Library>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141_x64\Release\eco_mysql.lib">
+      <Filter>bin\win64_release</Filter>
+    </Library>
+    <Library Include="..\..\..\..\lib\eco3.0.0\lib_vc141\Release\eco_mysql.lib">
+      <Filter>bin\win32_release</Filter>
+    </Library>
   </ItemGroup>
 </Project>

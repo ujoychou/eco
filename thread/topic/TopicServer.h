@@ -2,7 +2,6 @@
 #define ECO_TOPIC_SERVER_H
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Any.h>
-#include <eco/MemoryPool.h>
 #include <eco/thread/topic/Topic.h>
 #include <eco/thread/MessageServer.h>
 
@@ -54,28 +53,56 @@ public:
 	}
 
 public:
-	// publish object to topic, and create topic.
-	template<typename topic_t, typename object_t, typename topic_id_t>
-	inline void publish(
+	// publish object to topic, and don't make topic.
+	template<typename topic_id_t, typename object_t>
+	inline void publish_to_exist(
 		IN const topic_id_t& topic_id,
 		IN const object_t& obj,
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
-		Topic::ptr topic = get_topic(topic_id, topic_t::create);
+		Topic::ptr topic = get_topic(topic_id, nullptr);
 		if (topic != nullptr)
 		{
 			publish_to(topic, obj, stamp);
 		}
 	}
 
-	// publish object set to topic, and create topic.
-	template<typename topic_t, typename object_set_t, typename topic_id_t>
-	inline void publish_set(
+	// publish object to topic, and make topic.
+	template<typename topic_t, typename topic_id_t, typename object_t>
+	inline void publish(
 		IN const topic_id_t& topic_id,
-		IN const object_set_t& obj_set,
+		IN const object_t& obj,
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
-		for (auto it = obj_set.begin(); it != obj_set.end(); ++it)
+		Topic::ptr topic = get_topic(topic_id, topic_t::make);
+		if (topic != nullptr)
+		{
+			publish_to(topic, obj, stamp);
+		}
+	}
+
+	// publish set_topic "object to be removed."
+	template<typename topic_t, typename topic_id_t>
+	inline void remove(
+		IN const topic_id_t& topic_id,
+		IN const typename topic_t::object_id& obj_id)
+	{
+		Topic::ptr topic = find_topic(topic_id);
+		if (topic != nullptr)
+		{
+			ContentData::ptr newc(new IdContentDataT<topic_t::object_id>(
+				obj_id, eco::meta::stamp_delete));
+			m_impl.publish_new(topic, newc);
+		}
+	}
+
+	// publish object set to topic, and make topic.
+	template<typename topic_t, typename topic_id_t, typename set_t>
+	inline void publish_set(
+		IN const topic_id_t& topic_id, IN const set_t& set,
+		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
+	{
+		for (auto it = set.begin(); it != set.end(); ++it)
 		{
 			publish<topic_t>(topic_id, *it, stamp);
 		}
@@ -105,77 +132,6 @@ public:
 	}
 
 public:
-	// publish object to set_topic, and create topic.
-	template<typename topic_t, typename topic_id_t>
-	inline void publish(
-		IN const topic_id_t& topic_id,
-		IN const typename topic_t::object_id& obj_id,
-		IN const typename topic_t::object& obj,
-		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
-	{
-		Topic::ptr topic = get_topic(topic_id, topic_t::create);
-		if (topic != nullptr)
-		{
-			publish_to<topic_t>(topic, obj_id, obj, stamp);
-		}
-	}
-	template<typename topic_t, typename topic_id_t>
-	inline void publish(
-		IN const topic_id_t& topic_id,
-		IN const typename topic_t::object_id& obj_id,
-		IN const typename topic_t::object_ptr& obj,
-		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
-	{
-		Topic::ptr topic = get_topic(topic_id, topic_t::create);
-		if (topic != nullptr)
-		{
-			publish_to<topic_t>(topic, obj_id, obj, stamp);
-		}
-	}
-
-	// publish set_topic "object to be removed."
-	template<typename topic_id_t, typename object_id_t>
-	inline void remove(
-		IN const topic_id_t& topic_id,
-		IN const object_id_t& obj_id)
-	{
-		Topic::ptr topic = find_topic(topic_id);
-		if (topic != nullptr)
-		{
-			assert(topic->set_topic_type());
-			ContentData::ptr newc(new ContentIdT<object_id_t>(
-				obj_id, eco::meta::stamp_delete));
-			m_impl.publish_new(topic, newc);
-		}
-	}
-
-	// publish object to set_topic.
-	template<typename topic_t>
-	inline void publish_to(
-		IN Topic::ptr& topic,
-		IN const typename topic_t::object_id& obj_id,
-		IN const typename topic_t::object& obj,
-		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
-	{
-		ContentData::ptr newc(new SetContentDataT<topic_t::object_id,
-			topic_t::object, topic_t::object>(obj_id, obj, stamp));
-		m_impl.publish_new(topic, newc);
-	}
-
-	// publish shared object to set_topic.
-	template<typename topic_t>
-	inline void publish_to(
-		IN Topic::ptr& topic,
-		IN const typename topic_t::object_id& obj_id,
-		IN const typename topic_t::object_ptr& obj,
-		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
-	{
-		ContentData::ptr newc(new SetContentDataT<topic_t::object_id,
-			topic_t::object, topic_t::object_ptr>(obj_id, obj, stamp));
-		m_impl.publish_new(topic, newc);
-	}
-
-public:
 	// subscribe topic.
 	inline bool subscribe(IN Topic::ptr& topic,	IN Subscriber* subscriber)
 	{
@@ -197,7 +153,7 @@ public:
 	template<typename topic_t, typename topic_id_t>
 	inline bool subscribe(IN const topic_id_t& topic_id, IN Subscriber* suber)
 	{
-		Topic::ptr topic = get_topic(topic_id, topic_t::create);
+		Topic::ptr topic = get_topic(topic_id, topic_t::make);
 		if (topic == nullptr) return false;
 		return subscribe(topic, suber);
 	}
@@ -206,7 +162,7 @@ public:
 	template<typename topic_t, typename topic_id_t, typename data_t>
 	inline bool subscribe(IN const topic_id_t& id, Subscriber* s, data_t& d)
 	{
-		Topic::ptr topic = get_topic(id, topic_t::create);
+		Topic::ptr topic = get_topic(id, topic_t::make);
 		if (topic == nullptr) return false;
 		return subscribe(topic, s, d);
 	}
@@ -217,8 +173,8 @@ public:
 		IN const topic_id_t& topic_id_sub,
 		IN const topic_id_t& topic_id_pub)
 	{
-		Topic::ptr sub = get_topic(topic_id_sub, topic_t::create, 0);
-		Topic::ptr pub = get_topic(topic_id_pub, topic_t::create, 0);
+		Topic::ptr sub = get_topic(topic_id_sub, topic_t::make);
+		Topic::ptr pub = get_topic(topic_id_pub, topic_t::make);
 		return subscribe(pub, sub.get());
 	}
 
@@ -228,8 +184,8 @@ public:
 		IN const topic_id_t& topic_id_sub,
 		IN const topic_id_t& topic_id_pub)
 	{
-		Topic::ptr sub = get_topic(topic_id_sub, topic_sub_t::create, 0);
-		Topic::ptr pub = get_topic(topic_id_pub, topic_pub_t::create, 0);
+		Topic::ptr sub = get_topic(topic_id_sub, topic_sub_t::make);
+		Topic::ptr pub = get_topic(topic_id_pub, topic_pub_t::make);
 		return subscribe(pub, sub.get());
 	}
 
@@ -275,20 +231,20 @@ public:
 	}
 
 public:
-	// get and create derived topic.
+	// get and make derived topic.
 	template<typename topic_t, typename topic_id_t>
 	inline typename topic_t::ptr get_topic(
 		IN const topic_id_t& topic_id)
 	{
-		auto topic = get_topic(topic_id, topic_t::create);
+		auto topic = get_topic(topic_id, topic_t::make);
 		return std::dynamic_pointer_cast<topic_t>(topic);
 	}
 
-	// get and create topic.
+	// get and make topic.
 	template<typename topic_id_t>
 	inline Topic::ptr get_topic(
 		IN const topic_id_t& topic_id,
-		IN CreateTopic create = nullptr)
+		IN MakeTopic make = nullptr)
 	{
 		eco::Mutex::ScopeLock lock(m_topics_mutex);
 		auto& topic_map = __get_topic_map(topic_id);
@@ -298,9 +254,9 @@ public:
 			return it->second;
 		}
 
-		if (create != nullptr)
+		if (make != nullptr)
 		{
-			Topic::ptr topic = std::dynamic_pointer_cast<Topic>(create());
+			Topic::ptr topic = std::dynamic_pointer_cast<Topic>(make());
 			TopicInner().id(*topic).set(topic_id, this);
 			return topic_map[topic_id] = topic;
 		}
@@ -449,12 +405,12 @@ private:
 	{
 		return m_str_topics;
 	}
-	inline std::unordered_map<TopicId, Topic::ptr, TopicId::Hash>&
+	inline std::unordered_map<TopicId, Topic::ptr>& 
 		__get_topic_map(const TopicId&)
 	{
 		return m_tid_topics;
 	}
-	inline const std::unordered_map<TopicId, Topic::ptr, TopicId::Hash>&
+	inline const std::unordered_map<TopicId, Topic::ptr>&
 		__get_topic_map(const TopicId&) const
 	{
 		return m_tid_topics;
@@ -476,9 +432,9 @@ private:
 	// topic management.
 	mutable eco::Mutex m_topics_mutex;
 	Impl m_impl;
+	std::unordered_map<TopicId, Topic::ptr> m_tid_topics;
 	std::unordered_map<uint64_t, Topic::ptr> m_int_topics;
 	std::unordered_map<std::string, Topic::ptr> m_str_topics;
-	std::unordered_map<TopicId, Topic::ptr, TopicId::Hash> m_tid_topics;
 };
 
 

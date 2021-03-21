@@ -19,41 +19,36 @@
 #include <eco/test/Suite.h>
 
 
-
-
 namespace eco{;
 namespace test{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class Testing : public eco::Object<Testing>
 {
 ////////////////////////////////////////////////////////////////////////////////
 protected:
 	// init test context.
-	virtual void InitContext(
-		OUT eco::test::Context& context) = 0;
+	virtual void init_context(OUT eco::Context& context) = 0;
 
 	// init test scene.
-	virtual void InitScene() = 0;
+	virtual void init_scene() = 0;
 
 public:
 	// init test framework.
-	inline void Init()
+	inline void init()
 	{
 		// construct test context.
 		std::shared_ptr<Context> context(new Context());
-		InitContext(*context);
-		GetSuite().SetContext(context);
+		init_context(*context);
+		Suite::get().set_context(context);
 
 		// construct test scene and test case.
-		InitScene();
+		init_scene();
 	}
 
 	// run test case.
-	virtual void Run()
+	virtual void run()
 	{
-		GetSuite().Run();
+		Suite::get().run();
 	}
 };
 

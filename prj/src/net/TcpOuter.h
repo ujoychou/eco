@@ -82,19 +82,9 @@ public:
 		m_conn.m_peer = peer;
 	}
 
-	inline void set_protocol(IN Protocol& prot)
-	{
-		m_conn.m_prot = &prot;
-	}
-
 	inline void set_id(IN SessionId id)
 	{
 		m_conn.m_id = id;
-	}
-
-	inline Protocol& protocol()
-	{
-		return *m_conn.m_prot;
 	}
 
 	TcpConnection& m_conn;

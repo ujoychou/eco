@@ -39,19 +39,11 @@ class MessageHead;
 class TcpConnectorHandler
 {
 public:
-	virtual void on_connect(
-		IN bool is_connected,
-		IN const eco::Error* error)
-	{}
+	virtual void on_connect(bool err) {}
 
-	virtual void on_read(
-		IN MessageHead& head,
-		IN eco::String& data,
-		IN const eco::Error* error) = 0;
+	virtual void on_read(MessageHead& head, eco::String& data, bool err) = 0;
 
-	virtual void on_write(
-		IN const uint32_t write_size,
-		IN const eco::Error* error) = 0;
+	virtual void on_write(uint32_t siz, bool err) = 0;
 };
 
 
@@ -100,7 +92,7 @@ public:
 	int  get_recv_low_watermark() const;
 
 	/*@ client async connect to server.	*/
-	void async_connect(IN const Address& addr);
+	bool async_connect(IN const Address& addr);
 
 	/*@ asynchronous read data head from client.
 	* @ para.data: memory space for storing comming data.

@@ -18,7 +18,6 @@ public:
 ECO_SHARED_IMPL(CsvSourceFile);
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 void CsvSourceFile::open(IN const char* csv_file, IN const char* mode)
 {

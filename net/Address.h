@@ -62,24 +62,24 @@ public:
 
 	// address name or alias that easy to remember.
 	void set_name(const char*);
-	const char* get_name() const;
+	const char* name() const;
 	Address& name(const char*);
 
 	// host name
 	void set_host_name(const char*);
-	const char* get_host_name() const;
+	const char* host_name() const;
 	Address& host_name(const char*);
 
 	// service name
 	void set_service_name(const char*);
-	const char* get_service_name() const;
+	const char* service_name() const;
 	Address& service_name(const char*);
 
 	// get port of ip address.
-	const uint32_t get_port() const;
+	const uint32_t port() const;
 
 	// get address value.
-	const eco::String Address::get_value() const;
+	const eco::String Address::value() const;
 
 	// check the address is a ip format or hostname format.
 	bool ip_format() const;
@@ -94,15 +94,15 @@ public:
 	}
 	inline static bool equal(IN const Address& addr1, IN const Address& addr2)
 	{
-		return strcmp(addr1.get_host_name(), addr2.get_host_name()) == 0
-			&& strcmp(addr1.get_service_name(), addr2.get_service_name()) == 0;
+		return strcmp(addr1.host_name(), addr2.host_name()) == 0
+			&& strcmp(addr1.service_name(), addr2.service_name()) == 0;
 	}
 };
 template<typename stream_t>
 stream_t& operator<<(OUT stream_t& stream, IN const Address& v)
 {
-	return stream < v.get_host_name() < ':' < v.get_service_name()
-		< eco::group(v.get_name());
+	return stream < v.host_name() < ':' < v.service_name()
+		< eco::group(v.name());
 }
 
 
@@ -148,13 +148,13 @@ public:
 public:
 	// module name or alias that easy to remember.
 	void set_name(const char*);
-	const char* get_name() const;
+	const char* name() const;
 	AddressSet& name(const char*);
 
 	// service mode or router mode.
-	const ServiceMode get_mode() const;
+	const ServiceMode mode() const;
 	void set_mode(IN const ServiceMode);
-	ServiceMode mode();
+	ServiceMode& get_mode();
 	AddressSet& mode(IN const ServiceMode);
 };
 

@@ -22,16 +22,15 @@ app that run process.
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Being.h>
 #include <eco/Config.h>
 #include <eco/log/Log.h>
 #include <eco/cmd/Group.h>
 #include <eco/loc/Locale.h>
-#include <eco/thread/Timer.h>
 #include <eco/net/TcpServer.h>
 #include <eco/net/TcpClient.h>
 #include <eco/net/Subscriber.h>
 #include <eco/persist/Persist.h>
+#include <eco/thread/TimingWheel.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -83,17 +82,20 @@ public:
 	static uint32_t get_param_size();
 
 	/*@ get command param string.*/
-	static const char* get_param(IN const int i);
-	static const char* get_init_path();
-	static const char* get_exe_path();
-	static const char* get_exe_file();
-	const char* get_module_path() const;
-	const char* get_module_file() const;
+	static const char* param(IN const int i);
+	static const char* init_path();
+	static const char* exe_path();
+	static const char* exe_file();
+	const char* module_path() const;
+	const char* module_file() const;
+
+	/*@ get full path of string.*/
+	void get_module_fullpath(OUT std::string& v);
 
 	/*@ whether current module is a exe.*/
 	inline bool module_exe() const
 	{
-		return strcmp(get_exe_file(), get_module_file()) == 0;
+		return strcmp(exe_file(), module_file()) == 0;
 	}
 	
 	// whether app is ready.
@@ -101,15 +103,15 @@ public:
 
 	/*@ get app config.*/
 	void set_name(IN const char*);
-	const char* get_name() const;
+	const char* name() const;
 	App& name(IN const char*);
 
 	/*@ system config file path, default: "eco.sys.xml"; */
 	void set_config_file(IN const char*);
-	const char* get_config_file() const;
+	const char* config_file() const;
 
 	/*@ get app config.*/
-	const Config& get_config() const;
+	const Config& config() const;
 
 	/*@ file sink: logging file changed callback.*/
 	void set_log_file_on_changed(IN log::OnChangedLogFile func);
@@ -119,9 +121,9 @@ public:
 
 	// get consumer.
 	uint32_t consumer_size();
-	eco::net::TcpClient get_consumer(IN const char* name);
+	eco::net::TcpClient consumer(IN const char* name);
 	eco::net::TcpClient find_consumer(IN const char* name);
-	eco::net::TcpClient get_consumer(IN uint32_t index = 0);
+	eco::net::TcpClient consumer(IN uint32_t index = 0);
 	eco::net::TcpClient add_consumer(IN eco::net::Address&);
 	eco::net::TcpClient add_consumer(IN eco::net::AddressSet&);
 
@@ -133,17 +135,14 @@ public:
 	// service provider.
 	net::TcpServer& provider();
 
-	// eco timer.
-	TimerServer& timer();
+	// eco timing wheel.
+	eco::TimingWheel& timer();
 
 	// eco erx
 	std::shared_ptr<RxDll> get_erx(IN const char* name);
 
 	// eco locale and multi language.
-	inline eco::loc::Locale& locale()
-	{
-		return eco::loc::locale();
-	}
+	eco::loc::Locale& locale();
 
 private:
 	friend class Startup;

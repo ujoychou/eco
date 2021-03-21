@@ -27,10 +27,8 @@
 #include <eco/net/TcpSession.h>
 #include <eco/net/TcpDispatch.h>
 #include <eco/net/TcpOption.h>
-#include <eco/net/protocol/TcpProtocol.h>
-#include <eco/net/protocol/TcpProtocol2.h>
 #ifndef ECO_NO_PROTOBUF
-#include <eco/proto/Proto.h>
+#include <eco/eco/Proto.h>
 #endif
 
 
@@ -43,27 +41,33 @@ class ECO_API TcpClient : public TcpDispatch
 public:
 	// network server option.
 	void set_option(IN const TcpClientOption&);
-	TcpClientOption& option();
-	const TcpClientOption& get_option() const;
+	TcpClientOption& get_option();
+	const TcpClientOption& option() const;
 	TcpClient& option(IN const TcpClientOption&);
 
 	// service name.
 	inline const char* name() const
 	{
-		return get_option().get_name();
+		return option().name();
 	}
 
 	// service module name.
 	inline const char* module_() const
 	{
-		return get_option().get_module_();
+		return option().module_();
 	}
+
+	// get remote server ip.
+	eco::String ip() const;
+
+	// get remote server port.
+	uint32_t port() const;
 
 	// whether tcpclient is ready.
 	inline bool ready() const;
 
 	// set timeout
-	void set_timeout(IN const uint32_t millsec);
+	void set_timeout(IN uint32_t millsec);
 
 	// protocol
 	template<typename protocol_t>
@@ -83,7 +87,7 @@ public:
 	{
 		set_connection_data(&make_connection_data<connection_data_t>);
 	}
-	void set_connection_data(IN MakeConnectionDataFunc make);
+	void set_connection_data(IN MakeConnectionData&& make);
 
 	// connection data.
 	template<typename connection_data_t>
@@ -92,9 +96,6 @@ public:
 		return *static_cast<connection_data_t*>(data());
 	}
 	ConnectionData* data();
-
-	// connection data state.
-	eco::atomic::State& data_state();
 
 	// get tcp peer state. like whether connected.
 	const TcpState& state() const;
@@ -105,20 +106,27 @@ public:
 	{
 		set_session_data(&make_session_data<session_data_t>);
 	}
-	void set_session_data(IN MakeSessionDataFunc make);
+	void set_session_data(IN MakeSessionData&& make);
 
 	// register connection event
-	void set_event(IN ClientOpenFunc on_open, IN ClientCloseFunc on_close);
+	void set_event(IN OnConnect&&, IN OnDisconnect&&);
 
 	// set receive callback event.
-	void set_recv_event(OnRecvDataFunc on_recv, OnDecodeHeadFunc on_decode);
+	void set_recv_event(IN OnRecvData&&, IN OnDecodeHead&&);
 
 	// set load callback event when client connected.
-	void set_load_event(OnLoadDataFunc on_load_data);
+	uint32_t set_load_event(OnLoadState&& on_load, bool app_ready_evt = true);
+	// set load callback link events.
+	uint32_t set_load_event(OnLoadEvent&& on_load, bool app_ready_evt = true);
+	uint32_t add_load_event(OnLoadEvent&& on_load);
+	// reload event, set event state none and call event.
+	void load_event(IN uint32_t evt);
+	// get event state that whether event finished.
+	bool load_event_finished(IN uint32_t evt) const;
 
 	// register dispatch handler.
-	virtual void register_default(IN HandlerFunc hf) override;
-	virtual void register_handler(IN uint64_t id, IN HandlerFunc hf) override;
+	virtual void register_default(IN HandlerFunc&& hf) override;
+	virtual void register_handler(IN int id, IN HandlerFunc&&) override;
 
 //////////////////////////////////////////////////////////////////// ROUTER MODE
 public:
@@ -132,8 +140,11 @@ public:
 		IN const char* router_name,
 		IN const char* service_name);
 
-	// release client.
+	// close client: close socket, can be reconnect.
 	void close();
+
+	// release client: release thread/tcp_peer/io/timer.
+	void release();
 
 /////////////////////////////////////////////////////////////////// SERVICE MODE
 public:
@@ -145,15 +156,12 @@ public:
 	void set_address(IN eco::net::AddressSet&);
 
 	// service mode: async connect to service.
-	void async_connect(IN bool reconnect = false);
-	void async_connect(IN eco::net::AddressSet&, IN bool reconnect = false);
+	void async_connect();
+	void async_connect(IN eco::net::AddressSet&);
 
 	// service mode. sync connect to service.
-	bool connect(IN uint32_t millsec);
-	bool connect(IN eco::net::AddressSet&, IN uint32_t millsec);
-
-	// async send request to server.
-	void authorize(IN TcpSession& session, IN MessageMeta& meta);
+	void connect(IN uint32_t millsec);
+	void connect(IN eco::net::AddressSet&, IN uint32_t millsec);
 
 	// async send message.
 	void send(IN eco::String& data, IN const uint32_t start);
@@ -176,7 +184,7 @@ public:
 	* @rsp_codec: resolve response message decode.
 	* @rsp_set: save object set when response object set.
 	*/
-	bool request(
+	eco::Result request(
 		IN MessageMeta& req,
 		IN Codec& err_codec,
 		IN Codec& rsp_codec,
@@ -190,13 +198,13 @@ public:
 public:
 	// req/rsp mode: send message and get a response.
 	template<typename codec_t>
-	inline bool request(
+	inline eco::Result request(
 		IN uint32_t req_type,
 		IN const void* req = nullptr,
 		OUT void* err = nullptr,
 		OUT void* rsp = nullptr)
 	{
-		codec_t req_codec(req);
+		codec_t req_codec((void*)req);
 		codec_t err_codec(err);
 		codec_t rsp_codec(rsp);
 		MessageMeta meta;
@@ -206,7 +214,7 @@ public:
 
 	// sync request data set.
 	template<typename codec_t, typename rsp_t>
-	inline bool request_set(
+	inline eco::Result request_set(
 		IN uint32_t req_type,
 		IN const void* req,
 		OUT void* err,
@@ -244,7 +252,17 @@ public:
 
 #ifndef ECO_NO_PROTOBUF
 	// sync request protobuf.
-	inline bool request(
+	inline void send(
+		IN uint32_t req_type,
+		IN const google::protobuf::Message* req)
+	{
+		ProtobufCodec req_codec((void*)req);
+		MessageMeta meta;
+		send(meta.codec(req_codec).message_type(req_type));
+	}
+
+	// sync request protobuf.
+	inline eco::Result request(
 		IN uint32_t req_type,
 		IN const google::protobuf::Message* req,
 		OUT google::protobuf::Message* err,
@@ -254,29 +272,28 @@ public:
 	}
 
 	/*@sync request data ptr set.
-	* @rsp_t: response object type.
-	* @rsp_ptr_t: std::shared_ptr<rsp_t>/ std::auto_ptr<rsp_t> /rsp_t* /void*.
-	* @rsp_ptr_set_t: std::vector/list/queue so on.
+	* @return: eco::ok/eco::error/eco::timeout.
+	* @rsp_ptr: std::shared_ptr<rsp_t>/ std::auto_ptr<rsp_t>.
 	*/
 	template<typename rsp_ptr>
-	inline bool request_set(
+	inline eco::Result request_set(
 		IN uint32_t req_type,
 		IN const google::protobuf::Message* req,
 		OUT google::protobuf::Message* err,
 		OUT std::vector<rsp_ptr>& rsp_set)
 	{
 		AutoArray<rsp_ptr::element_type> set;
-		if (request_set<ProtobufCodec, rsp_ptr::element_type>(
-			req_type, req, err, set))
+		eco::Result ec = request_set<ProtobufCodec,
+			rsp_ptr::element_type>(req_type, req, err, set);
+		if (ec == eco::ok)
 		{
 			rsp_set.reserve(set.size());
 			for (size_t i = 0; i < set.size(); i++)
 			{
 				rsp_set.push_back(rsp_ptr(set.release(i)));
 			}
-			return true;
 		}
-		return false;
+		return ec;
 	}
 
 	// sync request data set.

@@ -255,8 +255,7 @@ public:
 	virtual bool encode(
 		OUT eco::String& bytes,
 		OUT uint32_t& start,
-		IN  const eco::net::MessageMeta& meta,
-		OUT eco::Error& e) = 0;
+		IN  const eco::net::MessageMeta& meta) = 0;
 
 	/*@ get message body size that don't include head size.*/
 	virtual bool decode_size(
@@ -269,10 +268,21 @@ public:
 		OUT eco::net::MessageMeta& meta,
 		OUT eco::Bytes& data,
 		IN  eco::String& bytes,
-		IN  uint32_t head_size,
-		IN  eco::Error& e) = 0;
+		IN  uint32_t head_size) = 0;
 
 public:
+	// get size of "uint8_t".
+	inline static uint8_t size_size_byte(uint8_t size)
+	{
+		if (size < 253)
+			return 1;
+		else if (size == 253)
+			return 1 + 2;
+		else if (size == 254)
+			return 1 + 4;
+		return 1 + 8;
+	}
+
 	// get size of data size.
 	inline static uint8_t size_size(uint64_t size)
 	{
@@ -406,7 +416,7 @@ protected:
 		else if (eco::has(meta.m_option, option_req4))
 			return sizeof(uint32_t);
 		else if (eco::has(meta.m_option, option_req8))
-			return  sizeof(uint64_t);
+			return sizeof(uint64_t);
 		return 0;
 	}
 };

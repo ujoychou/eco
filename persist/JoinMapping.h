@@ -21,7 +21,7 @@
 #include <eco/meta/Meta.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
@@ -64,8 +64,6 @@ public:
 		: m_map(v), m_option(option_join_inner)
 	{}
 
-	virtual object_t create() = 0;
-
 	virtual void set_value(
 		IN const PropertyMapping& prop,
 		IN const char* value,
@@ -86,13 +84,8 @@ template<typename meta_t, typename object_t>
 class JoinMetaImpl : public JoinMeta<object_t>
 {
 public:
-	JoinMetaImpl(const ObjectMapping& map) : JoinMeta<object_t>(&map)
+	inline JoinMetaImpl(const ObjectMapping& map) : JoinMeta<object_t>(&map)
 	{}
-
-	virtual object_t create() override
-	{
-		return m_meta.create();
-	}
 
 	virtual void set_value(
 		IN const PropertyMapping& prop,
@@ -233,7 +226,8 @@ public:
 		for (size_t r = 0; r < record_set.size(); ++r)
 		{
 			// create object.
-			object_set_t::value_type obj(m_main_meta->create());
+			object_set_t::value_type obj;
+			eco::make(obj);
 
 			// set main table object property value.
 			uint32_t field = 0;
@@ -252,7 +246,7 @@ public:
 				auto it = join_meta->m_map->get_map().begin();
 				for (; it != join_meta->m_map->get_map().end(); ++it)
 				{
-					if (get_main_table()->find_property(it->get_property(), 
+					if (get_main_table()->find(it->get_property(), 
 						eco::constraint_fk | eco::constraint_pk))
 					{
 						continue;
@@ -273,5 +267,5 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

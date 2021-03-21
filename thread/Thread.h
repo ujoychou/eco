@@ -20,10 +20,10 @@ thread and common thread function.
 
 *******************************************************************************/
 #include <eco/Object.h>
-#include <eco/thread/Error.h>
+#include <eco/eco/Proto.h>
 #include <list>
-#include <atomic>
-#include <thread>
+#include <eco/cpp/Thread.h>
+#include <eco/cpp/Chrono.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -44,7 +44,7 @@ public:
 
 	// thread name.
 	void set_name(IN const char*);
-	const char* get_name() const;
+	const char* name() const;
 	Thread& name(IN const char*);
 
 	// start thread.
@@ -114,12 +114,12 @@ class ECO_API ThreadCheck
 {
 	ECO_SINGLETON_API(ThreadCheck);
 public:
-	void set_time();
+	void set_time(uint64_t now_sec);
 	int64_t get_time() const;
 	static ThreadCheck& get();
 
 private:
-	void on_timer();
+	void on_timer(uint64_t now_sec);
 	void add_lock(ThreadLock*);
 	void del_lock(ThreadLock*);
 	friend class ThreadLockGuard;
@@ -171,18 +171,17 @@ private:
 		return curr - m_stamp >= (int64_t)m_timeout;
 	}
 
-	int m_timeout;					// timeout seconds.
-	Thread::Impl* m_thread;			// thread.
-	uint64_t m_object;				// object id.
-	std::atomic_int64_t m_stamp;	// seconds of day.
+	int					m_timeout;			// timeout seconds.
+	uint64_t			m_object;			// object id.
+	std_atomic_int64_t	m_stamp;			// seconds of day.
+	Thread::Impl*		m_thread;			// thread.
 	friend class ThreadCheck;
 	friend class Thread::Impl;
 };
 
 
 ECO_NS_BEGIN(this_thread);
-#define ECO_THIS_ERROR(id_path) eco::this_thread::error().key(id_path)
-#define ECO_THIS_THROW(id_path) throw eco::this_thread::error().key(id_path)
+
 ////////////////////////////////////////////////////////////////////////////////
 // get current thread id.
 ECO_API size_t id();
@@ -194,26 +193,31 @@ ECO_API const char* name();
 // get current thread lock.
 ECO_API ThreadLock& lock();
 
-// get current thread error.
-ECO_API eco::this_thread::Error& error();
-
-// get current thread format.
-ECO_API eco::Format<>& format();
-ECO_API eco::Format<>& format(const char* msg);
+/* get current thread format: 
+1.return char*: locale get_error.
+2.format buffer: 
+*/
+ECO_API eco::FormatX& format();
+ECO_API eco::FormatX& format(const char* msg);
+#ifndef ECO_NO_PROTOBUF
+ECO_NS_BEGIN(proto);
+ECO_API eco::proto::Error& error();
+ECO_NS_END(proto);
+#endif
 
 // get current thread logging buffer.
-ECO_API eco::log::PusherT<eco::StreamX>& logbuf();
+ECO_API eco::log::PusherT<eco::String>& logbuf();
 
 // init thread.
 ECO_API void init();
 
 inline void yield()
 {
-	std::this_thread::yield();
+	std_this_thread::yield();
 }
 inline void sleep(IN int millisecond)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(millisecond));
+	std_this_thread::sleep_for(std_chrono::milliseconds(millisecond));
 }
 ECO_NS_END(this_thread);
 
@@ -266,17 +270,23 @@ inline bool time_wait(
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-inline void release(IN std::shared_ptr<T>& sp, IN int unit_sleep = 50)
+inline void release(IN std::weak_ptr<T>& wp, IN int unit_sleep = 10)
+{
+	while (wp.use_count() > 0)
+	{
+		if (unit_sleep > 0)
+			std_this_thread::sleep_for(std_chrono::milliseconds(unit_sleep));
+		else
+			std_this_thread::yield();
+	}
+}
+template<typename T>
+inline void release(IN std::shared_ptr<T>& sp, IN int unit_sleep = 10)
 {
 	std::weak_ptr<T> wp(sp);
 	sp.reset();
-
-	while (wp.use_count() > 0)
-	{
-		eco::this_thread::sleep(unit_sleep);
-	}
+	release(wp, unit_sleep);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(thread);

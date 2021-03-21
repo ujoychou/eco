@@ -1,30 +1,28 @@
 #ifndef ECO_PROJECT_H
 #define ECO_PROJECT_H
-////////////////////////////////////////////////////////////////////////////////
-/*@ most used stl and boost head file.*/
-#include <cstddef>
-#include <cassert>
-#include <cstdarg>
-#include <string>
-#include <memory>
-#include <vector>
-#include <exception>
-#include <functional>
-#include <algorithm>
-#include <iostream>
+/*******************************************************************************
+@ name
+
+@ function
+
+@ exception
+
+@ note
+
+--------------------------------------------------------------------------------
+@ [history ver 1.0]
+@ ujoy modifyed on 2021-05-10.
 
 
-////////////////////////////////////////////////////////////////////////////////
-/*@ dll export header file.*/
-#include <eco/Export.h>
-#include <eco/ExportApi.h>
-#include <eco/Implement.h>
+--------------------------------------------------------------------------------
+* copyright(c) 2020 - 2021, ujoy, reserved all right.
 
-/*@ general use header file.*/
-#include <eco/Memory.h>
-#include <eco/Cast.h>
+*******************************************************************************/
 #include <eco/Type.h>
+#include <eco/Cast.h>
 #include <eco/Object.h>
+#include <eco/Implement.h>
+#include <eco/log/Log.h>
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -416,6 +416,12 @@ public:
 		m_auto_delete = auto_delete;
 	}
 
+	inline void release()
+	{
+		m_ptr = nullptr;
+		m_auto_delete = false;
+	}
+
 private:
 	Object* m_ptr;
 	bool m_auto_delete;

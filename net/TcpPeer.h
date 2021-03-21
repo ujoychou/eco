@@ -26,7 +26,8 @@
 #include <eco/net/Address.h>
 #include <eco/net/TcpState.h>
 #include <eco/net/TcpOption.h>
-#include <eco/net/protocol/TcpProtocol.h>
+#include <eco/net/protocol/Protocol.h>
+#include <eco/thread/TimingWheel.h>
 
 
 namespace eco{;
@@ -69,6 +70,13 @@ public:
 class TcpPeerHandler
 {
 public:
+	inline TcpPeerHandler()
+		: m_owner(0)
+		, m_protocol(0)
+		, m_websocket_key(0)
+		, m_option(0)
+	{}
+
 	void* m_owner;
 
 	// protocol.
@@ -82,7 +90,11 @@ public:
 
 	// when peer has connected to server.
 	// m_on_connect(error)
-	std::function<void(IN const Error*)> m_on_connect;
+	std::function<void(bool err)> m_on_connect;
+
+	// m_on_authorize language and user.
+	std::function<void(const char*, const char*,
+		std::shared_ptr<TcpPeer>&)> m_on_auth;
 
 	// when peer has sended a data, async notify sended data size.
 	// m_on_send(peer, size)
@@ -94,13 +106,12 @@ public:
 
 	// when recv data size, check the bytes tcp size edge.
 	// m_on_decode_head(head, byte, size, error)
-	std::function<bool(IN MessageHead&, IN const char*, IN uint32_t)>
+	std::function<eco::Result(IN MessageHead&, IN const char*, IN uint32_t)>
 		m_on_decode_head;
 
 	// when peer has been closed.
 	// m_on_close(peer_id, erase_peer)
-	std::function<void(IN SessionId, IN const eco::Error& e, 
-		IN bool erase_peer)> m_on_close;
+	std::function<void(IN void* peer)> m_on_close;
 };
 
 
@@ -135,35 +146,35 @@ public:
 	// tcp peer connection state.
 	const TcpState& state() const;
 
-	// tcp peer connection state.
-	eco::atomic::State& data_state();
-
 	// get peer data.
 	ConnectionData* data();
 
 	// authorize user and language.
-	void authorize(IN const char* user, IN const char* lang);
+	void authorize(
+		IN const char* user,
+		IN const char* lang,
+		IN TcpPeer::ptr& peer);
 
 	// whether peer has been authorized.
 	bool authorized() const;
 
 	// async connect to server address.
-	void async_connect(IN const Address& addr);
+	bool async_connect(IN const Address& addr);
 
 	// close peer.
 	void close();
 
 	// close peer and notify peer handler.
-	void close_and_notify(IN const eco::Error& e);
+	void close_and_notify();
 
 	// send string message.
 	void send(IN eco::String& data, IN uint32_t start);
 
 	// send meta message.
-	void send(IN const MessageMeta& meta, IN Protocol& prot);
+	void send(IN const MessageMeta& meta);
 
 	// response message.
-	void response(IN MessageMeta& m, IN Protocol& p, IN const Context& c);
+	void response(IN MessageMeta& m, IN const Context& c);
 };
 
 

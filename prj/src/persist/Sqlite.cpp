@@ -1,12 +1,19 @@
 #include "PrecHeader.h"
 #include <eco/persist/Sqlite.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Project.h>
 #include <eco/thread/Atomic.h>
 #include <eco/thread/Mutex.h>
 #include <vector>
 #include <sqlite/sqlite3.h>
 #include <boost/filesystem/operations.hpp>
+
+// import eco/log.
+#undef ECO_API
+#define ECO_API __declspec(dllimport)
+#include <eco/log/Log.h>
+#pragma comment(lib, "eco.lib")
+#undef ECO_API
+#define ECO_API __declspec(dllexport)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +45,7 @@ public:
 		{
 		case type_date_time:
 			PropertyMapping::get_field_type_sql(
-				field_sql, dtype_char_array, 19);
+				field_sql, field_char_array, 19);
 			break;
 		}
 	}
@@ -115,7 +122,7 @@ public:
 		if (!boost::filesystem::exists(path, ec) &&
 			!boost::filesystem::create_directory(path, ec))
 		{
-			eco::Stream<> err;
+			eco::String err;
 			err << "create directory fail" << m_config.m_db_name;
 			throw std::logic_error(err.c_str());
 		}
@@ -186,7 +193,7 @@ ECO_SHARED_IMPL(Sqlite);
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::open(IN const persist::Address& addr)
 {
-	open(addr.get_database(), addr.get_charset());
+	open(addr.database(), addr.charset());
 }
 
 
@@ -225,7 +232,7 @@ bool Sqlite::select(OUT Record& obj, IN  const char* sql)
 	select(rset, sql);
 	if (rset.size() > 0)
 	{
-		obj = rset[0];
+		obj = std::move(rset[0]);
 		return true;
 	}
 	return false;
@@ -347,16 +354,16 @@ void Sqlite::set_field(
 {
 	char sql[128] = { 0 };
 	if (db_name == 0) db_name = config().get_database();
-	if (!has_field(table, prop.get_field(), db_name))
+	if (!has_field(table, prop.field(), db_name))
 	{
 		sprintf(sql, "alter table %s.%s add %s %s", db_name, table,
-			prop.get_field(), prop.get_field_type_sql(&config()).c_str());
+			prop.field(), prop.get_field_type_sql(&config()).c_str());
 		execute_sql(sql);
 	}
 	else
 	{
 		eco_cpyc(sql, "sqlite don't support modify table column(field): ");
-		eco_catc(sql, prop.get_field());
+		eco_catc(sql, prop.field());
 		throw std::logic_error(sql);
 	}
 }

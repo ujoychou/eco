@@ -19,15 +19,12 @@ it shared the data in the program, and it manage data's life cycle.
 
 *******************************************************************************/
 #include <eco/Object.h>
-#include <eco/thread/Mutex.h>
-#include <unordered_map>
+#include <eco/cpp/Thread.h>
 #include <map>
-
+#include <unordered_map>
 
 
 namespace eco{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename identity_t, 
@@ -68,7 +65,7 @@ public:
 	// map size.
 	inline size_t size() const
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		return m_data_map.size();
 	}
 
@@ -77,7 +74,7 @@ public:
 		IN const identity& id,
 		IN const value& val)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_data_map[id] = val;
 	}
 
@@ -99,7 +96,7 @@ public:
 		= &make_object<object_t, identity>)
 	{
 		// find data in map.
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
@@ -114,7 +111,7 @@ public:
 	inline value get(IN const identity& id)
 	{
 		// find data in map.
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
@@ -132,7 +129,7 @@ public:
 		value val;
 		if (!find(val, id))
 		{
-			ECO_THROW(0) << "get object from eco map fail.";
+			ECO_THROW("get object from eco map fail.");
 		}
 		return val;
 	}
@@ -141,7 +138,7 @@ public:
 	*/
 	inline bool find(OUT value& val, IN  const identity& id) const
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		typename container::const_iterator it = m_data_map.find(id);
 		if (it == m_data_map.end())
 		{
@@ -154,7 +151,7 @@ public:
 	/*@ whether has the object.*/
 	inline bool has(IN const identity& id) const
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		return (m_data_map.find(id) != m_data_map.end());
 	}
 
@@ -165,14 +162,14 @@ public:
 		value v = pop(id, eid);
 		if (eid != 0)
 		{
-			ECO_THROW(eid) << "map pop fail.";
+			ECO_THROW("map pop fail.");
 		}
 		return v;
 	}
 	/*@ remove object from map.*/
 	inline value pop(IN const identity& id, OUT int& eid)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		value v;
 		auto it = m_data_map.find(id);
 		if (it == m_data_map.end())
@@ -190,7 +187,7 @@ public:
 	/*@ remove object from map.*/
 	inline void erase(IN const identity& id)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		auto it = m_data_map.find(id);
 		if (it != m_data_map.end())
 		{
@@ -201,7 +198,7 @@ public:
 	/*@ clear object in this map.*/
 	inline void clear()
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_data_map.clear();
 	}
 
@@ -218,7 +215,7 @@ public:
 	}
 
 	/*@ get raw data set.*/
-	inline eco::Mutex& mutex() const
+	inline std_mutex& mutex() const
 	{
 		return m_mutex;
 	}
@@ -227,7 +224,7 @@ public:
 protected:
 	// data map.
 	container m_data_map;
-	mutable eco::Mutex m_mutex;
+	mutable std_mutex m_mutex;
 };
 
 

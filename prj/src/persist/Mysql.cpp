@@ -1,11 +1,11 @@
 #include "PrecHeader.h"
 #include <eco/persist/MySql.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <vector>
+#include <mysql/mysql.h>
 #include <eco/Type.h>
 #include <eco/thread/Atomic.h>
 #include <eco/thread/Mutex.h>
-#include <vector>
-#include <mysql/mysql.h>
 
 // import eco/log.
 #undef ECO_API
@@ -345,8 +345,8 @@ void MySql::create_database(IN const char* db)
 ////////////////////////////////////////////////////////////////////////////////
 void MySql::open(IN const persist::Address& addr) 
 {
-	open(addr.get_host(), addr.get_port(), addr.get_database(),
-		addr.get_user(), addr.get_password(), addr.get_charset());
+	open(addr.host(), addr.port(), addr.database(),
+		addr.user(), addr.password(), addr.charset());
 }
 
 
@@ -393,7 +393,7 @@ bool MySql::select(OUT Record& obj, IN  const char* sql)
 	select(data_sheet, sql);
 	if (data_sheet.size() > 0)
 	{
-		obj = data_sheet[0];
+		obj = std::move(data_sheet[0]);
 		return true;
 	}
 	return false;
@@ -523,15 +523,15 @@ void MySql::set_field(
 {
 	char sql[128] = { 0 };
 	if (db == 0) db = config().get_database();
-	if (!has_field(table, prop.get_field(), db))
+	if (!has_field(table, prop.field(), db))
 	{
 		sprintf(sql, "alter table %s.%s add %s %s", db, table,
-			prop.get_field(), prop.get_field_type_sql(&config()).c_str());
+			prop.field(), prop.get_field_type_sql(&config()).c_str());
 	}
 	else
 	{
 		sprintf(sql, "alter table %s.%s modify %s %s", db, table,
-			prop.get_field(), prop.get_field_type_sql(&config()).c_str());
+			prop.field(), prop.get_field_type_sql(&config()).c_str());
 	}
 	execute_sql(sql);
 }
@@ -556,10 +556,10 @@ void MySql::set_index(
 {
 	char sql[128] = { 0 };
 	if (db == 0) db = config().get_database();
-	if (has_index(table, prop.get_index_name().c_str(), db))
+	if (has_index(table, prop.index_name().c_str(), db))
 	{
 		sprintf(sql, "drop index %s on %s.%s",
-			prop.get_index_name().c_str(), db, table);
+			prop.index_name().c_str(), db, table);
 		execute_sql(sql);
 	}
 

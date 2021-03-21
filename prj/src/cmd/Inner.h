@@ -35,13 +35,13 @@ namespace cmd{;
 ////////////////////////////////////////////////////////////////////////////////
 inline static bool equal(IN const Class& c, IN const std::string& name)
 {
-	return name == c.get_alias() || name == c.get_name();
+	return name == c.alias() || name == c.name();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 inline static bool equal_group(IN const Group& c, IN const std::string& name)
 {
-	return name == c.get_alias() || name == c.get_name();
+	return name == c.alias() || name == c.name();
 }
 
 

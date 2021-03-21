@@ -1,14 +1,13 @@
 #ifndef ECO_NET_TCP_CLIENT_IPP
 #define ECO_NET_TCP_CLIENT_IPP
-#include "PrecHeader.h"
 #include <eco/net/TcpClient.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/thread/State.h>
 #include <eco/thread/Map.h>
 #include <eco/thread/Monitor.h>
+#include <eco/thread/TimingWheel.h>
 #include <eco/net/Worker.h>
-#include <eco/net/IoTimer.h>
-#include <eco/net/protocol/WebSocketProtocol.h>
+#include <net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
 #include "DispatchServer.h"
 
@@ -27,6 +26,11 @@ public:
 	inline LoadBalancer() : m_address_cur(-1)
 	{}
 
+	inline int position()
+	{
+		return m_address_cur % m_address_set.size();
+	}
+
 	inline void release()
 	{
 		m_peer->close();
@@ -34,9 +38,19 @@ public:
 		m_peer.reset();
 	}
 
+	inline void on_connect(uint16_t balanc)
+	{
+		if (balanc == TcpClientOption::balance_order)
+		{
+			m_address_cur = position();		// reset reconnect times.
+		}
+	}
+
 	void add_address(IN Address& addr);
 	void update_address(IN AddressSet& addr);
-	bool connect();		// connect to server by blance algorithm.
+
+	// connect to server by blance algorithm.
+	bool connect(uint16_t balanc);
 };
 
 
@@ -45,16 +59,12 @@ class SessionDataPack
 {
 	ECO_OBJECT(SessionDataPack);
 public:
-	eco::String m_request;
-	uint32_t m_request_start;
 	SessionData::ptr m_session;
 	ClientUserObserver m_user_observer;
 	uint64_t m_option_data;
-	uint32_t m_auto_login;
 
 public:
-	inline SessionDataPack(IN bool auto_login = false)
-		: m_option_data(0), m_auto_login(auto_login), m_request_start(0)
+	inline SessionDataPack() : m_option_data(0)
 	{}
 };
 
@@ -105,20 +115,53 @@ class AsyncRequest : public eco::Object<AsyncRequest>
 public:
 	inline AsyncRequest(std::function<void(eco::net::Context& c)>& f)
 		: m_func(f) {}
-
 	std::function<void(eco::net::Context&)> m_func;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Loading
+class LoadEvent
 {
+	ECO_OBJECT(LoadEvent);
 public:
-	OnLoadDataFunc m_func;
-	eco::atomic::State m_state;
+	inline LoadEvent(OnLoadEvent& evt, uint32_t group, bool app_read_evt)
+		: m_on_event(evt), m_group(group)
+	{
+		m_state.set(app_read_evt, eco::atomic::State::_aa);
+	}
 
-	inline Loading() {}
-	inline Loading(OnLoadDataFunc& f) : m_func(f) {}
+	inline LoadEvent(OnLoadState& evt, bool app_read_evt)
+		: m_on_state(evt), m_group(0)
+	{
+		m_state.set(app_read_evt, eco::atomic::State::_aa);
+	}
+
+	inline void operator()(void)
+	{
+		if (m_on_state) return m_on_state(m_state);
+		if (m_on_event) return m_on_event([&](void) { m_state.set_ok(true); });
+	}
+
+	inline bool state_mode() const
+	{
+		return m_on_state != nullptr;
+	}
+
+	inline bool ready() const
+	{
+		return m_state.ok1() || !m_state.has(eco::atomic::State::_aa);
+	}
+
+	inline bool app_ready_event() const
+	{
+		return m_state.has(eco::atomic::State::_aa);
+	}
+	
+	uint32_t	m_group;		// event group to implement link event.
+	OnLoadEvent	m_on_event;		// callback load event. on_event(on_finish())
+
+	OnLoadState m_on_state;		// state load event. on_event(state)
+	eco::atomic::State m_state;	// event finish state.
 };
 
 
@@ -131,22 +174,20 @@ public:
 	TcpClientOption	m_option;		// client option.
 	ProtocolFamily  m_protocol;		// client protocol.
 	TcpPeerHandler	m_peer_handler;
+	uint32_t		m_manual_close;	// manual close means no need auto connect.
 	
 	// io server, timer and business dispatcher server.
 	eco::net::Worker	m_worker;	// io thread.
-	eco::net::IoTimer	m_timer;	// run in io thread.
 	DispatchServer		m_dispatch;	// dispatcher thread.
 
 	// connection event.
-	ClientOpenFunc  m_on_open;
-	ClientCloseFunc m_on_close;
-	std::vector<Loading> m_loading;
+	OnConnect m_on_open;
+	OnDisconnect m_on_close;
+	std::vector<LoadEvent::ptr> m_load_events;
+	TimingWheel::Timer m_timer_load_events;
 
 	// session data management.
-	MakeSessionDataFunc m_make_session;
-	MakeConnectionDataFunc m_make_connection;
-	// all session that client have, diff by "&session".
-	std::unordered_map<void*, SessionDataPack::ptr> m_authority_map;
+	MakeSessionData m_make_session;
 	// connected session that has id build by server.
 	eco::HashMap<uint64_t, SessionDataPack::ptr> m_session_map;
 	mutable eco::Mutex m_mutex;
@@ -160,63 +201,50 @@ public:
 public:
 	inline Impl() 
 		: m_make_session(nullptr)
-		, m_make_connection(nullptr)
 		, m_on_open(nullptr)
 		, m_on_close(nullptr)
 		, m_timeout_millsec(5000)
-	{}
+		, m_manual_close(false)
+	{
+		// create peer.
+		m_balancer.m_peer = TcpPeer::make(
+			m_worker.get_io_worker(), 0, &m_peer_handler);
+	}
 
 	inline ~Impl()
 	{
-		close();
+		release();
 	}
 
 	// get current tcp peer connected to server.
-	inline TcpPeer::ptr& peer()
+	inline TcpPeer::Impl& peer()
 	{
-		return m_balancer.m_peer;
+		return m_balancer.m_peer->impl();
+	}
+	inline const TcpPeer::Impl& peer() const
+	{
+		return m_balancer.m_peer->impl();
 	}
 
-	TcpState& get_state()
-	{
-		return m_balancer.m_peer->impl().state();
-	}
-	const TcpState& state() const
+	// peer state.
+	inline TcpState& get_state()
 	{
 		return m_balancer.m_peer->impl().get_state();
 	}
-
-	inline void set_load_event(OnLoadDataFunc func)
+	inline const TcpState& state() const
 	{
-		m_loading.push_back(Loading(func));
+		return m_balancer.m_peer->impl().state();
 	}
-	inline bool ready() const
+
+	inline uint32_t set_load_event(OnLoadState func, bool app_ready_evt)
 	{
-		for (const Loading& it : m_loading)
-		{
-			if (it.m_state.is_none())
-				return false;
-		}
-		return true;
+		m_load_events.push_back(
+			std::make_shared<LoadEvent>(func, app_ready_evt));
+		return uint32_t(m_load_events.size() - 1);
 	}
 
 	// open a session with no authority.
 	inline TcpSession open_session();
-
-	// set a authority.
-	inline void set_authority(IN void* key, IN SessionDataPack::ptr& pack)
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		m_authority_map[key] = pack;
-	}
-
-	// find exist authority.
-	inline SessionDataPack::ptr find_authority(IN void* key)
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		auto it = m_authority_map.find(key);
-		return it != m_authority_map.end() ? it->second : nullptr;
-	}
 
 	// find exist session.
 	inline SessionDataPack::ptr find_session(IN const SessionId id) const
@@ -269,6 +297,21 @@ public:
 		m_sync_manager.erase(req_id);
 	}
 
+	// auto connect to tcpclient, when: 1.on_open; 2.on_close.
+	inline void auto_connect()
+	{
+		if (m_option.get_auto_reconnect_sec() > 0 && !m_manual_close)
+		{
+			// timer_recv as the timer connect, and set recv timer when peer
+			// has connected.
+			peer().m_timer_recv.cancel();
+			peer().m_timer_recv = eco::Eco::get().timer().run_after([=] {
+				if (!get_state().connected() && !m_manual_close)
+					this->connect(2000);
+			}, std_chrono::seconds(m_option.auto_reconnect_sec()), false);
+		}
+	}
+
 public:
 	// async management post item.
 	inline AsyncRequest::ptr post_async(
@@ -315,83 +358,53 @@ public:
 	}
 
 	// async connect to server.
-	inline void async_connect(IN bool reconnect);
-	inline void async_connect(IN eco::net::AddressSet& addr, IN bool reconnect)
+	inline void async_connect();
+	inline void async_connect(IN eco::net::AddressSet& addr)
 	{
 		update_address(addr);
-		// reconnect to new address if cur address is removed.
-		async_connect(reconnect);
+		async_connect();
 	}
 	inline String logging();
 
+	// connect to server.
+	void connect(uint32_t millsec);
+	void connect(eco::net::AddressSet& addr, uint32_t millsec);
+
+	// close tcp client and connection.
+	inline void close();
+
 	// release tcp client and connection.
-	void close();
+	inline void release();
 
 	// set a tick timer to do some work in regular intervals.
-	inline void set_tick_timer()
-	{
-		if (m_option.has_tick_timer())
-			m_timer.set_timer(m_option.get_tick_time());
-	}
-	void on_timer(IN const eco::Error* e);
-
-	// check peer live.
-	inline void check_peer_live()
-	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		if (peer() && !peer()->impl().check_peer_live())
-		{
-			eco::Error e(e_peer_lost, "peer lost server heartbeat.");
-			peer()->impl().close_and_notify(e, true);
-		}
-	}
+	void on_connect_ok();
+	void on_live(bool active = false);
+	void on_live_timeout();
 
 	// async send data.
-	inline void send(IN eco::String& data, IN const uint32_t start)
+	inline void send(IN eco::String& data, IN uint32_t start)
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		if (peer())
-			peer()->impl().send(data, start);
+		peer().send(data, start);
 	}
 
 	inline void send(IN MessageMeta& meta)
 	{
-		eco::Error e;
-		eco::String data;
-		uint32_t start = 0;
-		if (peer()->impl().m_protocol->encode(data, start, meta, e))
-		{
-			send(data, start);
-		}
+		eco::Mutex::ScopeLock lock(m_mutex);
+		peer().send(meta);
 	}
 
 	// async send data.
-	inline void send_heartbeat()
+	inline void on_send_heartbeat()
 	{
 		eco::Mutex::ScopeLock lock(m_mutex);
-		if (peer())
-			peer()->impl().send_heartbeat();
+		if (m_option.heartbeat_rhythm())
+			peer().send_heartbeat();
+		else
+			peer().send_live_heartbeat();
 	}
 
-	inline void send(IN SessionDataPack::ptr& pack)
-	{
-		eco::String data;
-		data.assign(pack->m_request.c_str(), pack->m_request.size());
-
-		// client isn't ready and connected when first send authority.
-		// because of before that client is async connect.
-		eco::Mutex::ScopeLock lock(m_mutex);
-		if (peer() && peer()->impl().get_state().connected())
-		{
-			peer()->impl().send(data, pack->m_request_start);
-		}
-	}
-
-	inline void async_auth(
-		IN TcpSessionImpl& sess,
-		IN MessageMeta& meta);
-
-	inline bool request(
+	inline eco::Result request(
 		IN MessageMeta& req,
 		IN Codec& err_codec,
 		IN Codec& rsp_codec,
@@ -416,7 +429,7 @@ public:
 
 public:
 	// when peer has connected to server.
-	void on_connect(IN const eco::Error* e);
+	void on_connect(bool error);
 
 	// load data when peer connected.
 	void on_load_data();
@@ -429,7 +442,7 @@ public:
 	void on_send(IN void* peer, IN uint32_t size);
 
 	// when peer has been closed.
-	void on_close(SessionId peer_id, const Error& e, bool erase_peer);
+	void on_close(IN void* peer);
 
 	inline const char* websocket_key() const
 	{

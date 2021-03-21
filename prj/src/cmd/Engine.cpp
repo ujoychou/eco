@@ -1,14 +1,11 @@
 #include "PrecHeader.h"
 #include "Engine.ipp"
 ////////////////////////////////////////////////////////////////////////////////
-#include <iostream>
 #include "Inner.h"
 
 
 namespace eco{;
 namespace cmd{;
-
-
 //##############################################################################
 //##############################################################################
 std::string prompt(IN Group& group)
@@ -16,7 +13,7 @@ std::string prompt(IN Group& group)
 	// current group.
 	std::string msg;
 	msg += "[ ";
-	msg += group.get_name();
+	msg += group.name();
 	msg += " ] ";
 	return msg;
 }
@@ -36,7 +33,7 @@ bool Engine::Impl::run_inner_command(IN Context& context)
 {
 	std::vector<Class>::iterator it = std::find_if(
 		m_inner_cmds.begin(), m_inner_cmds.end(),
-		std::bind(&equal, std::placeholders::_1, context.get_command()));
+		std::bind(&equal, std::placeholders::_1, context.command()));
 	if (it == m_inner_cmds.end())
 	{
 		return false;
@@ -51,7 +48,7 @@ bool Engine::Impl::run_inner_command(IN Context& context)
 ////////////////////////////////////////////////////////////////////////////////
 void Engine::Impl::work()
 {
-	if (eco::empty(home().get_name()))
+	if (eco::empty(home().name()))
 	{
 		home().name("app");
 	}
@@ -121,19 +118,19 @@ void Engine::Impl::init(Engine&)
 
 //##############################################################################
 //##############################################################################
-Group Engine::root()
+Group Engine::get_root()
 {
 	return m_impl->m_root_group;
 }
-const Group Engine::get_root() const
+const Group Engine::root() const
 {
 	return m_impl->m_root_group;
 }
-Group Engine::current()
+Group Engine::get_current()
 {
 	return m_impl->m_curr_group;
 }
-const Group Engine::get_current() const
+const Group Engine::current() const
 {
 	return m_impl->m_curr_group;
 }
@@ -155,9 +152,9 @@ Group Engine::home()
 }
 
 ECO_SINGLETON_IMPL(Engine);
-ECO_API Engine& get_engine()
+ECO_API Engine& engine()
 {
-	return eco::Singleton<Engine>::instance();
+	return eco::Singleton<Engine>::get();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

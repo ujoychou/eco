@@ -262,16 +262,16 @@ type_t& type_t::##property_name(IN const property_t& val) \
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-property_t& type_t::##property_name()\
+property_t& type_t::get_##property_name()\
 {\
 	return impl().m_##property_name;\
 }\
-const property_t& type_t::get_##property_name() const\
+const property_t& type_t::##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
 // export value property implement: const value.
-#define ECO_PROPERTY_VVC_IMPL(type_t, property_t, property_name) \
+#define ECO_PROPERTY_VAC_IMPL(type_t, property_t, property_name) \
 void type_t::set_##property_name(IN const property_t val)\
 {\
 	impl().m_##property_name = val;\
@@ -281,30 +281,31 @@ type_t& type_t::##property_name(IN const property_t val) \
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-const property_t type_t::get_##property_name() const\
+const property_t type_t::##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
 // export value property implement: value.
-#define ECO_PROPERTY_VAV_IMPL(type_t, property_t, property_name) \
-ECO_PROPERTY_VVC_IMPL(type_t, property_t, property_name)\
-property_t type_t::##property_name()\
+#define ECO_PROPERTY_VAR_IMPL(type_t, property_t, property_name) \
+ECO_PROPERTY_VAC_IMPL(type_t, property_t, property_name)\
+property_t& type_t::get_##property_name()\
 {\
 	return impl().m_##property_name;\
 }
+
 // export object property implement
 #define ECO_PROPERTY_OBJ_IMPL_NOHAS(type_t, property_type, property_name)\
-void type_t::set_##property_name(IN property_type& v)\
+void type_t::set_##property_name(IN const property_type& v)\
 {\
 	impl().m_##property_name = v;\
 }\
-property_type& type_t::##property_name()\
+property_type& type_t::get_##property_name()\
 {\
 	if (impl().m_##property_name.null())\
 		impl().m_##property_name = eco::heap;\
 	return impl().m_##property_name;\
 }\
-const property_type& type_t::get_##property_name() const\
+const property_type& type_t::##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
@@ -326,7 +327,7 @@ type_t& type_t::##property_name(IN const char* val) \
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-const char* type_t::get_##property_name() const\
+const char* type_t::##property_name() const\
 {\
 	return impl().m_##property_name.c_str();\
 }
@@ -340,7 +341,7 @@ type_t& type_t::##property_name(IN const char* val) \
 	eco_cpyc(impl().m_##property_name, val);\
 	return *this;\
 }\
-const char* type_t::get_##property_name() const\
+const char* type_t::##property_name() const\
 {\
 	return impl().m_##property_name;\
 }
@@ -469,6 +470,60 @@ data_set_t::const_iterator data_set_t::end() const\
 	}\
 	return const_iterator(ptr);\
 }
+
+
+#ifndef ECO_NO_PROTOBUF
+////////////////////////////////////////////////////////////////////////////////
+#define ECO_IMPL_PROTO_PTR(object_t, proto_t) \
+public:\
+	eco::AutoDelete<proto_t> m_proto;\
+public:\
+	inline Impl() : m_proto(new proto_t()) {}\
+	inline Impl(proto_t* v, bool auto_delete) : m_proto(v, auto_delete) {}\
+	inline Impl(const Impl& impl) : m_proto(new proto_t(*impl.m_proto)) {}\
+	inline Impl(Impl&& impl) : m_proto(impl.m_proto) { impl.m_proto.release();}\
+	inline proto_t& get_proto() { return *m_proto; }\
+	inline const proto_t& proto() const { return *m_proto; }\
+	inline static object_t make(proto_t* proto, bool auto_delete)\
+	{\
+		object_t obj(eco::null);\
+		obj.m_impl = new object_t::Impl(proto, auto_delete);\
+		return std::move(obj);\
+	}\
+	inline Impl& operator=(const Impl& impl)\
+	{\
+		if (m_proto.get() != nullptr)\
+			*m_proto = *impl.m_proto;\
+		else\
+			m_proto.reset(new proto_t(*impl.m_proto));\
+		return *this;\
+	}
+
+#define ECO_IMPL_PROTO(proto_t) \
+public:\
+	proto_t m_proto;\
+	inline proto_t& get_proto() { return m_proto; }\
+	inline const proto_t& proto() const { return m_proto; }
+
+#define ECO_PROTOBUF_VAL(type_t, prop_t, name, member) \
+void type_t::set_##name(IN const prop_t val)\
+{\
+	impl().get_proto().set_##member(val);\
+}\
+const prop_t type_t::name() const\
+{\
+	return impl().proto().member();\
+}
+#define ECO_PROTOBUF_STR(type_t, name, member) \
+void type_t::set_##name(IN const char* val)\
+{\
+	impl().get_proto().set_##member(val);\
+}\
+const char* type_t::name() const\
+{\
+	return impl().proto().member().c_str();\
+}
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////

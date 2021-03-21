@@ -29,7 +29,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 ECO_OBJECT_IMPL(DllObject);
 ECO_PROPERTY_STR_IMPL(DllObject, name);
-const char* DllObject::get_path() const
+const char* DllObject::path() const
 {
 	return impl().m_path.c_str();
 }

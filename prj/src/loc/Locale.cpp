@@ -81,10 +81,20 @@ public:
 	}
 
 	// get word view.
-	inline const char* get_word(const std::string& path, const char* lang)
+	inline const char* get_word(
+		const std::string& path, const char* mdl, const char* lang)
 	{
 		auto* obj = find_lang(lang);
-		return obj ? obj->get_word(path) : "";
+		if (obj == nullptr) return "";
+
+		if (!eco::empty(mdl))
+		{
+			std::string temp(mdl);
+			temp += '/';
+			temp += path;
+			return obj->get_word(temp);
+		}
+		return obj->get_word(path);
 	}
 
 	inline const char* default_name(const char* name_) const
@@ -118,7 +128,7 @@ public:
 
 		std::string key;
 		const char* pos_last = var;
-		eco::String& buf = eco::this_thread::logbuf().stream().buffer();
+		eco::String& buf = eco::this_thread::logbuf().stream();
 		for (buf.clear();;)
 		{
 			uint32_t pos_s = eco::find_first(pos_last, '{');
@@ -176,31 +186,23 @@ public:
 		loc_key += name_;
 		loc_key += '/';
 		loc_key += key;
-		return eco::App::get()->get_config().find(v, loc_key.c_str());
-	}
-
-	eco::StringAny get_path(const char* key, const char* name_) const
-	{
-		eco::StringAny path, path_key;
-		name_ = default_name(name_);
-		if (!find(path, "path", name_)) return path;
-		if (!find(path_key, key, name_)) return path_key;
-		path.str() += '/';
-		path.str() += path_key.str();
-		return path;
+		return eco::App::get()->config().find(v, loc_key.c_str());
 	}
 };
 
 
 ECO_OBJECT_IMPL(Locale);
 ////////////////////////////////////////////////////////////////////////////////
-Locale g_locale;
-Locale& locale() { return g_locale; }
+eco::loc::Locale& app_locale()
+{
+	return eco::App::get()->locale();
+}
+////////////////////////////////////////////////////////////////////////////////
 void Locale::add_locale(const eco::proto::Locale& loc, const char* mdl)
 {
 	impl().add_locale(loc, mdl);
 }
-void Locale::set_default(const char* lang)
+void Locale::set_default_(const char* lang)
 {
 	impl().set_default(lang, true);
 }
@@ -216,7 +218,7 @@ void Locale::add_word_file(const char* lang, const char* file, const char* m)
 {
 	impl().add_word_file(lang, file, m);
 }
-const char* Locale::language() const
+const char* Locale::default_() const
 {
 	return impl().m_locale.default_().c_str();
 }
@@ -227,20 +229,37 @@ const char* Locale::get_error(int eid, const char* lang)
 {
 	return impl().get_error(eid, lang);
 }
-eco::Format<>& Locale::get_error_format(int eid, const char* lang)
+eco::FormatX& Locale::get_error_format(int eid, const char* lang)
 {
 	return this_thread::format()(impl().get_error(eid, lang));
 }
-const char* Locale::get_error(
-	int eid, const char* para, const char* mdl, const char* lang)
-{
-	return impl().get_error(eid, mdl, para, lang);
-}
-eco::Format<>& Locale::get_error_format(const char* path, const char* lang)
+eco::FormatX& Locale::get_error_format(const char* path, const char* lang)
 {
 	return this_thread::format()(impl().get_error(path, "", lang));
 }
-const char* Locale::get_error(
+const char* Locale::get_word(
+	const char* path, const char* mdl, const char* lang)
+{
+	return impl().get_word(path, mdl, lang);
+}
+eco::FormatX& Locale::get_word_format(
+	const char* path, const char* mdl, const char* lang)
+{
+	return this_thread::format()(impl().get_word(path, mdl, lang));
+}
+const char* Locale::get_variable(const char* p, const char* m, const char* l)
+{
+	return impl().get_variable(p, m, l);
+}
+eco::FormatX& Locale::get_variable_format(
+	const char* path, const char* mdl, const char* lang)
+{
+	return this_thread::format()(impl().get_variable(path, mdl, lang));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+const char* Locale::parse_error(
 	const char* path, const char* para, const char* mdl, const char* lang)
 {
 	if (!eco::empty(mdl))
@@ -250,23 +269,12 @@ const char* Locale::get_error(
 	}
 	return impl().get_error(path, para, lang);
 }
-const char* Locale::get_word(const char* path, const char* lang)
+const char* Locale::parse_error(
+	int eid, const char* para, const char* mdl, const char* lang)
 {
-	return impl().get_word(path, lang);
+	return impl().get_error(eid, mdl, para, lang);
 }
-eco::Format<>& Locale::get_word_format(const char* path, const char* lang)
-{
-	return this_thread::format()(impl().get_word(path, lang));
-}
-const char* Locale::get_variable(const char* p, const char* m, const char* l)
-{
-	return impl().get_variable(p, m, l);
-}
-eco::Format<>& Locale::get_variable_format(
-	const char* path, const char* mdl, const char* lang)
-{
-	return this_thread::format()(impl().get_variable(path, mdl, lang));
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 bool Locale::find(eco::StringAny& v, const char* key, const char* lang) const
@@ -286,10 +294,6 @@ const eco::proto::Locale& Locale::data() const
 const eco::proto::Language* Locale::language(const char* lang) const
 {
 	return impl().find_lang_data(lang);
-}
-eco::StringAny Locale::get_path(const char* key, const char* lang) const
-{
-	return impl().get_path(key, lang);
 }
 
 

@@ -22,6 +22,7 @@ business object.
 * copyright(c) 2017 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/log/Log.h>
 #include <eco/thread/Task.h>
 #include <eco/thread/Bobject.h>
 
@@ -39,8 +40,7 @@ public:
 	// occupy this business object.
 	virtual TaskState occupy()
 	{
-		return bobject().occupy(
-			std::dynamic_pointer_cast<Btask>(shared_from_this()),
+		return bobject().occupy(shared_from_this(),
 			m_sour_state, m_add_state, m_erase_state);
 	}
 
@@ -55,9 +55,24 @@ public:
 	{
 		eco::Bobject::Relock relock(bobject());
 		// if finished this task, set state and notify wait task to restart.
-		execute();
-		relock.finish(m_add_state, m_erase_state);
-		Eco::get().move_wait();
+		try
+		{
+			execute();
+			relock.finish(m_add_state, m_erase_state);
+			Eco::get().move_wait();
+		}
+		catch (std::exception& e)
+		{
+			ECO_LOG(error, "btask") < e.what();
+			if (restart_secs() > 0)
+			{
+				Btask::ptr this_ptr = shared_from_this();
+				Eco::get().timer().run_after([=]() mutable {
+					Eco::get().post_btask(this_ptr);
+				}, restart_secs() * 1000, false);
+			}
+			return;
+		}
 	}
 
 	// task start.
@@ -68,11 +83,11 @@ public:
 		if (task_state == task_no_ready || task_state == task_working_other)
 		{
 			prepare();
-			Eco::get().post_wait(TaskUnit(shared_from_this()));
+			Eco::get().post_wait(shared_from_this());
 		}
 		else if (task_state == task_occupied)
 		{
-			Eco::get().post_task(TaskUnit(shared_from_this()));
+			Eco::get().post_btask(shared_from_this());
 		}
 	}
 
@@ -95,6 +110,11 @@ public:
 		, m_add_state(dest_state)
 		, m_erase_state(0)
 	{}
+
+	inline Btask::ptr shared_from_this()
+	{
+		return std::dynamic_pointer_cast<Btask>(Task::shared_from_this());
+	}
 
 	// get instance of eco::Bobject.
 	static inline eco::Bobject& bob()
