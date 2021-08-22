@@ -2,99 +2,104 @@ syntax = "proto3";
 package eco.proto;
 
 ////////////////////////////////////////////////////////////////////////////////
-// ÊÓÍ¼Öµ/Ã¶¾ÙÖµ;
-message Word
+// ç©ºæ•°æ®ç»“æ„/ç©ºè¯·æ±‚/ç©ºå›æŠ¥ã€‚
+message Empty
 {
-	string path		= 1;		// ¹¦ÄÜÂ·¾¶£º"rc/class/name/10006"
-	string value	= 2;		// ÊÓÍ¼Öµ£º"Net Profit Rate"
 }
 
-// ´íÎóÂë/ÏêÏ¸ÃèÊö
+// è§†å›¾å€¼/æšä¸¾å€¼;
+message Word
+{
+	string path		= 1;		// åŠŸèƒ½è·¯å¾„ï¼š"rc/class/name/10006"
+	string value	= 2;		// è§†å›¾å€¼ï¼š"Net Profit Rate"
+}
+
+// é”™è¯¯ç /è¯¦ç»†æè¿°
 message Error
 {
-	int32  id		= 1;		// ´íÎóID£º"1001/-1002"
-	string path		= 2;		// ´íÎóÂë£º"user_exist/black_list/rc"
-	// ÖÕ¶ËÏÔÊ¾£º´íÎóĞÅÏ¢£º"µÇÂ¼Ê§°Ü£¬ÓÃ»§Ãû%²»´æÔÚ"¡£
-	// ¹ı³Ì´«µİ£º´íÎóĞÅÏ¢²ÎÊıĞÅÏ¢£º"%"Ëù´ú±íµÄÖµ¡£
+	int32  id		= 1;		// é”™è¯¯IDï¼š"1001/-1002"
+	string path		= 2;		// é”™è¯¯ç ï¼š"user_exist/black_list/rc"
+	// ç»ˆç«¯æ˜¾ç¤ºï¼šé”™è¯¯ä¿¡æ¯ï¼š"ç™»å½•å¤±è´¥ï¼Œç”¨æˆ·å%ä¸å­˜åœ¨"ã€‚
+	// è¿‡ç¨‹ä¼ é€’ï¼šé”™è¯¯ä¿¡æ¯å‚æ•°ä¿¡æ¯ï¼š"%"æ‰€ä»£è¡¨çš„å€¼ã€‚
 	string value	= 3;
 }
 
-// ¹ú¼Ê»¯ÊÓÍ¼Öµ£º¶àÓïÑÔ¹ú¼Ê»¯·½°¸¡£
+// å›½é™…åŒ–è§†å›¾å€¼ï¼šå¤šè¯­è¨€å›½é™…åŒ–æ–¹æ¡ˆã€‚
 message Language
 {
-	string name = 1;			// ÓïÑÔ£º"1Ó¢Óï/2ÖĞÎÄ"
-	string version = 2;			// °æ±¾ºÅ
-	string path = 3;			// ÓïÑÔÄ¿Â¼
-	repeated Word word = 8;		// ×Öµä
-	repeated Error error = 9;	// ´íÎóÂ·¾¶
+	string name = 1;			// è¯­è¨€ï¼š"1è‹±è¯­/2ä¸­æ–‡"
+	string version = 2;			// ç‰ˆæœ¬å·
+	string path = 3;			// è¯­è¨€ç›®å½•
+	repeated Word word = 8;		// å­—å…¸
+	repeated Error error = 9;	// é”™è¯¯è·¯å¾„
 }
 message Locale
 {
-	string default = 1;			// Ä¬ÈÏÓïÑÔ
-	repeated Language lang = 9;	// ÓïÑÔ°ü
+	string default = 1;			// é»˜è®¤è¯­è¨€
+	repeated Language lang = 9;	// è¯­è¨€åŒ…
 }
 
-// »ñÈ¡ÓïÑÔ°üÇëÇó(ÓïÑÔ°ü/Ğ­Òé)
+// è·å–è¯­è¨€åŒ…è¯·æ±‚(è¯­è¨€åŒ…/åè®®)
 message GetLangReq
 {
-	string module = 1;			// Ä£¿é(PC/App)
-	string lang = 2;			// ÓïÑÔ£¨Îª¿Õ·µ»ØÄ¬ÈÏÓïÑÔ°ü£©
+	string module = 1;			// æ¨¡å—(PC/App)
+	string lang = 2;			// è¯­è¨€ï¼ˆä¸ºç©ºè¿”å›é»˜è®¤è¯­è¨€åŒ…ï¼‰
 }
 message GetLicenseRsp
 {
-	string module = 1;			// Ä£¿é(PC/App)
-	string lang = 2;			// ÓïÑÔ£¨Îª¿Õ·µ»ØÄ¬ÈÏÓïÑÔ°ü£©
-	string license = 4;			// ÓÃ»§Ğ­Òé
-	string version = 5;			// °æ±¾
+	string module = 1;			// æ¨¡å—(PC/App)
+	string lang = 2;			// è¯­è¨€ï¼ˆä¸ºç©ºè¿”å›é»˜è®¤è¯­è¨€åŒ…ï¼‰
+	string license = 4;			// ç”¨æˆ·åè®®
+	string version = 5;			// ç‰ˆæœ¬
 }
 
 
-/////////////////////////////////////////////////////////////////////// È¨ÏŞ¹ÜÀí
-// ¹¦ÄÜĞÅÏ¢
+/////////////////////////////////////////////////////////////////////// æƒé™ç®¡ç†
+// åŠŸèƒ½ä¿¡æ¯
 message Function
 {
 	uint64 id = 1;					// id
-	uint64 parent = 2;				// ¸¸¹¦ÄÜ
-	string path = 3;				// ¹¦ÄÜÂ·¾¶£º"monitor";"monitor/rc/state";
-	string name = 4;				// ¹¦ÄÜÃû³Æ£º"¼à¿Ø"; "·ç¿Ø";
-	string detail = 5;				// ¹¦ÄÜÃèÊö£º"¼à¿Ø·ç¿ØµÄ×´Ì¬ÓëÒÑ´¦ÀíµÄ·ç¿Ø"
+	uint64 parent = 2;				// çˆ¶åŠŸèƒ½
+	string path = 3;				// åŠŸèƒ½è·¯å¾„ï¼š"monitor";"monitor/rc/state";
+	string name = 4;				// åŠŸèƒ½åç§°ï¼š"ç›‘æ§"; "é£æ§";
+	string detail = 5;				// åŠŸèƒ½æè¿°ï¼š"ç›‘æ§é£æ§çš„çŠ¶æ€ä¸å·²å¤„ç†çš„é£æ§"
 }
 
-// ½ÇÉ«ĞÅÏ¢
+// è§’è‰²ä¿¡æ¯
 message Role
 {
 	uint64 id = 1;					// id
-	string name = 2;				// Ãû³Æ£º"·ç¿ØÔ±";
-	repeated Function func = 10;	// ¹¦ÄÜÈ¨ÏŞ
+	string name = 2;				// åç§°ï¼š"é£æ§å‘˜";
+	repeated Function func = 10;	// åŠŸèƒ½æƒé™
 }
 
-// ¶ÔÏóÈÕÖ¾£ºĞÂÔö/ĞŞ¸Ä/É¾³ıµÈ¡£
+// å¯¹è±¡æ—¥å¿—ï¼šæ–°å¢/ä¿®æ”¹/åˆ é™¤ç­‰ã€‚
 message Logging
 {
-	uint64 id = 1;					// ¼ÇÂ¼±êÊ¶
-	string user = 2;				// ÓÃ»§ID/ÓÃ»§Ãû
-	string time = 3;				// ÈÕÆÚÊ±¼ä£º20200219 09:12:58.749083
-	string ip = 4;					// »úÆ÷µØÖ·£ºIPµØÖ·
-	string mac = 5;					// »úÆ÷µØÖ·£ºMACµØÖ·
-	uint32 action = 8;				// ²Ù×÷ÀàĞÍ£ºĞÂÔö/ĞŞ¸Ä/É¾³ı/´¥·¢
-	uint64 object = 9;				// ²Ù×÷¶ÔÏó£º·ç¿Ø/Ìõ¼şµ¥
-	string name = 10;				// ²Ù×÷ÊôĞÔ
-	string value = 11;				// ²Ù×÷Öµ
-	string detail = 12;				// ²Ù×÷ÃèÊö
+	uint64 id = 1;					// è®°å½•æ ‡è¯†
+	string user = 2;				// ç”¨æˆ·ID/ç”¨æˆ·å
+	string time = 3;				// æ—¥æœŸæ—¶é—´ï¼š20200219 09:12:58.749083
+	string ip = 4;					// æœºå™¨åœ°å€ï¼šIPåœ°å€
+	string mac = 5;					// æœºå™¨åœ°å€ï¼šMACåœ°å€
+	uint32 action = 8;				// æ“ä½œç±»å‹ï¼šæ–°å¢/ä¿®æ”¹/åˆ é™¤/è§¦å‘
+	uint64 object = 9;				// æ“ä½œå¯¹è±¡ï¼šé£æ§/æ¡ä»¶å•
+	string name = 10;				// æ“ä½œå±æ€§
+	string value = 11;				// æ“ä½œå€¼
+	string detail = 12;				// æ“ä½œæè¿°
 }
 
 
-/////////////////////////////////////////////////////////////////////// ¶ÔÏó¹ÜÀí
-// ¶©ÔÄ¶ÔÏóÇëÇó£¨µ±Ç°ÓÃ»§ÓĞÈ¨ÏŞµÄ¶ÔÏó£©
+/////////////////////////////////////////////////////////////////////// å¯¹è±¡ç®¡ç†
+// è®¢é˜…å¯¹è±¡è¯·æ±‚ï¼ˆå½“å‰ç”¨æˆ·æœ‰æƒé™çš„å¯¹è±¡ï¼‰
 message Subscribe
 {
-	string user = 1;			// ÓÃ»§ĞÅÏ¢
+	string user = 1;			// ç”¨æˆ·ä¿¡æ¯
 	uint32 type  = 2;			// TopicId
 	uint64 value = 3;			// TopicId | Integer
-	string topic = 4;			// ×Ö·û´®ID
+	string topic = 4;			// å­—ç¬¦ä¸²ID
 }
 
-// É¾³ı¶ÔÏóÇëÇó
+// åˆ é™¤å¯¹è±¡è¯·æ±‚
 message Remove
 {
 	string user = 1;
@@ -102,7 +107,7 @@ message Remove
 	string entity = 5;
 }
 
-// ¸üĞÂÊôĞÔ(Req)/·¢²¼ÊôĞÔ£¨Pub£©
+// æ›´æ–°å±æ€§(Req)/å‘å¸ƒå±æ€§ï¼ˆPubï¼‰
 message Property
 {
 	string user = 1;
@@ -112,11 +117,11 @@ message Property
 	string entity = 5;
 }
 
-// Êı¾İÀàĞÍÃèÊö¡£
+// æ•°æ®ç±»å‹æè¿°ã€‚
 message Datatype
 {
-	uint32 type = 11;			// ²ÎÊıÀàĞÍ
-	string value = 12;			// ²ÎÊıÄ¬ÈÏÖµ
-	string range = 13;			// ²ÎÊı·¶Î§
-	string detail = 14;			// ±¸×¢ĞÅÏ¢
+	uint32 type = 11;			// å‚æ•°ç±»å‹
+	string value = 12;			// å‚æ•°é»˜è®¤å€¼
+	string range = 13;			// å‚æ•°èŒƒå›´
+	string detail = 14;			// å¤‡æ³¨ä¿¡æ¯
 }

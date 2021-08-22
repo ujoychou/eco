@@ -21,6 +21,11 @@
 // @@protoc_insertion_point(includes)
 namespace eco {
 namespace proto {
+class EmptyDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<Empty>
+      _instance;
+} _Empty_default_instance_;
 class WordDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<Word>
@@ -89,6 +94,27 @@ class DatatypeDefaultTypeInternal {
 }  // namespace proto
 }  // namespace eco
 namespace protobuf_Eco_2eproto {
+void InitDefaultsEmptyImpl() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+  ::google::protobuf::internal::InitProtobufDefaultsForceUnique();
+#else
+  ::google::protobuf::internal::InitProtobufDefaults();
+#endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+  {
+    void* ptr = &::eco::proto::_Empty_default_instance_;
+    new (ptr) ::eco::proto::Empty();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::eco::proto::Empty::InitAsDefaultInstance();
+}
+
+void InitDefaultsEmpty() {
+  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
+  ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsEmptyImpl);
+}
+
 void InitDefaultsWordImpl() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -366,9 +392,14 @@ void InitDefaultsDatatype() {
   ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsDatatypeImpl);
 }
 
-::google::protobuf::Metadata file_level_metadata[13];
+::google::protobuf::Metadata file_level_metadata[14];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::Empty, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::Word, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -488,22 +519,24 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::eco::proto::Datatype, detail_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::eco::proto::Word)},
-  { 7, -1, sizeof(::eco::proto::Error)},
-  { 15, -1, sizeof(::eco::proto::Language)},
-  { 25, -1, sizeof(::eco::proto::Locale)},
-  { 32, -1, sizeof(::eco::proto::GetLangReq)},
-  { 39, -1, sizeof(::eco::proto::GetLicenseRsp)},
-  { 48, -1, sizeof(::eco::proto::Function)},
-  { 58, -1, sizeof(::eco::proto::Role)},
-  { 66, -1, sizeof(::eco::proto::Logging)},
-  { 81, -1, sizeof(::eco::proto::Subscribe)},
-  { 90, -1, sizeof(::eco::proto::Remove)},
-  { 98, -1, sizeof(::eco::proto::Property)},
-  { 108, -1, sizeof(::eco::proto::Datatype)},
+  { 0, -1, sizeof(::eco::proto::Empty)},
+  { 5, -1, sizeof(::eco::proto::Word)},
+  { 12, -1, sizeof(::eco::proto::Error)},
+  { 20, -1, sizeof(::eco::proto::Language)},
+  { 30, -1, sizeof(::eco::proto::Locale)},
+  { 37, -1, sizeof(::eco::proto::GetLangReq)},
+  { 44, -1, sizeof(::eco::proto::GetLicenseRsp)},
+  { 53, -1, sizeof(::eco::proto::Function)},
+  { 63, -1, sizeof(::eco::proto::Role)},
+  { 71, -1, sizeof(::eco::proto::Logging)},
+  { 86, -1, sizeof(::eco::proto::Subscribe)},
+  { 95, -1, sizeof(::eco::proto::Remove)},
+  { 103, -1, sizeof(::eco::proto::Property)},
+  { 113, -1, sizeof(::eco::proto::Datatype)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
+  reinterpret_cast<const ::google::protobuf::Message*>(&::eco::proto::_Empty_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::eco::proto::_Word_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::eco::proto::_Error_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::eco::proto::_Language_default_instance_),
@@ -535,41 +568,41 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 13);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 14);
 }
 
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\tEco.proto\022\teco.proto\"#\n\004Word\022\014\n\004path\030\001"
-      " \001(\t\022\r\n\005value\030\002 \001(\t\"0\n\005Error\022\n\n\002id\030\001 \001(\005"
-      "\022\014\n\004path\030\002 \001(\t\022\r\n\005value\030\003 \001(\t\"w\n\010Languag"
-      "e\022\014\n\004name\030\001 \001(\t\022\017\n\007version\030\002 \001(\t\022\014\n\004path"
-      "\030\003 \001(\t\022\035\n\004word\030\010 \003(\0132\017.eco.proto.Word\022\037\n"
-      "\005error\030\t \003(\0132\020.eco.proto.Error\"<\n\006Locale"
-      "\022\017\n\007default\030\001 \001(\t\022!\n\004lang\030\t \003(\0132\023.eco.pr"
-      "oto.Language\"*\n\nGetLangReq\022\016\n\006module\030\001 \001"
-      "(\t\022\014\n\004lang\030\002 \001(\t\"O\n\rGetLicenseRsp\022\016\n\006mod"
-      "ule\030\001 \001(\t\022\014\n\004lang\030\002 \001(\t\022\017\n\007license\030\004 \001(\t"
-      "\022\017\n\007version\030\005 \001(\t\"R\n\010Function\022\n\n\002id\030\001 \001("
-      "\004\022\016\n\006parent\030\002 \001(\004\022\014\n\004path\030\003 \001(\t\022\014\n\004name\030"
-      "\004 \001(\t\022\016\n\006detail\030\005 \001(\t\"C\n\004Role\022\n\n\002id\030\001 \001("
-      "\004\022\014\n\004name\030\002 \001(\t\022!\n\004func\030\n \003(\0132\023.eco.prot"
-      "o.Function\"\227\001\n\007Logging\022\n\n\002id\030\001 \001(\004\022\014\n\004us"
-      "er\030\002 \001(\t\022\014\n\004time\030\003 \001(\t\022\n\n\002ip\030\004 \001(\t\022\013\n\003ma"
-      "c\030\005 \001(\t\022\016\n\006action\030\010 \001(\r\022\016\n\006object\030\t \001(\004\022"
-      "\014\n\004name\030\n \001(\t\022\r\n\005value\030\013 \001(\t\022\016\n\006detail\030\014"
-      " \001(\t\"E\n\tSubscribe\022\014\n\004user\030\001 \001(\t\022\014\n\004type\030"
-      "\002 \001(\r\022\r\n\005value\030\003 \001(\004\022\r\n\005topic\030\004 \001(\t\"6\n\006R"
-      "emove\022\014\n\004user\030\001 \001(\t\022\016\n\006object\030\002 \001(\004\022\016\n\006e"
-      "ntity\030\005 \001(\t\"U\n\010Property\022\014\n\004user\030\001 \001(\t\022\016\n"
-      "\006object\030\002 \001(\004\022\014\n\004name\030\003 \001(\t\022\r\n\005value\030\004 \001"
-      "(\t\022\016\n\006entity\030\005 \001(\t\"F\n\010Datatype\022\014\n\004type\030\013"
-      " \001(\r\022\r\n\005value\030\014 \001(\t\022\r\n\005range\030\r \001(\t\022\016\n\006de"
-      "tail\030\016 \001(\tb\006proto3"
+      "\n\tEco.proto\022\teco.proto\"\007\n\005Empty\"#\n\004Word\022"
+      "\014\n\004path\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\"0\n\005Error\022\n\n"
+      "\002id\030\001 \001(\005\022\014\n\004path\030\002 \001(\t\022\r\n\005value\030\003 \001(\t\"w"
+      "\n\010Language\022\014\n\004name\030\001 \001(\t\022\017\n\007version\030\002 \001("
+      "\t\022\014\n\004path\030\003 \001(\t\022\035\n\004word\030\010 \003(\0132\017.eco.prot"
+      "o.Word\022\037\n\005error\030\t \003(\0132\020.eco.proto.Error\""
+      "<\n\006Locale\022\017\n\007default\030\001 \001(\t\022!\n\004lang\030\t \003(\013"
+      "2\023.eco.proto.Language\"*\n\nGetLangReq\022\016\n\006m"
+      "odule\030\001 \001(\t\022\014\n\004lang\030\002 \001(\t\"O\n\rGetLicenseR"
+      "sp\022\016\n\006module\030\001 \001(\t\022\014\n\004lang\030\002 \001(\t\022\017\n\007lice"
+      "nse\030\004 \001(\t\022\017\n\007version\030\005 \001(\t\"R\n\010Function\022\n"
+      "\n\002id\030\001 \001(\004\022\016\n\006parent\030\002 \001(\004\022\014\n\004path\030\003 \001(\t"
+      "\022\014\n\004name\030\004 \001(\t\022\016\n\006detail\030\005 \001(\t\"C\n\004Role\022\n"
+      "\n\002id\030\001 \001(\004\022\014\n\004name\030\002 \001(\t\022!\n\004func\030\n \003(\0132\023"
+      ".eco.proto.Function\"\227\001\n\007Logging\022\n\n\002id\030\001 "
+      "\001(\004\022\014\n\004user\030\002 \001(\t\022\014\n\004time\030\003 \001(\t\022\n\n\002ip\030\004 "
+      "\001(\t\022\013\n\003mac\030\005 \001(\t\022\016\n\006action\030\010 \001(\r\022\016\n\006obje"
+      "ct\030\t \001(\004\022\014\n\004name\030\n \001(\t\022\r\n\005value\030\013 \001(\t\022\016\n"
+      "\006detail\030\014 \001(\t\"E\n\tSubscribe\022\014\n\004user\030\001 \001(\t"
+      "\022\014\n\004type\030\002 \001(\r\022\r\n\005value\030\003 \001(\004\022\r\n\005topic\030\004"
+      " \001(\t\"6\n\006Remove\022\014\n\004user\030\001 \001(\t\022\016\n\006object\030\002"
+      " \001(\004\022\016\n\006entity\030\005 \001(\t\"U\n\010Property\022\014\n\004user"
+      "\030\001 \001(\t\022\016\n\006object\030\002 \001(\004\022\014\n\004name\030\003 \001(\t\022\r\n\005"
+      "value\030\004 \001(\t\022\016\n\006entity\030\005 \001(\t\"F\n\010Datatype\022"
+      "\014\n\004type\030\013 \001(\r\022\r\n\005value\030\014 \001(\t\022\r\n\005range\030\r "
+      "\001(\t\022\016\n\006detail\030\016 \001(\tb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1018);
+      descriptor, 1027);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "Eco.proto", &protobuf_RegisterTypes);
 }
@@ -587,6 +620,200 @@ struct StaticDescriptorInitializer {
 }  // namespace protobuf_Eco_2eproto
 namespace eco {
 namespace proto {
+
+// ===================================================================
+
+void Empty::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+Empty::Empty()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    ::protobuf_Eco_2eproto::InitDefaultsEmpty();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:eco.proto.Empty)
+}
+Empty::Empty(const Empty& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  // @@protoc_insertion_point(copy_constructor:eco.proto.Empty)
+}
+
+void Empty::SharedCtor() {
+  _cached_size_ = 0;
+}
+
+Empty::~Empty() {
+  // @@protoc_insertion_point(destructor:eco.proto.Empty)
+  SharedDtor();
+}
+
+void Empty::SharedDtor() {
+}
+
+void Empty::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* Empty::descriptor() {
+  ::protobuf_Eco_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_Eco_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const Empty& Empty::default_instance() {
+  ::protobuf_Eco_2eproto::InitDefaultsEmpty();
+  return *internal_default_instance();
+}
+
+Empty* Empty::New(::google::protobuf::Arena* arena) const {
+  Empty* n = new Empty;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void Empty::Clear() {
+// @@protoc_insertion_point(message_clear_start:eco.proto.Empty)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _internal_metadata_.Clear();
+}
+
+bool Empty::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:eco.proto.Empty)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+  handle_unusual:
+    if (tag == 0) {
+      goto success;
+    }
+    DO_(::google::protobuf::internal::WireFormat::SkipField(
+          input, tag, _internal_metadata_.mutable_unknown_fields()));
+  }
+success:
+  // @@protoc_insertion_point(parse_success:eco.proto.Empty)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:eco.proto.Empty)
+  return false;
+#undef DO_
+}
+
+void Empty::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:eco.proto.Empty)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:eco.proto.Empty)
+}
+
+::google::protobuf::uint8* Empty::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:eco.proto.Empty)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:eco.proto.Empty)
+  return target;
+}
+
+size_t Empty::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:eco.proto.Empty)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void Empty::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:eco.proto.Empty)
+  GOOGLE_DCHECK_NE(&from, this);
+  const Empty* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const Empty>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:eco.proto.Empty)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:eco.proto.Empty)
+    MergeFrom(*source);
+  }
+}
+
+void Empty::MergeFrom(const Empty& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:eco.proto.Empty)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+}
+
+void Empty::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:eco.proto.Empty)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void Empty::CopyFrom(const Empty& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:eco.proto.Empty)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool Empty::IsInitialized() const {
+  return true;
+}
+
+void Empty::Swap(Empty* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void Empty::InternalSwap(Empty* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata Empty::GetMetadata() const {
+  protobuf_Eco_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_Eco_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
 
 // ===================================================================
 

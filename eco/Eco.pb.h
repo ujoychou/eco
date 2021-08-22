@@ -36,12 +36,14 @@ namespace protobuf_Eco_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[13];
+  static const ::google::protobuf::internal::ParseTable schema[14];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
 };
 void AddDescriptors();
+void InitDefaultsEmptyImpl();
+void InitDefaultsEmpty();
 void InitDefaultsWordImpl();
 void InitDefaultsWord();
 void InitDefaultsErrorImpl();
@@ -69,6 +71,7 @@ void InitDefaultsProperty();
 void InitDefaultsDatatypeImpl();
 void InitDefaultsDatatype();
 inline void InitDefaults() {
+  InitDefaultsEmpty();
   InitDefaultsWord();
   InitDefaultsError();
   InitDefaultsLanguage();
@@ -89,6 +92,9 @@ namespace proto {
 class Datatype;
 class DatatypeDefaultTypeInternal;
 extern DatatypeDefaultTypeInternal _Datatype_default_instance_;
+class Empty;
+class EmptyDefaultTypeInternal;
+extern EmptyDefaultTypeInternal _Empty_default_instance_;
 class Error;
 class ErrorDefaultTypeInternal;
 extern ErrorDefaultTypeInternal _Error_default_instance_;
@@ -132,6 +138,98 @@ namespace proto {
 
 // ===================================================================
 
+class Empty : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:eco.proto.Empty) */ {
+ public:
+  Empty();
+  virtual ~Empty();
+
+  Empty(const Empty& from);
+
+  inline Empty& operator=(const Empty& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  Empty(Empty&& from) noexcept
+    : Empty() {
+    *this = ::std::move(from);
+  }
+
+  inline Empty& operator=(Empty&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Empty& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const Empty* internal_default_instance() {
+    return reinterpret_cast<const Empty*>(
+               &_Empty_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    0;
+
+  void Swap(Empty* other);
+  friend void swap(Empty& a, Empty& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Empty* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  Empty* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const Empty& from);
+  void MergeFrom(const Empty& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(Empty* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:eco.proto.Empty)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable int _cached_size_;
+  friend struct ::protobuf_Eco_2eproto::TableStruct;
+  friend void ::protobuf_Eco_2eproto::InitDefaultsEmptyImpl();
+};
+// -------------------------------------------------------------------
+
 class Word : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:eco.proto.Word) */ {
  public:
   Word();
@@ -167,7 +265,7 @@ class Word : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
                &_Word_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    0;
+    1;
 
   void Swap(Word* other);
   friend void swap(Word& a, Word& b) {
@@ -289,7 +387,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Error_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    1;
+    2;
 
   void Swap(Error* other);
   friend void swap(Error& a, Error& b) {
@@ -418,7 +516,7 @@ class Language : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_Language_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    2;
+    3;
 
   void Swap(Language* other);
   friend void swap(Language& a, Language& b) {
@@ -581,7 +679,7 @@ class Locale : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
                &_Locale_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    3;
+    4;
 
   void Swap(Locale* other);
   friend void swap(Locale& a, Locale& b) {
@@ -701,7 +799,7 @@ class GetLangReq : public ::google::protobuf::Message /* @@protoc_insertion_poin
                &_GetLangReq_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    4;
+    5;
 
   void Swap(GetLangReq* other);
   friend void swap(GetLangReq& a, GetLangReq& b) {
@@ -823,7 +921,7 @@ class GetLicenseRsp : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_GetLicenseRsp_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    5;
+    6;
 
   void Swap(GetLicenseRsp* other);
   friend void swap(GetLicenseRsp& a, GetLicenseRsp& b) {
@@ -975,7 +1073,7 @@ class Function : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_Function_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    6;
+    7;
 
   void Swap(Function* other);
   friend void swap(Function& a, Function& b) {
@@ -1126,7 +1224,7 @@ class Role : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
                &_Role_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    7;
+    8;
 
   void Swap(Role* other);
   friend void swap(Role& a, Role& b) {
@@ -1253,7 +1351,7 @@ class Logging : public ::google::protobuf::Message /* @@protoc_insertion_point(c
                &_Logging_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    8;
+    9;
 
   void Swap(Logging* other);
   friend void swap(Logging& a, Logging& b) {
@@ -1471,7 +1569,7 @@ class Subscribe : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_Subscribe_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    9;
+    10;
 
   void Swap(Subscribe* other);
   friend void swap(Subscribe& a, Subscribe& b) {
@@ -1607,7 +1705,7 @@ class Remove : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
                &_Remove_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    10;
+    11;
 
   void Swap(Remove* other);
   friend void swap(Remove& a, Remove& b) {
@@ -1736,7 +1834,7 @@ class Property : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_Property_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    11;
+    12;
 
   void Swap(Property* other);
   friend void swap(Property& a, Property& b) {
@@ -1895,7 +1993,7 @@ class Datatype : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_Datatype_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    12;
+    13;
 
   void Swap(Datatype* other);
   friend void swap(Datatype& a, Datatype& b) {
@@ -2011,6 +2109,10 @@ class Datatype : public ::google::protobuf::Message /* @@protoc_insertion_point(
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
+// Empty
+
+// -------------------------------------------------------------------
+
 // Word
 
 // string path = 1;
@@ -4260,6 +4362,8 @@ inline void Datatype::set_allocated_detail(::std::string* detail) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
