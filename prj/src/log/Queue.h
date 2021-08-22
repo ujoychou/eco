@@ -163,7 +163,7 @@ public:
 
 	inline int is_open()
 	{
-		return m_state.ok1();
+		return m_state.ok();
 	}
 
 	inline int is_close()

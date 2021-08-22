@@ -766,7 +766,7 @@ net::TcpClient App::add_consumer(IN eco::net::AddressSet& addr)
 }
 bool App::ready() const
 {
-	if (impl().m_state.none1())
+	if (impl().m_state.none())
 	{
 		return false;
 	}

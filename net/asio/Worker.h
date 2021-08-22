@@ -64,7 +64,7 @@ public:
 	// get work stopped state.
 	inline bool stopped() const
 	{
-		return m_state.none1();
+		return m_state.none();
 	}
 	inline bool running() const
 	{

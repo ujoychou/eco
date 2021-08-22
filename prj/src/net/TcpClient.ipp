@@ -149,7 +149,7 @@ public:
 
 	inline bool ready() const
 	{
-		return m_state.ok1() || !m_state.has(eco::atomic::State::_aa);
+		return m_state.ok() || !m_state.has(eco::atomic::State::_aa);
 	}
 
 	inline bool app_ready_event() const

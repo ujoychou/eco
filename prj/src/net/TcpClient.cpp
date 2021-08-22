@@ -367,7 +367,7 @@ void TcpClient::Impl::on_load_data()
 		LoadEvent::ptr& e = *it;
 		if (prev_group == 0 || e->m_group != prev_group)
 		{
-			if (!e->m_state.ok1())
+			if (!e->m_state.ok())
 			{
 				try
 				{
@@ -510,7 +510,7 @@ void TcpClient::load_event(uint32_t evt)
 }
 bool TcpClient::load_event_finished(uint32_t evt) const
 {
-	return impl().m_load_events[evt]->m_state.ok1();
+	return impl().m_load_events[evt]->m_state.ok();
 }
 
 

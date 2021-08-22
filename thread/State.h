@@ -74,9 +74,9 @@ public:
 
 	inline State(IN const uint32_t v);
 
-	inline bool none1() const;
+	inline bool none() const;
 
-	inline bool ok1() const;
+	inline bool ok() const;
 
 	// set ok state.
 	inline void set_ok(IN bool is);
@@ -131,11 +131,11 @@ void State::set_ok(IN bool is)
 {
 	is ? add(_ok) : del(_ok);
 }
-bool State::none1() const
+bool State::none() const
 {
 	return (m_value == _no);
 }
-bool State::ok1() const
+bool State::ok() const
 {
 	return has(_ok);
 }

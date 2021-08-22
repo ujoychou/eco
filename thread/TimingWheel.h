@@ -869,7 +869,7 @@ private:
 	// trigger tick event.
 	inline void work()
 	{
-		while (m_running.ok1())
+		while (m_running.ok())
 		{
 			eco::this_thread::sleep(m_wheel.prec_ms());
 			m_wheel.roll(std_chrono::system_clock::now());
