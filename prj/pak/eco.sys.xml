@@ -18,28 +18,24 @@
 
   <!--国际化-->
   <locale default="zh-cn">
-    <zh-cn>
-      <path  value="zh-cn"/>
-      <word  value="zh-cn/word_tr.xml" note="交易"/>
-      <word  value="zh-cn/word_rc.xml" note="风控"/>
-      <word  value="zh-cn/word_fee.xml" note="手续费"/>
-      <error value="zh-cn/error.xml" note="全局"/>
-      <error value="zh-cn/error_rc.xml" note="风控"/>
+    <zh-cn path="locale/zh-cn" note="中文">
+      <word  file="word.xml"/>
+      <word  file="word_tr.xml"  module="tr" note="交易"/>
+      <error file="error.xml"/>
+      <error file="error_rc.xml" module="rc"/>
     </zh-cn>
-    <en-us>
-      <path value="en-us"/>
+    <en-us path="locale/en-us" note="English">
+      <word  file="word_tr.xml"  module="tr" note="trade"/>
+      <error file="error.xml"/>
+      <error file="error_rc.xml" module="rc"/>
     </en-us>
-    <vi-ta>
-      <path value="vi-ta"/>
+    <vi-ta path="locale/vi-ta" note="English">
     </vi-ta>
   </locale>
 
   <!--#.生命机制-->
   <eco enable="true">
-    <being enable="true">
-      <unit_live_tick>1</unit_live_tick>
-    </being>
-    <task_server_thread_size value="2"/>
+    <task_thread_size>1</task_thread_size>
   </eco>
 
   <!--#.插件管理-->
@@ -71,18 +67,15 @@
     <max_connection_size value="5000"/>
     <no_delay value="true"/>
     <websocket value="false"/>
-    <send_buffer_size value="0"/>
-    <recv_buffer_size value="0"/>
-    <send_low_watermark value="0"/>
-    <recv_low_watermark value="0"/>
-    <tick_time value="5"/>
-    <io_heartbeat value="false"/>
-    <rhythm_heartbeat value="true"/>
-    <response_heartbeat value="false"/>
-    <heartbeat_recv_tick value="12"/>
-    <heartbeat_send_tick value="3"/>
-    <clean_dos_peer_tick value="1"/>
-  </provider>
+    <send_buffer_size>0</send_buffer_size>
+    <recv_buffer_size>0</recv_buffer_size>
+    <send_low_watermark>0</send_low_watermark>
+    <recv_low_watermark>0</recv_low_watermark>
+    <heartbeat_rhythm>true</heartbeat_rhythm>
+    <clean_dos_peer_sec>5</clean_dos_peer_sec>
+    <heartbeat_recv_sec>45</heartbeat_recv_sec>
+    <heartbeat_send_sec>15</heartbeat_send_sec>
+</provider>
 
   <!--#.消费者-->
   <consumer enable="true">
@@ -92,28 +85,30 @@
         <dev_env>39.104.67.41:40001</dev_env>
         <test_env>39.104.67.41:50001</test_env>
       </address>
-      <no_delay value="true"/>
-      <tick_time value="5"/>
-      <websocket value="false"/>
-      <max_byte_size value="15M"/>
-      <send_buffer_size value="0"/>
-      <recv_buffer_size value="0"/>
-      <send_low_watermark value="0"/>
-      <recv_low_watermark value="0"/>
-      <auto_reconnect_tick value="1"/>
-      <heartbeat_recv_tick value="9"/>
-      <heartbeat_send_tick value="1"/>
+      <suspend>false</suspend>
+      <no_delay>true</no_delay>
+      <balance>average</balance>
+      <websocket>false</websocket>
+      <max_byte_size>15M</max_byte_size>
+      <send_buffer_size>0</send_buffer_size>
+      <recv_buffer_size>0</recv_buffer_size>
+      <send_low_watermark>0</send_low_watermark>
+      <recv_low_watermark>0</recv_low_watermark>
+      <load_event_sec>5</load_event_sec>
+      <auto_reconnect_sec>5</auto_reconnect_sec>
+      <heartbeat_recv_sec>45</heartbeat_recv_sec>
+      <heartbeat_send_sec>15</heartbeat_send_sec>
     </team>
   </consumer>
 
   <!--#.数据库-->
   <persist enable="true">
     <test_env type="mysql">
-      <user value="root"/>
-      <password value="123456"/>
-      <database value="dev"/>
-      <address  value="127.0.0.1:3306"/>
-      <charset value="utf8"/>
+      <user>root</user>
+      <charset>utf8</charset>
+      <database>dev</database>
+      <password>123456</password>
+      <address>127.0.0.1:3306</address>
     </test_env>
   </persist>
 

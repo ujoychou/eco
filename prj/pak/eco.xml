@@ -1,3 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <!--#.日志选项-->
+  <logging>
+    <async value="false"/>
+    <file_sink enable="true">
+      <level value="debug"/>
+    </file_sink>
+    <console_sink enable="true">
+      <level value="info"/>
+    </console_sink>
+  </logging>
+
+  <!--国际化-->
+  <locale default="zh-cn">
+    <zh-cn path="locale/zh-cn" note="中文">
+      <word  file="word.xml"/>
+      <word  file="word_tr.xml"  module="tr" note="交易"/>
+      <error file="error.xml"/>
+      <error file="error_rc.xml" module="rc"/>
+    </zh-cn>
+    <en-us path="locale/en-us" note="English">
+      <word  file="word_tr.xml"  module="tr" note="trade"/>
+      <error file="error.xml"/>
+      <error file="error_rc.xml" module="rc"/>
+    </en-us>
+    <vi-ta path="locale/vi-ta" note="English">
+    </vi-ta>
+  </locale>
+
+  <!--#.服务者-->
+  <provider enable="true">
+    <service>hornet</service>
+    <port>50000</port>
+    <io_thread_size value="2"/>
+    <business_thread_size value="4"/>
+    <max_byte_size value="15M"/>
+    <max_session_size value="50000"/>
+    <max_connection_size value="5000"/>
+    <websocket value="false"/>
+    <no_delay value="true"/>
+  </provider>
+
+  <!--#.消费者-->
+  <consumer enable="true">
+    <team router="" enable="true">
+      <address>
+        <dev_env>39.104.67.41:40001</dev_env>
+      </address>
+      <suspend>false</suspend>
+      <no_delay>true</no_delay>
+      <websocket>false</websocket>
+      <balance>average</balance>
+    </team>
+  </consumer>
+
+  <!--#.数据库-->
+  <persist enable="true">
+    <test_env type="mysql">
+      <user>root</user>
+      <charset>utf8</charset>
+      <database>dev</database>
+      <password>123456</password>
+      <address>127.0.0.1:3306</address>
+    </test_env>
+  </persist>
+
+  <import>eco.xml</import>
 </root>
