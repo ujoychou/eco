@@ -36,5 +36,4 @@
 
 # directory
 obj
-/prj/src/net1
-/prj/src/service1
+build
