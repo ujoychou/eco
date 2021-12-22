@@ -2,11 +2,12 @@
 #define ECO_TYPE_H
 /*******************************************************************************
 @ name
-eco basic type.
+type define.
 
 @ function
-1.string_any.
-2.variant.
+1 value define: empty value.
+2 value type: plat value.
+3 value operation: +-/*, &|.
 
 @ exception
 
@@ -23,42 +24,74 @@ eco basic type.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <limits>
-#include <iostream>
+#include <eco/Prec.h>
+#include <string>
 #include <unordered_map>
-#include <eco/String.h>
 
 
 ECO_NS_BEGIN(eco);
-#undef max
-#undef min
 ////////////////////////////////////////////////////////////////////////////////
-// closure method.
-typedef std::function<void(void)> Closure;
+// value type: none int.
+// note: uint32_t instead of enum for plant.
+const uint32_t value_none = 0;
 
-// closure task handler.
-class Handler
+// value type: empty string.
+const std::string value_empty;
+
+////////////////////////////////////////////////////////////////////////////////
+// general value type
+enum
 {
-public:
-	template<typename task_t>
-	inline void operator()(task_t& task) { task(); }
-
-	template<typename task_t>
-	inline void operator()(std::shared_ptr<task_t>& task) { (*task)(); }
+	type_bool			= 1,			// "true/false"
+	type_int32			= 2,			// "1"
+	type_int64			= 3,			// "1"
+	type_string			= 4,			// "abcdefg,1234"
+	type_double			= 5,			// "2.35"
+	type_date			= 6,			// "20051010"
+	type_time			= 7,			// "10:10:10"
+	type_date_time		= 8,			// "20051010 10:10:10"
+	type_enum			= 9,			// "1:x;2:y;3:z"
+	type_percent		= 10,			// "10%"
+	type_defined		= 100,			// user defined type.
 };
+typedef uint16_t ValueType;
 
-// function general result.
-enum 
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename type_t>
+inline void add(type_t& obj, uint32_t v)
 {
-	ok				= 0,
-	fail			= 1,
-	error			= 2,
-	timeout			= 3,
+	obj |= v;
+}
+template<typename type_t>
+inline void del(type_t& obj, uint32_t v)
+{
+	obj &= ~v;
+}
+template<typename type_t>
+inline void toggle(type_t& obj, uint32_t v)
+{
+	obj ^= v;
+}
+template<typename type_t>
+inline void set(type_t& obj, uint32_t v, bool is)
+{
+	obj = is ? (obj | v) : (obj & ~v);
+}
+template<typename type_t>
+inline void set_v(type_t& obj, const uint32_t add_v, const uint32_t del_v)
+{
+	eco::add(add_v);
+	eco::del(del_v);
+}
+template<typename type_t>
+inline bool has(const type_t& obj, uint32_t v)
+{
+	return (obj & v) > 0;
+}
 
-	// user defined error id.
-	defined_error_start	= 100,
-};
-typedef int Result;
 
 ////////////////////////////////////////////////////////////////////////////////
 // judge integer big/little endian.
@@ -150,163 +183,21 @@ inline double round(double v)
 	return (v > 0.0) ? floor(v + 0.5) : ceil(v - 0.5);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// when app exit with exception, use _getch to show a console windows.
-// and show the exception error.
-inline char getch_exit()
-{
-	char ch = 0;
-	std::cout << "please input a char to end." << std::endl;
-	std::cin >> ch;
-	return ch;
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
-class Cout
+// closure method.
+typedef std::function<void(void)> Closure;
+
+// closure task handler.
+class Handler
 {
 public:
-	template<typename value_t>
-	inline Cout& operator<<(IN const value_t& val)
-	{
-		std::cout << val;
-		return (*this);
-	}
+	template<typename task_t>
+	inline void operator()(task_t& task) { task(); }
 
-	inline ~Cout()
-	{
-		for (uint8_t i = 0; i < m_turn_line; ++i)
-		{
-			std::cout << std::endl;
-		}
-	}
-
-	inline explicit Cout(IN const uint8_t turn_line) : m_turn_line(turn_line)
-	{}
-
-private:
-	uint8_t m_turn_line;
+	template<typename task_t>
+	inline void operator()(std::shared_ptr<task_t>& task) { (*task)(); }
 };
-// print stream message to std out auto append std::endl.
-inline Cout cout(IN uint8_t turn_line = 1)
-{
-	return Cout(turn_line);
-}
-#define EcoCout eco::cout()
-
-
-////////////////////////////////////////////////////////////////////////////////
-ECO_API uint32_t __typeid(const char* type_info_name);
-template<typename type_t>
-class TypeId
-{
-public:
-	inline operator const uint32_t() const
-	{
-		return value;
-	}
-	static const uint32_t value;
-};
-template<typename type_t>
-const uint32_t TypeId<type_t>::value = __typeid(typeid(type_t).name());
-
-////////////////////////////////////////////////////////////////////////////////
-#define ECO_TYPE_NAME(type_t) #type_t
-#define ECO_TYPE_1(type_t) ECO_TYPE__(type_t)\
-public:\
-	inline static const eco::Type* type()\
-	{\
-		static eco::Type t(type_id(), #type_t, nullptr,\
-			&eco::Singleton<eco::TypeInit<type_t> >::get());\
-		return &t;\
-	}\
-	inline bool kind_of(const type_t& obj) const\
-	{\
-		return get_type()->kind_of(obj.get_type());\
-	}\
-	template<typename type_tt>\
-	inline bool kind_of() const\
-	{\
-		return get_type()->kind_of(type_tt::type());\
-	}
-#define ECO_TYPE_2(type_t, parent) ECO_TYPE__(type_t)\
-public:\
-	inline static const eco::Type* type()\
-	{\
-		static eco::Type t(type_id(), #type_t, parent::type(),\
-			&eco::Singleton<eco::TypeInit<type_t> >::get());\
-		return &t;\
-	}
-#define ECO_TYPE__(type_t)\
-public:\
-	virtual const eco::Type* get_type() const\
-	{\
-		return type();\
-	}\
-	inline static const uint32_t type_id()\
-	{\
-		return eco::TypeId<type_t>::value;\
-	}\
-	virtual const uint32_t get_type_id() const\
-	{\
-		return type_id();\
-	}\
-	inline static const char* type_name()\
-	{\
-		return ECO_TYPE_NAME(type_t);\
-	}\
-	virtual const char* get_type_name() const\
-	{\
-		return type_name();\
-	}
-#define ECO_TYPE(...) ECO_MACRO(ECO_TYPE_,__VA_ARGS__)
-
-
-////////////////////////////////////////////////////////////////////////////////
-template<typename Object>
-class Movable
-{
-public:
-	inline Movable()
-	{}
-
-	inline Movable(IN Object& v)
-		: m_object(std::move(v))
-	{}
-
-	inline Movable(IN Movable&& v)
-		: m_object(std::move(v.m_object))
-	{}
-
-	inline Movable(IN const Movable& v)
-		: m_object(std::move(v.m_object))
-	{}
-
-	inline Movable& operator=(IN const Movable& v)
-	{
-		m_object = std::move(v.m_object);
-		return *this;
-	}
-
-	inline operator Object& ()
-	{
-		return m_object;
-	}
-
-	inline operator const Object& () const
-	{
-		return m_object;
-	}
-
-private:
-	mutable Object m_object;
-};
-
-template<typename Object>
-inline eco::Movable<Object> move(IN Object& obj)
-{
-	return eco::Movable<Object>(obj);
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
