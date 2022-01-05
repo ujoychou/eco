@@ -26,7 +26,7 @@ protocol stack structure like this:
 #include <string>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 
 

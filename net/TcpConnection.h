@@ -28,7 +28,7 @@
 #include <eco/net/protocol/ProtobufCodec.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 class DataContext;
 ////////////////////////////////////////////////////////////////////////////////
@@ -238,7 +238,7 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////// TcpServer
-class ConnectionData : public eco::HeapOperators
+class ConnectionData : public eco::RxHeap
 {
 	ECO_OBJECT(ConnectionData);
 public:

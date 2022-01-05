@@ -25,7 +25,7 @@ xml key value reader.
 #include <eco/Type.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace xml{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Reader

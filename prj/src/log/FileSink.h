@@ -28,7 +28,7 @@ sink.
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace log{;
 
 

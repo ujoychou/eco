@@ -29,7 +29,7 @@
 #include <eco/net/protocol/Check.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpProtocol : public Protocol

@@ -19,7 +19,7 @@
 #include <eco/Type.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace web{;
 ////////////////////////////////////////////////////////////////////////////////
 /*nested json class.

@@ -1,4 +1,4 @@
-﻿#include "PrecHeader.h"
+﻿#include "Pch.h"
 #include <eco/qt/QtApp.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <QtCore/QFile>
@@ -15,7 +15,7 @@
 #include <eco/sys/WinConsoleEvent.h>
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 extern "C" void init_argv(int argc, char* argv[]);
 extern "C" void init_app(IN App& app, IN void* module_func_addr);
 extern "C" void load_app(IN App& app);

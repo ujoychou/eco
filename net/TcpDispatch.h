@@ -27,7 +27,7 @@
 #include <eco/net/RequestHandler.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 // message handled by "handler", suguest using in server.

@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include <eco/persist/MySql.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <vector>
@@ -23,7 +23,7 @@ eco::Database* create()
 }
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 __declspec(thread) uint32_t	t_trans_level = 0;
 inline bool has_transaction()

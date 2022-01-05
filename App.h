@@ -36,7 +36,7 @@ app that run process.
 ECO_NS_BEGIN(eco);
 class RxDll;
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API App : public HeapOperators
+class ECO_API App : public RxHeap
 {
 	ECO_IMPL_API();
 	ECO_NONCOPYABLE(App);

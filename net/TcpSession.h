@@ -28,7 +28,7 @@
 #include <memory>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 // client access user handler, and user access client.
@@ -36,7 +36,7 @@ typedef std::shared_ptr<int> ClientUser;
 typedef std::weak_ptr<int> ClientUserObserver;
 ////////////////////////////////////////////////////////////////////////////////
 // define session data holder. (using the boost::any<type> mechanism)
-class SessionData : public eco::HeapOperators
+class SessionData : public eco::RxHeap
 {
 	ECO_OBJECT(SessionData);
 public:

@@ -27,7 +27,7 @@
 #include <eco/net/protocol/TcpProtocol.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpProtocol2 : public TcpProtocol

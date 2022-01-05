@@ -26,7 +26,7 @@
 #include <eco/ExportApi.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 
 

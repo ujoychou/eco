@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include <eco/log/Core.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/log/Pusher.h>
@@ -8,7 +8,7 @@
 #include "Server.h"
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace log{;
 
 

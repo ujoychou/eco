@@ -29,7 +29,7 @@
 #include <eco/loc/Locale.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 eco::loc::Locale& app_locale();
 ////////////////////////////////////////////////////////////////////////////////

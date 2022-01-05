@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <eco/net/TcpAcceptor.h>
@@ -7,7 +7,7 @@
 #include "../TcpServer.ipp"
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpPeerPool : public eco::Object<TcpPeerPool>

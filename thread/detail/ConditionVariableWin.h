@@ -21,7 +21,7 @@ thread safe object state.
 #include <eco/thread/Mutex.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace detail{;
 
 

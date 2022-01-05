@@ -25,7 +25,7 @@ command context.
 #include <eco/Type.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Context : public eco::Context

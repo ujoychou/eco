@@ -1,8 +1,7 @@
-#ifndef ECO_HEAP_OPERATORS_H
-#define ECO_HEAP_OPERATORS_H
+#ifndef ECO_RX_HEAP_H
+#define ECO_RX_HEAP_H
 /*******************************************************************************
 @ name
-heap memory api.
 
 @ function
 
@@ -20,14 +19,14 @@ heap memory api.
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/rx/RxApi.h>
 
 
 #undef new
 #undef delete
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API HeapOperators 
+class ECO_API RxHeap 
 {
 public:
 	// new operators.
@@ -48,7 +47,6 @@ public:
 		const char* file_name, 
 		int file_line);
 
-
 	// delete operators.
 	static void operator delete(void* p);
 
@@ -68,5 +66,5 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}
-#endif // __HEAP_OPERATORS_H__
+ECO_NS_END(eco);
+#endif

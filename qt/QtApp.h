@@ -29,7 +29,7 @@ QT_BEGIN_NAMESPACE
 class QLocalServer;
 QT_END_NAMESPACE;
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace qt{;
 ////////////////////////////////////////////////////////////////////////////////
 class App : public eco::App

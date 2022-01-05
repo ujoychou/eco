@@ -22,7 +22,7 @@ thread safe call once.
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class CallOnce : public eco::Object<CallOnce>
 {

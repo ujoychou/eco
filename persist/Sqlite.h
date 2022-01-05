@@ -28,7 +28,7 @@
 extern "C" ECO_API eco::Database* create();
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Sqlite : public eco::Database
 {

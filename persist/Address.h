@@ -23,7 +23,7 @@
 #include <eco/ExportApi.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace persist{;
 
 // data souce type.

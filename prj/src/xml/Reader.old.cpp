@@ -1,11 +1,11 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "Impl.h"
 ////////////////////////////////////////////////////////////////////////////////
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace xml{;
 ////////////////////////////////////////////////////////////////////////////////
 /*@ read xml node key value.*/

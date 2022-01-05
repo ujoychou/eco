@@ -30,7 +30,7 @@
 
 QT_BEGIN_NAMESPACE
 QT_END_NAMESPACE;
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace qt{;
 ////////////////////////////////////////////////////////////////////////////////
 class Label : public QLabel

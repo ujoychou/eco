@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #ifdef ECO_WIN
 #include <eco/process/Process.h>
 ////////////////////////////////////////////////////////////////////////////////
@@ -8,7 +8,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace this_process{;
 static char s_pid_str[64] = {0};
 size_t get_id()

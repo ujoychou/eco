@@ -1,16 +1,16 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include <eco/net/Address.h>
 ////////////////////////////////////////////////////////////////////////////////
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class Address::Impl
 {
 	ECO_IMPL_INIT(Address);
 public:
-	// "ÉÏº£µçÐÅ"/"²âÊÔµØÖ·1" and so on.
+	// "ï¿½Ïºï¿½ï¿½ï¿½ï¿½ï¿½"/"ï¿½ï¿½ï¿½Ôµï¿½Ö·1" and so on.
 	std::string m_name;
 
 	// server ip address or host name.

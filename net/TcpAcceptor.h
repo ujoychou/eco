@@ -26,7 +26,7 @@
 #include <eco/net/TcpPeer.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 class TcpServer;
 class IoService;

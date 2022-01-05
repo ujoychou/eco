@@ -31,7 +31,7 @@
 #include "TcpPeer.ipp"
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpStatistics : public eco::Object<TcpStatistics>

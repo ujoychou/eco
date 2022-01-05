@@ -21,7 +21,7 @@
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace test{;
 ////////////////////////////////////////////////////////////////////////////////
 class Runner : public eco::test::Object

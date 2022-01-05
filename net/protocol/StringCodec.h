@@ -26,7 +26,7 @@
 #include <eco/net/protocol/Codec.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 
 

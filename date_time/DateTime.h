@@ -26,7 +26,7 @@ Now.
 #include <eco/date_time/Time.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace date_time{;
 ////////////////////////////////////////////////////////////////////////////////
 class DateTime

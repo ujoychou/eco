@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "TcpClient.ipp"
 ////////////////////////////////////////////////////////////////////////////////
 #include "TcpOuter.h"
@@ -426,11 +426,11 @@ ECO_PROPERTY_VAL_IMPL(TcpClient, TcpClientOption, option);
 ////////////////////////////////////////////////////////////////////////////////
 void TcpClient::register_handler(IN int id, IN HandlerFunc&& hf)
 {
-	impl().m_dispatch.register_handler(id, std::forward<HandlerFunc>(hf));
+	impl().m_dispatch.register_handler(id, std::move(hf));
 }
 void TcpClient::register_default(IN HandlerFunc&& hf)
 {
-	impl().m_dispatch.register_default(std::forward<HandlerFunc>(hf));
+	impl().m_dispatch.register_default(std::move(hf));
 }
 void TcpClient::set_event(OnConnect&& on_open, OnDisconnect&& on_close)
 {
@@ -439,8 +439,7 @@ void TcpClient::set_event(OnConnect&& on_open, OnDisconnect&& on_close)
 }
 void TcpClient::set_recv_event(OnRecvData&& on_recv, OnDecodeHead&& on_decode)
 {
-	impl().m_dispatch.message_handler().set_event(
-		std::forward<OnRecvData>(on_recv));
+	impl().m_dispatch.message_handler().set_event(std::move(on_recv));
 	impl().m_peer_handler.m_on_decode_head = on_decode;
 }
 void TcpClient::set_timeout(uint32_t millsec)

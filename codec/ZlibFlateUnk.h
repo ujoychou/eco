@@ -19,7 +19,7 @@
 #include <eco/codec/ZlibFlate.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace codec{;
 namespace zlib{;
 
@@ -131,6 +131,6 @@ private:
 
 }// ns::zlib
 }// ns::codec
-}// ns::eco
+ECO_NS_END(eco);
 ////////////////////////////////////////////////////////////////////////////////
 #endif

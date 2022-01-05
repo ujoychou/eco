@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "Eco.ipp"
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -12,17 +12,17 @@ Eco& Eco::get()
 }
 Eco::Impl::Impl()
 {}
-// Ä¬ÈÏÃ¿1Ãë1´Î£¬¼ì²âÓëÐÞ¸´ÏµÍ³¡£
+// Ä¬ï¿½ï¿½Ã¿1ï¿½ï¿½1ï¿½Î£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ÏµÍ³ï¿½ï¿½
 uint32_t Eco::Impl::s_task_thread_size = 0;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void Eco::Impl::start()
 {
-	// Æô¶¯Ê±¼äÂÖ
+	// ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
 	m_wheel.start("eco_wheel");
 
-	// Æô¶¯ÉúÃü»î¶¯Ïß³Ì
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î¶¯ï¿½ß³ï¿½
 	if (s_task_thread_size > 0)
 	{
 		m_task_server.run("btask", s_task_thread_size);
@@ -50,7 +50,7 @@ void Eco::Impl::post_wait(IN Btask::ptr& task)
 }
 void Eco::Impl::move_wait()
 {
-	// ÖØÐÂ¼ì²éµÈ´ýÈÎÎñÊÇ·ñ¿ÉÖ´ÐÐ¡£
+	// ï¿½ï¿½ï¿½Â¼ï¿½ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ö´ï¿½Ð¡ï¿½
 	eco::Mutex::ScopeLock lock(m_wait_task_list_mutex);
 	for (auto it = m_wait_task_list.begin(); it != m_wait_task_list.end(); )
 	{
@@ -73,7 +73,7 @@ void Eco::Impl::move_wait()
 ////////////////////////////////////////////////////////////////////////////////
 void Eco::post_task(IN Closure&& task)
 {
-	impl().post_task(std::forward<Closure>(task));
+	impl().post_task(std::move(task));
 }
 void Eco::post_task(IN Task::ptr& task)
 {

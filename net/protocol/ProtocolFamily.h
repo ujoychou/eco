@@ -26,7 +26,7 @@
 #include <eco/net/protocol/Protocol.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API ProtocolFamily

@@ -1,4 +1,4 @@
-﻿#include "PrecHeader.h"
+﻿#include "Pch.h"
 #include <eco/qt/QtType.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <QtCore/QFile>
@@ -10,7 +10,7 @@
 #include <QtWidgets/QApplication>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace qt{;
 ////////////////////////////////////////////////////////////////////////////////
 bool hideBySplitter(QSplitter* splitter, QWidget* child)

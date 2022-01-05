@@ -34,7 +34,7 @@
 #include "DispatchServer.h"
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpServer::Impl

@@ -20,7 +20,7 @@ thread safe object state.
 #include <eco/thread/ConditionVariable.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class Monitor : public eco::Object<Monitor>
 {
@@ -109,5 +109,5 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

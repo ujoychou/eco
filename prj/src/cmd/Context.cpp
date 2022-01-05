@@ -1,9 +1,9 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include <eco/cmd/Context.h>
 ////////////////////////////////////////////////////////////////////////////////
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 ////////////////////////////////////////////////////////////////////////////////
 class Context::Impl
@@ -27,13 +27,13 @@ void Context::Impl::set_command_line(IN const char* cmd_line, IN Context& wrap)
 	std::vector<std::string> set;
 	eco::split(set, cmd_line, ' ');
 
-	// ½âÎöÃüÁîÃû×Ö£ºcmd
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½cmd
 	if (set.size() > 0)
 	{
 		m_command = set[0];
 	}
 
-	// ½âÎö²ÎÊý: para1, para2, para3
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: para1, para2, para3
 	for (size_t i = 1; i < set.size(); i++)
 	{
 		wrap.add().get_value() = set[i].c_str();

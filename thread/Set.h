@@ -25,7 +25,7 @@ it shared the data in the program, and it manage data's life cycle.
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -114,5 +114,5 @@ class Set : public SetT<identity_t, std::set<identity_t>> {};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

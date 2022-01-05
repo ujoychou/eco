@@ -26,7 +26,7 @@
 #include <eco/thread/State.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpState

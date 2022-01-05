@@ -24,7 +24,7 @@ thread safe object state.
 #include <list>
 #include <eco/cpp/Thread.h>
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 
 typedef detail::Mutex Mutex;
 ////////////////////////////////////////////////////////////////////////////////
@@ -278,5 +278,5 @@ inline LockPtr<object_t> lock_ptr(const object_t& obj)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

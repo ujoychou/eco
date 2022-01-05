@@ -19,7 +19,7 @@
 #include <eco/test/Trace.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace test{;
 ////////////////////////////////////////////////////////////////////////////////
 class TestCheck

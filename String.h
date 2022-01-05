@@ -23,197 +23,256 @@ eco basic type.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Cast.h>
-#include <eco/Object.h>
-#include <eco/HeapOperators.h>
+#include <eco/Def.h>
+#include <eco/Stream.h>
+#include <eco/Number.h>
+#include <eco/rx/RxHeap.h>
+#include <cstring>
 
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-// error mechanism: get this_thread error
-class Error;
-ECO_NS_BEGIN(this_thread);
-// get current thread error.
-ECO_API eco::Error& error();
-ECO_API int  error_id();
-ECO_API const char* error_path();
-ECO_API const char* error_value();
-ECO_API void error_key(int);
-ECO_API void error_key(const char*);
-ECO_API void error_add(const char*);
-ECO_API void error_val(const char*);
-ECO_API void error_clear();
-ECO_API void error_append(IN uint32_t siz, IN char c);
-ECO_API void error_append(IN const char* buf, IN uint32_t siz);
-#define ECO_THROW(id_msg) throw eco::this_thread::error().key_throw(id_msg)
-#define ECO_THIS_ERROR(id_path) eco::this_thread::error().key(id_path)
-#define ECO_THIS_ERROR_ADD(id_path) eco::this_thread::error().add(id_path)
-ECO_NS_END(this_thread);
+#ifdef ECO_VC100
+#	define __func__ eco::func(__FUNCTION__)
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_STREAM_OPERATOR_REF(stream_t, value_t, sep)\
-inline stream_t& operator<(IN const value_t& v)\
-{\
-	return *this << v;\
-}\
-inline stream_t& operator<=(IN const value_t& v)\
-{\
-	return *this << sep << v;\
+// value type: empty string.
+const std::string value_empty;
+using detail::is_upper;
+using detail::upper;
+using detail::iequal;
+inline bool is_lower(IN char v)
+{
+	return v >= 'a' && v <= 'z';
 }
-#define ECO_STREAM_OPERATOR_TPL(stream_t, value_t, sep1, sep2)\
-template<typename T>\
-inline stream_t& operator<<(IN const value_t& v)\
-{\
-	return (*this) << sep1 << v.value << sep2;\
-}\
-template<typename T>\
-inline stream_t& operator<(IN const value_t& v)\
-{\
-	return (*this) << v;\
-}\
-template<typename T>\
-inline stream_t& operator<=(IN const value_t& v)\
-{\
-	return (*this) <= sep1 < v.value < sep2;\
+inline bool is_char(IN char v)
+{
+	return is_upper(v) || is_lower(v);
 }
-
-#define ECO_STREAM_OPERATOR(stream_t, member, sep)\
-public:\
-inline stream_t& append(double v, int prec, bool percent)\
-{\
-	eco::Double fmt(v, prec, percent);\
-	member.append(fmt.c_str(), fmt.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN bool v)\
-{\
-	(*this) << eco::cast<std::string>(v).c_str();\
-	return *this;\
-}\
-inline stream_t& operator<<(IN char v)\
-{\
-	member.append(1, v);\
-	return *this;\
-}\
-inline stream_t& operator<<(IN int8_t v)\
-{\
-	Integer<int8_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN uint8_t v)\
-{\
-	Integer<uint8_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN int16_t v)\
-{\
-	Integer<int16_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN uint16_t v)\
-{\
-	Integer<uint16_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN int32_t v)\
-{\
-	Integer<int32_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN uint32_t v)\
-{\
-	Integer<uint32_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN int64_t v)\
-{\
-	Integer<int64_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN uint64_t v)\
-{\
-	Integer<uint64_t> str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN long v)\
-{\
-	return operator<<(int32_t(v));\
-}\
-inline stream_t& operator<<(IN unsigned long v)\
-{\
-	return operator<<(uint32_t(v));\
-}\
-inline stream_t& operator<<(IN double v)\
-{\
-	Double str(v);\
-	member.append(str, str.size());\
-	return *this;\
-}\
-inline stream_t& operator<<(IN const char* v)\
-{\
-	member.append(v, (uint32_t)strlen(v));\
-	return *this;\
-}\
-template<typename T>\
-inline stream_t& operator<(IN T v)\
-{\
-	return *this << v;\
-}\
-template<typename T>\
-inline stream_t& operator<=(IN T v)\
-{\
-	return *this << sep << v;\
-}\
-inline stream_t& operator<<(IN const eco::Bytes& v)\
-{\
-	member.append(v.c_str(), v.size());\
-	return *this;\
-}\
-ECO_STREAM_OPERATOR_REF(stream_t, eco::Bytes, sep)\
-inline stream_t& operator<<(IN const eco::String& v)\
-{\
-	member.append(v.c_str(), v.size());\
-	return *this;\
-}\
-ECO_STREAM_OPERATOR_REF(stream_t, eco::String, sep)\
-inline stream_t& operator<<(IN const std::string& v)\
-{\
-	member.append(v.c_str(), (uint32_t)v.size());\
-	return *this;\
-}\
-ECO_STREAM_OPERATOR_REF(stream_t, std::string, sep)\
-ECO_STREAM_OPERATOR_TPL(stream_t, eco::GroupT<T>, '(', ')')\
-ECO_STREAM_OPERATOR_TPL(stream_t, eco::SquareT<T>,'[', ']')\
-ECO_STREAM_OPERATOR_TPL(stream_t, eco::BraceT<T>, '{', '}')
-
-
-#undef max
-#undef min
-const std::string empty_str;
-////////////////////////////////////////////////////////////////////////////////
-// check the string is empty.
+inline bool is_char_number(IN char v)
+{
+	return is_number(v) || is_char(v);
+}
 inline bool empty(IN const char* v)
 {
 	return v[0] == 0;
 }
+inline bool equal(IN const char* s1, IN const char* s2)
+{
+	return strcmp(s1, s2) == 0;
+}
+inline char lower(IN char v)
+{
+	return is_lower(v) ? v : (v + 'a' - 'A');
+}
 
+
+////////////////////////////////////////////////////////////////////////////////
+#ifdef ECO_WIN32
+inline int snprintf(OUT char* buf, IN size_t size, IN const char* format, ...)
+{
+	va_list arglist;
+	va_start(arglist, format);
+	int result = _vsnprintf(buf, size, format, arglist);
+	va_end(arglist);
+	return result;
+}
+#endif
+
+/*@ strncpy copy like strncpy but return the length of copyed string instead
+of return the dest string. 
+1.strncpy is more effective than strncpy, because strncpy will set left 
+memory to '\0' when dest len is max than src.
+2.strncpy will auto add '\0' to dest when src len is equal or more than dest.
+but strncpy not, and it will make crash sometimes.
+*/
+inline size_t strncpy(OUT char* dest, IN const char* src, IN size_t len)
+{
+	assert(dest != nullptr && src != nullptr && len != 0);
+	// copy string like strncpy.
+	size_t cpy = 0;
+	char* temp = dest;
+	while (cpy++ < len && (*temp++ = *src++) != '\0') {}
+	// auto add '\0' to dest.
+	if (0 != len) dest[len - 1] = '\0';
+	return len - 1;
+}
+
+inline size_t strncat(OUT char* dest, IN const char* src, IN size_t len)
+{
+	size_t dest_end = strlen(dest);
+	return strncpy(&dest[dest_end], src, len - dest_end);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline void copy(OUT char& dest, OUT uint32_t& pos, IN  char sour)
+{
+	dest = sour;
+	pos += 1;
+}
+inline void copy(char* dest, uint32_t& pos, const char* sour, uint32_t size)
+{
+	memcpy(dest, sour, size);
+	pos += size;
+}
+#define eco_copy_dest(dest, pos, sour) \
+{\
+	memcpy(dest, sour, sizeof(dest));\
+	pos += sizeof(dest);\
+}
+#define eco_copy_sour(dest, pos, sour) \
+{\
+	memcpy(dest, sour, sizeof(sour));\
+	pos += sizeof(sour);\
+}
+#define eco_cpyc(dest, sour) eco::strncpy(dest, sour, sizeof(dest))
+#define eco_cpys(dest, sour) eco::strncpy(dest, (sour).c_str(), sizeof(dest))
+#define eco_catc(dest, sour) eco::strncat(dest, sour, sizeof(dest))
+#define eco_cats(dest, sour) eco::strncat(dest, (sour).c_str(), sizeof(dest))
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline uint32_t find_first(IN const char* key, IN char flag)
+{
+	uint32_t pos = 0;
+	for (; *key != 0 && *key != flag; ++key, ++pos) {}
+	return (*key == 0) ? -1 : pos;
+}
+inline uint32_t find_last(IN const char* key, IN uint32_t end, IN char flag)
+{
+	const char* it = key + end - 1;
+	for (; *it != flag && it >= key; --it) {}
+	return static_cast<uint32_t>(it - key);
+}
+inline uint32_t find_last(IN const char* key, IN char flag)
+{
+	// key format: "logging/file_link/roll_size".
+	uint32_t len = static_cast<uint32_t>(strlen(key));
+	return find_last(key, len, flag);
+}
+inline uint32_t find_nth(const char* key, char flag, uint32_t nth)
+{
+	uint32_t pos = 0;
+	uint32_t cur_seq = 0;
+	for (; *key != 0; ++key, ++pos)
+	{
+		if (*key == flag && ++cur_seq == nth) { break; }
+	}
+	return (*key == 0) ? -1 : pos;
+}
+inline bool find_cmp(IN const char* dest, IN const char* v)
+{
+	for (; *dest != '\0' && *v != '\0' && *dest == *v; ++dest, ++v) {}
+	return *v == '\0';
+}
+inline const char* find(IN const char* dest, IN const char* v)
+{
+	for (; *dest != '\0'; ++dest)
+	{
+		if (find_cmp(dest, v)) { return dest; }
+	}
+	return nullptr;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+/*@find sub string from string.
+@return: the index of string array.
+*/
+inline const char* find(
+	IN const char* data, IN size_t size,
+	IN const char* sub, IN size_t sub_size = 0)
+{
+	if (sub_size == 0) sub_size = strlen(sub);
+	const char* end = &data[size - sub_size];
+	for (; data <= end; ++data)
+	{
+		if (find_cmp(data, sub)) return data;
+	}
+	return nullptr;
+}
+
+/*@reverse find sub string from string.
+@return: the index of string array.
+exp:
+String str("there is a desk.");
+str.find_reverse("is", 10, 6) == 6;
+str.find_reverse("desk") == 11;
+*/
+inline uint32_t find_reverse(
+	IN const char* data, IN uint32_t size,
+	IN const char* sub, IN uint32_t rstart = -1, IN uint32_t rend = -1)
+{
+	// size isn't enough.
+	uint32_t size_sub = (uint32_t)strlen(sub);
+	if (size_sub > size) return -1;
+
+	uint32_t pos = size - size_sub;
+	if (rstart == -1 || pos < rstart) rstart = pos;
+	rend += 1;
+	if (rend > rstart) return -1;
+
+	// reverse find with "--".
+	const char* end = &data[rend];
+	const char* start = &data[rstart];
+	// "--end" because of "rend += 1"
+	for (--end; start != end; --start)
+	{
+		if (eco::find_cmp(start, sub))
+			return uint32_t(start - data);
+	}
+	return -1;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline void insert(OUT char* dest, IN uint32_t pos, IN uint32_t num, char c)
+{
+	if (num == 0) { return; }
+
+	size_t size = strlen(dest);
+	char* dest_move = &dest[size];
+	char* dest_move_end = &dest[pos];
+	for (; dest_move >= dest_move_end; --dest_move)
+	{
+		*(dest_move + num) = *dest_move;
+	}
+	for (; num > 0; --num)
+	{
+		*dest_move_end++ = c;
+	}
+}
+inline void replace(OUT char* path, IN char c, IN char r)
+{
+	for (char* ch = path; *ch != 0; ++ch)
+	{
+		if (*ch == c) { *ch = r; }
+	}
+}
+inline void remove(IN std::string& v, IN char ch)
+{
+	v.erase(std::remove(v.begin(), v.end(), ch), v.end());
+}
+inline void remove(IN char* v, IN char ch)
+{
+	char* p = v;
+	for (; *v != 0; ++v)
+	{
+		if (*v == ch) { continue; }
+		*p = *v; ++p;
+	}
+	*p = 0;
+}
 // clear the string data.
 inline void clear(OUT char* v)
 {
 	v[0] = 0;
 }
-
 // get string end size.
-inline size_t fit_size(IN const char* str, IN const size_t size)
+inline size_t fit_size(IN const char* str, IN size_t size)
 {
 	size_t x = 0;
 	size_t i = size - 1;
@@ -221,12 +280,46 @@ inline size_t fit_size(IN const char* str, IN const size_t size)
 	if (i == 0 && str[i] == 0) ++x;
 	return x;
 }
-
 // remove string end empty.
 inline void fit(OUT std::string& str)
 {
 	size_t x = eco::fit_size(str.c_str(), str.size());
 	str.resize(str.length() - x);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename array_t>
+inline void split(OUT array_t& set, IN const char* str, IN char token)
+{
+	const char* v = str;
+	uint32_t pos = eco::find_first(v, token);
+	while (pos != -1)
+	{
+		set.push_back(std::string(v, pos));
+		v += pos + 1;
+		pos = eco::find_first(v, token);
+	}
+	if (!eco::empty(v))
+	{
+		set.push_back(v);
+	}
+}
+template<typename type_t, typename array_t>
+inline void split(OUT array_t& set, IN const char* str, IN char token)
+{
+	const char* v = str;
+	uint32_t pos = eco::find_first(v, token);
+	while (pos != -1)
+	{
+		set.push_back(eco::cast<type_t>(std::string(v, pos)));
+		v += pos + 1;
+		pos = eco::find_first(v, token);
+	}
+	if (!eco::empty(v))
+	{
+		set.push_back(eco::cast<type_t>(v));
+	}
 }
 
 
@@ -253,7 +346,7 @@ public:
 		return m_data;
 	}
 
-	inline const uint32_t size() const
+	inline uint32_t size() const
 	{
 		return m_size;
 	}
@@ -284,49 +377,6 @@ inline const char* clss(IN const char* full_clss_name)
 	uint32_t start = eco::find_last(full_clss_name, end, ':');
 	start = (start == -1) ? 0 : start + 1;
 	return (full_clss_name + start);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-template<typename T>
-class GroupT	// ()
-{
-public:
-	inline GroupT(IN const T& v) : value(v) {}
-	const T& value;
-};
-template<typename T>
-inline GroupT<T> group(IN const T& v)
-{
-	return GroupT<T>(v);
-}
-
-template<typename T>
-class SquareT	// []
-{
-public:
-	inline SquareT() {}
-	inline SquareT(IN const T& v) : value(v) {}
-	const T& value;
-};
-template<typename T>
-inline SquareT<T> square(IN const T& v)
-{
-	return SquareT<T>(v);
-}
-
-template<typename T>
-class BraceT	// {}
-{
-public:
-	inline BraceT() {}
-	inline BraceT(IN const T& v) : value(v) {}
-	const T& value;
-};
-template<typename T>
-inline BraceT<T> brace(IN const T& v)
-{
-	return BraceT<T>(v);
 }
 
 
@@ -378,13 +428,13 @@ public:
 	inline String()	: m_data(nullptr), m_size(0), m_capacity(0)
 	{}
 
-	explicit inline String(IN uint32_t siz, IN bool reserved = false)
+	explicit inline String(IN uint32_t size, IN bool reserved = false)
 		: m_data(nullptr), m_size(0), m_capacity(0)
 	{
 		if (reserved)
-			reserve(siz);
+			reserve(size);
 		else
-			resize(siz);
+			resize(size);
 	}
 
 	explicit inline String(IN const char* v)
@@ -531,11 +581,11 @@ public:
 	{
 		if (count > 0 && m_size > pos)
 		{
-			uint32_t siz = m_size - pos;
-			if (count < siz) siz = count;
-			count = m_size - pos - siz;
-			if (count > 0) memcpy(&m_data[pos], &m_data[pos + siz], count);
-			m_size -= siz;
+			uint32_t size = m_size - pos;
+			if (count < size) size = count;
+			count = m_size - pos - size;
+			if (count > 0) memcpy(&m_data[pos], &m_data[pos + size], count);
+			m_size -= size;
 			m_data[m_size] = 0;
 		}
 	}
@@ -561,7 +611,7 @@ public:
 			}
 
 			// keep old value.
-			char* new_data = (char*)HeapOperators::
+			char* new_data = (char*)RxHeap::
 				operator new[](new_size + 1);
 			if (old_size > 0)
 			{
@@ -591,7 +641,7 @@ public:
 	{
 		if (m_data != nullptr)
 		{
-			HeapOperators::operator delete[](m_data);
+			RxHeap::operator delete[](m_data);
 			m_data = nullptr;
 		}
 		m_size = 0;
@@ -611,20 +661,20 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<uint32_t siz = 160>
+template<uint32_t size_v = 160>
 class Buffer
 {
 	ECO_STREAM_OPERATOR(Buffer, (*this), ' ');
 public:
 	inline Buffer()
 	{
-		assert(siz > 0);
+		assert(size_v > 0);
 		clear();
 	}
 
 	inline explicit Buffer(const char* msg)
 	{
-		assert(siz > 0);
+		assert(size_v > 0);
 		clear();
 		append(msg);
 	}
@@ -639,7 +689,7 @@ public:
 		return m_data;
 	}
 
-	inline char* buffer(IN const uint32_t pos = 0)
+	inline char* buffer(IN uint32_t pos = 0)
 	{
 		return &m_data[pos];
 	}
@@ -651,7 +701,7 @@ public:
 
 	inline static uint32_t capacity()
 	{
-		return siz - 1;	// last char = '\0'
+		return size_v - 1;	// last char = '\0'
 	}
 
 	inline uint32_t avail() const
@@ -718,37 +768,37 @@ public:
 		}
 		return 0;
 	}
-	inline uint32_t append(IN uint32_t siz, IN char c)
+	inline uint32_t append(IN uint32_t size, IN char c)
 	{
-		if (siz == 1) return append(c);
-		if (avail() >= siz)
+		if (size == 1) return append(c);
+		if (avail() >= size)
 		{
-			memset(&m_data[m_size], c, siz);
-			m_size += siz;
+			memset(&m_data[m_size], c, size);
+			m_size += size;
 			m_data[m_size] = 0;
-			return siz;
+			return size;
 		}
 		return 0;
 	}
 
 	// force append string.
-	inline uint32_t force_append(IN const char* buf, IN uint32_t siz)
+	inline uint32_t force_append(IN const char* buf, IN uint32_t size)
 	{
-		force(siz);
-		return append(buf, siz);
+		force(size);
+		return append(buf, size);
 	}
 
 	// append char.
-	inline uint32_t force_append(IN uint32_t siz, IN char c)
+	inline uint32_t force_append(IN uint32_t size, IN char c)
 	{
-		force(siz);
-		return append(siz, c);
+		force(size);
+		return append(size, c);
 	}
 
 	// erase a space for force content using.
-	inline void force(IN uint32_t siz)
+	inline void force(IN uint32_t size)
 	{
-		int32_t pop_size = static_cast<int32_t>(siz - avail());
+		int32_t pop_size = static_cast<int32_t>(size - avail());
 		if (pop_size > 0) pop(pop_size);
 	}
 
@@ -780,105 +830,9 @@ public:
 	}
 
 private:
-	char m_data[siz];
+	char m_data[size_v];
 	uint32_t  m_size;
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
-class Error : public std::exception
-{
-	ECO_STREAM_OPERATOR(Error, (*this), ';');
-public:
-	inline int id() const
-	{
-		return this_thread::error_id();
-	}
-
-	inline const char* path() const
-	{
-		return this_thread::error_path();
-	}
-
-	inline const char* value() const
-	{
-		return this_thread::error_value();
-	}
-
-	virtual const char* what() const override
-	{
-		return this_thread::error_value();
-	}
-
-	// whether has error.
-	inline operator bool() const
-	{
-		return this_thread::error_id() != 0
-			|| !eco::empty(this_thread::error_path());
-	}
-
-	inline Error& key(int id)
-	{
-		this_thread::error_key(id);
-		return *this;
-	}
-	inline Error& key(const char* v)
-	{
-		this_thread::error_key(v);
-		return *this;
-	}
-	inline Error& add(const char* v)
-	{
-		this_thread::error_add(v);
-		return *this;
-	}
-
-	inline Error& key_throw(int id)
-	{
-		this_thread::error_key(id);
-		return *this;
-	}
-	inline Error& key_throw(const char* v)
-	{
-		this_thread::error_val(v);
-		return *this;
-	}
-
-	// path: add pro: "a/b" / "c" = "a/b/c";
-	inline Error& operator / (const char* v)
-	{
-		append(1, '/');
-		append(v, (uint32_t)strlen(v));
-		return *this;
-	}
-
-	inline void clear()
-	{
-		this_thread::error_clear();
-	}
-
-private:
-	// append char.
-	inline void append(IN uint32_t siz, IN char c)
-	{
-		this_thread::error_append(siz, c);
-	}
-
-	// append string.
-	inline void append(IN const char* buf, IN uint32_t siz)
-	{
-		this_thread::error_append(buf, siz);
-	}
-};
-template<typename StreamT>
-StreamT& operator<<(OUT StreamT& stream, IN const eco::Error& e)
-{
-	const char* p = e.path();
-	stream <= e.value();
-	if (e.id() != 0) stream <= '#' < e.id();
-	if (!eco::empty(p)) stream <= '#' < p;
-	return stream;
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -920,7 +874,7 @@ public:
 	}
 
 	template<typename T>
-	inline Format& operator%(IN const T v)
+	inline Format& operator%(IN T v)
 	{
 		if (next()) m_stream << v;
 		return *this;
@@ -1007,7 +961,7 @@ public:
 		return (operator==(v.c_str()));
 	}
 	template<typename string_t>
-	inline bool operator!=(IN const string_t v) const
+	inline bool operator!=(IN const string_t& v) const
 	{
 		return !(operator==(v));
 	}
@@ -1017,36 +971,144 @@ public:
 	inline StringAny(IN bool v);
 	inline StringAny(IN char v);
 	inline StringAny(IN unsigned char v);
-	inline StringAny(IN short v);
-	inline StringAny(IN unsigned short v);
-	inline StringAny(IN int v);
-	inline StringAny(IN unsigned int v);
-	inline StringAny(IN long v);
-	inline StringAny(IN unsigned long v);
+	inline StringAny(IN int32_t v);
+	inline StringAny(IN uint32_t v);
 	inline StringAny(IN int64_t v);
 	inline StringAny(IN uint64_t v);
 	inline StringAny(IN double v, IN int precision = -1);
 
 public:
 	inline operator const char*() const;
-	inline operator const char() const;
-	inline operator const unsigned char() const;
-	inline operator const short() const;
-	inline operator const unsigned short() const;
-	inline operator const int() const;
-	inline operator const unsigned int() const;
-	inline operator const long() const;
-	inline operator const unsigned long() const;
-	inline operator const int64_t() const;
-	inline operator const uint64_t() const;
-	inline operator const float() const;
-	inline operator const double() const;
-	inline operator const bool() const;
+	inline operator char() const;
+	inline operator unsigned char() const;
+	inline operator int16_t() const;
+	inline operator uint16_t() const;
+	inline operator int32_t() const;
+	inline operator uint32_t() const;
+	inline operator int64_t() const;
+	inline operator uint64_t() const;
+	inline operator double() const;
+	inline operator bool() const;
 
 private:
-	ValueType m_vtype;
+	eco::ValueType m_vtype;
 	std::string m_value;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+StringAny::StringAny() : m_vtype(0) {}
+StringAny::StringAny(IN StringAny&& v)
+	: m_vtype(v.m_vtype), m_value(std::move(v.m_value)) { v.m_vtype = 0; }
+StringAny::StringAny(IN const StringAny& v)
+	: m_vtype(v.m_vtype), m_value(v.m_value)  {}
+StringAny::StringAny(IN const char* v)
+	: m_vtype(type_string), m_value(v) {}
+StringAny::StringAny(IN bool v)
+	: m_vtype(type_bool), m_value(eco::cast<std::string>(v).c_str()) {}
+StringAny::StringAny(IN char v)
+	: m_vtype(type_char), m_value(1, v) {}
+StringAny::StringAny(IN unsigned char v)
+	: m_vtype(type_char), m_value(1, v) {}
+StringAny::StringAny(IN int32_t v)
+	: m_vtype(type_int32), m_value(eco::Integer<int32_t>(v).c_str()) {}
+StringAny::StringAny(IN uint32_t v)
+	: m_vtype(type_int32), m_value(eco::Integer<uint32_t>(v).c_str()) {}
+StringAny::StringAny(IN int64_t v)
+	: m_vtype(type_int64), m_value(eco::Integer<int64_t>(v).c_str()) {}
+StringAny::StringAny(IN uint64_t v)
+	: m_vtype(type_int64), m_value(eco::Integer<uint64_t>(v).c_str()) {}
+StringAny::StringAny(IN double v, IN int precision)
+	: m_vtype(type_double), m_value(eco::Double(v, precision).c_str()) {}
+
+////////////////////////////////////////////////////////////////////////////////
+StringAny& StringAny::operator=(IN StringAny&& v)
+{
+	m_value = std::move(v.m_value);
+	m_vtype = v.m_vtype;
+	v.m_vtype = 0;
+	return *this;
+}
+StringAny& StringAny::operator=(IN const StringAny& v)
+{
+	m_value = v.m_value;
+	m_vtype = v.m_vtype;
+	return *this;
+}
+StringAny& StringAny::operator=(IN const char* v)
+{
+	m_vtype = type_string;
+	m_value = v;
+	return *this;
+}
+bool StringAny::operator==(IN const char* v) const
+{
+	return m_value == v;
+}
+bool StringAny::operator==(IN const StringAny& obj) const
+{
+	return m_value == obj.m_value && m_vtype == obj.m_vtype;
+}
+bool StringAny::empty() const
+{
+	return m_value.empty();
+}
+const char* StringAny::c_str() const
+{
+	return m_value.c_str();
+}
+std::string& StringAny::str()
+{
+	return m_value;
+}
+StringAny::operator const char*() const
+{
+	return m_value.c_str();
+}
+StringAny::operator char() const
+{
+	return eco::cast<char>(m_value);
+}
+StringAny::operator unsigned char() const
+{
+	return eco::cast<unsigned char>(m_value);
+}
+StringAny::operator int16_t() const
+{
+	return eco::cast<int16_t>(m_value);
+}
+StringAny::operator uint16_t() const
+{
+	return eco::cast<uint16_t>(m_value);
+}
+StringAny::operator int32_t() const
+{
+	return eco::cast<int32_t>(m_value);
+}
+StringAny::operator uint32_t() const
+{
+	return eco::cast<uint32_t>(m_value);
+}
+StringAny::operator int64_t() const
+{
+	return eco::cast<int64_t>(m_value);
+}
+StringAny::operator uint64_t() const
+{
+	return eco::cast<uint64_t>(m_value);
+}
+StringAny::operator double() const
+{
+	return eco::cast<double>(m_value);
+}
+StringAny::operator bool() const
+{
+	return eco::cast<bool>(m_value);
+}
+eco::ValueType StringAny::type() const
+{
+	return m_vtype;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

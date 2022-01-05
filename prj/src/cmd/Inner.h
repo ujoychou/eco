@@ -28,7 +28,7 @@ inner command.
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 
 

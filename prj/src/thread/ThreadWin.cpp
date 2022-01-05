@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #ifdef ECO_WIN32
 #include <eco/thread/Thread.h>
 ////////////////////////////////////////////////////////////////////////////////
@@ -11,7 +11,7 @@
 
 
 // this thread data.
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace this_thread{;
 
 __declspec(thread) uint64_t	t_tid = 0;
@@ -44,7 +44,7 @@ void init()
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class Thread::Impl
 {
@@ -102,10 +102,8 @@ unsigned __stdcall work(IN void* tdata)
 	{
 		// init this_thread info.
 		eco::this_thread::t_tid = impl.m_handle;
-		eco::strncpy(
-			eco::this_thread::t_tid_string, impl.m_tid_string.c_str(), 15);
-		eco::strncpy(
-			eco::this_thread::t_tname, impl.m_name.c_str(), 31);
+		eco_cpyc(eco::this_thread::t_tname, impl.m_name.c_str());
+		eco_cpyc(eco::this_thread::t_tid_string, impl.m_tid_string.c_str());
 
 		// run thread func.
 		impl.m_func();

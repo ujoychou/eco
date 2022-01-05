@@ -28,7 +28,7 @@
 #include <eco/thread/DispatchServer.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class DispatchHandler : public eco::DispatchHandler<int, Context>

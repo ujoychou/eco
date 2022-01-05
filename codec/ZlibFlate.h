@@ -19,7 +19,7 @@
 #include <eco/codec/Zlib.h>
 #include <assert.h>
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace codec{;
 namespace zlib{;
 
@@ -132,6 +132,6 @@ public:
 
 }// ns::zlib
 }// ns::codec
-}// ns::eco
+ECO_NS_END(eco);
 ////////////////////////////////////////////////////////////////////////////////
 #endif

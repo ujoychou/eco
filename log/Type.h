@@ -27,7 +27,7 @@ log api type.
 #include <eco/Type.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace log{;
 
 

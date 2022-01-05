@@ -165,7 +165,7 @@
     <ClCompile Include="..\log\FileSink.cpp">
       <Filter>src\log</Filter>
     </ClCompile>
-    <ClCompile Include="..\HeapOperators.cpp">
+    <ClCompile Include="..\RxHeap.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
     <ClCompile Include="..\cmd\Class.cpp">
@@ -323,7 +323,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\Error.h">
       <Filter>lib\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h">
+    <ClInclude Include="..\..\..\..\..\contrib\eco\RxHeap.h">
       <Filter>lib\app</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\Object.h">

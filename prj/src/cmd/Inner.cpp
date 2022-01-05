@@ -1,11 +1,11 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "Inner.h"
 ////////////////////////////////////////////////////////////////////////////////
 #include "Engine.ipp"
 #include <iostream>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 
 

@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include <eco/persist/Persist.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/meta/Meta.h>
@@ -8,7 +8,7 @@
 #include <eco/App.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 
 typedef eco::Database* (*CreateFunc)(void);
 ////////////////////////////////////////////////////////////////////////////////

@@ -28,15 +28,15 @@
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 enum  
 {
-	service_mode		= 1,		// C\S¼Ü¹¹·þÎñ
-	router_mode			= 2,		// Â·ÓÉ¼Ü¹¹·þÎñ
+	service_mode		= 1,		// C\Sï¿½Ü¹ï¿½ï¿½ï¿½ï¿½ï¿½
+	router_mode			= 2,		// Â·ï¿½É¼Ü¹ï¿½ï¿½ï¿½ï¿½ï¿½
 };
 typedef uint16_t ServiceMode;
 

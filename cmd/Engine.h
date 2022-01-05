@@ -29,7 +29,7 @@ precommands by order.
 #include <eco/Object.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 
 

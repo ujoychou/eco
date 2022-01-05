@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "TcpServer.ipp"
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/service/dev/Cluster.h>
@@ -9,7 +9,7 @@
 #include "TcpOuter.h"
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 void test_close_io_service(TcpAcceptor::Impl* impl);
 ////////////////////////////////////////////////////////////////////////////////
@@ -242,11 +242,11 @@ Protocol* TcpServer::protocol_latest() const
 ////////////////////////////////////////////////////////////////////////////////
 void TcpServer::register_handler(IN int id, IN HandlerFunc&& hf)
 {
-	impl().m_dispatch_pool.register_handler(id, std::forward<HandlerFunc>(hf));
+	impl().m_dispatch_pool.register_handler(id, std::move(hf));
 }
 void TcpServer::register_default(IN HandlerFunc&& hf)
 {
-	impl().m_dispatch_pool.register_default(std::forward<HandlerFunc>(hf));
+	impl().m_dispatch_pool.register_default(std::move(hf));
 }
 void TcpServer::set_event(OnAccept&& on_accept, OnClose&& on_close)
 {
@@ -256,7 +256,7 @@ void TcpServer::set_event(OnAccept&& on_accept, OnClose&& on_close)
 void TcpServer::set_recv_event(OnRecvData&& on_recv, OnDecodeHead&& on_decode)
 {
 	impl().m_dispatch_pool.message_handler().set_event(
-		std::forward<OnRecvData>(on_recv));
+		std::move<OnRecvData>(on_recv));
 	impl().m_peer_handler.m_on_decode_head = on_decode;
 }
 bool TcpServer::receive_mode() const

@@ -20,7 +20,7 @@
 #include <eco/test/Check.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace test{;
 ////////////////////////////////////////////////////////////////////////////////
 class Object : public eco::Object<Object>

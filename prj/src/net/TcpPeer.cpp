@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "TcpPeer.ipp"
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/net/Ecode.h>
@@ -10,7 +10,7 @@
 #include "TcpOuter.h"
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ECO_OBJECT_IMPL(TcpPeer);
 /* this thread local data has two serious error:

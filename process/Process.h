@@ -23,7 +23,7 @@ process.
 #include <process.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace this_process{;
 
 
@@ -34,7 +34,7 @@ const char* get_id_string();
 }}
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 
 
 ////////////////////////////////////////////////////////////////////////////////

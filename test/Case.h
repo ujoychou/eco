@@ -22,7 +22,7 @@
 #include <eco/log/Log.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace test{;
 ////////////////////////////////////////////////////////////////////////////////
 class Case : public Runner

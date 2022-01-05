@@ -153,7 +153,7 @@
     <ClCompile Include="..\Eco.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
-    <ClCompile Include="..\HeapOperators.cpp">
+    <ClCompile Include="..\RxHeap.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
     <ClCompile Include="..\Type.cpp">

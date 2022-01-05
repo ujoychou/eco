@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "DispatchServer.h"
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/net/TcpPeer.h>
@@ -8,7 +8,7 @@
 #include "TcpClient.ipp"
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 // return whether need to dispatch meta context.

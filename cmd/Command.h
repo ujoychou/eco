@@ -23,7 +23,7 @@ command that input by user on service console.
 
 *******************************************************************************/
 #include <eco/cmd/Context.h>
-#include <eco/HeapOperators.h>
+#include <eco/RxHeap.h>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +45,7 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 ////////////////////////////////////////////////////////////////////////////////
 enum ExecuteMode
@@ -76,7 +76,7 @@ typedef std::function<void(
 	IN eco::cmd::ExecuteMode)> CommandExecute;
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API Command : public eco::HeapOperators
+class ECO_API Command : public eco::RxHeap
 {
 	ECO_NONCOPYABLE(Command);
 public:

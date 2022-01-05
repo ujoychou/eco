@@ -20,7 +20,7 @@ singleton model solution.
 #include <eco/Type.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace web{;
 ////////////////////////////////////////////////////////////////////////////////
 /* support nested html class define.

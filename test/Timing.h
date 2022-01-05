@@ -21,7 +21,7 @@ timing.
 #include <eco/ExportApi.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace test{;
 
 

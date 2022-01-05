@@ -75,7 +75,7 @@ public:
 	// start task.
 	static inline void start(Closure&& task)
 	{
-		Eco::get().post_task(std::forward<Closure>(task));
+		Eco::get().post_task(std::move(task));
 	}
 
 private:

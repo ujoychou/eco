@@ -28,7 +28,7 @@ log queue.
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace log{;
 typedef eco::Buffer<pack_size> Pack;
 ////////////////////////////////////////////////////////////////////////////////

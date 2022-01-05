@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include "FileSink.h"
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/process/Process.h>
@@ -7,7 +7,7 @@
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace log{;
 
 

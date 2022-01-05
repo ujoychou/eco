@@ -17,8 +17,8 @@ convert types.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
-#include <eco/Memory.h>
+#include <eco/Prec.h>
+#include <algorithm>
 
 
 ECO_NS_BEGIN(eco);
@@ -232,10 +232,35 @@ inline uint64_t atoui64(IN const char* sv)
 #endif
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_BEGIN(detail);
+inline bool is_upper(IN const char v)
+{
+	return v >= 'A' && v <= 'Z';
+}
+inline char upper(IN const char v)
+{
+	return is_upper(v) ? v : (v + 'A' - 'a');
+}
+inline bool iequal(IN const char* s1, IN const char* s2)
+{
+	char c1 = 0, c2 = 0;
+	for (size_t i = 0; true; ++i)
+	{
+		c1 = upper(s1[i]);
+		c2 = upper(s2[i]);
+		if (c1 != c2 || c1 == 0 || c2 == 0) break;
+	}
+	return c1 == 0 && c2 == 0;
+}
+ECO_NS_END(detail);
+
+
 ////////////////////////////////////////////////////////////////////////////////
 inline void cast(OUT bool& v, IN const char* sv)
 {
-	v = sv && (sv[0] == '1' || eco::iequal(sv, "true"));
+	v = sv && (sv[0] == '1' || eco::detail::iequal(sv, "true"));
 }
 inline void cast(OUT char& v, IN const char* sv)
 {
@@ -294,8 +319,11 @@ template<uint32_t size> struct get_char
 	inline get_char(IN const char* sv, IN uint32_t len)
 	{
 		str[0] = 0;
-		if (len > size - 1) len = size - 1;
-		eco::strncpy(str, sv, len);
+		if (len == 0) { return; }
+		
+		if (len > size - 1) { len = size - 1; }
+		memcpy(str, sv, len);
+		str[len] = 0;
 	}
 
 	inline operator const char*() const

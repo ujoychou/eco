@@ -23,7 +23,7 @@ it shared the data in the program, and it manage data's life cycle.
 #include <vector>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 template<typename value_t>
 class IndexArray : public eco::Object<IndexArray<value_t> >
@@ -105,5 +105,5 @@ protected:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

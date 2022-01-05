@@ -24,7 +24,7 @@ thread safe object state.
 #endif
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,5 +83,5 @@ private:
 };
 
 
-}// ns::eco
+ECO_NS_END(eco);
 #endif

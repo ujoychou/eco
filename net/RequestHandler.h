@@ -31,7 +31,7 @@
 #include <eco/eco/Proto.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 class NullRequest {};
 ////////////////////////////////////////////////////////////////////////////////

@@ -243,7 +243,7 @@
     <ClCompile Include="..\DllObject.cpp" />
     <ClCompile Include="..\DllObjectWin.cpp" />
     <ClCompile Include="..\Eco.cpp" />
-    <ClCompile Include="..\HeapOperators.cpp" />
+    <ClCompile Include="..\RxHeap.cpp" />
     <ClCompile Include="..\loc\Locale.cpp" />
     <ClCompile Include="..\log\Core.cpp" />
     <ClCompile Include="..\log\FileSink.cpp" />

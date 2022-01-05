@@ -24,7 +24,7 @@ it shared the data in the program, and it manage data's life cycle.
 #include <unordered_map>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename identity_t, 
@@ -237,5 +237,5 @@ class Map : public MapT<identity_t, value_t, std::map<identity_t, value_t> > {};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}// ns::eco
+ECO_NS_END(eco);
 #endif

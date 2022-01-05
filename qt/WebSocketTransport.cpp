@@ -1,4 +1,4 @@
-﻿#include "PrecHeader.h"
+﻿#include "Pch.h"
 #include "WebSocketTransport.h"
 ////////////////////////////////////////////////////////////////////////////////
 #include <QtCore/qjsondocument.h>

@@ -28,7 +28,7 @@
 #include <eco/thread/topic/TopicServer.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class Publisher : public eco::Object<Publisher>
@@ -66,13 +66,13 @@ class Subscriber;
 class ECO_API TopicUidMap
 {
 private:
-	// ×¢²á·¢²¼Ö÷Ìâ£ºSubscriber
+	// ×¢ï¿½á·¢ï¿½ï¿½ï¿½ï¿½ï¿½â£ºSubscriber
 	friend class Subscriber;
 	static Publisher::ptr get(const TopicUid& id);
 	static void sub(IN const TopicUid& id, IN Publisher::ptr& pub);
 	static void erase(IN const TopicUid& id);
 
-	// ×¢²á·¢²¼Ö÷Ìâ£ºDispatcher
+	// ×¢ï¿½á·¢ï¿½ï¿½ï¿½ï¿½ï¿½â£ºDispatcher
 	static Publisher::ptr get(const TopicUid& id, uint32_t type_id);
 	static void set(IN uint32_t type_id, IN Publisher::ptr& pub);
 	static void set(IN const TopicUid& id, IN Publisher::ptr& pub);
@@ -151,7 +151,7 @@ public:
 protected:
 	virtual void on_default(IN eco::Topic& topic, IN eco::Content& c) {};
 
-	// eco::Subscriber on_publish£ºdispatch by tuid.
+	// eco::Subscriber on_publishï¿½ï¿½dispatch by tuid.
 	virtual void on_publish(IN eco::Topic& topic, IN eco::Content& c) override
 	{
 		Publisher::ptr pub = TopicUidMap::get(topic.get_uid(), c.object_id());

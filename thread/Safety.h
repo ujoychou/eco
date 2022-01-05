@@ -115,7 +115,7 @@ class SafetyPtr : public BaseSafetyPtr<object_t, Safety<object_t>>
 	ECO_PTR_MEMBER(object_t, m_ptr);
 	inline SafetyPtr() : BasePtr() {}
 	inline SafetyPtr(const Safety<object_t>& safe) : BasePtr(safe) {}
-	inline SafetyPtr(SafetyPtr&& obj) : BasePtr(std::forward<SafetyPtr>(obj)) {}
+	inline SafetyPtr(SafetyPtr&& obj) : BasePtr(std::move(obj)) {}
 };
 template<class object_t>
 class WriterPtr : public BaseSafetyPtr<object_t, SharedSafety<object_t>>
@@ -123,14 +123,14 @@ class WriterPtr : public BaseSafetyPtr<object_t, SharedSafety<object_t>>
 	ECO_PTR_MEMBER(object_t, m_ptr);
 	inline WriterPtr() : BasePtr() {}
 	inline WriterPtr(const SharedSafety<object_t>& safe) : BasePtr(safe) {}
-	inline WriterPtr(WriterPtr&& obj) : BasePtr(std::forward<WriterPtr>(obj)) {}
+	inline WriterPtr(WriterPtr&& obj) : BasePtr(std::move(obj)) {}
 };
 template<class object_t>
 class ReaderPtr : public BaseSafetyPtr<object_t, SharedSafety<object_t>>
 {
 public:
 	inline ReaderPtr() : BasePtr() {}
-	inline ReaderPtr(ReaderPtr&& obj) : BasePtr(std::forward<ReaderPtr>(obj)) {}
+	inline ReaderPtr(ReaderPtr&& obj) : BasePtr(std::move(obj)) {}
 	inline ReaderPtr(const safety_t& safe) : BasePtr()
 	{
 		set_safety(safe);

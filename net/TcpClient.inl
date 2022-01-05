@@ -26,7 +26,7 @@
 #include <eco/net/TcpClient.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 template<typename codec_t, typename err_t>

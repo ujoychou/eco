@@ -30,7 +30,7 @@ command group.
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 
 

@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #ifdef ECO_LINUX
 #include <eco/thread/Thread.h>
 ////////////////////////////////////////////////////////////////////////////////
@@ -11,7 +11,7 @@
 
 // this thread data.
 ////////////////////////////////////////////////////////////////////////////////
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace this_thread{;
 __thread size_t	t_tid;
 __thread char[64]	t_tid_string;
@@ -33,7 +33,7 @@ const char* get_id_string()
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace thread{;
 ////////////////////////////////////////////////////////////////////////////////
 class Thread::Impl

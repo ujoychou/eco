@@ -42,7 +42,7 @@ or send a response, so get the request and response info.
 
 
 ////////////////////////////////////////////////////////////////////////////////
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 typedef uint64_t SessionId;
 const SessionId none_session = 0;

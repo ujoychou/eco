@@ -20,7 +20,7 @@ html class parser.
 #include <eco/Export.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace web{;
 
 

@@ -22,7 +22,7 @@
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 
 
@@ -141,6 +141,6 @@ typedef eco::net::CheckT<&eco::codec::zlib::adler32> CheckAdler32;
 
 
 }// ns::net
-}// ns::eco
+ECO_NS_END(eco);
 ////////////////////////////////////////////////////////////////////////////////
 #endif

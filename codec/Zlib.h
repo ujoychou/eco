@@ -25,7 +25,7 @@
 #include <zlib/zlib.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace codec{;
 namespace zlib{;
 
@@ -44,6 +44,6 @@ inline uint32_t adler32(IN const char* data, IN uint32_t size)
 ////////////////////////////////////////////////////////////////////////////////
 }// ns::zlib
 }// ns::codec
-}// ns::eco
+ECO_NS_END(eco);
 ////////////////////////////////////////////////////////////////////////////////
 #endif

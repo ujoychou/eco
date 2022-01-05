@@ -1,4 +1,4 @@
-#include "PrecHeader.h"
+#include "Pch.h"
 #include <eco/cmd/Group.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/log/Log.h>
@@ -9,7 +9,7 @@
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 
 

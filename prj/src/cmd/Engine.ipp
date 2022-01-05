@@ -27,7 +27,7 @@ cmd engine ipp.
 #include <vector>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace cmd{;
 ////////////////////////////////////////////////////////////////////////////////
 class Engine::Impl

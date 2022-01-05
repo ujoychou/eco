@@ -30,7 +30,7 @@
 #include <eco/thread/TimingWheel.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 class IoWorker;
 class TcpPeer;

@@ -1,4 +1,4 @@
-﻿#include "PrecHeader.h"
+﻿#include "Pch.h"
 #include <eco/qt/QtListBar.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <QtGui/QMouseEvent>
@@ -8,7 +8,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace qt{;
 ////////////////////////////////////////////////////////////////////////////////
 ListBar::ListBar(QWidget* parent, Style style, int space)

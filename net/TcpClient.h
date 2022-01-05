@@ -32,7 +32,7 @@
 #endif
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TcpClient : public TcpDispatch

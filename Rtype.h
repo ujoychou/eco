@@ -22,49 +22,12 @@ rt type.
 * copyright(c) 2016 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Prec.h>
+#include <eco/Def.h>
 #include <map>
+#include <memory>
 
 
 ECO_NS_BEGIN(eco);
-////////////////////////////////////////////////////////////////////////////////
-class Type
-{
-	ECO_NONCOPYABLE(Type);
-public:
-	// init.
-	inline Type(uint32_t id, const char* name, const Type* parent, void*)
-		: m_id(id), m_name(name), m_parent(parent) {}
-
-	// get type id of this type.
-	inline const uint32_t id() const { return m_id; }
-
-	// get type name of this type.
-	inline const char* name() const { return m_name; }
-
-	// get parent of this type.
-	inline const Type* parent() const { return m_parent; }
-
-	// is kind of runtime class.
-	inline bool kind_of(IN const Type* clss_sup) const
-	{
-		const Type* me = this;
-		for (; me != nullptr && clss_sup != me; me = me->m_parent) {}
-		return (me != nullptr);
-	}
-
-private:
-	const Type* m_parent;
-	const char* m_name;
-	const uint32_t m_id;
-};
-template<typename t>
-struct TypeInit
-{
-	inline TypeInit() { t::type(); }
-};
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class RtClass;
 class RtObject : public std::enable_shared_from_this<eco::RtObject>
@@ -97,15 +60,59 @@ public:
 	inline bool kind_of(const RtObject& obj) const;
 	template<typename object_t> inline bool kind_of() const;
 };
-typedef eco::RtObject::ptr (*MakeRtObject)(void);
+typedef eco::RtObject::ptr (*MakeObject)(void);
+
+
+////////////////////////////////////////////////////////////////////////////////
+class Type
+{
+	ECO_NONCOPYABLE(Type);
+public:
+	// init.
+	inline Type(uint32_t id, const char* name, const Type* parent, void*)
+		: m_id(id), m_name(name), m_parent(parent) {}
+
+	// get type id of this type.
+	inline uint32_t id() const { return m_id; }
+
+	// get type name of this type.
+	inline const char* name() const { return m_name; }
+
+	// get parent of this type.
+	inline const Type* parent() const { return m_parent; }
+
+	// is kind of runtime class.
+	inline bool kind_of(IN const Type* clss_sup) const
+	{
+		const Type* me = this;
+		for (; me != nullptr && clss_sup != me; me = me->m_parent) {}
+		return (me != nullptr);
+	}
+
+private:
+	const uint32_t m_id;
+	const char* m_name;
+	const Type* m_parent;
+};
+template<typename t>
+struct TypeInit
+{
+	inline TypeInit() { t::type(); }
+};
+template<typename t = int>
+class RtClassMap
+{
+	static std::map<std::string, const RtClass*> s_map;
+	friend class RtClass;
+};
+template<typename t>
+std::map<std::string, const RtClass*> RtClassMap<t>::s_map;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 class RtClass : public eco::Type
 {
 public:
-	typedef RtObject::ptr (*MakeObject)(void);
-
 	// make class in rtobject.
 	inline RtClass(
 		IN const RtClass* parent,
@@ -178,14 +185,6 @@ struct RtClassInit
 		t::clss();
 	}
 };
-template<typename t = int>
-class RtClassMap
-{
-	static std::map<std::string, const RtClass*> s_map;
-	friend class RtClass;
-};
-template<typename t>
-std::map<std::string, const RtClass*> RtClassMap<t>::s_map;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -216,6 +215,10 @@ protected:
 	static uint_t s_next_id;
 	static std::map<std::string, uint_t> s_map;
 };
+template<typename uint_t>
+uint_t GetTypeIdT<uint_t>::s_next_id = 0;
+template<typename uint_t>
+std::map<std::string, uint_t> GetTypeIdT<uint_t>::s_map;
 typedef GetTypeIdT<uint32_t> GetTypeId;
 
 
@@ -225,18 +228,14 @@ template<typename type_t>
 class TypeId : public GetTypeId
 {
 public:
-	inline operator const uint32_t() const
+	inline operator uint32_t() const
 	{
 		return value;
 	}
 	static const uint32_t value;
 };
-template<typename uint_t>
-uint_t GetTypeIdT<uint_t>::s_next_id = 0;
-template<typename uint_t>
-std::map<std::string, uint_t> GetTypeIdT<uint_t>::s_map;
 template<typename type_t>
-const uint32_t TypeId<type_t>::value = GetTypeId::init_id();
+const uint32_t TypeId<type_t>::value = GetTypeId::init_id<type_t>();
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);
 
@@ -332,5 +331,4 @@ ECO_RTYPE__(object_t, parent_t, nullptr)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_NS_END(eco);
 #endif

@@ -124,7 +124,7 @@
     <ClCompile Include="..\DateTime.cpp" />
     <ClCompile Include="..\DllObject.cpp" />
     <ClCompile Include="..\DllObjectWin.cpp" />
-    <ClCompile Include="..\HeapOperators.cpp" />
+    <ClCompile Include="..\RxHeap.cpp" />
     <ClCompile Include="..\log\Pusher.cpp" />
     <ClCompile Include="..\log\Core.cpp" />
     <ClCompile Include="..\log\FileSink.cpp" />
@@ -265,7 +265,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\Error.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\File.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\filesystem\SourceFile.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\HeapOperators.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\RxHeap.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\Implement.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\log\Core.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\log\Log.h" />

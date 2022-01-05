@@ -23,7 +23,7 @@ dll entry
 #include <eco/ExportApi.h>
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 typedef void  (*DllFunc)(void);		// function ptr.
 ECO_API void* load_dll(IN const char* dll_name);

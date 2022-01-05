@@ -29,7 +29,7 @@
 
 
 
-namespace eco{;
+ECO_NS_BEGIN(eco);
 namespace net{;
 namespace asio{;
 
