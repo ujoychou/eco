@@ -126,28 +126,12 @@ public:
 		return static_cast<uint32_t>(p - buf);
 	}
 
-
-public:
-	inline operator const char*() const
-	{
-		return m_buf;
-	}
-
-	inline const char* c_str() const
-	{
-		return m_buf;
-	}
-
-	inline uint32_t size() const
-	{
-		return m_size;
-	}
-
+	inline uint32_t size() const { return m_size; }
+	inline const char* c_str() const { return m_buf; }
+	
 private:
 	char m_buf[32];
 	uint32_t m_size;
-
-private:
 	static const char s_digits[];
 	static const char s_digits_hex[];
 	static const char* s_zero;
@@ -158,7 +142,6 @@ template<typename int_t>
 const char Integer<int_t>::s_digits_hex[] = "0123456789ABCDEF";
 template<typename int_t>
 const char* Integer<int_t>::s_zero = s_digits + 9;
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -191,26 +174,43 @@ public:
 		return size;
 	}
 
-public:
-	inline operator const char*() const
-	{
-		return m_buf;
-	}
-
-	inline const char* c_str() const
-	{
-		return m_buf;
-	}
-
-	inline uint32_t size() const
-	{
-		return m_size;
-	}
+	inline uint32_t size() const { return m_size; }
+	inline const char* c_str() const { return m_buf; }
 
 private:
 	char m_buf[64];
 	uint32_t m_size;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_BEGIN(detail);
+inline bool is_lower(IN char v)
+{
+	return v >= 'a' && v <= 'z';
+}
+inline char upper(IN char v)
+{
+	return is_lower(v) ? (v + 'A' - 'a') : v;
+}
+inline bool iequal(IN const char* s1, IN const char* s2)
+{
+	char c1 = 0, c2 = 0;
+	for (size_t i = 0; true; ++i)
+	{
+		c1 = upper(s1[i]);
+		c2 = upper(s2[i]);
+		if (c1 != c2 || c1 == 0 || c2 == 0) break;
+	}
+	return c1 == 0 && c2 == 0;
+}
+inline char first(IN const char* sv)
+{
+	return (sv != nullptr && sv[0] != '\0') ? sv[0] : 0;
+}
+ECO_NS_END(detail);
+
+
 ////////////////////////////////////////////////////////////////////////////////
 inline int64_t atoi64(IN const char* sv)
 {
@@ -231,44 +231,17 @@ inline uint64_t atoui64(IN const char* sv)
 	return strtoull(sv, &end, 10);
 #endif
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-ECO_NS_BEGIN(detail);
-inline bool is_upper(IN const char v)
-{
-	return v >= 'A' && v <= 'Z';
-}
-inline char upper(IN const char v)
-{
-	return is_upper(v) ? v : (v + 'A' - 'a');
-}
-inline bool iequal(IN const char* s1, IN const char* s2)
-{
-	char c1 = 0, c2 = 0;
-	for (size_t i = 0; true; ++i)
-	{
-		c1 = upper(s1[i]);
-		c2 = upper(s2[i]);
-		if (c1 != c2 || c1 == 0 || c2 == 0) break;
-	}
-	return c1 == 0 && c2 == 0;
-}
-ECO_NS_END(detail);
-
-
-////////////////////////////////////////////////////////////////////////////////
 inline void cast(OUT bool& v, IN const char* sv)
 {
-	v = sv && (sv[0] == '1' || eco::detail::iequal(sv, "true"));
+	v = (sv != nullptr) && (sv[0] == '1' || eco::detail::iequal(sv, "true"));
 }
 inline void cast(OUT char& v, IN const char* sv)
 {
-	v = static_cast<int8_t>(atoi(sv));
+	v = eco::detail::first(sv);
 }
 inline void cast(OUT unsigned char& v, IN const char* sv)
 {
-	v = static_cast<uint8_t>(atoi(sv));
+	v = eco::detail::first(sv);
 }
 inline void cast(OUT int16_t& v, IN const char* sv)
 {
@@ -308,6 +281,18 @@ inline void cast(OUT float& v, IN const char* sv)
 	if (end != NULL && *end == '%')		// handle '%'.
 		v /= 100;
 }
+template<typename dest_t>
+inline dest_t cast(IN const char* v)
+{
+	dest_t dv;
+	cast(dv, v);
+	return dv;
+}
+template<typename dest_t>
+inline dest_t cast(IN const std::string& v)
+{
+	return cast<dest_t>(v.c_str());
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -320,46 +305,29 @@ template<uint32_t size> struct get_char
 	{
 		str[0] = 0;
 		if (len == 0) { return; }
-		
 		if (len > size - 1) { len = size - 1; }
 		memcpy(str, sv, len);
 		str[len] = 0;
 	}
-
-	inline operator const char*() const
-	{
-		return str;
-	}
-	inline const char* c_str() const
-	{
-		return str;
-	}
-
+	inline operator const char*() const { return str; }
+	inline const char* c_str() const { return str; }
 	char str[size];
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
-inline void cast(OUT double& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT double& v, IN const char* sv, IN uint32_t len)
 {
 	char* end = NULL;
 	v = strtod(get_char<32>(sv, len), &end);
 	// handle '%'.
-	if (end != NULL && *end == '%'){
-		v /= 100;
-	}
+	if (end != NULL && *end == '%') { v /= 100; }
 }
-inline void cast(OUT float& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT float& v, IN const char* sv, IN uint32_t len)
 {
 	char* end = NULL;
 	v = static_cast<float>(strtod(get_char<32>(sv, len), &end));
 	// handle '%'.
-	if (end != NULL && *end == '%') {
-		v /= 100;
-	}
+	if (end != NULL && *end == '%') { v /= 100; }
 }
-
-inline void cast(OUT uint64_t& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT uint64_t& v, IN const char* sv, IN uint32_t len)
 {
 #ifdef ECO_WIN
 	char* end = nullptr;
@@ -369,7 +337,7 @@ inline void cast(OUT uint64_t& v, IN const char* sv, IN const uint32_t len)
 	v = strtoull(get_char<24>(sv, len).str, &end, 10);
 #endif
 }
-inline void cast(OUT int64_t& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT int64_t& v, IN const char* sv, IN uint32_t len)
 {
 #ifdef ECO_WIN
 	v = _atoi64(get_char<24>(sv, len));
@@ -378,112 +346,89 @@ inline void cast(OUT int64_t& v, IN const char* sv, IN const uint32_t len)
 	v = strtoll(get_char<24>(sv, len).str, &end, 10);
 #endif
 }
-inline void cast(OUT int16_t& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT int16_t& v, IN const char* sv, IN uint32_t len)
 {
 	v = static_cast<int16_t>(atoi(get_char<8>(sv, len)));
 }
-inline void cast(OUT uint16_t& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT uint16_t& v, IN const char* sv, IN uint32_t len)
 {
 	v = static_cast<uint16_t>(atoi(get_char<8>(sv, len)));
 }
-inline void cast(OUT int32_t& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT int32_t& v, IN const char* sv, IN uint32_t len)
 {
 	v = atoi(get_char<16>(sv, len));
 }
-inline void cast(OUT uint32_t& v, IN const char* sv, IN const uint32_t len)
+inline void cast(OUT uint32_t& v, IN const char* sv, IN uint32_t len)
 {
 	v = atoi(get_char<16>(sv, len));
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-inline void cast(OUT std::string& sv, IN bool v)
-{
-	sv = v ? "1" : "0";
-}
-inline void cast(OUT std::string& sv, IN int16_t v)
-{
-	sv = Integer<int16_t>(v, dec);
-}
-inline void cast(OUT std::string& sv, IN uint16_t v)
-{
-	sv = Integer<uint16_t>(v, dec);
-}
-inline void cast(OUT std::string& sv, IN int32_t v)
-{
-	sv = Integer<int32_t>(v, dec);
-}
-inline void cast(OUT std::string& sv, IN uint32_t v)
-{
-	sv = Integer<uint32_t>(v, dec);
-}
-inline void cast(OUT std::string& sv, IN int64_t v)
-{
-	sv = Integer<int64_t>(v, dec);
-}
-inline void cast(OUT std::string& sv, IN uint64_t v)
-{
-	sv = Integer<uint64_t>(v, dec);
-}
-inline void cast(OUT std::string& sv, IN double v)
-{
-	sv = Double(v);
-}
-inline void cast(OUT std::string& sv, IN double v,
-	IN int precision, IN bool is_percent = false)
-{
-	sv = Double(v, precision, is_percent);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-template<typename dest_t, typename sour_t>
-inline dest_t cast(IN const sour_t& sv)
+template<typename dest_t>
+inline dest_t cast(IN const char* v, IN uint32_t siz)
 {
 	dest_t dv;
-	cast(dv, sv);
+	cast(dv, v, siz);	// using get_char<>;
 	return dv;
 }
 template<typename dest_t>
-inline dest_t cast(IN const char* v)
+inline dest_t cast(IN const std::string& v, IN uint32_t siz)
 {
-	dest_t dv;
-	cast(dv, v);
-	return dv;
-}
-template<typename dest_t>
-inline dest_t cast(IN const char* v, IN const uint32_t siz)
-{
-	dest_t dv;
-	cast(dv, v, siz);
-	return dv;
-}
-template<typename dest_t>
-inline dest_t cast(IN const std::string& v)
-{
-	return cast<dest_t>(v.c_str());
-}
-template<typename dest_t>
-inline dest_t cast(IN const std::string& v, IN const uint32_t siz)
-{
+	if (siz > v.size()) siz = v.size();
 	return cast<dest_t>(v.c_str(), siz);
 }
-template<typename dest_t>
-inline dest_t cast(IN double v, IN int precision, IN bool is_percent = false)
+
+
+////////////////////////////////////////////////////////////////////////////////
+inline std::string cast(IN bool v)
 {
-	dest_t dv;
-	cast(dv, v, precision, is_percent);
-	return dv;
+	return v ? "1" : "0";
+}
+inline std::string cast(IN int16_t v)
+{
+	return Integer<int16_t>(v, dec).c_str();
+}
+inline std::string cast(IN uint16_t v)
+{
+	return Integer<uint16_t>(v, dec).c_str();
+}
+inline std::string cast(IN int32_t v)
+{
+	return Integer<int32_t>(v, dec).c_str();
+}
+inline std::string cast(IN uint32_t v)
+{
+	return Integer<uint32_t>(v, dec).c_str();
+}
+inline std::string cast(IN int64_t v)
+{
+	return Integer<int64_t>(v, dec).c_str();
+}
+inline std::string cast(IN uint64_t v)
+{
+	return Integer<uint64_t>(v, dec).c_str();
+}
+inline std::string cast(IN double v)
+{
+	return Double(v).c_str();
+}
+inline std::string cast(IN double v, IN int precision, IN bool percent = false)
+{
+	return Double(v, precision, percent).c_str();
+}
+template<typename dest_t>
+inline dest_t cast(IN double v, IN int precision, IN bool percent = false)
+{
+	return Double(v, precision, percent).c_str();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline char to_upper(IN const char c)
+inline char to_upper(IN char c)
 {
 	if (c <= 'z' && c >= 'a')
 		return c + ('A' - 'a');
 	return c;
 }
-inline char to_lower(IN const char c)
+inline char to_lower(IN char c)
 {
 	if (c <= 'Z' && c >= 'A')
 		return c + ('a' - 'A');
@@ -502,10 +447,6 @@ inline void to_lower(IN std::string& v)
 	{
 		*ch = to_lower(*ch);
 	}
-}
-inline char first(IN const char* sv)
-{
-	return (sv != nullptr && sv[0] != '\0') ? sv[0] : 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);

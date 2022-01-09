@@ -4,10 +4,10 @@
 #include <eco/Prec.h>
 
 // configure eco version.
-#define ECO_UTT_LIB_MAJOR @EcoUtt_VERSION_MAJOR@
-#define ECO_UTT_LIB_MINOR @EcoUtt_VERSION_MINOR@
-#define ECO_UTT_LIB_PATCH @EcoUtt_VERSION_PATCH@
-#define ECO_UTT_LIB_TWEAK @EcoUtt_VERSION_TWEAK@
+#define ECO_UTT_LIB_MAJOR @Utt_VERSION_MAJOR@
+#define ECO_UTT_LIB_MINOR @Utt_VERSION_MINOR@
+#define ECO_UTT_LIB_PATCH @Utt_VERSION_PATCH@
+#define ECO_UTT_LIB_TWEAK @Utt_VERSION_TWEAK@
 
 // configure eco prec.
 #define ECO_LINUX

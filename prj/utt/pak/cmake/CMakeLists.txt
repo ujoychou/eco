@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
 # project name version.
-project(EcoUtt VERSION 2.0.1)
+project(Utt VERSION 2.0.1)
 # project param for cppxx.cmake
 set(ECO_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(SRC_DIR  ${ECO_DIR}/prj/utt)
@@ -22,7 +22,7 @@ list(APPEND CXX_FILES ${SRC_DIR}/Rtype.cpp)
 list(APPEND CXX_FILES_EXCLUDE ${SRC_DIR}/xml/Reader.old.cpp)
 # include lib.
 set(CXX_LIBS libprotobufd.so libpthread.so)
-list(APPEND CXX_LIBS libboost_filesystem.so libboost_thread.so gtest gtest_main)
+list(APPEND CXX_LIBS libboost_filesystem.so libboost_thread.so libgtestd.a libgtest_maind.a)
 
 # apply with cpp11
 include(${ECO_DIR}/pak/cmake/cpp11.cmake)

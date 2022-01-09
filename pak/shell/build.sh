@@ -29,7 +29,7 @@ cmake ${CMAKE_DIR}/ -DCMAKE_BUILD_TYPE=${CFG}
 # make: build & move to bin.
 make -j
 mkdir -p ${BIN_DIR}/${PRJ_CFG}
-mv ${TMP_DIR}/${PRJ_CFG}/${PRJ} ${BIN_DIR}/${PRJ_CFG}/
+#mv ${TMP_DIR}/${PRJ_CFG}/${PRJ} ${BIN_DIR}/${PRJ_CFG}/
 
 # back to init dir.
 cd ${INIT_DIR}

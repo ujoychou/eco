@@ -40,12 +40,13 @@ ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 // value type: empty string.
 const std::string value_empty;
-using detail::is_upper;
+using detail::is_lower;
 using detail::upper;
 using detail::iequal;
-inline bool is_lower(IN char v)
+using detail::first;
+inline bool is_upper(IN char v)
 {
-	return v >= 'a' && v <= 'z';
+	return v >= 'A' && v <= 'Z';
 }
 inline bool is_char(IN char v)
 {
@@ -65,7 +66,7 @@ inline bool equal(IN const char* s1, IN const char* s2)
 }
 inline char lower(IN char v)
 {
-	return is_lower(v) ? v : (v + 'a' - 'A');
+	return is_upper(v) ? (v + 'a' - 'A') : v;
 }
 
 
@@ -208,12 +209,12 @@ inline uint32_t find_reverse(
 {
 	// size isn't enough.
 	uint32_t size_sub = (uint32_t)strlen(sub);
-	if (size_sub > size) return -1;
+	if (size_sub > size) return uint32_t(-1);
 
 	uint32_t pos = size - size_sub;
-	if (rstart == -1 || pos < rstart) rstart = pos;
+	if (rstart == uint32_t(-1) || pos < rstart) rstart = pos;
 	rend += 1;
-	if (rend > rstart) return -1;
+	if (rend > rstart) return uint32_t(-1);
 
 	// reverse find with "--".
 	const char* end = &data[rend];
@@ -276,7 +277,7 @@ inline size_t fit_size(IN const char* str, IN size_t size)
 {
 	size_t x = 0;
 	size_t i = size - 1;
-	for (; i != -1 && str[i] == 0; --i) ++x;
+	for (; i != size_t(-1) && str[i] == 0; --i) ++x;
 	if (i == 0 && str[i] == 0) ++x;
 	return x;
 }
@@ -337,7 +338,7 @@ public:
 	inline Bytes(const char* data, uint32_t size = -1)
 		: m_data(data), m_size(size)
 	{
-		if (m_size == -1 && data != nullptr)
+		if (m_size == uint32_t(-1) && data != nullptr)
 			m_size = static_cast<uint32_t>(strlen(data));
 	}
 
@@ -366,16 +367,16 @@ inline eco::Bytes func(IN const char* full_func_name)
 {
 	uint32_t len = (uint32_t)strlen(full_func_name);
 	uint32_t end = eco::find_last(full_func_name, len, '(');
-	if (end == -1) end = len;
+	if (end == uint32_t(-1)) end = len;
 	uint32_t start = eco::find_last(full_func_name, end, ':');
-	start = (start == -1) ? 0 : start + 1;
+	start = (start == uint32_t(-1)) ? 0 : start + 1;
 	return eco::Bytes(full_func_name + start, end - start);
 }
 inline const char* clss(IN const char* full_clss_name)
 {
 	uint32_t end = (uint32_t)strlen(full_clss_name);
 	uint32_t start = eco::find_last(full_clss_name, end, ':');
-	start = (start == -1) ? 0 : start + 1;
+	start = (start == uint32_t(-1)) ? 0 : start + 1;
 	return (full_clss_name + start);
 }
 
@@ -603,12 +604,10 @@ public:
 		if (m_capacity < c)
 		{
 			// exponential growth.
+			if (c < 32) { c = 32; }
 			uint32_t old_size = m_size;
 			uint32_t new_size = m_capacity * 2;
-			if (new_size < c)
-			{
-				new_size = c;
-			}
+			if (new_size < c) { new_size = c; }
 
 			// keep old value.
 			char* new_data = (char*)RxHeap::
@@ -1005,7 +1004,7 @@ StringAny::StringAny(IN const StringAny& v)
 StringAny::StringAny(IN const char* v)
 	: m_vtype(type_string), m_value(v) {}
 StringAny::StringAny(IN bool v)
-	: m_vtype(type_bool), m_value(eco::cast<std::string>(v).c_str()) {}
+	: m_vtype(type_bool), m_value(eco::cast(v)) {}
 StringAny::StringAny(IN char v)
 	: m_vtype(type_char), m_value(1, v) {}
 StringAny::StringAny(IN unsigned char v)
@@ -1021,7 +1020,6 @@ StringAny::StringAny(IN uint64_t v)
 StringAny::StringAny(IN double v, IN int precision)
 	: m_vtype(type_double), m_value(eco::Double(v, precision).c_str()) {}
 
-////////////////////////////////////////////////////////////////////////////////
 StringAny& StringAny::operator=(IN StringAny&& v)
 {
 	m_value = std::move(v.m_value);

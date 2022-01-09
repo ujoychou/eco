@@ -60,7 +60,7 @@ inline stream_t& append(double v, int prec, bool percent)\
 }\
 inline stream_t& operator<<(IN bool v)\
 {\
-	(*this) << eco::cast<std::string>(v).c_str();\
+	(*this) << eco::cast(v).c_str();\
 	return *this;\
 }\
 inline stream_t& operator<<(IN char v)\
@@ -70,56 +70,56 @@ inline stream_t& operator<<(IN char v)\
 }\
 inline stream_t& operator<<(IN int8_t v)\
 {\
-	Integer<int8_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<int8_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN uint8_t v)\
 {\
-	Integer<uint8_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<uint8_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN int16_t v)\
 {\
-	Integer<int16_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<int16_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN uint16_t v)\
 {\
-	Integer<uint16_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<uint16_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN int32_t v)\
 {\
-	Integer<int32_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<int32_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN uint32_t v)\
 {\
-	Integer<uint32_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<uint32_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN int64_t v)\
 {\
-	Integer<int64_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<int64_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN uint64_t v)\
 {\
-	Integer<uint64_t> str(v);\
-	member.append(str, str.size());\
+	eco::Integer<uint64_t> str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN double v)\
 {\
-	Double str(v);\
-	member.append(str, str.size());\
+	eco::Double str(v);\
+	member.append(str.c_str(), str.size());\
 	return *this;\
 }\
 inline stream_t& operator<<(IN const char* v)\
