@@ -17,8 +17,8 @@ thread safe object state.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
-#include <eco/thread/Mutex.h>
+#include <eco/rx/RxExport.h>
+#include <eco/std/mutex.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -30,16 +30,16 @@ class ConditionVariable : public eco::Object<ConditionVariable>
 {
 public:
 	inline explicit ConditionVariable(
-		IN eco::Mutex* m = nullptr) : m_mutex(m)
+		IN std_mutex* m = nullptr) : m_mutex(m)
 	{
 		// condition var no need to destroy.
 		::InitializeConditionVariable(&m_cond_var);
 	}
-	inline void set_mutex(IN eco::Mutex& m)
+	inline void set_mutex(IN std_mutex& m)
 	{
 		m_mutex = &m;
 	}
-	inline eco::Mutex& mutex()
+	inline std_mutex& mutex()
 	{
 		return *m_mutex;
 	}
@@ -63,7 +63,7 @@ public:
 	}
 
 private:
-	eco::Mutex* m_mutex;
+	std_mutex* m_mutex;
 	CONDITION_VARIABLE m_cond_var;
 };
 

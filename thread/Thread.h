@@ -19,17 +19,15 @@ thread and common thread function.
 * copyright(c) 2016 - 2018, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Object.h>
-#include <eco/eco/Proto.h>
+#include <eco/Cast.h>
+#include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
+#include <eco/std/thread.h>
+#include <eco/std/chrono.h>
 #include <list>
-#include <eco/cpp/Thread.h>
-#include <eco/cpp/Chrono.h>
 
 
 ECO_NS_BEGIN(eco);
-ECO_NS_BEGIN(log);
-template<typename stream_t> class PusherT;
-ECO_NS_END(log);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Thread
 {
@@ -48,17 +46,15 @@ public:
 	Thread& name(IN const char*);
 
 	// start thread.
-	void run(
-		IN std::function<void()>&& func,
-		IN const char* name = "");
+	void run(IN const char* name, IN eco::Task&& func);
 
 	// compatible with thread pool.
 	inline void run(
-		IN std::function<void()>&& func,
+		IN const char* name,
 		IN uint32_t thread_size,
-		IN const char* name = "")
+		IN eco::Task&& func)
 	{
-		run(std::move(func), name);
+		run(name, std::move(func));
 	}
 
 	// waiting thread over.
@@ -72,17 +68,17 @@ class ThreadPool
 public:
 	// start thread.
 	inline void run(
-		IN std::function<void()>&& func,
+		IN const char* name,
 		IN uint32_t thread_size,
-		IN const char* name = "")
+		IN eco::Task&& func)
 	{
 		std::string namei;
 		for (uint32_t i = 0; i < thread_size; ++i)
 		{
 			eco::Thread thr;
 			namei = name;
-			namei += eco::cast<std::string>(i);
-			thr.run(std::move(func), namei.c_str());
+			namei += eco::cast(i);
+			thr.run(namei.c_str(), std::move(func));
 			m_threads.push_back(std::move(thr));
 		}
 	}
@@ -108,81 +104,7 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// timer will check the lock state in intervals.
-class ThreadLock;
-class ECO_API ThreadCheck
-{
-	ECO_SINGLETON_API(ThreadCheck);
-public:
-	void set_time(uint64_t now_sec);
-	int64_t get_time() const;
-	static ThreadCheck& get();
-
-private:
-	void on_timer(uint64_t now_sec);
-	void add_lock(ThreadLock*);
-	void del_lock(ThreadLock*);
-	friend class ThreadLockGuard;
-	friend class ThreadCheckOut;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-// when thread locked, tracer will produce warn.
-class ThreadLock
-{
-public:
-	inline ThreadLock(int timeout = 10)
-		: m_object(0), m_stamp(0)
-		, m_timeout(timeout), m_thread(0)
-	{}
-	inline ~ThreadLock()
-	{}
-
-	// the function of thread begin.
-	inline void set_object(uint64_t object_id)
-	{
-		m_object = object_id;
-		m_stamp = ThreadCheck::get().get_time();
-	}
-
-	// the function of thread end.
-	inline void unlock()
-	{
-		m_stamp = 0;
-		m_object = 0;
-	}
-
-	inline bool unlocked() const
-	{
-		return m_stamp == 0;
-	}
-
-private:
-	// the function of thread end.
-	inline void lock(int64_t stamp)
-	{
-		m_stamp = stamp;
-	}
-
-	// update time at regular intervals.
-	inline bool timeout(int64_t curr) const
-	{
-		return curr - m_stamp >= (int64_t)m_timeout;
-	}
-
-	int					m_timeout;			// timeout seconds.
-	uint64_t			m_object;			// object id.
-	std_atomic_int64_t	m_stamp;			// seconds of day.
-	Thread::Impl*		m_thread;			// thread.
-	friend class ThreadCheck;
-	friend class Thread::Impl;
-};
-
-
 ECO_NS_BEGIN(this_thread);
-
-////////////////////////////////////////////////////////////////////////////////
 // get current thread id.
 ECO_API size_t id();
 ECO_API const char* get_id();
@@ -191,22 +113,8 @@ ECO_API const char* get_id();
 ECO_API const char* name();
 
 // get current thread lock.
-ECO_API ThreadLock& lock();
-
-/* get current thread format: 
-1.return char*: locale get_error.
-2.format buffer: 
-*/
-ECO_API eco::FormatX& format();
-ECO_API eco::FormatX& format(const char* msg);
-#ifndef ECO_NO_PROTOBUF
-ECO_NS_BEGIN(proto);
-ECO_API eco::proto::Error& error();
-ECO_NS_END(proto);
-#endif
-
-// get current thread logging buffer.
-ECO_API eco::log::PusherT<eco::String>& logbuf();
+class DeadLock;
+ECO_API DeadLock& dead_lock();
 
 // init thread.
 ECO_API void init();
@@ -222,72 +130,104 @@ inline void sleep(IN int millisecond)
 ECO_NS_END(this_thread);
 
 
+////////////////////////////////////////////////////////////////////////////////
+class DeadLockCheckImpl;
+class ECO_API DeadLockCheck
+{
+public:
+	// time unit: second. no need to use high precision unit.
+	// get current time in dead lock check. return day of time seconds.
+	static uint32_t get_time();
+
+	// update dead lock check time. set day of time seconds.
+	static void on_timer(uint64_t now);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_BEGIN(this_thread);
+// when thread locked, tracer will produce warn.
+class DeadLock
+{
+public:
+	inline DeadLock(int timeout = 10)
+		: m_stamp(0), m_timeout(timeout), m_thread(nullptr) {}
+
+	// the function of thread begin.
+	// update time at regular intervals.
+	inline void begin() { m_stamp = eco::DeadLockCheck::get_time(); }
+	// the function of thread end.
+	inline void end() { m_stamp = 0; }
+
+	// check whether deadlock happen.
+	inline bool happen(int64_t curr) const
+	{
+		bool is_begin = (m_stamp != 0);
+		bool is_timeout = (curr - m_stamp >= (int64_t)m_timeout);
+		return is_begin && is_timeout;
+	}
+
+private:
+	friend class eco::DeadLockCheckImpl;
+	friend class eco::Thread::Impl;
+	uint32_t m_stamp;			// seconds of day.
+	uint32_t m_timeout;			// timeout seconds.
+	Thread::Impl* m_thread;		// thread.
+};
+ECO_NS_END(this_thread);
+
 
 ECO_NS_BEGIN(thread);
 ////////////////////////////////////////////////////////////////////////////////
 // check and wait data state is valid infinitely.
-inline void wait(
-	IN std::function<bool()>&& checker,
-	IN uint32_t unit_mill_sec = 50)
+inline void wait(IN std::function<bool()>&& checker, IN uint32_t sleep_ms = 50)
 {
-	if (unit_mill_sec < 10)
-	{
-		unit_mill_sec = 10;
-	}
-
 	// wait until the data state is valid.
 	while (!checker())
 	{
-		eco::this_thread::sleep(unit_mill_sec);
+		if (sleep_ms == 0)
+			std_this_thread::yield();
+		else
+			std_this_thread::sleep_for(std_chrono::milliseconds(sleep_ms));
 	}
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
 // check and wait data state is valid until time is out.
 inline bool time_wait(
 	IN std::function<bool()>&& checker,
-	IN uint32_t timeout_mill_secs,
-	IN uint32_t unit_mill_sec = 50)
+	IN uint32_t timeout_ms, IN uint32_t sleep_ms = 50)
 {
-	if (unit_mill_sec < 10)
-	{
-		unit_mill_sec = 10;
-	}
-
 	// wait until the data state is valid or when timeout.
-	uint32_t count_mill_secs = 0;
-	while (!checker() && count_mill_secs < timeout_mill_secs)
+	uint32_t count_ms = 0;
+	if (sleep_ms < 10) { sleep_ms = 10; }
+	while (!checker() && count_ms < timeout_ms)
 	{
-		eco::this_thread::sleep(unit_mill_sec);
-		count_mill_secs += unit_mill_sec;
+		eco::this_thread::sleep(sleep_ms);
+		count_ms += sleep_ms;
 	}
-
 	// timeout return false, else true.
-	return count_mill_secs < timeout_mill_secs;
+	return count_ms < timeout_ms;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-inline void release(IN std::weak_ptr<T>& wp, IN int unit_sleep = 10)
+inline void release(IN std::weak_ptr<T>& wp, IN int sleep_ms = 10)
 {
 	while (wp.use_count() > 0)
 	{
-		if (unit_sleep > 0)
-			std_this_thread::sleep_for(std_chrono::milliseconds(unit_sleep));
+		if (sleep_ms > 0)
+			std_this_thread::sleep_for(std_chrono::milliseconds(sleep_ms));
 		else
 			std_this_thread::yield();
 	}
 }
 template<typename T>
-inline void release(IN std::shared_ptr<T>& sp, IN int unit_sleep = 10)
+inline void release(IN std::shared_ptr<T>& sp, IN int sleep_ms = 10)
 {
 	std::weak_ptr<T> wp(sp);
 	sp.reset();
-	release(wp, unit_sleep);
+	release(wp, sleep_ms);
 }
-
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(thread);
 ECO_NS_END(eco);

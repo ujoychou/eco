@@ -252,7 +252,7 @@
     <ClCompile Include="..\net\asio\TcpAcceptor.cpp" />
     <ClCompile Include="..\net\asio\TcpConnector.cpp" />
     <ClCompile Include="..\net\asio\Worker.cpp" />
-    <ClCompile Include="..\net\DispatchServer.cpp" />
+    <ClCompile Include="..\net\Router.cpp" />
     <ClCompile Include="..\net\Net.cpp" />
     <ClCompile Include="..\net\Protocol.cpp" />
     <ClCompile Include="..\net\Subscriber.cpp" />
@@ -300,7 +300,7 @@
     <ClInclude Include="..\log\Queue.h" />
     <ClInclude Include="..\log\Server.h" />
     <ClInclude Include="..\log\FileSink.h" />
-    <ClInclude Include="..\net\DispatchServer.h" />
+    <ClInclude Include="..\net\Router.h" />
     <ClInclude Include="..\net\TcpOuter.h" />
     <ClInclude Include="..\net\TcpStatistics.h" />
     <ClInclude Include="..\net\TcpWheel.h" />

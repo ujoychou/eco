@@ -2,80 +2,60 @@
 #define ECO_ECO_IPP
 /*******************************************************************************
 @ name
-
-
 @ function
-
-
 --------------------------------------------------------------------------------
 @ history ver 1.0 @
 @ records: ujoy modifyed on 2017-01-01.
 1.create and init this class.
-
-
 --------------------------------------------------------------------------------
 * copyright(c) 2017 - 2019, ujoy, reserved all right.
-
 *******************************************************************************/
-#include <eco/Eco.h>
+#include <eco/thread/Eco.h>
 #include <eco/thread/Map.h>
 #include <eco/thread/State.h>
-#include <eco/thread/TaskServer.h>
-#include <eco/thread/TimingWheel.h>
+#include <eco/thread/Btask.h>
+#include <eco/thread/Tasker.h>
+#include <eco/thread/Timing.h>
 #include <list>
 
 
 ECO_NS_BEGIN(eco);
-class Being;
 ////////////////////////////////////////////////////////////////////////////////
 class Eco::Impl
 {
 	ECO_IMPL_INIT(Eco);
 public:
-	// ¹¹Ôì·½·¨
+	// æ„é€ æ–¹æ³•
 	Impl();
 
-	// ÔËĞĞ»î¶¯
+	// è¿è¡Œæ´»åŠ¨
 	void start();
 
-	// Í£Ö¹»î¶¯
+	// åœæ­¢æ´»åŠ¨
 	void stop();
 
-	// ¼ÓÈëÖ´ĞĞÈÎÎñ
-	void post_task(IN Closure&& task);
+	// åŠ å…¥æ‰§è¡Œä»»åŠ¡
+	void post_task(eco::Task&& task, uint32_t restart_sec_if_fail);
 
-	// ¼ÓÈëµÈ´ıÈÎÎñ
-	void post_wait(IN Btask::ptr& task);
+	// åŠ å…¥ç­‰å¾…ä»»åŠ¡
+	void post_wait(Btask::ptr&& task);
 
-	// Í¨ÖªµÈ´ıÈÎÎñ
+	// é€šçŸ¥ç­‰å¾…ä»»åŠ¡
 	void move_wait();
 
-	// ÈÎÎñ·şÎñÏß³Ì
+	// ä»»åŠ¡æœåŠ¡çº¿ç¨‹
 	static void set_task_thread_size(uint32_t size);
 	static uint32_t get_task_thread_size();
 
-	// get next req id.
-	inline uint32_t next_req_id()
-	{
-		std_lock_guard lock(m_async_map.mutex());
-		// promise that: request_id != 0.
-		if (++m_request_id == 0) ++m_request_id;
-		return m_request_id;
-	}
-
 public:
-	// Ê±¼äÂÖ¶¨Ê±Æ÷
-	eco::TimingWheel m_wheel;
+	// æ—¶é—´è½®å®šæ—¶å™¨
+	eco::Timing m_wheel;
 
-	// ÈÎÎñ¶ÓÁĞ
+	// ä»»åŠ¡é˜Ÿåˆ—
 	static uint32_t s_task_thread_size;
-	eco::TaskServer m_task_server;
+	eco::Tasker m_task_server;
 	std::list<Btask::ptr> m_wait_task_list;
-	mutable eco::Mutex m_wait_task_list_mutex;
-
-	// ·şÎñÒì²½¹ÜÀí
-	eco::Atomic<uint32_t> m_request_id;
-	eco::HashMap<uint32_t, Eco::HandlerPtr> m_async_map;
+	mutable std_mutex m_wait_task_list_mutex;
 };
 
 

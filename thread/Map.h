@@ -18,8 +18,8 @@ it shared the data in the program, and it manage data's life cycle.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Object.h>
-#include <eco/cpp/Thread.h>
+#include <eco/Error.h>
+#include <eco/std/mutex.h>
 #include <map>
 #include <unordered_map>
 
@@ -29,8 +29,8 @@ ECO_NS_BEGIN(eco);
 template<
 	typename identity_t, 
 	typename value_t,
-	typename container = std::unordered_map<identity_t, value_t >>
-class MapT : public eco::Object<MapT<identity_t, value_t, container> >
+	typename std_map = std::unordered_map<identity_t, value_t >>
+class MapT : public eco::Object<MapT<identity_t, value_t, std_map> >
 {
 public:
 	typedef identity_t identity;
@@ -43,12 +43,12 @@ public:
 		inline MapFinder(value_iterator_find& func) : m_func(func)
 		{}
 
-		inline bool operator()(typename container::value_type& val)
+		inline bool operator()(typename std_map::value_type& val)
 		{
 			return m_func(val.second);
 		}
 
-		inline bool operator()(typename const container::value_type& val)
+		inline bool operator()(const typename std_map::value_type& val)
 		{
 			return m_func(val.second);
 		}
@@ -139,7 +139,7 @@ public:
 	inline bool find(OUT value& val, IN  const identity& id) const
 	{
 		std_lock_guard lock(m_mutex);
-		typename container::const_iterator it = m_data_map.find(id);
+		typename std_map::const_iterator it = m_data_map.find(id);
 		if (it == m_data_map.end())
 		{
 			return false;
@@ -203,13 +203,13 @@ public:
 	}
 
 	/*@ get raw data set.*/
-	inline container& map()
+	inline std_map& map()
 	{
 		return m_data_map;
 	}
 
 	/*@ get raw data set.*/
-	inline const container& get_map() const
+	inline const std_map& get_map() const
 	{
 		return m_data_map;
 	}
@@ -223,7 +223,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 protected:
 	// data map.
-	container m_data_map;
+	std_map m_data_map;
 	mutable std_mutex m_mutex;
 };
 

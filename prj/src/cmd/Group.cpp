@@ -2,7 +2,7 @@
 #include <eco/cmd/Group.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/log/Log.h>
-#include <eco/Implement.h>
+#include <eco/rx/RxImpl.h>
 #include <eco/cmd/Engine.h>
 #include <iostream>
 #include "Inner.h"
@@ -72,7 +72,7 @@ void ListCommand::execute(IN eco::cmd::Context& context)
 		{
 			snprintf(fmt, sizeof(fmt), "{g} %-10s %-20s: %s",
 				it->alias(), it->name(), it->help_info());
-			EcoCout << fmt;
+			eco::cout() << fmt;
 		}
 	}
 
@@ -84,12 +84,12 @@ void ListCommand::execute(IN eco::cmd::Context& context)
 		{
 			snprintf(fmt, sizeof(fmt), "(c) %-10s %-20s: %s",
 				it->alias(), it->name(), it->help_info());
-			EcoCout << fmt;
+			eco::cout() << fmt;
 		}
 	}
 	if (data.m_command_set.empty() && data.m_group_set.empty())
 	{
-		EcoCout << "this group has no command.";
+		eco::cout() << "this group has no command.";
 	}
 }
 
@@ -114,7 +114,7 @@ void run_command(IN Context& context, OUT Group::Impl& data)
 		std::bind(&equal, std::placeholders::_1, context.command()));
 	if (it == data.m_command_set.end())
 	{
-		EcoCout << "can't find command: " << context.command();
+		eco::cout() << "can't find command: " << context.command();
 		return ;
 	}
 

@@ -1,7 +1,7 @@
 ﻿#ifndef ECO_ANY_H
 #define ECO_ANY_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Type.h>
+#include <eco/Object.h>
 
 
 ECO_NS_BEGIN(eco);

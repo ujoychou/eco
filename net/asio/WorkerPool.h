@@ -23,7 +23,7 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
+#include <eco/rx/RxExport.h>
 #include <eco/net/asio/Worker.h>
 
 
@@ -67,7 +67,7 @@ public:
 			TcpWorkerPtr tcp_worker(new Worker);
 			m_tcp_workers.push_back(tcp_worker);
 			xname = name;
-			xname += eco::cast<std::string>(i);
+			xname += eco::cast(i);
 			m_balancer.push_back(WorkLoad(tcp_worker.get(), 0));
 			tcp_worker->run(xname.c_str());
 		}

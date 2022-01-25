@@ -2,7 +2,7 @@
 #define ECO_TOPIC_ROLE_H
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Any.h>
-#include <eco/RtObject.h>
+#include <eco/Rtype.h>
 #include <eco/log/Log.h>
 #include <eco/meta/Stamp.h>
 #include <eco/thread/topic/Subscription.h>
@@ -665,7 +665,7 @@ public:
 	template<typename object_set_t>
 	inline void push_back_set(IN const object_set_t& set)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		for (auto it = set.begin(); it != set.end(); ++it)
 		{
 			push_back_raw(*it);
@@ -674,20 +674,20 @@ public:
 	template<typename object_t>
 	inline void push_back(IN const object_t& obj)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		push_back_raw(obj);
 	}
 	template<typename object_t>
 	inline void push_back(IN const std::shared_ptr<object_t>& obj)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		push_back_raw(obj);
 	}
 
 	// topic server: publish snap after subsriber reserve topic.
 	virtual void publish_snap(IN Subscription& node)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		if (node.m_subscriber != nullptr)
 		{
 			node.subscribe_submit();
@@ -699,7 +699,7 @@ public:
 	virtual void publish_new(IN eco::ContentData::ptr& new_c)
 	{
 		// publish new content to all subscriber.
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		eco::ContentData::ptr old_c;
 		eco::meta::Stamp stmp = new_c->stamp();
 		if (!do_move(new_c, old_c)) return;
@@ -723,7 +723,7 @@ public:
 	// publish remove topic event.
 	virtual void publish_erase()
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))
 		{
@@ -742,7 +742,7 @@ public:
 	// publish clear all content in topic.
 	virtual void publish_clear()
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		do_clear();
 		Subscription* node = subscriber_head();
 		while (!subscriber_end(node))

@@ -196,7 +196,7 @@ public:
 		IN Subscriber* subscriber,
 		IN bool erase_topic_if_no_suber = false)
 	{
-		eco::Mutex::ScopeLock lock(m_topics_mutex);
+		std_lock_guard lock(m_topics_mutex);
 		auto& topic_map = __get_topic_map(topic_id);
 		auto it = topic_map.find(topic_id);
 		if (it != topic_map.end() &&
@@ -246,7 +246,7 @@ public:
 		IN const topic_id_t& topic_id,
 		IN MakeTopic make = nullptr)
 	{
-		eco::Mutex::ScopeLock lock(m_topics_mutex);
+		std_lock_guard lock(m_topics_mutex);
 		auto& topic_map = __get_topic_map(topic_id);
 		auto it = topic_map.find(topic_id);
 		if (it != topic_map.end())
@@ -267,7 +267,7 @@ public:
 	template<typename topic_id_t>
 	inline Topic::ptr find_topic(IN const topic_id_t& topic_id) const
 	{
-		eco::Mutex::ScopeLock lock(m_topics_mutex);
+		std_lock_guard lock(m_topics_mutex);
 		auto it = __get_topic_map(topic_id).find(topic_id);
 		return (it != __get_topic_map(topic_id).end())
 			? it->second : Topic::ptr();
@@ -284,7 +284,7 @@ public:
 	inline Topic::ptr pop_topic(IN const topic_id_t& topic_id)
 	{
 		Topic::ptr topic;
-		eco::Mutex::ScopeLock lock(m_topics_mutex);
+		std_lock_guard lock(m_topics_mutex);
 		auto& topic_map = __get_topic_map(topic_id);
 		auto it = topic_map.find(topic_id);
 		if (it != topic_map.end())
@@ -420,7 +420,7 @@ private:
 	template<typename TopicMap>
 	inline void __clear_topic(IN TopicMap& topic_map)
 	{
-		eco::Mutex::ScopeLock lock(m_topics_mutex);
+		std_lock_guard lock(m_topics_mutex);
 		for (auto it = topic_map.begin(); it != topic_map.end(); ++it)
 		{
 			m_impl.publish_erase(it->second);
@@ -430,7 +430,7 @@ private:
 
 private:
 	// topic management.
-	mutable eco::Mutex m_topics_mutex;
+	mutable std_mutex m_topics_mutex;
 	Impl m_impl;
 	std::unordered_map<TopicId, Topic::ptr> m_tid_topics;
 	std::unordered_map<uint64_t, Topic::ptr> m_int_topics;

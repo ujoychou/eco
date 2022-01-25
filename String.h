@@ -23,11 +23,12 @@ eco basic type.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Def.h>
+#include <eco/Object.h>
 #include <eco/Stream.h>
 #include <eco/Number.h>
 #include <eco/rx/RxHeap.h>
 #include <cstring>
+#include <cassert>
 
 
 ECO_NS_BEGIN(eco);
@@ -68,19 +69,6 @@ inline char lower(IN char v)
 {
 	return is_upper(v) ? (v + 'a' - 'A') : v;
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-#ifdef ECO_WIN32
-inline int snprintf(OUT char* buf, IN size_t size, IN const char* format, ...)
-{
-	va_list arglist;
-	va_start(arglist, format);
-	int result = _vsnprintf(buf, size, format, arglist);
-	va_end(arglist);
-	return result;
-}
-#endif
 
 /*@ strncpy copy like strncpy but return the length of copyed string instead
 of return the dest string. 
@@ -986,6 +974,7 @@ public:
 	inline operator uint32_t() const;
 	inline operator int64_t() const;
 	inline operator uint64_t() const;
+	inline operator float() const;
 	inline operator double() const;
 	inline operator bool() const;
 
@@ -1098,6 +1087,10 @@ StringAny::operator uint64_t() const
 StringAny::operator double() const
 {
 	return eco::cast<double>(m_value);
+}
+StringAny::operator float() const
+{
+	return eco::cast<float>(m_value);
 }
 StringAny::operator bool() const
 {

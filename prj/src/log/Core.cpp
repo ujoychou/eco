@@ -1,19 +1,32 @@
 #include "Pch.h"
 #include <eco/log/Core.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/log/Pusher.h>
-#include <boost/ptr_container/ptr_vector.hpp>
+#include <eco/log/Type.h>
 #include <boost/filesystem/operations.hpp>
-#include "FileSink.h"
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "Server.h"
+#include "FileSink.h"
 
 
 ECO_NS_BEGIN(eco);
-namespace log{;
+ECO_NS_BEGIN(this_thread);
+////////////////////////////////////////////////////////////////////////////////
+// thread local log buf.
+thread_local eco::log::PusherT<eco::String>* t_logbuf = 0;
+eco::log::PusherT<eco::String>& logbuf()
+{
+	if (t_logbuf == 0) { t_logbuf = new eco::log::PusherT<eco::String>(); }
+	t_logbuf->stream().clear();
+	return *t_logbuf;
+}
+ECO_NS_END(this_thread);
 
 
 //##############################################################################
 //##############################################################################
+ECO_NS_BEGIN(log);
 ////////////////////////////////////////////////////////////////////////////////
 class ConsoleSink
 {
@@ -38,10 +51,10 @@ public:
 	// sync logging.
 	inline void operator()(
 		IN const eco::Bytes& buf,
-		IN const SeverityLevel level);
+		IN SeverityLevel level);
 	inline void cout(
 		IN const eco::Bytes& buf,
-		IN const SeverityLevel level);
+		IN SeverityLevel level);
 
 	// async logging.
 	inline void operator()(IN const Pack& buf);
@@ -66,7 +79,7 @@ public:
 	uint32_t m_async_flush;			// async flush millseconds.
 
 	// console sink.
-	eco::Mutex m_sync_mutex;
+	std_mutex m_sync_mutex;
 	std::auto_ptr<FileSink> m_file_sink;
 	std::auto_ptr<ConsoleSink> m_console_sink;
 	SeverityLevel m_file_sev;
@@ -116,14 +129,14 @@ Core::Impl::Impl()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Handler::cout(const eco::Bytes& buf, const SeverityLevel level)
+void Handler::cout(const eco::Bytes& buf, SeverityLevel level)
 {
 	if (m_core->m_console_sink.get() && level >= m_core->m_console_sev)
 	{
 		(*m_core->m_console_sink) << buf.c_str();
 	}
 }
-void Handler::operator()(IN const eco::Bytes& buf, IN const SeverityLevel level)
+void Handler::operator()(IN const eco::Bytes& buf, IN SeverityLevel level)
 {
 	if (m_core->m_file_sink.get() && level >= m_core->m_file_sev)
 	{
@@ -211,18 +224,18 @@ void Core::join()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Core::set_severity_level(IN const char* v, IN const int flag)
+void Core::set_severity_level(IN const char* v, IN int flag)
 {
 	set_severity_level(eco::log::Severity::get_level(v), flag);
 }
-void Core::set_severity_level(IN const SeverityLevel v, IN const int flag)
+void Core::set_severity_level(IN SeverityLevel v, IN int flag)
 {
 	if (flag == 0 || flag == 1)
 		impl().m_file_sev = v;
 	if (flag == 0 || flag == 2)
 		impl().m_console_sev = v;
 }
-const SeverityLevel Core::severity_level() const
+SeverityLevel Core::severity_level() const
 {
 	return (impl().m_file_sev < impl().m_console_sev)
 		? impl().m_file_sev : impl().m_console_sev;
@@ -253,11 +266,11 @@ void Core::set_file_on_create(IN eco::log::OnChangedLogFile& func)
 {
 	impl().m_on_create = func;
 }
-void Core::append(IN eco::Bytes& buf, IN const SeverityLevel level)
+void Core::append(IN eco::Bytes& buf, IN SeverityLevel level)
 {
 	if (impl().m_server == nullptr)
 	{
-		eco::Mutex::ScopeLock lock(impl().m_sync_mutex);
+		std_lock_guard lock(impl().m_sync_mutex);
 		Handler(impl()).operator()(buf, level);
 		return;
 	}
@@ -274,7 +287,7 @@ void Core::append(IN eco::Bytes& buf, IN const SeverityLevel level)
 	catch (std::exception& e)
 	{
 		// buffer size is larger than logging pack.
-		EcoCout << e.what();
+		eco::cout() << e.what();
 		impl().m_server->post(eco::Bytes(e.what()));
 		impl().m_server->post(eco::Bytes(buf.c_str(), 1000));
 	}
@@ -316,13 +329,13 @@ SeverityLevel Severity::get_level(IN const char* sev_name)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-const char* Severity::get_name(IN const SeverityLevel sev_level)
+const char* Severity::get_name(IN SeverityLevel sev_level)
 {
 	if (sev_level > eco::log::fatal || sev_level < eco::log::trace)
 		return "unknown";
 	return g_sev_name[sev_level - eco::log::trace];
 }
-const char* Severity::get_display(IN const SeverityLevel sev_level)
+const char* Severity::get_display(IN SeverityLevel sev_level)
 {
 	if (sev_level > eco::log::fatal || sev_level < eco::log::trace)
 		return "[unknown]";
@@ -331,4 +344,5 @@ const char* Severity::get_display(IN const SeverityLevel sev_level)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
+ECO_NS_END(log);
+ECO_NS_END(eco);

@@ -4,8 +4,8 @@
 #include <eco/Prec.h>
 
 // configure eco version.
-#define ECO_LIB_MAJOR 3
-#define ECO_LIB_MINOR 2
+#define ECO_LIB_MAJOR 2
+#define ECO_LIB_MINOR 0
 #define ECO_LIB_PATCH 1
 #define ECO_LIB_TWEAK 
 

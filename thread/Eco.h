@@ -17,16 +17,13 @@
 * copyright(c) 2017 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Type.h>
-#include <eco/thread/TimingWheel.h>
+#include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
+#include <eco/thread/Timing.h>
 
 
 ECO_NS_BEGIN(eco);
-class Task;
 class Btask;
-ECO_NS_BEGIN(net);
-class MessageHandler;
-ECO_NS_END(net);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Eco
 {
@@ -36,11 +33,10 @@ public:
 	static Eco& get();
 
 	// post task to executing queue.
-	void post_task(IN Closure&& task);
-	void post_task(IN std::shared_ptr<Task>& task);
-	void post_task(IN std::shared_ptr<Btask>& task);
+	void post_task(IN eco::Task&& task, IN uint32_t restart_sec_if_fail);
+
 	// post btask for vc100
-	void post_btask(IN std::shared_ptr<Btask>& task);
+	void post_task(IN std::shared_ptr<Btask>&& task);
 
 	// post task to wait queue.
 	void post_wait(IN std::shared_ptr<Btask>&& task);
@@ -49,21 +45,7 @@ public:
 	void move_wait();
 
 	// get timer wheel.
-	eco::TimingWheel& timer();
-
-public:
-	// async management post item.
-	typedef std::shared_ptr<net::MessageHandler> HandlerPtr;
-	uint32_t post_async(IN HandlerPtr& hdl);
-
-	// has async message handler.
-	bool has_async(IN uint32_t req_id);
-
-	// erase async handler.
-	void erase_async(IN uint32_t req_id);
-
-	// pop async message handler.
-	HandlerPtr pop_async(IN uint32_t req_id, IN bool last);
+	eco::Timing& timing();	
 };
 
 

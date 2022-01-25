@@ -1,28 +1,28 @@
 #include "Pch.h"
 #include "Eco.ipp"
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
+#include <eco/thread/Btask.h>
 
 
 ECO_NS_BEGIN(eco);
-////////////////////////////////////////////////////////////////////////////////
-ECO_SINGLETON_IMPL(Eco);
-Eco& Eco::get()
-{
-	return Singleton<Eco>::get();
-}
-Eco::Impl::Impl()
-{}
-// Ĭ��ÿ1��1�Σ�������޸�ϵͳ��
 uint32_t Eco::Impl::s_task_thread_size = 0;
-
-
 ////////////////////////////////////////////////////////////////////////////////
+Eco::Impl::Impl() {}
+uint32_t Eco::Impl::get_task_thread_size()
+{
+	return s_task_thread_size;
+}
+void Eco::Impl::set_task_thread_size(IN uint32_t v)
+{
+	s_task_thread_size = v;
+}
 void Eco::Impl::start()
 {
-	// ����ʱ����
+	// 启动时间轮
 	m_wheel.start("eco_wheel");
 
-	// ����������߳�
+	// 启动生命活动线程
 	if (s_task_thread_size > 0)
 	{
 		m_task_server.run("btask", s_task_thread_size);
@@ -39,19 +39,19 @@ void Eco::Impl::stop()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::Impl::post_task(IN Closure&& task)
+void Eco::Impl::post_task(eco::Task&& task, uint32_t restart_sec_if_fail)
 {
-	m_task_server.queue().post(std::move(task));
+	m_task_server.post(std::move(task), restart_sec_if_fail);
 }
-void Eco::Impl::post_wait(IN Btask::ptr& task)
+void Eco::Impl::post_wait(IN Btask::ptr&& task)
 {
-	eco::Mutex::ScopeLock lock(m_wait_task_list_mutex);
+	std_lock_guard lock(m_wait_task_list_mutex);
 	m_wait_task_list.push_back(std::move(task));
 }
 void Eco::Impl::move_wait()
 {
-	// ���¼��ȴ������Ƿ��ִ�С�
-	eco::Mutex::ScopeLock lock(m_wait_task_list_mutex);
+	// 重新检查等待任务是否可执行。
+	std_lock_guard lock(m_wait_task_list_mutex);
 	for (auto it = m_wait_task_list.begin(); it != m_wait_task_list.end(); )
 	{
 		Btask* btask = it->get();
@@ -63,7 +63,8 @@ void Eco::Impl::move_wait()
 		}
 		else if (state == task_occupied)
 		{
-			m_task_server.post(std::bind(&Btask::operator(), btask));
+			m_task_server.post(
+				std::bind(&Btask::operator(), btask), btask->restart_secs());
 		}
 		it = m_wait_task_list.erase(it);
 	}
@@ -71,64 +72,27 @@ void Eco::Impl::move_wait()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Eco::post_task(IN Closure&& task)
+ECO_SINGLETON_IMPL(Eco);
+Eco& Eco::get() { return Singleton<Eco>::get(); }
+void Eco::post_task(eco::Task&& task, uint32_t restart_sec_if_fail)
 {
-	impl().post_task(std::move(task));
+	impl().post_task(std::move(task), restart_sec_if_fail);
 }
-void Eco::post_task(IN Task::ptr& task)
+void Eco::post_task(IN Btask::ptr&& task)
 {
-	impl().post_task(std::bind(&Task::operator(), task));
-}
-void Eco::post_task(IN Btask::ptr& task)
-{
-	impl().post_task(std::bind(&Btask::operator(), task));
+	impl().post_task(std::bind(&Task::operator(), task), task->restart_secs());
 }
 void Eco::post_wait(IN std::shared_ptr<Btask>&& task)
 {
-	impl().post_wait(task);
+	impl().post_wait(std::move(task));
 }
 void Eco::move_wait()
 {
 	impl().move_wait();
 }
-eco::TimingWheel& Eco::timer()
+eco::Timing& Eco::timer()
 {
 	return impl().m_wheel;
-}
-uint32_t Eco::Impl::get_task_thread_size()
-{
-	return s_task_thread_size;
-}
-void Eco::Impl::set_task_thread_size(IN uint32_t v)
-{
-	s_task_thread_size = v;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-uint32_t Eco::post_async(IN HandlerPtr& hdl)
-{
-	// note: request_id != 0.
-	uint32_t req_id = impl().next_req_id();
-	impl().m_async_map.set(req_id, hdl);
-	return req_id;
-}
-bool Eco::has_async(IN uint32_t req_id)
-{
-	return impl().m_async_map.has(req_id);
-}
-void Eco::erase_async(IN uint32_t req_id)
-{
-	impl().m_async_map.erase(req_id);
-}
-Eco::HandlerPtr Eco::pop_async(uint32_t req_id, bool last)
-{
-	int eid = 0;
-	if (last) return impl().m_async_map.pop(req_id, eid);
-
-	HandlerPtr handler;
-	impl().m_async_map.find(handler, req_id);
-	return handler;
 }
 
 

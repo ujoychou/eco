@@ -21,8 +21,8 @@ log server.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
-#include <eco/eco/Proto.h>
+#include <eco/rx/RxApi.h>
+#include <eco/detail/proto/Proto.h>
 
 
 ECO_NS_BEGIN(eco);

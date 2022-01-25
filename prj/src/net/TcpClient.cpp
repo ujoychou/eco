@@ -74,7 +74,7 @@ bool LoadBalancer::connect(uint16_t balanc)
 ECO_SHARED_IMPL(TcpClient);
 void TcpClient::Impl::async_connect()
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	// set default protocol.
 	if (m_protocol.protocol_latest() == 0)
 	{
@@ -186,7 +186,7 @@ inline String TcpClient::Impl::logging()
 ///////////////////////////////////////////////////////////////////////////////
 void TcpClient::Impl::release()
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	if (m_balancer.m_peer)
 	{
 		auto id = peer().id();
@@ -199,7 +199,7 @@ void TcpClient::Impl::release()
 }
 void TcpClient::Impl::close()
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	m_manual_close = true;
 	ECO_THIS_ERROR(e_peer_client_close);
 	peer().close_and_notify();
@@ -268,7 +268,7 @@ void TcpClient::Impl::async(IN MessageMeta& req, IN ResponseFunc& rsp_func)
 ////////////////////////////////////////////////////////////////////////////////
 void TcpClient::Impl::on_connect(bool error)
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	if (!error)
 	{
 		on_connect_ok();

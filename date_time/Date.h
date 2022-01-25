@@ -178,11 +178,6 @@ public:
 		m_days = get_day(year, month, day);
 	}
 
-	inline Date(struct std::tm* t)
-	{
-		m_days = get_day(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
-	}
-
 	inline explicit Date(const Ymd& v)
 	{
 		m_days = get_day(v.year, v.month, v.day);

@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include "Engine.ipp"
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include "Inner.h"
 
 
@@ -89,7 +90,7 @@ void Engine::Impl::work()
 ////////////////////////////////////////////////////////////////////////////////
 void Engine::Impl::start()
 {
-	m_thread.run(std::bind(&Engine::Impl::work, this), "cmd");
+	m_thread.run("cmd", std::bind(&Engine::Impl::work, this));
 }
 
 

@@ -54,6 +54,10 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "cstring": "cpp",
-        "set": "cpp"
-    }
+        "set": "cpp",
+        "unordered_set": "cpp",
+        "shared_mutex": "cpp",
+        "cerrno": "cpp"
+    },
+    "cmake.configureOnOpen": false
 }

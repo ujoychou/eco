@@ -17,7 +17,7 @@ singleton model solution.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Type.h>
+#include <eco/Object.h>
 
 
 ECO_NS_BEGIN(eco);

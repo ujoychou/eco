@@ -26,8 +26,10 @@ logging.
 #include <eco/log/Core.h>
 #include <eco/log/Pusher.h>
 
-
 ECO_NS_BEGIN(eco);
+ECO_NS_BEGIN(this_thread);
+ECO_API eco::log::PusherT<eco::String>& logbuf();
+ECO_NS_END(this_thread);
 ECO_NS_BEGIN(log);
 ////////////////////////////////////////////////////////////////////////////////
 class Logger
@@ -81,8 +83,8 @@ ECO_NS_END(eco);
 */
 #define ECO_LOG_1(sev) ECO_LOG_2(sev, nullptr)
 #define ECO_LOG_2(sev, func) \
-if (eco::log::##sev >= eco::log::core().severity_level())\
-	eco::log::Logger().set(func, __FILE__, __LINE__, eco::log::##sev)
+if (eco::log::sev >= eco::log::core().severity_level())\
+	eco::log::Logger().set(func, __FILE__, __LINE__, eco::log::sev)
 #define ECO_LOG(...) ECO_MACRO(ECO_LOG_,__VA_ARGS__)
 #define ECO_FUNC(sev) ECO_LOG(sev, __func__)
 

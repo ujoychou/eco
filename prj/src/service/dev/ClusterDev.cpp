@@ -26,7 +26,7 @@ public:
 	std::unordered_map<std::string, eco::net::TcpClient> m_router_map;
 	std::unordered_map<std::string, eco::net::TcpClient> m_service_map;
 	std::unordered_map<std::string, eco::net::AddressSet> m_router_service_map;
-	eco::Mutex m_mutex;
+	std_mutex m_mutex;
 };
 
 
@@ -51,7 +51,7 @@ void Cluster::async_init_service(
 	IN const char* service_name,
 	IN eco::net::AddressSet& service_addr)
 {
-	eco::Mutex::ScopeLock lock(impl().m_mutex);
+	std_lock_guard lock(impl().m_mutex);
 	auto it = impl().m_service_map.find(service_name);
 	if (it != impl().m_service_map.end())
 	{

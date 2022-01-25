@@ -23,7 +23,7 @@ command that input by user on service console.
 
 *******************************************************************************/
 #include <eco/cmd/Context.h>
-#include <eco/RxHeap.h>
+#include <eco/rx/RxHeap.h>
 
 
 ////////////////////////////////////////////////////////////////////////////////

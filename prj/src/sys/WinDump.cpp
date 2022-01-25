@@ -3,7 +3,7 @@
 #include <eco/sys/WinAutoHandler.h>
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef WIN32
-#include <eco/thread/Mutex.h>
+#include <eco/std/mutex.h>
 #include <eco/sys/Sys.h>
 #include <eco/date_time/DateTime.h>
 #include <boost/filesystem/path.hpp>
@@ -15,7 +15,7 @@ ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(win);
 static bool s_auto_restart = false;
 static bool s_init = false;
-static eco::Mutex s_mutex;
+static std_mutex s_mutex;
 ////////////////////////////////////////////////////////////////////////////////
 std::string get_dump_file_name()
 {
@@ -93,7 +93,7 @@ void DisableSetUnhandledExceptionFilter()
 ////////////////////////////////////////////////////////////////////////////////
 void Dump::init(IN bool auto_restart)
 {
-	eco::Mutex::ScopeLock lock(s_mutex);
+	std_lock_guard lock(s_mutex);
 	if (s_init) return;
 
 	// currently this don't support win10.

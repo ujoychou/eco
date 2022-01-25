@@ -19,6 +19,7 @@
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/Prec.h>
 #include <eco/rx/RxApi.h>
 
 
@@ -30,22 +31,16 @@ class ECO_API RxHeap
 {
 public:
 	// new operators.
-	static void* operator new(
-		size_t size);
+	static void* operator new(size_t size);
 
-	static void* operator new[](
-		size_t size);
+	static void* operator new[](size_t size);
 
 	// debug new: indicate the filename and file line.
 	static void* operator new(
-		size_t size, 
-		const char* file_name,
-		int file_line);
+		size_t size, const char* file_name, int file_line);
 
 	static void* operator new[](
-		size_t size,
-		const char* file_name, 
-		int file_line);
+		size_t size, const char* file_name, int file_line);
 
 	// delete operators.
 	static void operator delete(void* p);
@@ -54,14 +49,10 @@ public:
 
 	// Unicode: leaving file_name as char for now
 	static void operator delete(
-		void* p,
-		const char* file_name,
-		int file_line);
+		void* p, const char* file_name, int file_line);
 
 	static void operator delete[](
-		void* p,
-		const char* file_name,
-		int file_line);
+		void* p, const char* file_name, int file_line);
 };
 
 

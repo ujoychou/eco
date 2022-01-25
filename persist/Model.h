@@ -17,7 +17,7 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/rx/RxApi.h>
 #include <eco/persist/Persist.h>
 #include <eco/proto/Proto.h>
 #include <eco/thread/topic/TopicServer.h>

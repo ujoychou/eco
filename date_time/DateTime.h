@@ -32,7 +32,7 @@ namespace date_time{;
 class DateTime
 {
 public:
-	inline DateTime(Date& date, uint32_t time)
+	inline DateTime(Date date, uint32_t time)
 		: m_date(date), m_time(time)
 	{}
 
@@ -68,8 +68,8 @@ public:
 	}
 
 private:
-	Time m_time;
 	Date m_date;
+	Time m_time;
 };
 
 
@@ -80,11 +80,8 @@ inline DateTime now(int delay_millsec = 0)
 	tp += std_chrono::milliseconds(delay_millsec);
 	std::time_t tt = std_chrono::system_clock::to_time_t(tp);
 	struct std::tm* tm = std::localtime(&tt);
-	return DateTime(Date(tm), Time(tm));
+	return DateTime(Date(*tm), Time(*tm));
 }
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

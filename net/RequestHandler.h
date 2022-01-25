@@ -23,17 +23,70 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Eco.h>
+#include <eco/thread/Eco.h>
 #include <eco/net/Ecode.h>
 #include <eco/net/Context.h>
 #include <eco/loc/Locale.h>
 #include <eco/thread/Map.h>
-#include <eco/eco/Proto.h>
+#include <eco/detail/proto/Proto.h>
 
 
 ECO_NS_BEGIN(eco);
 namespace net{;
 class NullRequest {};
+////////////////////////////////////////////////////////////////////////////////
+class MessageHandler;
+class Async
+{
+	ECO_SINGLETON(Async);
+public:
+	// get next req id.
+	inline uint32_t next_req_id()
+	{
+		// promise that: request_id != 0.
+		if (++m_request_id = 0) { ++m_request_id; }
+		return m_request_id;
+	}
+
+	// async management post item.
+	inline uint32_t post_async(IN std::shared_ptr<MessageHandler>&& hdl)
+	{
+		// note: request_id != 0.
+		uint32_t req_id = next_req_id();
+		m_async_map.set(req_id, hdl);
+		return req_id;
+	}
+
+	// has async message handler.
+	inline bool has_async(IN uint32_t req_id)
+	{
+		return m_async_map.has(req_id);
+	}
+
+	// erase async handler.
+	inline void erase_async(IN uint32_t req_id)
+	{
+		m_async_map.erase(req_id);
+	}
+
+	// pop async message handler.
+	inline std::shared_ptr<MessageHandler> pop_async(
+		IN uint32_t req_id, IN bool last)
+	{
+		int eid = 0;
+		if (last) { return m_async_map.pop(req_id, eid); }
+
+		std::shared_ptr<MessageHandler> handler;
+		m_async_map.find(handler, req_id);
+		return handler;
+	}
+
+private:
+	std_atomic_uint32_t m_request_id;
+	eco::HashMap<uint32_t, std::shared_ptr<MessageHandler>> m_async_map;
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 class MessageHandler : public std::enable_shared_from_this<MessageHandler>
 {

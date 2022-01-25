@@ -192,7 +192,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Context.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestFilter.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchRegistry.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchServer.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Router.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\Ecode.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestHandler.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\ProtobufHandler.h" />
@@ -251,7 +251,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\AutoRef.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\ConditionVariableWin.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\detail\MutexWin.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Router.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Monitor.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\ThreadState.h" />

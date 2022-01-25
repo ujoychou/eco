@@ -24,7 +24,7 @@ eco basic type.
 
 *******************************************************************************/
 #include <eco/String.h>
-#include <eco/RxApi.h>
+#include <eco/rx/RxApi.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -70,7 +70,7 @@ public:
 		return this_thread::error_value();
 	}
 
-	virtual const char* what() const override
+	virtual const char* what() const noexcept override
 	{
 		return this_thread::error_value();
 	}

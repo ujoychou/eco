@@ -18,6 +18,8 @@ convert types.
 
 *******************************************************************************/
 #include <eco/Prec.h>
+#include <string>
+#include <cstring>
 #include <algorithm>
 
 

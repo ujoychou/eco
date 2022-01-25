@@ -25,6 +25,7 @@ rx export.
 
 *******************************************************************************/
 #include <eco/Prec.h>
+#include <eco/Object.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -110,7 +111,6 @@ ECO_NS_END(eco);
 public:\
 	inline void init(IN type_t&) {}
 
-
 #define ECO_IMPL_API_A() \
 public:\
 	friend class Impl;\
@@ -123,6 +123,17 @@ ECO_IMPL_API_A()\
 protected:\
 	Impl* m_impl;
 
+
+// singleton: single api.
+#define ECO_SINGLETON_API(object_t)\
+    ECO_IMPL_API();\
+    ECO_NONCOPYABLE(object_t);\
+public:\
+	~object_t();\
+private:\
+	friend class eco::Singleton<object_t>;\
+	object_t();\
+	
 
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_TYPE_API_A(type_t) \

@@ -17,13 +17,11 @@ thread safe object state.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
-#include <eco/thread/Atomic.h>
-
+#include <eco/std/atomic.h>
 
 
 ECO_NS_BEGIN(eco);
-namespace atomic{;
+ECO_NS_BEGIN(atomic);
 ////////////////////////////////////////////////////////////////////////////////
 class State
 {
@@ -72,7 +70,7 @@ public:
 public:
 	inline State();
 
-	inline State(IN const uint32_t v);
+	inline State(IN uint32_t v);
 
 	inline bool none() const;
 
@@ -83,33 +81,31 @@ public:
 
 public:
 	// add state.
-	inline void add(IN const uint32_t v);
+	inline void add(IN uint32_t v);
 
 	// delete state.
-	inline void del(IN const uint32_t v);
+	inline void del(IN uint32_t v);
 	inline void del_low();
 	inline void del_high();
 
 	// asign value to state.
-	inline void set(IN bool is, IN const uint32_t v);
+	inline void set(IN bool is, IN uint32_t v);
 
 	// delete state.
-	inline void set_v(
-		IN const uint32_t add_v,
-		IN const uint32_t del_v);
+	inline void set_v(IN uint32_t add_v, IN uint32_t del_v);
 
 	// asign value to state.
-	inline void operator=(IN const uint32_t v);
+	inline void operator=(IN uint32_t v);
 
 	// whether has dedicated state.
-	inline bool has(IN const uint32_t v) const;
+	inline bool has(IN uint32_t v) const;
 
 	// whether two state is equal.
 	inline bool operator==(IN const State& state) const;
 
 	// whether this state is equal to the value.
-	inline bool operator==(IN const int state) const;
-	inline bool operator==(IN const uint32_t state) const;
+	inline bool operator==(IN int state) const;
+	inline bool operator==(IN uint32_t state) const;
 
 	// get uint32_t value.
 	inline uint32_t value() const;
@@ -118,14 +114,14 @@ public:
 	inline operator uint32_t() const;
 
 private:
-	eco::Atomic<uint32_t> m_value;
+	std_atomic_uint32_t m_value;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 State::State() : m_value(_no)
 {}
-State::State(IN const uint32_t v) : m_value(v)
+State::State(IN uint32_t v) : m_value(v)
 {}
 void State::set_ok(IN bool is)
 {
@@ -139,11 +135,11 @@ bool State::ok() const
 {
 	return has(_ok);
 }
-void State::add(IN const uint32_t v)
+void State::add(IN uint32_t v)
 {
 	m_value |= v;
 }
-void State::del(IN const uint32_t v)
+void State::del(IN uint32_t v)
 {
 	m_value &= ~v;
 }
@@ -155,20 +151,20 @@ void State::del_high()
 {
 	m_value &= 0x0000FFFF;
 }
-void State::set_v(IN const uint32_t add_v, IN const uint32_t del_v)
+void State::set_v(IN uint32_t add_v, IN uint32_t del_v)
 {
 	add(add_v);
 	del(del_v);
 }
-void State::operator=(IN const uint32_t v)
+void State::operator=(IN uint32_t v)
 {
 	m_value = v;
 }
-void State::set(bool is, IN const uint32_t v)
+void State::set(bool is, IN uint32_t v)
 {
 	return is ? add(v) : del(v);
 }
-bool State::has(IN const uint32_t v) const
+bool State::has(IN uint32_t v) const
 {
 	return (m_value & v) > 0;
 }
@@ -176,11 +172,11 @@ bool State::operator==(IN const State& state) const
 {
 	return m_value == state.m_value;
 }
-bool State::operator==(IN const uint32_t v) const
+bool State::operator==(IN uint32_t v) const
 {
 	return m_value == v;
 }
-bool State::operator==(IN const int v) const
+bool State::operator==(IN int v) const
 {
 	return m_value == v;
 }
@@ -195,5 +191,6 @@ State::operator uint32_t() const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}ECO_NS_END(eco);.atomic
+ECO_NS_END(atomic);
+ECO_NS_END(eco);
 #endif

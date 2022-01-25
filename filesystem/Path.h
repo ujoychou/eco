@@ -17,7 +17,7 @@
 
 *******************************************************************************/
 #include <cstring>
-#include <eco/Type.h>
+#include <eco/Object.h>
 
 
 ECO_NS_BEGIN(eco);

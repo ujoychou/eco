@@ -23,8 +23,7 @@ file.
 *******************************************************************************/
 #include <stdio.h>
 #include <sys/stat.h>
-#include <eco/Type.h>
-#include <eco/Object.h>
+#include <eco/Error.h>
 
 
 ECO_NS_BEGIN(eco);

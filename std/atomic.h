@@ -19,7 +19,7 @@
 * copyright(c) 2020 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#ifdef ECO_NO_STD_THREAD
+#ifdef ECO_NO_STD_ATOMIC
 #include <boost/atomic/atomic.hpp>
 ECO_NS_BEGIN(eco);
 typedef boost::atomic_int32_t   std_atomic_int32_t;

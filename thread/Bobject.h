@@ -3,44 +3,37 @@
 /*******************************************************************************
 @ name
 business object.
-
 @ function
 1.apply scene: client api(like ctp\esunny) control request once a time.
 2.apply scene: all people just finish a task, who ocuppy first who do it.
-
 @ exception
-
 @ note
-
 --------------------------------------------------------------------------------
 @ history ver 1.0 @
 @ records: ujoy modifyed on 2013-01-01.
 1.create and init this class.
-
-
 --------------------------------------------------------------------------------
 * copyright(c) 2017 - 2019, ujoy, reserved all right.
-
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/Prec.h>
+#include <eco/std/mutex.h>
 #include <eco/thread/State.h>
-#include <eco/thread/Mutex.h>
 
 
-ECO_NS_BEGIN(eco);
+namespace eco{;
 class Btask;
 ////////////////////////////////////////////////////////////////////////////////
 enum TaskState
 {
-	// ����δ������ִ��Prepare����
+	// 任务未就绪（执行Prepare任务）
 	task_no_ready		= 0x01,
-	// �����ִ�У������߳�ִ�е�ǰ����
+	// 任务可执行（任务线程执行当前任务）
 	task_occupied		= 0x02,
-	// ��������ɣ�����Ҫ��ִ�С�����������
+	// 任务已完成，不需要再执行。（不处理）
 	task_finished		= 0x03,
-	// ����ִ����ͬ�������Բ�����ִ�е�ǰ���񡣣���������
+	// 正在执行相同任务，所以不用再执行当前任务。（不处理）
 	task_working_self	= 0x04,
-	// ����ִ���������񣬸������뵱ǰ�����޹���������������
+	// 正在执行其他任务，该任务与当前任务无关联。（不处理）
 	task_working_other	= 0x05,
 };
 enum
@@ -85,7 +78,7 @@ public:
 			return task_no_ready;
 		}
 
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		// if task is working by other task.
 		if (m_working_task)
 		{
@@ -123,13 +116,13 @@ public:
 	}
 
 	// mutex of business object.
-	inline eco::Mutex& mutex() const
+	inline std_mutex& mutex() const
 	{
 		return m_mutex;
 	}
 
 private:
-	mutable eco::Mutex m_mutex;
+	mutable std_mutex m_mutex;
 	eco::atomic::State m_state;
 	std::shared_ptr<Btask> m_working_task;
 };
@@ -256,5 +249,5 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_NS_END(eco);
+}// ns::eco
 #endif

@@ -1,4 +1,5 @@
 #include "md5.h"
+#include <cstring>
 ////////////////////////////////////////////////////////////////////////////////
 const MD5::byte MD5::PADDING[64] = { 0x80 };
 const char MD5::HEX_NUMBERS[16] = {

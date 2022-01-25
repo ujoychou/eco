@@ -22,7 +22,9 @@ key value config data.
 * copyright(c) 2016 - 2018, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Prec.h>
+#include <eco/String.h>
+#include <eco/rx/RxExport.h>
+#include <vector>
 
 
 ECO_NS_BEGIN(eco);
@@ -47,23 +49,21 @@ public:
 
 public:
 	inline operator const char*() const;
-	inline operator const char() const;
-	inline operator const unsigned char() const;
-	inline operator const short() const;
-	inline operator const unsigned short() const;
-	inline operator const int() const;
-	inline operator const unsigned int() const;
-	inline operator const long() const;
-	inline operator const unsigned long() const;
-	inline operator const int64_t() const;
-	inline operator const uint64_t() const;
-	inline operator const float() const;
-	inline operator const double() const;
-	inline operator const bool() const;
+	inline operator char() const;
+	inline operator unsigned char() const;
+	inline operator int16_t() const;
+	inline operator uint16_t() const;
+	inline operator int32_t() const;
+	inline operator uint32_t() const;
+	inline operator int64_t() const;
+	inline operator uint64_t() const;
+	inline operator float() const;
+	inline operator double() const;
+	inline operator bool() const;
 
 private:
 	std::string m_name;
-	StringAny m_value;
+	eco::StringAny m_value;
 	inline Parameter& impl() { return *this; }
 	inline const Parameter& impl() const { return *this; }
 };
@@ -102,11 +102,11 @@ public:
 	/*@ get context parameter set size.*/
 	size_t size() const;
 	bool empty() const;
-	void reserve(IN const size_t capacity);
+	void reserve(IN size_t capacity);
 
 	/*@ access parameter by item index.*/
-	Parameter& at(IN const int i);
-	const Parameter& at(IN const int i) const;
+	Parameter& at(IN int i);
+	const Parameter& at(IN int i) const;
 
 public:
 	// whether has a key.
@@ -198,11 +198,11 @@ public:
 	/*@ get context parameter set size.*/
 	size_t size() const;
 	bool empty() const;
-	void reserve(IN const size_t capacity);
+	void reserve(IN size_t capacity);
 
 	/*@ access parameter by item index.*/
-	ContextNode& at(IN const int i);
-	const ContextNode& at(IN const int i) const;
+	ContextNode& at(IN int i);
+	const ContextNode& at(IN int i) const;
 
 	/*@ access parameter by item name.*/
 	ContextNode* find(IN const char* name);
@@ -246,7 +246,7 @@ public:
 	void init(IN const char* file);
 
 	/*@ read config data from xml text.*/
-	void init(IN const char* text, IN const uint32_t size);
+	void init(IN const char* text, IN uint32_t size);
 
 	/*@ get import file by index.*/
 	uint32_t import_file_size() const;
@@ -348,55 +348,47 @@ Parameter::operator const char*() const
 {
 	return m_value.c_str();
 }
-Parameter::operator const char() const
+Parameter::operator char() const
 {
 	return (char)(m_value);
 }
-Parameter::operator const unsigned char() const
+Parameter::operator unsigned char() const
 {
 	return (unsigned char)(m_value);
 }
-Parameter::operator const short() const
+Parameter::operator int16_t() const
 {
 	return (int16_t)(m_value);
 }
-Parameter::operator const unsigned short() const
+Parameter::operator uint16_t() const
 {
 	return (uint16_t)(m_value);
 }
-Parameter::operator const int() const
+Parameter::operator int32_t() const
 {
 	return (int32_t)(m_value);
 }
-Parameter::operator const unsigned int() const
+Parameter::operator uint32_t() const
 {
 	return (uint32_t)(m_value);
 }
-Parameter::operator const long() const
-{
-	return (int32_t)(m_value);
-}
-Parameter::operator const unsigned long() const
-{
-	return (uint32_t)(m_value);
-}
-Parameter::operator const int64_t() const
+Parameter::operator int64_t() const
 {
 	return (int64_t)(m_value);
 }
-Parameter::operator const uint64_t() const
+Parameter::operator uint64_t() const
 {
 	return (uint64_t)(m_value);
 }
-Parameter::operator const float() const
+Parameter::operator float() const
 {
 	return (float)(m_value);
 }
-Parameter::operator const double() const
+Parameter::operator double() const
 {
 	return (double)(m_value);
 }
-Parameter::operator const bool() const
+Parameter::operator bool() const
 {
 	return m_value;
 }

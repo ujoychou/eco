@@ -2,7 +2,7 @@
 #include <eco/persist/Sqlite.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/thread/Atomic.h>
-#include <eco/thread/Mutex.h>
+#include <eco/std/mutex.h>
 #include <vector>
 #include <sqlite/sqlite3.h>
 #include <boost/filesystem/operations.hpp>
@@ -101,7 +101,7 @@ class Sqlite::Impl
 public:
 	// mysql instance.
 	sqlite3* m_sqlite;
-	eco::Mutex m_sqlite_mutex;
+	std_mutex m_sqlite_mutex;
 	// config
 	SqliteConfig m_config;
 	
@@ -202,7 +202,7 @@ void Sqlite::open(
 	IN const char* db_name,
 	IN const persist::Charset charset)
 {
-	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex);
+	std_lock_guard lock(impl().m_sqlite_mutex);
 	impl().m_config.m_db_name = db_name;
 	impl().m_config.set_charset(charset);
 	impl().open();
@@ -212,7 +212,7 @@ void Sqlite::open(
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::close()
 {
-	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex);
+	std_lock_guard lock(impl().m_sqlite_mutex);
 	impl().close();
 }
 
@@ -220,7 +220,7 @@ void Sqlite::close()
 ////////////////////////////////////////////////////////////////////////////////
 bool Sqlite::is_open()
 {
-	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex, !has_transaction());
+	std_lock_guard lock(impl().m_sqlite_mutex, !has_transaction());
 	return (impl().m_sqlite != nullptr);
 }
 
@@ -242,7 +242,7 @@ bool Sqlite::select(OUT Record& obj, IN  const char* sql)
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::select(OUT Recordset& rd_set, IN  const char* sql)
 {
-	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex, !has_transaction());
+	std_lock_guard lock(impl().m_sqlite_mutex, !has_transaction());
 	impl().open_once();
 
 	// query sql.
@@ -275,7 +275,7 @@ void Sqlite::select(OUT Recordset& rd_set, IN  const char* sql)
 ////////////////////////////////////////////////////////////////////////////////
 uint64_t Sqlite::execute_sql(IN const char* sql)
 {
-	eco::Mutex::ScopeLock lock(impl().m_sqlite_mutex, !has_transaction());
+	std_lock_guard lock(impl().m_sqlite_mutex, !has_transaction());
 	impl().open_once();
 
 	// execute sql fail.

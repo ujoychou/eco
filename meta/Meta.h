@@ -1,7 +1,7 @@
 #ifndef ECO_META_H
 #define ECO_META_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Export.h>
+#include <eco/rx/RxExport.h>
 #include <eco/meta/Stamp.h>
 #include <string>
 

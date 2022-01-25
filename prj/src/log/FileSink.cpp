@@ -1,17 +1,13 @@
 #include "Pch.h"
 #include "FileSink.h"
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/process/Process.h>
+#include <eco/proc/Proc.h>
 #include <eco/net/Net.h>
 #include <time.h>
 
 
-
 ECO_NS_BEGIN(eco);
-namespace log{;
-
-
-
+ECO_NS_BEGIN(log);
 //##############################################################################
 //##############################################################################
 Context::Context(
@@ -58,7 +54,7 @@ const std::string Context::get_file_path() const
 	fullpath += buf;
 	fullpath += eco::net::get_hostname();
 	fullpath += ".";
-	fullpath += eco::this_process::get_id_string();
+	fullpath += eco::this_process::sid();
 	fullpath += ".log";
 	return fullpath;
 }

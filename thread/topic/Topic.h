@@ -41,7 +41,7 @@ protected:
 
 	inline ContentData::ptr snap() const
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		return m_snap;
 	}
 
@@ -63,12 +63,12 @@ public:
 	*/
 	inline ContentData::ptr back() const
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		return !m_snap_set.empty() ? m_snap_set.back() : nullptr;
 	}
 	inline ContentData::ptr front() const
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		return !m_snap_set.empty() ? m_snap_set.front() : nullptr;
 	}
 
@@ -76,7 +76,7 @@ public:
 	*/
 	inline ContentData::ptr pop_back()
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		if (!m_snap_set.empty())
 		{
 			auto c = m_snap_set.back(); 
@@ -90,7 +90,7 @@ public:
 	*/
 	inline ContentData::ptr pop_front()
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		if (!m_snap_set.empty())
 		{
 			auto c = m_snap_set.front();
@@ -104,7 +104,7 @@ public:
 	*/
 	inline void pop_front(uint32_t left)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		if (m_snap_set.size() > left)
 		{
 			auto it_erase_end = m_snap_set.end() - left;
@@ -114,7 +114,7 @@ public:
 
 	inline const uint32_t size() const
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		return (uint32_t)m_snap_set.size();
 	}
 	inline const std::deque<eco::ContentData::ptr>& snap_set_raw() const
@@ -124,7 +124,7 @@ public:
 	template<typename object_t>
 	inline object_t at(IN uint32_t i)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		return m_snap_set[i]->cast<object_t>();
 	}
 
@@ -132,7 +132,7 @@ public:
 	template<typename object_set_t>
 	inline void push_front_set(IN const object_set_t& set)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		for (auto it = set.rbegin(); it != set.rend(); ++it)
 		{
 			push_front_raw(*it);
@@ -141,13 +141,13 @@ public:
 	template<typename object_t>
 	inline void push_front(IN const object_t& obj)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		push_front_raw(obj);
 	}
 	template<typename object_t>
 	inline void push_front(IN const std::shared_ptr<object_t>& obj)
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		push_front_raw(obj);
 	}
 	template<typename object_t>
@@ -272,7 +272,7 @@ public:
 	// find content by identity.
 	inline ContentData::ptr find(IN const object_id_t& id) const
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		auto it = m_snap_map.find(id);
 		return (it != m_snap_map.end()) ? it->second : nullptr;
 	}
@@ -286,7 +286,7 @@ public:
 	// get objects map size.
 	inline size_t size() const
 	{
-		eco::Mutex::ScopeLock lock(mutex());
+		std_lock_guard lock(mutex());
 		return m_snap_map.size();
 	}
 

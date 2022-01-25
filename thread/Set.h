@@ -19,20 +19,17 @@ it shared the data in the program, and it manage data's life cycle.
 
 *******************************************************************************/
 #include <eco/Object.h>
-#include <eco/thread/Mutex.h>
-#include <unordered_map>
-#include <map>
-
+#include <eco/std/mutex.h>
+#include <unordered_set>
+#include <set>
 
 
 ECO_NS_BEGIN(eco);
-
-
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename identity_t, 
-	typename container = std::unordered_set<identity_t>>
-class SetT : public eco::Object<SetT<identity_t, container> >
+	typename std_set = std::unordered_set<identity_t>>
+class SetT : public eco::Object<SetT<identity_t, std_set> >
 {
 public:
 	typedef identity_t identity;
@@ -43,76 +40,63 @@ public:
 	// map size.
 	inline size_t size() const
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		return m_data_map.size();
+		std_lock_guard lock(m_mutex);
+		return m_data_set.size();
 	}
 
 	/*@ add object to map.*/
 	inline void add(IN const identity& id)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		m_data_map.insert(id);
+		std_lock_guard lock(m_mutex);
+		m_data_set.insert(id);
 	}
 
 	/*@ whether has the object.*/
 	inline bool has(IN const identity& id) const
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		return (m_data_map.find(id) != m_data_map.end());
+		std_lock_guard lock(m_mutex);
+		return (m_data_set.find(id) != m_data_set.end());
 	}
 
 	/*@ remove object from map.*/
 	inline void erase(IN const identity& id)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		auto it = m_data_map.find(id);
-		if (it != m_data_map.end())
+		std_lock_guard lock(m_mutex);
+		auto it = m_data_set.find(id);
+		if (it != m_data_set.end())
 		{
-			m_data_map.erase(it);
+			m_data_set.erase(it);
 		}
 	}
 
 	/*@ clear object in this map.*/
 	inline void clear()
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
-		m_data_map.clear();
+		std_lock_guard lock(m_mutex);
+		m_data_set.clear();
 	}
 
 	/*@ get raw data set.*/
-	inline container& set()
-	{
-		return m_data_map;
-	}
+	inline std_set& set() { return m_data_set; }
 
 	/*@ get raw data set.*/
-	inline const container& get_set() const
-	{
-		return m_data_map;
-	}
+	inline const std_set& get_set() const { return m_data_set; }
 
 	/*@ get raw data set.*/
-	inline eco::Mutex& mutex() const
-	{
-		return m_mutex;
-	}
+	inline std_mutex& mutex() const { return m_mutex; }
 
-////////////////////////////////////////////////////////////////////////////////
 protected:
 	// data map.
-	container m_data_map;
-	mutable eco::Mutex m_mutex;
+	std_set m_data_set;
+	mutable std_mutex m_mutex;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename identity_t>
 class HashSet : public SetT<identity_t> {};
-
 template<typename identity_t>
 class Set : public SetT<identity_t, std::set<identity_t>> {};
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);
 #endif

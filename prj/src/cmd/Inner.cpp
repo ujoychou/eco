@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include "Inner.h"
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/Object.h>
 #include "Engine.ipp"
 #include <iostream>
 
@@ -41,7 +42,7 @@ void CdCommand::execute(IN eco::cmd::Context& context)
 		Group chd = engine().current().find_group(param);
 		if (chd.null())
 		{
-			EcoCout << "this is not a command: " << param;
+			eco::cout() << "this is not a command: " << param;
 			return;
 		}
 		m_group = impl->m_curr_group;
@@ -73,14 +74,14 @@ void PwdCommand::execute(IN eco::cmd::Context& context)
 	if (context.size() == 0)
 	{
 		std::string dir = pwd(engine().get_current());
-		EcoCout << dir;
+		eco::cout() << dir;
 	}
 }
 void PwdCommand::revoke()
 {}
 void PwdCommand::resume()
 {}
-std::string PwdCommand::pwd(IN Group& group)
+std::string PwdCommand::pwd(IN Group&& group)
 {
 	std::vector<Group> vec;
 
@@ -123,12 +124,12 @@ void HelpCommand::execute(IN eco::cmd::Context& context)
 		{
 			snprintf(fmt, sizeof(fmt), "(c) %-10s %-20s: %s",
 				it->alias(), it->name(), it->help_info());
-			EcoCout << fmt;
+			eco::cout() << fmt;
 		}
 	}
 	if (inner_cmds.empty())
 	{
-		EcoCout << "command engine has no inner command.";
+		eco::cout() << "command engine has no inner command.";
 	}
 }
 void HelpCommand::revoke()

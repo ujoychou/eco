@@ -16,8 +16,8 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Type.h>
-#include <eco/Implement.h>
+#include <eco/Object.h>
+#include <eco/rx/RxImpl.h>
 #include <eco/persist/DatabaseConfig.h>
 
 
@@ -294,12 +294,12 @@ public:
 			break;
 		case field_char_array:
 			field_sql = "CHAR(";
-			field_sql += eco::cast<std::string>(field_size);
+			field_sql += eco::cast(field_size);
 			field_sql += ")";
 			break;
 		case field_varchar:
 			field_sql = "VARCHAR(";
-			field_sql += eco::cast<std::string>(field_size);
+			field_sql += eco::cast(field_size);
 			field_sql += ")";
 			break;
 		case field_text:

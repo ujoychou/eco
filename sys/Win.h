@@ -21,7 +21,7 @@ as
 *******************************************************************************/
 #include <string>
 #include <eco/Memory.h>
-#include <eco/Type.h>
+#include <eco/Object.h>
 #include "windows.h"
 
 

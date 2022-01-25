@@ -5,11 +5,11 @@
 #include <eco/thread/State.h>
 #include <eco/thread/Map.h>
 #include <eco/thread/Monitor.h>
-#include <eco/thread/TimingWheel.h>
+#include <eco/thread/Timing.h>
 #include <eco/net/Worker.h>
 #include <net/protocol/WebSocketProtocol.h>
 #include "TcpPeer.ipp"
-#include "DispatchServer.h"
+#include "Router.h"
 
 
 ECO_NS_BEGIN(eco);
@@ -178,7 +178,7 @@ public:
 	
 	// io server, timer and business dispatcher server.
 	eco::net::Worker	m_worker;	// io thread.
-	DispatchServer		m_dispatch;	// dispatcher thread.
+	Router		m_dispatch;	// dispatcher thread.
 
 	// connection event.
 	OnConnect m_on_open;
@@ -190,10 +190,10 @@ public:
 	MakeSessionData m_make_session;
 	// connected session that has id build by server.
 	eco::HashMap<uint64_t, SessionDataPack::ptr> m_session_map;
-	mutable eco::Mutex m_mutex;
+	mutable std_mutex m_mutex;
 
 	// async management.
-	eco::Atomic<uint32_t> m_request_id;
+	std_atomic_uint32_t m_request_id;
 	uint32_t m_timeout_millsec;
 	std::unordered_map<uint32_t, SyncRequest::ptr> m_sync_manager;
 	std::unordered_map<uint32_t, AsyncRequest::ptr> m_async_manager;
@@ -271,7 +271,7 @@ public:
 		IN Codec& rsp_codec,
 		IN std::vector<void*>* rsp_set = nullptr)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		auto& ptr = m_sync_manager[req_id];
 		if (ptr == nullptr)
 			ptr.reset(new SyncRequest(err_codec, rsp_codec, rsp_set));
@@ -281,7 +281,7 @@ public:
 	// async management pop item.
 	inline SyncRequest::ptr pop_sync(IN uint32_t req_id, IN bool last)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		SyncRequest::ptr sync;
 		auto it = m_sync_manager.find(req_id);
 		if (it != m_sync_manager.end())
@@ -293,7 +293,7 @@ public:
 	}
 	inline void erase_sync(IN const uint32_t req_id)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_sync_manager.erase(req_id);
 	}
 
@@ -318,7 +318,7 @@ public:
 		IN const uint32_t req_id,
 		IN std::function<void(eco::net::Context&)>& rsp_func)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		auto& ptr = m_async_manager[req_id];
 		if (ptr == nullptr)
 			ptr.reset(new AsyncRequest(rsp_func));
@@ -328,7 +328,7 @@ public:
 	// async management pop item.
 	inline AsyncRequest::ptr pop_async(IN uint32_t req_id, IN bool last)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		AsyncRequest::ptr async_;
 		auto it = m_async_manager.find(req_id);
 		if (it != m_async_manager.end())
@@ -340,7 +340,7 @@ public:
 	}
 	inline void erase_async(IN const uint32_t req_id)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_async_manager.erase(req_id);
 	}
 
@@ -348,12 +348,12 @@ public:
 	// set server address.
 	inline void add_address(IN eco::net::Address& addr)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_balancer.add_address(addr);
 	}
 	inline void update_address(IN eco::net::AddressSet& addr)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_balancer.update_address(addr);
 	}
 
@@ -384,20 +384,20 @@ public:
 	// async send data.
 	inline void send(IN eco::String& data, IN uint32_t start)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		peer().send(data, start);
 	}
 
 	inline void send(IN MessageMeta& meta)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		peer().send(meta);
 	}
 
 	// async send data.
 	inline void on_send_heartbeat()
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		if (m_option.heartbeat_rhythm())
 			peer().send_heartbeat();
 		else

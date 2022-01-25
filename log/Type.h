@@ -23,14 +23,11 @@ log api type.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
-#include <eco/Type.h>
+#include <eco/Prec.h>
 
 
 ECO_NS_BEGIN(eco);
-namespace log{;
-
-
+ECO_NS_BEGIN(log);
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
@@ -75,5 +72,7 @@ enum
 
 
 typedef void (*OnChangedLogFile)(IN const char* file_path);
-}}
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(log);
+ECO_NS_END(eco);
 #endif

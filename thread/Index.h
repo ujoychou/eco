@@ -1,5 +1,5 @@
-#ifndef ECO_THREAD_INDEX_ARRAY_H
-#define ECO_THREAD_INDEX_ARRAY_H
+#ifndef ECO_THREAD_INDEX_H
+#define ECO_THREAD_INDEX_H
 /*******************************************************************************
 @ name
 data array.
@@ -19,7 +19,7 @@ it shared the data in the program, and it manage data's life cycle.
 
 *******************************************************************************/
 #include <eco/Object.h>
-#include <eco/thread/Mutex.h>
+#include <eco/std/mutex.h>
 #include <vector>
 
 
@@ -37,7 +37,7 @@ public:
 	// array size.
 	inline size_t size() const
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		return m_array.size();
 	}
 
@@ -46,7 +46,7 @@ public:
 		IN const identity& id,
 		IN const value& val)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_array[id] = val;
 	}
 
@@ -54,7 +54,7 @@ public:
 	template<typename function_t>
 	inline bool find_if(OUT value& val, IN function_t& func) const
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		auto it = std::find_if(m_array.begin(), m_array.end(), func);
 		if (it == m_array.end())
 		{
@@ -75,7 +75,7 @@ public:
 	/*@ clear object in this array.*/
 	inline void clear()
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_lock_guard lock(m_mutex);
 		m_array.clear();
 	}
 
@@ -92,7 +92,7 @@ public:
 	}
 
 	/*@ get raw data array.*/
-	inline eco::Mutex& mutex() const
+	inline std_mutex& mutex() const
 	{
 		return m_mutex;
 	}
@@ -100,7 +100,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 protected:
 	std::vector<value_t>	m_array;
-	mutable eco::Mutex		m_mutex;
+	mutable std_mutex		m_mutex;
 };
 
 

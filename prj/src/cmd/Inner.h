@@ -67,7 +67,7 @@ public:
 	virtual void execute(eco::cmd::Context& context);
 	virtual void revoke();
 	virtual void resume();
-	std::string pwd(IN Group& group);
+	std::string pwd(IN Group&& group);
 };
 
 

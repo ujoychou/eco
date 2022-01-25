@@ -29,6 +29,8 @@ precompile define.
 * copyright(c) 2016 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <cstddef>
+#include <cstdint>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -139,6 +141,19 @@ ECO_LIB_NAME_CAT_(name, major, minor, patch)
 ECO_MACRO_STR_(name.lib.major.minor.patch)
 #define ECO_LIB_NAME(name) \
 ECO_LIB_NAME_CAT(name, ECO_LIB_MAJOR, ECO_LIB_MINOR, ECO_LIB_PATCH)
+
+
+////////////////////////////////////////////////////////////////////////////////
+#ifdef ECO_WIN32
+inline int snprintf(OUT char* buf, IN size_t size, IN const char* format, ...)
+{
+	va_list arglist;
+	va_start(arglist, format);
+	int result = _vsnprintf(buf, size, format, arglist);
+	va_end(arglist);
+	return result;
+}
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////

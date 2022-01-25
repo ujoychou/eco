@@ -79,7 +79,7 @@ public:
 
 		// turn line '\n' must input into the string.
 		m_stream.force_append(1, '\n');
-		core().append(m_stream.bytes(), m_severity);
+		core().append(eco::lv(m_stream.bytes()), m_severity);
 	}
 
 	/*@ logging collector. domain has 'logging', 'monitor', 'report'
@@ -98,8 +98,8 @@ public:
 		{
 			uint32_t pos = -1;
 			m_file_name = (
-				(pos = find_last(file_name, '/')) != -1 ||
-				(pos = find_last(file_name, '\\')) != -1)
+				(pos = find_last(file_name, '/'))  != uint32_t(-1) ||
+				(pos = find_last(file_name, '\\')) != uint32_t(-1))
 				? &file_name[pos + 1] : file_name;
 			m_file_line = file_line;
 		}

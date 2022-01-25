@@ -18,7 +18,7 @@
 
 *******************************************************************************/
 #include <eco/xml/Reader.h>
-#include <eco/Implement.h>
+#include <eco/rx/RxImpl.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 

@@ -20,7 +20,7 @@
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Type.h>
+#include <eco/Object.h>
 #include <eco/App.h>
 #include <eco/DllObject.h>
 

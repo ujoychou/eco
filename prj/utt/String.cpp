@@ -21,13 +21,14 @@ TEST(BaseType, cstring)
 ////////////////////////////////////////////////////////////////////////////////
 TEST(BaseType, String)
 {
-    /*eco::String s;
+    eco::String s;
     EXPECT_TRUE(s.null());
     EXPECT_TRUE(s.empty());
     const char* tmp = "123456";
     s.append(tmp);
-    EXPECT_EQ(s.size(), 6);
+    EXPECT_EQ(s.size(), size_t(6));
+    EXPECT_EQ(!s.empty());
 
     // flow size.
-    s << tmp;*/
+    s << tmp;
 }

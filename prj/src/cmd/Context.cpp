@@ -1,9 +1,11 @@
+
 #include "Pch.h"
 #include <eco/cmd/Context.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 
 
-ECO_NS_BEGIN(eco);
+namespace eco{;
 namespace cmd{;
 ////////////////////////////////////////////////////////////////////////////////
 class Context::Impl
@@ -27,13 +29,13 @@ void Context::Impl::set_command_line(IN const char* cmd_line, IN Context& wrap)
 	std::vector<std::string> set;
 	eco::split(set, cmd_line, ' ');
 
-	// �����������֣�cmd
+	// 解析命令名字：cmd
 	if (set.size() > 0)
 	{
 		m_command = set[0];
 	}
 
-	// ��������: para1, para2, para3
+	// 解析参数: para1, para2, para3
 	for (size_t i = 1; i < set.size(); i++)
 	{
 		wrap.add().get_value() = set[i].c_str();

@@ -22,11 +22,13 @@
 #ifdef ECO_NO_STD_THREAD
 #include <boost/thread/thread.hpp>
 ECO_NS_BEGIN(eco);
+typedef boost::thread std_thread;
 namespace std_this_thread = boost::this_thread;
 ECO_NS_END(eco);
 #else
 #include <thread>
 ECO_NS_BEGIN(eco);
+typedef std::thread std_thread;
 namespace std_this_thread = std::this_thread;
 ECO_NS_END(eco);
 #endif

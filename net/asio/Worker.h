@@ -23,7 +23,7 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
+#include <eco/rx/RxExport.h>
 #include <eco/log/Log.h>
 #include <eco/thread/Thread.h>
 #include <boost/asio/io_service.hpp>
@@ -78,12 +78,12 @@ public:
 	// io service run.
 	inline void run(const char* name)
 	{
-		m_thread.run([=]() {
+		m_thread.run(name, [=]() {
 			boost::system::error_code ec;
 			m_io_service->run(ec);
 			m_state.set_ok(false);
-			if (!!ec) ECO_ERROR << name <= ec.value() <= ec.message();
-		}, name);
+			if (ec) ECO_ERROR << name <= ec.value() <= ec.message();
+		});
 		m_state.add(eco::atomic::State::_b);
 	}
 

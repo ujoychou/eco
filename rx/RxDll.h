@@ -20,38 +20,64 @@ dll entry
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
 
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-typedef void  (*DllFunc)(void);		// function ptr.
-ECO_API void* load_dll(IN const char* dll_name);
-ECO_API void  free_dll(IN void*& dll_handle);
-ECO_API DllFunc get_function(IN void* dll_handle, IN const char* func_name);
+typedef void  	(*RxFunc)(void);
+ECO_API void* 	dll_load(IN const char* dll_name);
+ECO_API void  	dll_free(IN void*& dll_handle);
+ECO_API RxFunc 	dll_func(IN void* dll_handle, IN const char* func_name);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API DllObject
+class RxObject
 {
-	ECO_OBJECT_API(DllObject);
 public:
-	void load(
+ 	// rx object.
+	inline RxObject() : m_handle(nullptr) {}
+	inline ~RxObject() { if (m_handle) { dll_free(m_handle); } }
+
+	// load dll file, you can dedicate the name of dll.
+	inline void load(
 		IN const char* dll_path,
-		IN const char* dll_name = "");
-
-	const char* path() const;
-
-	void set_name(IN const char* name);
-	const char* name() const;
-	DllObject& name(IN const char*);
-	
-	DllFunc get_function(IN const char* func_name);
-	template<typename FunctionT>
-	inline FunctionT cast_function(IN const char* func_name)
+		IN const char* dll_name = "")
 	{
-		return reinterpret_cast<FunctionT>(get_function(func_name));
+		m_path = dll_path;
+		m_name = dll_name;
+		m_handle = eco::dll_load(dll_path);
 	}
+
+	// get dll file path.
+	inline const char* path() const
+	{
+		return m_path.c_str();
+	}
+
+	// dll name when dedicated, or path leaf name if not.
+	inline void set_name(IN const char* name) {	m_name = name; }
+	inline const char* name() const  { return m_name.c_str(); }
+	inline RxObject& name(IN const char* name) { m_name = name; return *this; }
+	
+	// get dll function.
+	inline RxFunc get_func(IN const char* func_name)
+	{
+		return eco::dll_func(m_handle, func_name);
+	}
+
+	// get right function type by cast.
+	template<typename func_t>
+	inline func_t cast_func(IN const char* func_name)
+	{
+		return 2r<func_t>(get_func(func_name));
+	}
+
+private:
+	void* m_handle;
+	std::string m_name;
+	std::string m_path;
 };
 
 

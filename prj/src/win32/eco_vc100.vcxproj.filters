@@ -183,7 +183,7 @@
     <ClCompile Include="..\net\Address.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
-    <ClCompile Include="..\net\DispatchServer.cpp">
+    <ClCompile Include="..\net\Router.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
     <ClCompile Include="..\net\Net.cpp">
@@ -281,7 +281,7 @@
     <ClInclude Include="..\loc\Language.h">
       <Filter>src\loc</Filter>
     </ClInclude>
-    <ClInclude Include="..\net\DispatchServer.h">
+    <ClInclude Include="..\net\Router.h">
       <Filter>src\net</Filter>
     </ClInclude>
     <ClInclude Include="..\net\TcpOuter.h">

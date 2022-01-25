@@ -19,7 +19,7 @@
 * copyright(c) 2020 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#ifdef ECO_NO_STD_THREAD
+#ifdef ECO_NO_STD_SHARED_MUTEX
 #include <boost/thread/shared_mutex.hpp>
 ECO_NS_BEGIN(eco);
 typedef boost::shared_mutex shared_mutex;

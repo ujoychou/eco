@@ -178,14 +178,14 @@ void JsonObject::SetValue(
 	IN const char* prop_name,
 	IN const double value)
 {
-	std::string v = eco::cast<std::string>(value);
+	std::string v = eco::cast(value);
 	impl().m_prop_values[prop_name] = v;
 }
 void JsonObject::SetValue(
 	IN const char* prop_name,
 	IN const int value)
 {
-	std::string v = eco::cast<std::string>(value);
+	std::string v = eco::cast(value);
 	impl().m_prop_values[prop_name] = v;
 }
 JsonObject JsonObject::AddChild(

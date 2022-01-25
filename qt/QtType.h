@@ -20,7 +20,7 @@ QtType类。
 * 版权所有(c) 2019 - 2021, ujoy 保留所有权利。
 
 *******************************************************************************/
-#include <eco/Export.h>
+#include <eco/rx/RxExport.h>
 #include <QtCore/qobject.h>
 #include <QtCore/qglobal.h>
 

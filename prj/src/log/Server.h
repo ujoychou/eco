@@ -21,18 +21,15 @@ log server.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/thread/MessageServer.h>
+#include <eco/thread/Worker.h>
 #include "Queue.h"
 
 
 ECO_NS_BEGIN(eco);
-namespace log{;
-
-
+ECO_NS_BEGIN(log);
 ////////////////////////////////////////////////////////////////////////////////
 template<typename HandlerT>
-class Server : public eco::MessageServerT<
-	eco::Bytes, HandlerT, eco::Thread, Queue>
+class Server : public eco::Worker<eco::Bytes, HandlerT, eco::Thread, Queue>
 {
 	ECO_OBJECT(Server);
 public:
@@ -42,7 +39,7 @@ public:
 	/*@ set message queue max sync interval mill seconds.*/
 	inline void set_sync_interval(IN const uint32_t millsec)
 	{
-		m_message_queue.set_sync_interval(millsec);
+		this->m_channel.set_sync_interval(millsec);
 	}
 
 	/*@ work thread method.	*/
@@ -53,13 +50,13 @@ public:
 			Queue::PackPtr pack;
 			while (true)
 			{
-				m_message_queue.pop(pack);
+				this->m_channel.pop(pack);
 				// message queue is close and has handled all message.
-				if (pack == nullptr && m_message_queue.is_close())
+				if (pack == nullptr && this->m_channel.is_close())
 				{
 					break;
 				}
-				m_message_handler(*pack);
+				this->m_handler(*pack);
 			}// end while
 		}
 		catch (std::exception& e)
@@ -70,7 +67,7 @@ public:
 };
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
-}}
+ECO_NS_END(log);
+ECO_NS_END(eco);
 #endif

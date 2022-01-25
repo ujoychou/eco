@@ -210,7 +210,7 @@
     <ClCompile Include="..\PrecHeader.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\net\DispatchServer.cpp">
+    <ClCompile Include="..\net\Router.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
     <ClCompile Include="..\persist\PersistAddress.cpp">
@@ -299,7 +299,7 @@
     <ClInclude Include="..\PrecHeader.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\net\DispatchServer.h">
+    <ClInclude Include="..\net\Router.h">
       <Filter>src\net</Filter>
     </ClInclude>
     <ClInclude Include="..\Impl.h">

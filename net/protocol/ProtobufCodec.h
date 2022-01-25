@@ -30,10 +30,6 @@
 #include <google/protobuf/util/json_util.h>
 #endif
 
-#ifndef ECO_AUTO_LINK_NO
-#	pragma comment(lib, "libprotobuf.lib")
-#endif
-
 
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);

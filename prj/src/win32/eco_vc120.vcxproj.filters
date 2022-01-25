@@ -539,7 +539,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\RequestHandler.h">
       <Filter>lib\net</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\DispatchServer.h">
+    <ClInclude Include="..\..\..\..\..\contrib\eco\thread\Router.h">
       <Filter>lib\thread</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\thread\TaskServer.h">
@@ -686,7 +686,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchRegistry.h">
       <Filter>lib\net</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\DispatchServer.h">
+    <ClInclude Include="..\..\..\..\..\contrib\eco\net\Router.h">
       <Filter>lib\net</Filter>
     </ClInclude>
   </ItemGroup>

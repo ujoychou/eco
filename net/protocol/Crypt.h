@@ -20,8 +20,8 @@ protocol stack structure like this:
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
-#include <eco/Type.h>
+#include <eco/rx/RxApi.h>
+#include <eco/Object.h>
 #include <eco/codec/ZlibFlate.h>
 #include <string>
 

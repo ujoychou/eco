@@ -19,7 +19,7 @@
 * copyright(c) 2020 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#ifdef ECO_NO_STD_THREAD
+#ifdef ECO_NO_STD_CONDITION_VARIABLE
 #include <boost/thread/condition_variable.hpp>
 ECO_NS_BEGIN(eco);
 typedef boost::condition_variable std_condition_variable;

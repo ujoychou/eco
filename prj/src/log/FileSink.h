@@ -21,17 +21,14 @@ sink.
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/rx/RxApi.h>
 #include <eco/log/Type.h>
 #include <eco/filesystem/File.h>
 #include <time.h>
 
 
-
 ECO_NS_BEGIN(eco);
-namespace log{;
-
-
+ECO_NS_BEGIN(log);
 ////////////////////////////////////////////////////////////////////////////////
 class Context : public eco::Object<Context>
 {
@@ -86,13 +83,14 @@ public:
 	// append buffer to file.
 	void append(IN const char* buf, IN uint32_t size);
 
-
 private:
+	eco::log::Context m_context;
 	eco::filesystem::File m_file;
-	Context m_context;
 	eco::log::OnChangedLogFile m_on_changed;
 };
 
 
-}}
+////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(log);
+ECO_NS_END(eco);
 #endif

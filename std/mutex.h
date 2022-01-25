@@ -19,7 +19,7 @@
 * copyright(c) 2020 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#ifdef ECO_NO_STD_THREAD
+#ifdef ECO_NO_STD_MUTEX
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/lock_types.hpp>
 ECO_NS_BEGIN(eco);

@@ -26,7 +26,7 @@
 #include <codec/md5.h>
 #include <codec/sha1.h>
 #include <codec/base64.h>
-#include <eco/Type.h>
+#include <eco/Object.h>
 
 
 ECO_NS_BEGIN(eco);

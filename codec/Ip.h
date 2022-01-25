@@ -94,7 +94,7 @@ public:
 		{
 			auto left = ip_int % 256;
 			ip_int = ip_int / 256;
-			auto v = eco::cast<std::string>(left);
+			auto v = eco::cast(left);
 			result.append(v);
 			result.push_back('.');
 		}

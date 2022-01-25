@@ -22,7 +22,7 @@ command context.
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Type.h>
+#include <eco/Config.h>
 
 
 ECO_NS_BEGIN(eco);

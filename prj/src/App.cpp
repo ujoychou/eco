@@ -854,7 +854,7 @@ extern "C" ECO_API void exit_app(IN App& app)
 void App::Impl::wait_master(App& app)
 {
 	{
-		eco::Mutex::ScopeLock lock(s_monitor.mutex());
+		std_lock_guard lock(s_monitor.mutex());
 		set_app(app);
 	}
 	if (!master(app) && s_app_thread_id != std_this_thread::get_id())
@@ -1021,7 +1021,7 @@ void App::init(App& app, void* module_func_addr, bool command)
 	}
 	catch (std::exception& e)
 	{
-		EcoCout << "[error] " << e.what();
+		eco::cout() << "[error] " << e.what();
 		app.impl().exit(app, true);
 		getch_exit();
 	}

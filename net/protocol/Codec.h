@@ -23,9 +23,9 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/ExportApi.h>
+#include <eco/rx/RxApi.h>
 #include <eco/net/Ecode.h>
-#include <eco/Type.h>
+#include <eco/Object.h>
 
 
 ECO_NS_BEGIN(eco);

@@ -1,6 +1,8 @@
 #include "Pch.h"
-#include <eco/Type.h>
+#include <eco/Config.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/Error.h>
+#include <eco/rx/RxImpl.h>
 #include <map>
 
 

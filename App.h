@@ -30,7 +30,7 @@ app that run process.
 #include <eco/net/TcpClient.h>
 #include <eco/net/Subscriber.h>
 #include <eco/persist/Persist.h>
-#include <eco/thread/TimingWheel.h>
+#include <eco/thread/Timing.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -136,7 +136,7 @@ public:
 	net::TcpServer& provider();
 
 	// eco timing wheel.
-	eco::TimingWheel& timer();
+	eco::Timing& timer();
 
 	// eco erx
 	std::shared_ptr<RxDll> get_erx(IN const char* name);

@@ -17,8 +17,9 @@ convert types.
 * copyright(c) 2015 - 2017, muduo.chenshuo, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
-#include <eco/cpp/Chrono.h>
+#include <eco/rx/RxExport.h>
+#include <eco/std/chrono.h>
+#include <eco/Error.h>
 #include <ctime>
 
 
@@ -151,9 +152,9 @@ public:
 		m_time = get_second(now_t);
 	}
 
-	inline Time(struct tm* t)
+	inline Time(const struct tm& t)
 	{
-		m_time = t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec;
+		m_time = t.tm_hour * 3600 + t.tm_min * 60 + t.tm_sec;
 	}
 
 	inline void set_value(const uint32_t v)

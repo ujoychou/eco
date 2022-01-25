@@ -1,8 +1,8 @@
 ﻿#ifndef ECO_DETAIL_SUBSCRIPTION_H
 #define ECO_DETAIL_SUBSCRIPTION_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/thread/Mutex.h>
-#include <eco/thread/AutoRef.h>
+#include <eco/std/mutex.h>
+#include <eco/Memory.h>
 #include <forward_list>
 
 
@@ -215,7 +215,7 @@ public:
 private:
 	// topic list.
 	friend class Topic;
-	mutable eco::Mutex m_mutex;
+	mutable std_mutex m_mutex;
 	Subscription* m_subscriber_topic_head;
 };
 
@@ -247,7 +247,7 @@ public:
 	inline void clear();
 
 	// thread safe mutex.
-	inline eco::Mutex& mutex() const
+	inline std_mutex& mutex() const
 	{
 		return m_mutex;
 	}
@@ -268,7 +268,7 @@ protected:
 private:
 	// manage subscription's life cycle.
 	friend class Subscriber;
-	mutable eco::Mutex m_mutex;
+	mutable std_mutex m_mutex;
 	SubscriptionList m_topic_subscriber_head;
 };
 
@@ -288,11 +288,11 @@ inline Subscriber::~Subscriber()
 inline void Subscriber::unsubscribe_all()
 {
 	// 从头部节点开始逐个清理。
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	while (m_subscriber_topic_head != nullptr)
 	{
 		// 原理可参考Topic.clear。
-		eco::Mutex::OrderRelock rlock(m_mutex,
+		std_mutex::OrderRelock rlock(m_mutex,
 			m_subscriber_topic_head->m_topic->m_mutex);
 		if (m_subscriber_topic_head != nullptr)
 		{
@@ -307,7 +307,7 @@ inline void Subscriber::unsubscribe_all()
 ////////////////////////////////////////////////////////////////////////////////
 inline bool Subscriber::unsubscribe(IN Topic* topic)
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	Subscription* node = m_subscriber_topic_head;
 	while (node != nullptr)
 	{
@@ -323,7 +323,7 @@ inline bool Subscriber::unsubscribe(IN Topic* topic)
 		取消订阅。（目前使用方案2）
 		*/
 		node->add_ref();
-		eco::Mutex::OrderRelock rlock(m_mutex, node->m_topic->m_mutex);
+		std_mutex::OrderRelock rlock(m_mutex, node->m_topic->m_mutex);
 		node->unsubscribe(&topic->m_topic_subscriber_head.m_tail);
 		node->del_ref();
 		return true;
@@ -335,7 +335,7 @@ inline bool Subscriber::unsubscribe(IN Topic* topic)
 ////////////////////////////////////////////////////////////////////////////////
 inline bool Subscriber::has_topic(IN const Topic* topic) const
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	Subscription* node = m_subscriber_topic_head;
 	while (node != nullptr)
 	{
@@ -364,7 +364,7 @@ AutoRefPtr<Subscription> Topic::reserve_subscribe(IN Subscriber* subscriber)
 	if (has_subscriber(subscriber)) return aref;
 
 	aref.reset(new Subscription(this, subscriber));
-	eco::Mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
+	std_mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
 	aref->subscribe_reserve(m_topic_subscriber_head,
 		subscriber->m_subscriber_topic_head);
 	return aref;
@@ -377,7 +377,7 @@ AutoRefPtr<Subscription> Topic::reserve_subscribe(
 	if (has_subscriber(subscriber)) return aref;
 	aref.reset(new SubscriptionT<data_t>(this, subscriber, data));
 
-	eco::Mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
+	std_mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
 	aref->subscribe_reserve(m_topic_subscriber_head,
 		subscriber->m_subscriber_topic_head);
 	return aref;
@@ -394,7 +394,7 @@ inline bool Topic::unsubscribe(IN Subscriber* subscriber)
 ////////////////////////////////////////////////////////////////////////////////
 inline void Topic::clear()
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	while (!subscriber_end(m_topic_subscriber_head.m_head))
 	{
 		/* 当前节点可能在OrderRelock期间（可能会释放锁）被其他线程删除掉。但没关系由于
@@ -404,7 +404,7 @@ inline void Topic::clear()
 		而此恰恰能在【从头开始删除节点】时，“头部”指针自动移向下一个节点。
 		#2.注意：【从非头部删除节点】需要使用m_erasing_node。
 		*/
-		eco::Mutex::OrderRelock rlock(m_mutex, 
+		std_mutex::OrderRelock rlock(m_mutex, 
 			m_topic_subscriber_head.m_head->m_subscriber->m_mutex);
 		if (!subscriber_end(m_topic_subscriber_head.m_head))
 		{
@@ -427,7 +427,7 @@ inline bool Topic::has_subscriber(IN Subscriber* subscriber) const
 ////////////////////////////////////////////////////////////////////////////////
 inline bool Topic::has_subscriber() const
 {
-	eco::Mutex::ScopeLock lock(m_mutex);
+	std_lock_guard lock(m_mutex);
 	return !subscriber_end(m_topic_subscriber_head.m_head);
 }
 

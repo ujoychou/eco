@@ -22,14 +22,14 @@ log queue.
 
 *******************************************************************************/
 #include <eco/log/Type.h>
+#include <eco/std/thread.h>
+#include <eco/std/condition_variable.h>
 #include <eco/thread/State.h>
-#include <eco/thread/ConditionVariable.h>
 #include <boost/ptr_container/ptr_deque.hpp>
 
 
-
 ECO_NS_BEGIN(eco);
-namespace log{;
+ECO_NS_BEGIN(log);
 typedef eco::Buffer<pack_size> Pack;
 ////////////////////////////////////////////////////////////////////////////////
 class Queue
@@ -45,35 +45,39 @@ public:
 	inline explicit Queue()
 		: m_cur_size(0)
 		, m_capacity(queue_size)
-		, m_mutex()
-		, m_avail_cond_var(&m_mutex)
-		, m_logging_cond_var(&m_mutex)
-		, m_max_sync_interval(sync_interval)
+		, m_max_sync_interval(eco::log::sync_interval)
 	{
 		open();
 	}
 
+	// queue name.
 	inline void set_name(IN const char* name)
-	{}
+	{
+		m_name = name;
+	}
+	inline const char* name() const
+	{
+		return m_name.c_str();
+	}
 
 	// set logging sync max interval.
-	inline void set_sync_interval(IN const uint32_t millsecs)
+	inline void set_sync_interval(IN uint32_t millsecs)
 	{
 		m_max_sync_interval = millsecs;
 	}
 
 	// log queue bytes capacity.
-	inline void set_capacity(IN const uint32_t size)
+	inline void set_capacity(IN uint32_t size)
 	{
 		m_capacity = size;
 	}
 
-	inline const uint32_t capacity() const
+	inline uint32_t capacity() const
 	{
 		return m_capacity;
 	}
 
-	inline const uint32_t size() const
+	inline uint32_t size() const
 	{
 		return m_cur_size;
 	}
@@ -89,13 +93,11 @@ public:
 	inline void close()
 	{
 		m_state.set_ok(false);
-
 		m_avail_cond_var.notify_all();
 		m_logging_cond_var.notify_all();
 	}
 
-	// please call close() instead of release(), as close() will wait all 
-	// message to be logged.
+	// compatible with worker.
 	inline void release()
 	{
 		assert(false);
@@ -110,7 +112,7 @@ public:
 			throw std::logic_error("text size is larger than log pack.");
 		}
 
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_unique_lock lock(m_mutex);
 		// if current pack is full, move avail to logging buffer.
 		if (!m_avail.empty() && m_avail.back().avail() < text.size())
 		{
@@ -122,7 +124,7 @@ public:
 		Pack* pack = get_vail(text.size());
 		while (pack == nullptr)
 		{
-			m_avail_cond_var.wait();
+			m_avail_cond_var.wait(lock);
 			pack = get_vail(text.size());
 		}
 		
@@ -135,9 +137,12 @@ public:
 		}
 	}
 
+	// compatible with eco::work<>()
+	inline size_t pop(eco::Bytes& pack) { return 0; }
+
 	inline void pop(PackPtr& pack)
 	{
-		eco::Mutex::ScopeLock lock(m_mutex);
+		std_unique_lock lock(m_mutex);
 		
 		// recycle avail pack.
 		if (pack.get() != nullptr)
@@ -153,7 +158,8 @@ public:
 				pack.reset();
 				return ;
 			}
-			if (!m_logging_cond_var.timed_wait(m_max_sync_interval))
+			if (std_cv_status::timeout == m_logging_cond_var.wait_for(
+				lock, std_chrono::milliseconds(m_max_sync_interval)))
 			{
 				move_avail();
 			}
@@ -221,16 +227,18 @@ private:
 	uint32_t m_capacity;
 
 	// synchronous mutex
-	eco::Mutex m_mutex;
-	eco::detail::ConditionVariable m_avail_cond_var;
-	eco::detail::ConditionVariable m_logging_cond_var;
+	std_mutex m_mutex;
+	std_condition_variable m_avail_cond_var;
+	std_condition_variable m_logging_cond_var;
 	uint32_t m_max_sync_interval;
 
 	// queue status.
 	eco::atomic::State m_state;
+	std::string m_name;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
+ECO_NS_END(log);
+ECO_NS_END(eco);
 #endif

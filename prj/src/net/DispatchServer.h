@@ -25,7 +25,7 @@
 *******************************************************************************/
 #include <eco/net/Ecode.h>
 #include <eco/net/Context.h>
-#include <eco/thread/DispatchServer.h>
+#include <eco/thread/Router.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -67,7 +67,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 // tcp client dispatch server.
-class DispatchServer : public eco::MessageServer<DataContext, DispatchHandler>
+class Router : public eco::MessageServer<DataContext, DispatchHandler>
 {
 public:
 	typedef std::function<void(IN Context&)> HandlerFunc;

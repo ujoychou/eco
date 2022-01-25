@@ -24,7 +24,7 @@ dll export template implement.
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Export.h>
+#include <eco/rx/RxExport.h>
 #include <vector>
 #include <algorithm>
 
@@ -257,7 +257,7 @@ void type_t::set_##property_name(IN const property_t& val)\
 {\
 	impl().m_##property_name = val;\
 }\
-type_t& type_t::##property_name(IN const property_t& val) \
+type_t& type_t::property_name(IN const property_t& val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
@@ -266,22 +266,22 @@ property_t& type_t::get_##property_name()\
 {\
 	return impl().m_##property_name;\
 }\
-const property_t& type_t::##property_name() const\
+const property_t& type_t::property_name() const\
 {\
 	return impl().m_##property_name;\
 }
 // export value property implement: const value.
 #define ECO_PROPERTY_VAC_IMPL(type_t, property_t, property_name) \
-void type_t::set_##property_name(IN const property_t val)\
+void type_t::set_##property_name(IN property_t val)\
 {\
 	impl().m_##property_name = val;\
 }\
-type_t& type_t::##property_name(IN const property_t val) \
+type_t& type_t::property_name(IN property_t val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-const property_t type_t::##property_name() const\
+property_t type_t::property_name() const\
 {\
 	return impl().m_##property_name;\
 }
@@ -305,7 +305,7 @@ property_type& type_t::get_##property_name()\
 		impl().m_##property_name = eco::heap;\
 	return impl().m_##property_name;\
 }\
-const property_type& type_t::##property_name() const\
+const property_type& type_t::property_name() const\
 {\
 	return impl().m_##property_name;\
 }
@@ -322,12 +322,12 @@ void type_t::set_##property_name(IN const char* val) \
 {\
 	impl().m_##property_name = val;\
 }\
-type_t& type_t::##property_name(IN const char* val) \
+type_t& type_t::property_name(IN const char* val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-const char* type_t::##property_name() const\
+const char* type_t::property_name() const\
 {\
 	return impl().m_##property_name.c_str();\
 }
@@ -336,27 +336,27 @@ void type_t::set_##property_name(IN const char* val) \
 {\
 	eco_cpyc(impl().m_##property_name, val);\
 }\
-type_t& type_t::##property_name(IN const char* val) \
+type_t& type_t::property_name(IN const char* val) \
 {\
 	eco_cpyc(impl().m_##property_name, val);\
 	return *this;\
 }\
-const char* type_t::##property_name() const\
+const char* type_t::property_name() const\
 {\
 	return impl().m_##property_name;\
 }
 // export bool property implement
 #define ECO_PROPERTY_BOL_IMPL(type_t, property_name) \
-void type_t::set_##property_name(IN const bool val) \
+void type_t::set_##property_name(IN bool val) \
 {\
 	impl().m_##property_name = val;\
 }\
-type_t& type_t::##property_name(IN const bool val) \
+type_t& type_t::property_name(IN bool val) \
 {\
 	impl().m_##property_name = val;\
 	return *this;\
 }\
-bool type_t::##property_name() const\
+bool type_t::property_name() const\
 {\
 	return impl().m_##property_name > 0;\
 }
@@ -406,7 +406,7 @@ bool data_set_t::empty() const\
 {\
 	return impl().m_items.size() == 0;\
 }\
-void data_set_t::reserve(IN const size_t v)\
+void data_set_t::reserve(IN size_t v)\
 {\
 	return impl().m_items.reserve(v);\
 }\
@@ -506,11 +506,11 @@ public:\
 	inline const proto_t& proto() const { return m_proto; }
 
 #define ECO_PROTOBUF_VAL(type_t, prop_t, name, member) \
-void type_t::set_##name(IN const prop_t val)\
+void type_t::set_##name(IN prop_t val)\
 {\
 	impl().get_proto().set_##member(val);\
 }\
-const prop_t type_t::name() const\
+prop_t type_t::name() const\
 {\
 	return impl().proto().member();\
 }
