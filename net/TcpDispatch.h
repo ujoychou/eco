@@ -28,7 +28,8 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+extern bool app_ready();
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 // message handled by "handler", suguest using in server.
 template<typename handler_t>
@@ -63,11 +64,11 @@ inline void handle_context(IN Context& c)
 	}
 
 	// 2.when app is unready, return.
-	if (!eco::App::get()->ready())
+	if (!app_ready())
 	{
 		ECO_ERROR << Log(c, handler_t::name())(req)
-			<= "app_unready " < eco::this_thread::error();
-		eco::this_thread::error().clear();
+			<= "app_unready " < eco::Error();
+		eco::Error().clear();
 		return;
 	}
 	
@@ -76,7 +77,8 @@ inline void handle_context(IN Context& c)
 		// 2.decode message by a newer handler.
 		// heap is used to be passed by deriving from "enable_shared_from_this".
 		std::shared_ptr<handler_t> hdl(std::make_shared<handler_t>());
-		if (TypeId<handler_t::request_t>() != TypeId<eco::net::NullRequest>())
+		if (eco::TypeId<eco::net::NullRequest>() != 
+		    eco::TypeId<typename handler_t::request_t>())
 		{
 			if (!hdl->on_decode(c.m_message.m_data, c.m_message.m_size))
 			{
@@ -160,7 +162,7 @@ public:
 	template<typename msg_t, typename codec_t>
 	inline void dispatch(int id, std::function<void(msg_t&, Context&)> func)
 	{
-		register_handler(id, std::bind(&handle_context<rsp_t, codec_t>,
+		register_handler(id, std::bind(&handle_context<msg_t, codec_t>,
 			func, std::placeholders::_1));
 	}
 

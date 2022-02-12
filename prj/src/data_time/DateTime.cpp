@@ -17,7 +17,7 @@ public:
 public:
 	bool set_date_time(IN const char* str)
 	{
-		if (str == nullptr) str = eco::empty_str.c_str();
+		if (str == nullptr) str = eco::value_empty.c_str();
 
 		// 去除空格
 		std::string dt_v(str);

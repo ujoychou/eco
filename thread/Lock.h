@@ -24,11 +24,11 @@ thread safe object state.
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class OrderLock : public eco::Object<Mutex::OrderLock>
+class OrderLock : public eco::Object<eco::OrderLock>
 {
 public:
 	// lock the two mutex in order.
-	inline OrderLock(IN Mutex& mutex1, IN Mutex& mutex2)
+	inline OrderLock(IN std_mutex& mutex1, IN std_mutex& mutex2)
 		: m_mutex1(mutex1), m_mutex2(mutex2)
 	{
 		if (&m_mutex1 == &mutex2)
@@ -61,18 +61,18 @@ public:
 	}
 
 private:
-	Mutex& m_mutex1;
-	Mutex& m_mutex2;
+	std_mutex& m_mutex1;
+	std_mutex& m_mutex2;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class OrderRelock : public eco::Object<Mutex::OrderRelock>
+class OrderRelock : public eco::Object<eco::OrderRelock>
 {
 public:
 	// mutex1 is already locked by scope_lock, mutex2 is unknown, so we will
 	// try to lock it. last lock the two mutex in order.
-	inline OrderRelock(IN Mutex& mutex1, IN Mutex& mutex2)
+	inline OrderRelock(IN std_mutex& mutex1, IN std_mutex& mutex2)
 		: m_unlock(true), m_mutex2(mutex2)
 	{
 		if (&mutex1 == &mutex2)
@@ -104,12 +104,12 @@ public:
 
 private:
 	uint32_t m_unlock;
-	Mutex& m_mutex2;
+	std_mutex& m_mutex2;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class OrdersLock : public eco::Object<Mutex::OrdersLock>
+class OrdersLock : public eco::Object<eco::OrdersLock>
 {
 public:
 	inline OrdersLock()
@@ -121,7 +121,7 @@ public:
 	}
 
 	// lock the mutexs in order.
-	inline void push_back(IN Mutex& mutex)
+	inline void push_back(IN std_mutex& mutex)
 	{
 		auto it = m_mutexs.begin();
 		for (; it != m_mutexs.end(); ++it)
@@ -151,7 +151,7 @@ public:
 	}
 
 private:
-	std::list<Mutex*> m_mutexs;
+	std::list<std_mutex*> m_mutexs;
 };
 
 
@@ -226,7 +226,7 @@ public:
 		m_mutex = nullptr;
 	}
 
-	inline void reset(std_mutex& m)
+	inline void reset(std_mutex& m, const object_t& obj)
 	{
 		unlock();
 		m_ptr = const_cast<object_t*>(&obj);
@@ -238,9 +238,6 @@ private:
 	object_t* m_ptr;
 	std_mutex* m_mutex;
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
 template<class object_t>
 inline LockPtr<object_t> lock_ptr(const object_t& obj)
 {

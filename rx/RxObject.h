@@ -1,5 +1,5 @@
-#ifndef ECO_DLL_H
-#define ECO_DLL_H
+#ifndef ECO_RX_OBJECT_H
+#define ECO_RX_OBJECT_H
 /*******************************************************************************
 @ name
 dll entry
@@ -41,9 +41,7 @@ public:
 	inline ~RxObject() { if (m_handle) { dll_free(m_handle); } }
 
 	// load dll file, you can dedicate the name of dll.
-	inline void load(
-		IN const char* dll_path,
-		IN const char* dll_name = "")
+	inline void load(IN const char* dll_path, IN const char* dll_name = "")
 	{
 		m_path = dll_path;
 		m_name = dll_name;
@@ -71,7 +69,7 @@ public:
 	template<typename func_t>
 	inline func_t cast_func(IN const char* func_name)
 	{
-		return 2r<func_t>(get_func(func_name));
+		return reinterpret_cast<func_t>(get_func(func_name));
 	}
 
 private:

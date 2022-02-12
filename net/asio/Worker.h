@@ -32,7 +32,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 namespace asio{;
 ////////////////////////////////////////////////////////////////////////////////
 class Worker : public eco::Object<Worker>

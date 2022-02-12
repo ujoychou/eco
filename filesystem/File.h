@@ -158,7 +158,7 @@ public:
 		m_file_size = 0;
 	}
 
-	inline const uint64_t file_size() const
+	inline uint64_t file_size() const
 	{
 		return m_file_size;
 	}

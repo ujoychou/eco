@@ -64,7 +64,7 @@ public:
 	// post message to server or queue.
 	inline void pop()
 	{
-		if (m_severity < core().severity_level()) return;
+		if (m_severity < Core::get().severity_level()) return;
 
 		const char* t_name = eco::this_thread::name();
 		if (m_severity >= eco::log::warn)
@@ -79,7 +79,7 @@ public:
 
 		// turn line '\n' must input into the string.
 		m_stream.force_append(1, '\n');
-		core().append(eco::lv(m_stream.bytes()), m_severity);
+		Core::get().append(m_stream.bytes(), m_severity);
 	}
 
 	/*@ logging collector. domain has 'logging', 'monitor', 'report'
@@ -90,7 +90,7 @@ public:
 		IN int file_line,
 		IN SeverityLevel sev_level)
 	{
-		assert(sev_level >= core().severity_level());
+		assert(sev_level >= Core::get().severity_level());
 		m_severity = sev_level;
 
 		// info< logging no need to save source file info.
@@ -111,7 +111,7 @@ public:
 
 		// default domain is empty string.
 		eco::date_time::Timestamp now(eco::date_time::fmt_std_m);
-		m_stream << now.value() <= eco::this_thread::get_id()
+		m_stream << now.value() <= eco::this_thread::sid()
 			<= Severity::get_display(sev_level) < ' ';
 		if (!func_name.null()) m_stream << eco::group(func_name) < ' ';
 		return *this;

@@ -23,8 +23,7 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <set>
-#include <eco/Eco.h>
+#include <eco/thread/Eco.h>
 #include <eco/thread/Map.h>
 #include <eco/thread/Atomic.h>
 #include <eco/thread/Timing.h>
@@ -32,10 +31,11 @@
 #include <eco/net/TcpAcceptor.h>
 #include "TcpStatistics.h"
 #include "Router.h"
+#include <set>
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class TcpServer::Impl
 {
@@ -61,8 +61,8 @@ public:
 	DispatchServerPool m_dispatch_pool;
 
 	// connection timer
-	TimingWheel::Timer m_timer_close;
-	TimingWheel::Timer m_timer_heart;
+	Timing::Timer m_timer_close;
+	Timing::Timer m_timer_heart;
 
 	// close event.
 	OnClose  m_on_close;

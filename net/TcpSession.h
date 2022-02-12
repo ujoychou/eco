@@ -29,7 +29,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 // client access user handler, and user access client.
 typedef std::shared_ptr<int> ClientUser;
@@ -48,10 +48,10 @@ public:
 	{}
 
 	// #.event: after server session close.
-	virtual ~SessionData() = 0 {}
+	virtual ~SessionData() {}
 
 	// get user id.
-	virtual const uint64_t user_id() const
+	virtual uint64_t user_id() const
 	{
 		return 0;
 	}
@@ -72,7 +72,7 @@ public:
 		return m_conn;
 	}
 
-	inline const SessionId id() const
+	inline SessionId id() const
 	{
 		return m_id;
 	}
@@ -105,7 +105,7 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN int type, IN bool last_)
 	{
-		send(ProtobufCodec(&msg), type, last_);
+		send(eco::lvalue(ProtobufCodec(&msg)), type, last_);
 	}
 
 	// async publish protobuf.
@@ -177,7 +177,7 @@ public:
 	inline TcpConnection& connection() const;
 
 	// get session data.
-	inline const SessionId id() const;
+	inline SessionId id() const;
 
 	// get session data.
 	inline SessionData::ptr data() const;

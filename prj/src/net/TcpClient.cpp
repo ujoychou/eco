@@ -11,11 +11,11 @@
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-void LoadBalancer::add_address(IN Address& addr)
+void LoadBalancer::add_address(IN const Address& addr)
 {
 	m_address_set.push_back(addr);
 }
-void LoadBalancer::update_address(IN AddressSet& addr)
+void LoadBalancer::update_address(IN const AddressSet& addr)
 {
 	m_address_set = addr;
 	m_address_cur = -1;		// need random again.
@@ -95,7 +95,7 @@ void TcpClient::Impl::async_connect()
 	{
 		ECO_THIS_ERROR(e_client_no_address)
 			<< "client has no server address.";
-		ECO_LOG(info) << logging() << eco::this_thread::error();
+		ECO_LOG(info) << logging() << eco::Error();
 		return;
 	}
 
@@ -141,7 +141,8 @@ void TcpClient::Impl::connect(uint32_t millsec)
 	eco::thread::time_wait(std::bind(
 		&TcpState::connected, &peer().state()), millsec);
 }
-void TcpClient::Impl::connect(eco::net::AddressSet& addr, uint32_t millsec)
+void TcpClient::Impl::connect(
+	const eco::net::AddressSet& addr, uint32_t millsec)
 {
 	update_address(addr);
 	connect(millsec);
@@ -277,7 +278,7 @@ void TcpClient::Impl::on_connect(bool error)
 	else
 	{
 		ECO_ERROR << NetLog(peer().id(), __func__)	<= m_option.name()
-			<= eco::this_thread::error();
+			<= eco::Error();
 		auto_connect();		// 1.auto connect when connection open fail.
 	}
 
@@ -297,7 +298,7 @@ void TcpClient::Impl::on_connect_ok()
 	if (m_option.heartbeat_send_sec() > 0)
 	{
 		peer().m_timer_send.cancel();
-		peer().m_timer_send = eco::Eco::get().timer().run_after(
+		peer().m_timer_send = eco::Eco::get().timing().run_after(
 			[=] { this->on_send_heartbeat(); },
 			std_chrono::seconds(m_option.heartbeat_send_sec()), true);
 	}
@@ -306,7 +307,7 @@ void TcpClient::Impl::on_connect_ok()
 	if (m_option.heartbeat_recv_sec() > 0)
 	{
 		peer().m_timer_recv.cancel();
-		peer().m_timer_recv = eco::App::get()->timer().run_after(
+		peer().m_timer_recv = eco::App::get()->timing().run_after(
 			[=] { this->on_live_timeout(); },
 			std_chrono::seconds(m_option.heartbeat_recv_sec()), false);
 	}
@@ -314,7 +315,7 @@ void TcpClient::Impl::on_connect_ok()
 	// async load data.
 	on_load_data();
 	m_timer_load_events.cancel();
-	m_timer_load_events = eco::App::get()->timer().run_after(
+	m_timer_load_events = eco::App::get()->timing().run_after(
 		[=] { this->on_load_data(); },
 		std_chrono::seconds(m_option.get_load_event_sec()), true);
 }
@@ -349,7 +350,7 @@ void TcpClient::Impl::on_close(IN void* impl)
 		LoadEvent::ptr& evt = *it;
 		evt->m_state.set_ok(false);
 	}
-	ECO_INFO << NetLog(peer->id(), __func__) < eco::this_thread::error();
+	ECO_INFO << NetLog(peer->id(), __func__) < eco::Error();
 
 	// notify on close.
 	if (m_on_close) m_on_close();
@@ -557,11 +558,11 @@ Protocol* TcpClient::protocol_latest() const
 {
 	return impl().m_protocol.protocol_latest();
 }
-void TcpClient::add_address(IN Address& addr)
+void TcpClient::add_address(IN const Address& addr)
 {
 	impl().add_address(addr);
 }
-void TcpClient::set_address(IN AddressSet& addr)
+void TcpClient::set_address(IN const AddressSet& addr)
 {
 	impl().update_address(addr);
 	impl().m_option.set_name(addr.name());
@@ -570,7 +571,7 @@ void TcpClient::async_connect()
 {
 	impl().async_connect();
 }
-void TcpClient::async_connect(IN AddressSet& addr)
+void TcpClient::async_connect(IN const AddressSet& addr)
 {
 	impl().async_connect(addr);
 }
@@ -578,7 +579,7 @@ void TcpClient::connect(IN uint32_t millsec)
 {
 	impl().connect(millsec);
 }
-void TcpClient::connect(IN AddressSet& addr, IN uint32_t millsec)
+void TcpClient::connect(IN const AddressSet& addr, IN uint32_t millsec)
 {
 	impl().connect(addr, millsec);
 }

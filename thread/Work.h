@@ -46,7 +46,8 @@ inline bool work_with_catch_exception(const char* name, functor_t&& func)
 	catch(...)
 	{
 		ECO_LOG(error, name) << eco::Error();
-	}	
+	}
+	return result;
 }
 
 

@@ -9,7 +9,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 // return whether need to dispatch meta context.
 void DispatchHandler::handle_server(Context& c, TcpPeer& peer)
@@ -131,7 +131,7 @@ void DispatchHandler::operator()(IN DataContext& dc)
 		c.m_meta, c.m_message, dc.m_data, dc.m_head_size))
 	{
 		ECO_ERROR << NetLog(impl.id(), func, sess_id) <=
-			eco::this_thread::error();
+			eco::Error();
 		return;
 	}
 

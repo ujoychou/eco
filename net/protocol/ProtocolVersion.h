@@ -30,7 +30,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 class Protocol;
 ////////////////////////////////////////////////////////////////////////////////
 // support message option for message to send.

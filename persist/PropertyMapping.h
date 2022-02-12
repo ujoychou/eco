@@ -56,7 +56,7 @@ class PropertyMapping
 {
 public:
 	explicit inline PropertyMapping(IN uint32_t index = 0)
-		: m_constraint(eco::value_none), m_field_index(index)
+		: m_field_index(index), m_constraint(eco::value_none)
 	{}
 
 	inline bool operator==(IN const char* field_name) const
@@ -226,7 +226,7 @@ public:
 	{
 		return m_prop_name.c_str();
 	}
-	inline operator const uint32_t() const
+	inline operator uint32_t() const
 	{
 		return m_field_index;
 	}
@@ -261,7 +261,7 @@ public:
 		return eco::has(m_constraint, eco::constraint_nnull);
 	}
 
-	inline bool has_constraint(IN const uint16_t v) const
+	inline bool has_constraint(IN uint16_t v) const
 	{
 		return eco::has(m_constraint, v);
 	}
@@ -278,8 +278,8 @@ public:
 
 	inline static void get_field_type_sql(
 		OUT std::string& field_sql,
-		IN  const uint32_t field_type,
-		IN  const uint32_t field_size)
+		IN  uint32_t field_type,
+		IN  uint32_t field_size)
 	{
 		switch (field_type)
 		{

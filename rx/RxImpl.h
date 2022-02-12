@@ -144,6 +144,16 @@ type_t& type_t::operator=(IN const type_t& val)\
 	impl() = val.impl();\
 	return *this;\
 }
+#define ECO_VALUE_IMPL_B(type_t, parent_t)\
+type_t::type_t(IN const type_t& val) : parent_t()\
+{\
+	m_impl = new Impl(val.impl());\
+}\
+type_t& type_t::operator=(IN const type_t& val)\
+{\
+	impl() = val.impl();\
+	return *this;\
+}
 
 #define ECO_VALUE_IMPL_1(type_t) \
 ECO_TYPE_IMPL_1(type_t) \
@@ -151,7 +161,7 @@ ECO_VALUE_IMPL_A(type_t)
 
 #define ECO_VALUE_IMPL_2(type_t, parent_t) \
 ECO_TYPE_IMPL_2(type_t, parent_t) \
-ECO_VALUE_IMPL_A(type_t)
+ECO_VALUE_IMPL_B(type_t, parent_t)
 
 #define ECO_VALUE_IMPL(...) ECO_MACRO(ECO_VALUE_IMPL_, __VA_ARGS__)
 

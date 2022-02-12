@@ -62,8 +62,8 @@ public:
 	const char* help_info() const;
 
 	/*@ context mode: where command can be revoke and resume.*/
-	Group& open_context(IN const bool = false);
-	const bool context_openned() const;
+	Group& open_context(IN bool = false);
+	bool context_openned() const;
 
 	/*@ get parent group.*/
 	Group parent() const;
@@ -127,11 +127,11 @@ public:
 	/*@ get command group set size.*/
 	size_t size() const;
 	bool empty() const;
-	void reserve(IN const size_t capacity);
+	void reserve(IN size_t capacity);
 
 	/*@ access command group by item index.*/
-	Group& at(IN const int i);
-	const Group& at(IN const int i) const;
+	Group& at(IN int i);
+	const Group& at(IN int i) const;
 
 private:
 	Group& add();

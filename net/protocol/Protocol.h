@@ -23,14 +23,13 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/rx/RxExport.h>
 #include <eco/net/protocol/Codec.h>
 #include <eco/net/protocol/ProtocolVersion.h>
-#include <eco/Object.h>
-
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
@@ -181,50 +180,48 @@ public:
 	}
 
 public:
-	inline void set_request_data(IN const uint8_t req_data)
+	inline void set_request_data(IN uint8_t req_data)
 	{
 		m_option_data = req_data;
 		eco::add(m_option, option_req1);
 		eco::add(m_option, option_data);
 	}
-	inline void set_request_data(IN const uint16_t req_data)
+	inline void set_request_data(IN uint16_t req_data)
 	{
 		m_option_data = req_data;
 		eco::add(m_option, option_req2);
 		eco::add(m_option, option_data);
 	}
-	inline void set_request_data(IN const uint32_t req_data)
+	inline void set_request_data(IN uint32_t req_data)
 	{
 		m_option_data = req_data;
 		eco::add(m_option, option_req4);
 		eco::add(m_option, option_data);
 	}
-	inline void set_request_data(IN const uint64_t req_data)
+	inline void set_request_data(IN uint64_t req_data)
 	{
 		m_option_data = req_data;
 		eco::add(m_option, option_req8);
 		eco::add(m_option, option_data);
 	}
-	inline void set_request_data(
-		IN const uint64_t req_data,
-		IN const MessageOption opt)
+	inline void set_request_data(IN uint64_t req_data, IN MessageOption opt)
 	{
 		m_option_data = req_data;
 		eco::add(m_option, opt);
 	}
-	inline const uint8_t get_req1() const
+	inline uint8_t get_req1() const
 	{
 		return static_cast<uint8_t>(m_option_data);
 	}
-	inline const uint16_t get_req2() const
+	inline uint16_t get_req2() const
 	{
 		return static_cast<uint16_t>(m_option_data);
 	}
-	inline const uint32_t get_req4() const
+	inline uint32_t get_req4() const
 	{
 		return static_cast<uint32_t>(m_option_data);
 	}
-	inline const uint64_t get_req8() const
+	inline uint64_t get_req8() const
 	{
 		return m_option_data;
 	}
@@ -261,7 +258,7 @@ public:
 	virtual bool decode_size(
 		OUT IN eco::net::MessageHead& head,
 		IN const char* bytes,
-		IN const uint32_t size) const = 0;
+		IN uint32_t size) const = 0;
 
 	/*@ get message meta and message bytes.*/
 	virtual bool decode_meta(

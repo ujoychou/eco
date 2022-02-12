@@ -1,7 +1,8 @@
 ﻿#ifndef ECO_ANY_H
 #define ECO_ANY_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/Object.h>
+#include <eco/Rtype.h>
+#include <eco/String.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -15,7 +16,7 @@ class Any
 		inline Data() {}
 		virtual ~Data() {}
 		virtual void* get_value() = 0;
-		virtual const uint32_t get_type_id() const = 0;
+		virtual uint32_t get_type_id() const = 0;
 		virtual Data* copy() const = 0;
 		virtual void copy(const Data* data) = 0;
 	};
@@ -32,7 +33,7 @@ class Any
 		{
 			return &m_value;
 		}
-		virtual const uint32_t get_type_id() const override
+		virtual uint32_t get_type_id() const override
 		{
 			return eco::TypeId<T>::value;
 		}
@@ -59,67 +60,47 @@ public:
 	{
 		release();
 	}
-
 	inline Any(eco::Null) : m_data(nullptr)
 	{}
 	inline Any& operator=(eco::Null)
 	{
 		release();
+		return *this;
 	}
-
 	template<typename T>
 	inline Any(IN const T& v) : m_data(new DataT<T>(v))
 	{}
-
 	inline Any(IN const char* v) : m_data(new DataT<std::string>(v))
 	{}
-
 	inline Any(IN bool v) : m_data(new DataT<uint32_t>(v))
 	{}
-
 	inline Any(IN char v) : m_data(new DataT<uint32_t>(v))
 	{}
-
 	inline Any(IN unsigned char v) : m_data(new DataT<uint32_t>(v))
 	{}
-
-	inline Any(IN short v) : m_data(new DataT<uint32_t>(v))
+	inline Any(IN int16_t v) : m_data(new DataT<uint32_t>(v))
 	{}
-
-	inline Any(IN unsigned short v) : m_data(new DataT<uint32_t>(v))
+	inline Any(IN uint16_t v) : m_data(new DataT<uint32_t>(v))
 	{}
-
-	inline Any(IN int v) : m_data(new DataT<uint32_t>(v))
+	inline Any(IN int32_t v) : m_data(new DataT<uint32_t>(v))
 	{}
-
-	inline Any(IN unsigned int v) : m_data(new DataT<uint32_t>(v))
+	inline Any(IN uint32_t v) : m_data(new DataT<uint32_t>(v))
 	{}
-
-	inline Any(IN long v) : m_data(new DataT<uint32_t>(v))
-	{}
-
-	inline Any(IN unsigned long v) : m_data(new DataT<uint32_t>(v))
-	{}
-
 	inline Any(IN int64_t v) : m_data(new DataT<uint64_t>(v))
 	{}
-
 	inline Any(IN uint64_t v) : m_data(new DataT<uint64_t>(v))
 	{}
-
 	inline Any(IN float v) : m_data(new DataT<float>(v))
 	{}
-
 	inline Any(IN double v) : m_data(new DataT<double>(v))
-	{}
-
-	inline Any(IN const Any& v) : m_data(v.null() ? v.m_data : v.m_data->copy())
 	{}
 	inline Any(IN Any&& v) : m_data(v.m_data)
 	{
 		v.m_data = nullptr;
 	}
-
+	inline Any(IN const Any& v) : m_data(v.null() ? v.m_data : v.m_data->copy())
+	{}
+	
 	// constructor operator =.
 	template<typename T>
 	inline Any& operator=(IN const T& v)
@@ -182,17 +163,12 @@ public:
 		return m_data == nullptr;
 	}
 
-	inline operator bool() const
-	{
-		return m_data == nullptr;
-	}
-
 	// content type.
-	inline const uint32_t get_type_id() const
+	inline uint32_t get_type_id() const
 	{
 		return m_data->get_type_id();
 	}
-	inline bool same_type_id(const uint32_t type_id) const
+	inline bool same_type_id(uint32_t type_id) const
 	{
 		return !null() && type_id == get_type_id();
 	}
@@ -255,55 +231,47 @@ public:
 	{
 		return eco::Any::cast<std::string>(*this).c_str();
 	}
-	inline operator const bool() const
+	inline operator bool() const
 	{
 		return eco::Any::cast<uint32_t>(*this) != 0;
 	}
-	inline operator const char() const
+	inline operator char() const
 	{
 		return eco::Any::cast<uint32_t>(*this);
 	}
-	inline operator const unsigned char() const
+	inline operator unsigned char() const
 	{
 		return eco::Any::cast<uint32_t>(*this);
 	}
-	inline operator const short() const
+	inline operator int16_t() const
 	{
 		return eco::Any::cast<uint32_t>(*this);
 	}
-	inline operator const unsigned short() const
+	inline operator uint16_t() const
 	{
 		return eco::Any::cast<uint32_t>(*this);
 	}
-	inline operator const int() const
+	inline operator int32_t() const
 	{
 		return eco::Any::cast<uint32_t>(*this);
 	}
-	inline operator const unsigned int() const
+	inline operator uint32_t() const
 	{
 		return eco::Any::cast<uint32_t>(*this);
 	}
-	inline operator const long() const
-	{
-		return eco::Any::cast<uint32_t>(*this);
-	}
-	inline operator const unsigned long() const
-	{
-		return eco::Any::cast<uint32_t>(*this);
-	}
-	inline operator const int64_t() const
+	inline operator int64_t() const
 	{
 		return eco::Any::cast<uint64_t>(*this);
 	}
-	inline operator const uint64_t() const
+	inline operator uint64_t() const
 	{
 		return eco::Any::cast<uint64_t>(*this);
 	}
-	inline operator const float() const
+	inline operator float() const
 	{
 		return eco::Any::cast<float>(*this);
 	}
-	inline operator const double() const
+	inline operator double() const
 	{
 		return eco::Any::cast<double>(*this);
 	}
@@ -321,7 +289,7 @@ public:
 		if (i64 != nullptr) return eco::Integer<uint64_t>(*i64).c_str();
 		auto f = eco::Any::cast<float>(this);
 		if (f != nullptr) return eco::Double(*f, prec).c_str();
-		return eco::empty_str;
+		return eco::value_empty;
 	}
 
 private:

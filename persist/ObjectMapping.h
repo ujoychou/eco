@@ -401,7 +401,7 @@ public:
 		for (size_t oi = 0; oi < record_set.size(); ++oi)
 		{
 			// create object.
-			object_set_t::value_type obj;
+			typename object_set_t::value_type obj;
 			meta.make_attach(obj);
 
 			// set object property value.

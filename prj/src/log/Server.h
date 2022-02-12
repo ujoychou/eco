@@ -37,7 +37,7 @@ public:
 	{}
 
 	/*@ set message queue max sync interval mill seconds.*/
-	inline void set_sync_interval(IN const uint32_t millsec)
+	inline void set_sync_interval(IN uint32_t millsec)
 	{
 		this->m_channel.set_sync_interval(millsec);
 	}

@@ -83,7 +83,7 @@ public:
 		if (!succ && m_restart_secs > 0)
 		{
 			Btask::ptr this_ptr = shared_from_this();
-			Eco::get().timer().run_after([=]() mutable {
+			Eco::get().timing().run_after([=]() mutable {
 				Eco::get().post_task(std::move(this_ptr));
 			}, restart_secs() * 1000, false);
 		}// end if.
@@ -130,7 +130,7 @@ public:
 	// restart interval second when task fail(operator() will throw exception).
 	inline void set_restart_secs(IN uint32_t secs = restart_secs_default)
 	{
-		m_restart_secs = (secs > 0 ? secs : restart_secs_default);
+		m_restart_secs = (secs > 0 ? secs : uint32_t(restart_secs_default));
 	}
 	inline uint32_t restart_secs() const
 	{
@@ -155,11 +155,11 @@ public:
 		m_erase_state = erase_state;
 	}
 	// task dest state.
-	inline const uint32_t get_add_state() const
+	inline uint32_t get_add_state() const
 	{
 		return m_add_state;
 	}
-	inline const uint32_t get_sour_state() const
+	inline uint32_t get_sour_state() const
 	{
 		return m_sour_state;
 	}

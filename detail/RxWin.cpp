@@ -1,6 +1,6 @@
 #include "Pch.h"
 #ifdef ECO_WIN32
-#include <eco/rx/RxDll.h>
+#include <eco/rx/RxObject.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Error.h>
 #include "windows.h"

@@ -2,11 +2,11 @@
 #define ECO_ERROR_H
 /*******************************************************************************
 @ name
-eco basic type.
+error type.
 
 @ function
-1.string_any.
-2.variant.
+1.eco error data.
+2.eco error throw.
 
 @ exception
 
@@ -25,28 +25,39 @@ eco basic type.
 *******************************************************************************/
 #include <eco/String.h>
 #include <eco/rx/RxApi.h>
+#ifndef ECO_NO_PROTOBUF
+#include <eco/detail/proto/Eco.pb.h>
+#endif
 
 
 ECO_NS_BEGIN(eco);
+// eco error mechanism base on thread_local error.
 ////////////////////////////////////////////////////////////////////////////////
-// error mechanism: get this_thread error
-class Error;
 ECO_NS_BEGIN(this_thread);
-// get current thread error.
-ECO_API eco::Error& error();
+// current thread error c api.
 ECO_API int  error_id();
 ECO_API const char* error_path();
 ECO_API const char* error_value();
 ECO_API void error_key(int);
 ECO_API void error_key(const char*);
-ECO_API void error_add(const char*);
-ECO_API void error_val(const char*);
+ECO_API void error_value(const char*);
 ECO_API void error_clear();
 ECO_API void error_append(IN uint32_t siz, IN char c);
 ECO_API void error_append(IN const char* buf, IN uint32_t siz);
-#define ECO_THROW(id_msg) throw eco::this_thread::error().key_throw(id_msg)
-#define ECO_THIS_ERROR(id_path) eco::this_thread::error().key(id_path)
-#define ECO_THIS_ERROR_ADD(id_path) eco::this_thread::error().add(id_path)
+#define ECO_THIS_ERROR(id_path) eco::Error().key(id_path)
+#define ECO_THIS_ERROR_ADD(id_path) eco::Error().add(id_path)
+#define ECO_THROW(id_msg) throw eco::Error(id_msg)
+
+// get protobuf error object.
+#ifndef ECO_NO_PROTOBUF
+ECO_NS_BEGIN(proto);
+ECO_API eco::proto::Error& error();
+ECO_NS_END(proto);
+#endif
+
+// get this thread format.
+ECO_API eco::FormatX& format();
+ECO_API eco::FormatX& format(const char* msg);
 ECO_NS_END(this_thread);
 
 
@@ -55,33 +66,42 @@ class Error : public std::exception
 {
 	ECO_STREAM_OPERATOR(Error, (*this), ';');
 public:
+	inline Error()
+	{}
+	// for ECO_THROW.
+	inline Error(int id)
+	{
+		this_thread::error_key(id);
+	}
+	inline Error(const char* msg)
+	{
+		this_thread::error_key(msg);
+	}
+
+	// get error key: id/path;value
 	inline int id() const
 	{
 		return this_thread::error_id();
 	}
-
 	inline const char* path() const
 	{
 		return this_thread::error_path();
 	}
-
 	inline const char* value() const
 	{
 		return this_thread::error_value();
 	}
-
 	virtual const char* what() const noexcept override
 	{
 		return this_thread::error_value();
 	}
-
 	// whether has error.
 	inline operator bool() const
 	{
-		return this_thread::error_id() != 0
-			|| !eco::empty(this_thread::error_path());
+		return id() != 0 || !eco::empty(path());
 	}
 
+	// set error key: id/path;value
 	inline Error& key(int id)
 	{
 		this_thread::error_key(id);
@@ -92,23 +112,10 @@ public:
 		this_thread::error_key(v);
 		return *this;
 	}
-	inline Error& add(const char* v)
+	inline void clear()
 	{
-		this_thread::error_add(v);
-		return *this;
+		this_thread::error_clear();
 	}
-
-	inline Error& key_throw(int id)
-	{
-		this_thread::error_key(id);
-		return *this;
-	}
-	inline Error& key_throw(const char* v)
-	{
-		this_thread::error_val(v);
-		return *this;
-	}
-
 	// path: add pro: "a/b" / "c" = "a/b/c";
 	inline Error& operator / (const char* v)
 	{
@@ -117,18 +124,12 @@ public:
 		return *this;
 	}
 
-	inline void clear()
-	{
-		this_thread::error_clear();
-	}
-
 private:
 	// append char.
 	inline void append(IN uint32_t siz, IN char c)
 	{
 		this_thread::error_append(siz, c);
 	}
-
 	// append string.
 	inline void append(IN const char* buf, IN uint32_t siz)
 	{

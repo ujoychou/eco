@@ -178,7 +178,7 @@ Group& Group::open_context(IN bool is_open)
 	impl().m_open_context = is_open;
 	return *this;
 }
-const bool Group::context_openned() const
+bool Group::context_openned() const
 {
 	return impl().m_open_context;
 }

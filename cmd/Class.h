@@ -114,11 +114,11 @@ public:
 	/*@ get command set size.*/
 	size_t size() const;
 	bool empty() const;
-	void reserve(IN const size_t capacity);
+	void reserve(IN size_t capacity);
 
 	/*@ access command by item index.*/
-	Class& at(IN const int i);
-	const Class& at(IN const int i) const;
+	Class& at(IN int i);
+	const Class& at(IN int i) const;
 };
 
 

@@ -80,9 +80,9 @@ void Eco::post_task(eco::Task&& task, uint32_t restart_sec_if_fail)
 }
 void Eco::post_task(IN Btask::ptr&& task)
 {
-	impl().post_task(std::bind(&Task::operator(), task), task->restart_secs());
+	impl().post_task(std::bind(&Btask::operator(), task), task->restart_secs());
 }
-void Eco::post_wait(IN std::shared_ptr<Btask>&& task)
+void Eco::post_wait(IN Btask::ptr&& task)
 {
 	impl().post_wait(std::move(task));
 }
@@ -90,7 +90,7 @@ void Eco::move_wait()
 {
 	impl().move_wait();
 }
-eco::Timing& Eco::timer()
+eco::Timing& Eco::timing()
 {
 	return impl().m_wheel;
 }

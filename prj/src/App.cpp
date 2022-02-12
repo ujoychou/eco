@@ -1,7 +1,7 @@
 #include "Pch.h"
 #include <eco/App.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/RxApp.h>
+#include <eco/rx/RxApp.h>
 #include <eco/sys/Sys.h>
 #include <eco/cmd/Engine.h>
 #include <eco/net/TcpServer.h>
@@ -9,7 +9,6 @@
 #	include <eco/sys/WinDump.h>
 #	include <eco/sys/WinConsoleEvent.h>
 #endif
-#include <eco/thread/Task.h>
 #include <eco/thread/Monitor.h>
 #include <eco/filesystem/Path.h>
 #include <eco/service/dev/Cluster.h>
@@ -160,46 +159,46 @@ inline void App::Impl::init_log()
 	// #.read logging config.
 	eco::StringAny v;
 	if (m_config.find(v, "logging/async"))
-		eco::log::core().set_async(v);
+		eco::log::Core::get().set_async(v);
 	if (m_config.find(v, "logging/level"))
-		eco::log::core().set_severity_level(v.c_str());
+		eco::log::Core::get().set_severity_level(v.c_str());
 	if (m_config.find(v, "logging/memcache"))
-		eco::log::core().set_capacity(int(double(v) * 1024 * 1024));
+		eco::log::Core::get().set_capacity(int(double(v) * 1024 * 1024));
 	if (m_config.find(v, "logging/async_flush"))
-		eco::log::core().set_async_flush(v);
+		eco::log::Core::get().set_async_flush(v);
 	if (m_config.has("logging/file_sink"))
 	{
-		eco::log::core().add_file_sink(true);
+		eco::log::Core::get().add_file_sink(true);
 		if (m_config.find(v, "logging/file_sink/level"))
-			eco::log::core().set_severity_level(v.c_str(), 1);
+			eco::log::Core::get().set_severity_level(v.c_str(), 1);
 		if (m_config.find(v, "logging/file_sink/file_path"))
-			eco::log::core().set_file_path(v.c_str());
+			eco::log::Core::get().set_file_path(v.c_str());
 		if (m_config.find(v, "logging/file_sink/roll_size"))
-			eco::log::core().set_file_roll_size(
+			eco::log::Core::get().set_file_roll_size(
 				uint32_t(double(v) * 1024 * 1024));
 
 		// set logging file path.
 		std::string file(m_module_path);
-		file += eco::log::core().file_path();
+		file += eco::log::Core::get().file_path();
 		eco::filesystem::add_path_suffix(file);
-		eco::log::core().set_file_path(file.c_str());
+		eco::log::Core::get().set_file_path(file.c_str());
 	}
 	else
 	{
-		eco::log::core().add_file_sink(false);
+		eco::log::Core::get().add_file_sink(false);
 	}
 
 	if (m_config.has("logging/console_sink"))
 	{
-		eco::log::core().add_console_sink(true);
+		eco::log::Core::get().add_console_sink(true);
 		if (m_config.find(v, "logging/console_sink/level"))
-			eco::log::core().set_severity_level(v.c_str(), 2);
+			eco::log::Core::get().set_severity_level(v.c_str(), 2);
 	}
 	else
 	{
-		eco::log::core().add_console_sink(false);
+		eco::log::Core::get().add_console_sink(false);
 	}
-	eco::log::core().run();
+	eco::log::Core::get().run();
 }
 
 
@@ -391,31 +390,31 @@ inline void App::Impl::init_router()
 inline void App::Impl::init_option(net::TcpOption& option, ContextNode& node)
 {
 	const eco::StringAny* v = nullptr;
-	if (v = node.find("router"))
+	if (nullptr != (v = node.find("router")))
 		option.set_router(v->c_str());
-	if (v = node.find("no_delay"))
+	if (nullptr != (v = node.find("no_delay")))
 		option.set_no_delay(*v);
-	if (v = node.find("websocket"))
+	if (nullptr != (v = node.find("websocket")))
 		option.set_websocket(*v);
-	if (v = node.find("heartbeat_rhythm"))
+	if (nullptr != (v = node.find("heartbeat_rhythm")))
 		option.set_heartbeat_rhythm(*v);
-	if (v = node.find("heartbeat_recv_sec"))
+	if (nullptr != (v = node.find("heartbeat_recv_sec")))
 		option.set_heartbeat_recv_sec(*v);
-	if (v = node.find("heartbeat_send_sec"))
+	if (nullptr != (v = node.find("heartbeat_send_sec")))
 		option.set_heartbeat_send_sec(*v);
-	if (v = node.find("context_capacity"))
+	if (nullptr != (v = node.find("context_capacity")))
 		option.set_context_capacity(*v);
-	if (v = node.find("send_capacity"))
+	if (nullptr != (v = node.find("send_capacity")))
 		option.set_send_capacity(*v);
-	if (v = node.find("send_buffer_size"))
+	if (nullptr != (v = node.find("send_buffer_size")))
 		option.set_send_buffer_size(*v);
-	if (v = node.find("recv_buffer_size"))
+	if (nullptr != (v = node.find("recv_buffer_size")))
 		option.set_recv_buffer_size(*v);
-	if (v = node.find("send_low_watermark"))
+	if (nullptr != (v = node.find("send_low_watermark")))
 		option.set_send_low_watermark(*v);
-	if (v = node.find("recv_low_watermark"))
+	if (nullptr != (v = node.find("recv_low_watermark")))
 		option.set_recv_low_watermark(*v);
-	if (v = node.find("max_byte_size"))
+	if (nullptr != (v = node.find("max_byte_size")))
 		option.set_max_byte_size(int(double(*v) * 1024 * 1024));
 }
 
@@ -480,25 +479,25 @@ net::TcpClient App::Impl::add_consumer(IN eco::net::AddressSet& addr)
 inline void App::Impl::init_consumer()
 {
 	eco::ContextNodeSet nodes = m_config.find_children("consumer");
-	if (nodes.null() || nodes.size() == 0) return;
+	if (nodes.null() || nodes.size() == 0) { return; }
 
 	// #.init consumer that this service depends on.
-	const eco::StringAny* v = 0;
+	const eco::StringAny* v = nullptr;
 	for (auto it = nodes.begin(); it != nodes.end(); ++it)
 	{
 		eco::net::TcpClient client;
 		client.set_address(init_address(*it));
 		init_option(client.get_option(), *it);
 		client.get_option().set_module_(client.option().name());
-		if (v = it->find("module"))
+		if (nullptr != (v = it->find("module")))
 			client.get_option().set_module_(*v);
-		if (v = it->find("suspend"))
+		if (nullptr != (v = it->find("suspend")))
 			client.get_option().set_suspend(*v);
-		if (v = it->find("balance"))
+		if (nullptr != (v = it->find("balance")))
 			client.get_option().set_balance(v->c_str());
-		if (v = it->find("load_event_sec"))
+		if (nullptr != (v = it->find("load_event_sec")))
 			client.get_option().set_load_event_sec(*v);
-		if (v = it->find("auto_reconnect_sec"))
+		if (nullptr != (v = it->find("auto_reconnect_sec")))
 			client.get_option().set_auto_reconnect_sec(*v);
 		m_consumer_set.push_back(client);
 	}
@@ -538,23 +537,23 @@ inline void App::Impl::init_provider()
 	}
 	
 	// #.init provider service option.
-	const eco::StringAny* v = 0;
+	const eco::StringAny* v = nullptr;
 	eco::net::TcpServerOption& option = m_provider.get_option();
 	eco::ContextNode node = m_config.get_node("provider");
 	init_option(option, node);
-	if (v = node.find("service"))
+	if (nullptr != (v = node.find("service")))
 		set_provider_service(v->c_str());
-	if (v = node.find("port"))
+	if (nullptr != (v = node.find("port")))
 		option.set_port(*v);
-	if (v = node.find("max_connection_size"))
+	if (nullptr != (v = node.find("max_connection_size")))
 		option.set_max_connection_size(*v);
-	if (v = node.find("max_session_size"))
+	if (nullptr != (v = node.find("max_session_size")))
 		option.set_max_session_size(*v);
-	if (v = node.find("clean_dos_peer_sec"))
+	if (nullptr != (v = node.find("clean_dos_peer_sec")))
 		option.set_clean_dos_peer_sec(*v);
-	if (v = node.find("io_thread_size"))
+	if (nullptr != (v = node.find("io_thread_size")))
 		option.set_io_thread_size(*v);
-	if (v = node.find("business_thread_size"))
+	if (nullptr != (v = node.find("business_thread_size")))
 		option.set_business_thread_size(*v);
 }
 
@@ -655,9 +654,9 @@ const char* App::config_file() const
 {
 	return impl().m_config_file.c_str();
 }
-App* App::get()
+App& App::get()
 {
-	return Impl::s_app;
+	return *Impl::s_app;
 }
 void App::set_app(IN App& app)
 {
@@ -711,15 +710,15 @@ const eco::Config& App::config() const
 }
 void App::set_log_file_on_changed(IN eco::log::OnChangedLogFile func)
 {
-	eco::log::core().set_file_on_create(func);
+	eco::log::Core::get().set_file_on_create(func);
 }
 eco::cmd::Group App::home()
 {
 	return eco::cmd::engine().home();
 }
-TimingWheel& App::timer()
+eco::Timing& App::timing()
 {
-	return Eco::get().timer();
+	return Eco::get().timing();
 }
 eco::loc::Locale& App::locale()
 {
@@ -782,6 +781,11 @@ bool App::ready() const
 	}
 	return false;
 }
+bool app_ready()
+{
+	return eco::App::get().ready();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 eco::Persist App::persist(IN const char* name_)
@@ -987,7 +991,7 @@ inline void App::Impl::exit(IN App& app, IN bool error)
 
 	if (s_app_counts == 0)
 	{
-		eco::log::core().stop();// #7.exit log
+		eco::log::Core::get().stop();// #7.exit log
 	}	
 }
 

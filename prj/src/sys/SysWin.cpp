@@ -252,9 +252,9 @@ std::string GetAppName()
 	char path[2048] = { 0 };
 	GetModuleFileNameA(NULL, path, 2048);
 	uint32_t start = eco::find_last(path, '\\');
-	if (start == std::string::npos) return eco::empty_str;
+	if (start == std::string::npos) return eco::value_empty;
 	uint32_t end = eco::find_last(path, '.');
-	if (end == std::string::npos) return eco::empty_str;
+	if (end == std::string::npos) return eco::value_empty;
 	std::string result(&path[start + 1], end - start - 1);
 	return result;
 }

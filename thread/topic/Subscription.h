@@ -1,8 +1,7 @@
 ﻿#ifndef ECO_DETAIL_SUBSCRIPTION_H
 #define ECO_DETAIL_SUBSCRIPTION_H
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/std/mutex.h>
-#include <eco/Memory.h>
+#include <eco/thread/Lock.h>
 #include <forward_list>
 
 
@@ -11,10 +10,6 @@ ECO_NS_BEGIN(detail);
 class Topic;
 class Subscriber;
 ECO_NS_END(detail);
-ECO_NS_END(eco);
-
-
-ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 class Subscription;
 class SubscriptionList
@@ -67,12 +62,12 @@ public:
 
 	// construct.
 	inline Subscription(IN detail::Topic* topic, IN detail::Subscriber* sub)
-		: m_topic(topic), m_subscriber(sub)
+		: m_working(false), m_topic(topic)
 		, m_topic_subscriber_next(nullptr)
 		, m_topic_subscriber_prev(nullptr)
+		, m_subscriber(sub)
 		, m_subscriber_topic_next(nullptr)
 		, m_subscriber_topic_prev(nullptr)
-		, m_working(false)
 	{}
 
 	// for SubscriptionT.
@@ -292,7 +287,7 @@ inline void Subscriber::unsubscribe_all()
 	while (m_subscriber_topic_head != nullptr)
 	{
 		// 原理可参考Topic.clear。
-		std_mutex::OrderRelock rlock(m_mutex,
+		eco::OrderRelock rlock(m_mutex,
 			m_subscriber_topic_head->m_topic->m_mutex);
 		if (m_subscriber_topic_head != nullptr)
 		{
@@ -323,7 +318,7 @@ inline bool Subscriber::unsubscribe(IN Topic* topic)
 		取消订阅。（目前使用方案2）
 		*/
 		node->add_ref();
-		std_mutex::OrderRelock rlock(m_mutex, node->m_topic->m_mutex);
+		eco::OrderRelock rlock(m_mutex, node->m_topic->m_mutex);
 		node->unsubscribe(&topic->m_topic_subscriber_head.m_tail);
 		node->del_ref();
 		return true;
@@ -364,7 +359,7 @@ AutoRefPtr<Subscription> Topic::reserve_subscribe(IN Subscriber* subscriber)
 	if (has_subscriber(subscriber)) return aref;
 
 	aref.reset(new Subscription(this, subscriber));
-	std_mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
+	eco::OrderLock lock(m_mutex, subscriber->m_mutex);
 	aref->subscribe_reserve(m_topic_subscriber_head,
 		subscriber->m_subscriber_topic_head);
 	return aref;
@@ -377,7 +372,7 @@ AutoRefPtr<Subscription> Topic::reserve_subscribe(
 	if (has_subscriber(subscriber)) return aref;
 	aref.reset(new SubscriptionT<data_t>(this, subscriber, data));
 
-	std_mutex::OrderLock lock(m_mutex, subscriber->m_mutex);
+	eco::OrderLock lock(m_mutex, subscriber->m_mutex);
 	aref->subscribe_reserve(m_topic_subscriber_head,
 		subscriber->m_subscriber_topic_head);
 	return aref;
@@ -404,7 +399,7 @@ inline void Topic::clear()
 		而此恰恰能在【从头开始删除节点】时，“头部”指针自动移向下一个节点。
 		#2.注意：【从非头部删除节点】需要使用m_erasing_node。
 		*/
-		std_mutex::OrderRelock rlock(m_mutex, 
+		eco::OrderRelock rlock(m_mutex, 
 			m_topic_subscriber_head.m_head->m_subscriber->m_mutex);
 		if (!subscriber_end(m_topic_subscriber_head.m_head))
 		{

@@ -31,7 +31,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 class TcpSocket;
 class IoWorker;
 class MessageHead;

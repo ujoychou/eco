@@ -10,7 +10,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 void test_close_io_service(TcpAcceptor::Impl* impl);
 ////////////////////////////////////////////////////////////////////////////////
 void TcpServer::Impl::start()
@@ -134,7 +134,7 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& peer, bool error)
 {
 	if (error)
 	{
-		ECO_FUNC(error) << eco::this_thread::error();
+		ECO_FUNC(error) << eco::Error();
 		return;
 	}
 

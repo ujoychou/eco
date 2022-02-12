@@ -2,14 +2,13 @@
 #include <eco/persist/Persist.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/meta/Meta.h>
-#include <eco/DllObject.h>
+#include <eco/rx/RxObject.h>
 #include <eco/persist/Database.h>
 #include <eco/thread/State.h>
 #include <eco/App.h>
 
 
 ECO_NS_BEGIN(eco);
-
 typedef eco::Database* (*CreateFunc)(void);
 ////////////////////////////////////////////////////////////////////////////////
 eco::Database* create_database(IN const persist::SourceType type)
@@ -17,13 +16,13 @@ eco::Database* create_database(IN const persist::SourceType type)
 	CreateFunc create_func = nullptr;
 	if (type == persist::source_mysql)
 	{
-		static eco::DllObject mysql;
+		static eco::RxObject mysql;
 		mysql.load("eco_mysql.dll");
-		create_func = mysql.cast_function<CreateFunc>("create");
+		create_func = mysql.cast_func<CreateFunc>("create");
 	}
 	else if (type == persist::source_sqlite)
 	{
-		static eco::DllObject sqlite;
+		static eco::RxObject sqlite;
 		sqlite.load("eco_sqlite.dll");
 		create_func = sqlite.cast_function<CreateFunc>("create");
 	}
@@ -67,7 +66,7 @@ public:
 		uint64_t& m_load_thread_id;
 	};
 
-	TimingWheel::Timer		m_timer;
+	Timing::Timer		m_timer;
 	PersistHandler*			m_handler;
 	eco::Database::ptr		m_master;
 	persist::Address		m_address;
@@ -218,7 +217,7 @@ void Persist::start()
 	impl().on_live();
 
 	// 3.live timer.
-	impl().m_timer = eco::App::get()->timer().run_after(
+	impl().m_timer = eco::App::get()->timing().run_after(
 		std::bind(&Persist::Impl::on_live, &impl()),
 		std_chrono::seconds(impl().m_live_interval), true);
 }

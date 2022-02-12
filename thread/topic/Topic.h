@@ -21,7 +21,7 @@ protected:
 			auto* suber = (Subscriber*)node.m_subscriber;
 			Snap type = snap_head | snap_last;
 			m_snap->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(m_snap, nullptr, type));
+			suber->on_publish(*this, eco::lvalue(Content(m_snap, nullptr, type)));
 		}
 	}
 
@@ -112,7 +112,7 @@ public:
 		}
 	}
 
-	inline const uint32_t size() const
+	inline uint32_t size() const
 	{
 		std_lock_guard lock(mutex());
 		return (uint32_t)m_snap_set.size();
@@ -173,7 +173,7 @@ protected:
 		auto& cur = m_snap_set[seq];
 		cur->stamp() = eco::meta::stamp_insert;
 		eco::ContentData* old = seq > 0 ? m_snap_set[seq - 1].get() : nullptr;
-		suber->on_publish(*this, Content(cur, old, snap));
+		suber->on_publish(*this, eco::lvalue(Content(cur, old, snap)));
 	}
 
 	// get snap seq size to publish snap.

@@ -22,7 +22,9 @@ log server.
 
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
 #include <eco/detail/proto/Proto.h>
+#include <eco/Error.h>
 
 
 ECO_NS_BEGIN(eco);

@@ -29,7 +29,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class Publisher : public eco::Object<Publisher>
 {
@@ -66,13 +66,11 @@ class Subscriber;
 class ECO_API TopicUidMap
 {
 private:
-	// ע�ᷢ�����⣺Subscriber
 	friend class Subscriber;
 	static Publisher::ptr get(const TopicUid& id);
 	static void sub(IN const TopicUid& id, IN Publisher::ptr& pub);
 	static void erase(IN const TopicUid& id);
 
-	// ע�ᷢ�����⣺Dispatcher
 	static Publisher::ptr get(const TopicUid& id, uint32_t type_id);
 	static void set(IN uint32_t type_id, IN Publisher::ptr& pub);
 	static void set(IN const TopicUid& id, IN Publisher::ptr& pub);
@@ -116,9 +114,9 @@ public:
 		IN uint32_t pub_type)
 	{
 		Publisher::ptr pub(new Publisher(pub_type));
-		pub->register_func<topic_t::object*>();
+		pub->register_func<typename topic_t::object*>();
 		TopicUidMap::sub(TopicUid(topic_id, &server), pub);
-		server.subscribe<topic_t>(topic_id, this);
+		server.template subscribe<topic_t>(topic_id, this);
 	}
 
 	// subscribe mode: topic and register map. thread-safe.
@@ -127,7 +125,7 @@ public:
 		typename object_t,
 		typename topic_server_t,
 		typename topic_id_t>
-		inline void subscribe(
+	inline void subscribe(
 		IN topic_server_t& server,
 		IN const topic_id_t& topic_id,
 		IN uint32_t pub_type)
@@ -135,7 +133,7 @@ public:
 		Publisher::ptr pub(new Publisher(pub_type));
 		pub->register_func<object_t*>();
 		TopicUidMap::sub(TopicUid(topic_id, &server), pub);
-		server.subscribe<topic_t>(topic_id, this);
+		server.template subscribe<topic_t>(topic_id, this);
 	}
 
 	// subscribe mode: unregister map. thread-safe.
@@ -151,7 +149,7 @@ public:
 protected:
 	virtual void on_default(IN eco::Topic& topic, IN eco::Content& c) {};
 
-	// eco::Subscriber on_publish��dispatch by tuid.
+	// eco::Subscriber on_publish dispatch by tuid.
 	virtual void on_publish(IN eco::Topic& topic, IN eco::Content& c) override
 	{
 		Publisher::ptr pub = TopicUidMap::get(topic.get_uid(), c.object_id());

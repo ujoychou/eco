@@ -28,12 +28,12 @@
 #include <eco/net/TcpDispatch.h>
 #include <eco/net/TcpOption.h>
 #ifndef ECO_NO_PROTOBUF
-#include <eco/eco/Proto.h>
+#include <eco/detail/proto/Proto.h>
 #endif
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TcpClient : public TcpDispatch
 {
@@ -64,7 +64,7 @@ public:
 	uint32_t port() const;
 
 	// whether tcpclient is ready.
-	inline bool ready() const;
+	bool ready() const;
 
 	// set timeout
 	void set_timeout(IN uint32_t millsec);
@@ -133,7 +133,7 @@ public:
 	// router mode: async call cluster init router.
 	void async_connect_router(
 		IN const char* router_name,
-		IN eco::net::AddressSet& router_addr);
+		IN const eco::net::AddressSet& router_addr);
 
 	// router mode: async connect to service of router.
 	void async_connect(
@@ -152,16 +152,16 @@ public:
 	TcpSession open_session();
 
 	// service mode: set address ready to connect to service.
-	void add_address(IN eco::net::Address&);
-	void set_address(IN eco::net::AddressSet&);
+	void add_address(IN const eco::net::Address&);
+	void set_address(IN const eco::net::AddressSet&);
 
 	// service mode: async connect to service.
 	void async_connect();
-	void async_connect(IN eco::net::AddressSet&);
+	void async_connect(IN const eco::net::AddressSet&);
 
 	// service mode. sync connect to service.
 	void connect(IN uint32_t millsec);
-	void connect(IN eco::net::AddressSet&, IN uint32_t millsec);
+	void connect(IN const eco::net::AddressSet&, IN uint32_t millsec);
 
 	// async send message.
 	void send(IN eco::String& data, IN const uint32_t start);
@@ -282,7 +282,7 @@ public:
 		OUT google::protobuf::Message* err,
 		OUT std::vector<rsp_ptr>& rsp_set)
 	{
-		AutoArray<rsp_ptr::element_type> set;
+		AutoArray<typename rsp_ptr::element_type> set;
 		eco::Result ec = request_set<ProtobufCodec,
 			rsp_ptr::element_type>(req_type, req, err, set);
 		if (ec == eco::ok)

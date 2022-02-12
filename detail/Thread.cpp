@@ -22,16 +22,16 @@ thread_local Thread::Impl*	t_thread = 0;
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(this_thread);
 // get and format std thread id.
-inline const char* init_tid(IN const std::thread::id& id)
-{
-	std::stringstream ss;
-	ss << id;
-	t_nid = eco::cast<size_t>(ss.str());
-	eco_cpyc(t_sid, eco::Integer<size_t>(t_nid, eco::dec, 8).c_str());
-}
 inline void init_tid()
 {
-	if (t_nid == 0) { init_tid(std_this_thread::get_id()); }
+	if (t_nid == 0)
+	{
+		init_tid();
+		std::stringstream ss;
+		ss << std_this_thread::get_id();
+		t_nid = eco::cast<size_t>(ss.str());
+		eco_cpyc(t_sid, eco::Integer<size_t>(t_nid, eco::dec, 8).c_str());
+	}
 }
 ECO_NS_END(this_thread);
 
@@ -107,7 +107,7 @@ public:
 		}
 	}
 
-	inline void run(const char* name, std::function<void()>&& func)
+	inline void run(const char* name, eco::Task&& func)
 	{
 		m_name = name;
 		m_thread = std_thread([=]() {
@@ -146,7 +146,7 @@ const char* Thread::get_id() const
 {
 	return impl().m_sid.c_str();
 }
-void Thread::run(const char* name, std::function<void()>&& func)
+void Thread::run(const char* name, eco::Task&& func)
 {
 	impl().run(name, std::move(func));
 }

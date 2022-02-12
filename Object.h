@@ -127,7 +127,7 @@ inline eco::Movable<Object> move(IN Object& obj)
 	return eco::Movable<Object>(obj);
 }
 template<typename type_t>
-inline type_t& lv(type_t&& value)
+inline type_t& lvalue(type_t&& value)
 {
 	return value;
 }

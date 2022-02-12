@@ -273,11 +273,11 @@ public:\
 	{\
 		return type();\
 	}\
-	inline static const uint32_t type_id()\
+	inline static uint32_t type_id()\
 	{\
 		return eco::TypeId<type_t>::value;\
 	}\
-	virtual const uint32_t get_type_id() const\
+	virtual uint32_t get_type_id() const\
 	{\
 		return type_id();\
 	}\
@@ -295,7 +295,7 @@ public:\
 ////////////////////////////////////////////////////////////////////////////////
 // runtime object implement.
 #define ECO_RTYPE__(object_t, parent_t, create_func) \
-ECO_RTYPE__(object_t)\
+ECO_TYPE__(object_t)\
 public:\
 	typedef std::weak_ptr<object_t> wptr;\
 	typedef std::shared_ptr<object_t> ptr;\
@@ -326,7 +326,7 @@ inline static eco::RtObject::ptr make()\
 	return eco::RtObject::ptr(new object_t());\
 }
 // runtime object who is a interface cann't be created.
-#define ECO_RTI(object_t, parent_t) \
+#define ECO_RTYPE_I(object_t, parent_t) \
 ECO_RTYPE__(object_t, parent_t, nullptr)
 
 

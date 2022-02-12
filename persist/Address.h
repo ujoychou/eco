@@ -55,19 +55,19 @@ public:
 	Address& set_address(IN const char* addr);
 
 	// data source type.
-	void set_type(IN const SourceType);
-	const SourceType type() const;
+	void set_type(IN SourceType);
+	SourceType type() const;
 	SourceType& get_type();
-	Address& type(IN const SourceType);
+	Address& type(IN SourceType);
 	// type string: mysql/sqlite/.
 	void set_type(IN const char* type);
 	const char* type_name() const;
 
 	// data source char set.
-	void set_charset(IN const Charset = charset_gbk);
-	const Charset charset() const;
+	void set_charset(IN Charset = charset_gbk);
+	Charset charset() const;
 	Charset& get_charset();
-	Address& charset(IN const Charset = charset_gbk);
+	Address& charset(IN Charset = charset_gbk);
 	void set_charset(IN const char* v = "gbk");
 
 	// host name
@@ -81,10 +81,10 @@ public:
 	Address& host(IN const char*);
 
 	// port
-	void set_port(IN const uint32_t);
+	void set_port(IN uint32_t);
 	uint32_t& get_port();
-	const uint32_t port() const;
-	Address& port(IN const uint32_t);
+	uint32_t port() const;
+	Address& port(IN uint32_t);
 
 	// database
 	void set_database(IN const char*);
@@ -136,11 +136,11 @@ public:
 	/*@ get address set size.*/
 	size_t size() const;
 	bool empty() const;
-	void reserve(IN const size_t capacity);
+	void reserve(IN size_t capacity);
 
 	/*@ access address by item index.*/
-	Address& at(IN const int i);
-	const Address& at(IN const int i) const;
+	Address& at(IN int i);
+	const Address& at(IN int i) const;
 };
 
 

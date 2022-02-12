@@ -32,7 +32,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class TcpStatistics : public eco::Object<TcpStatistics>
 {
@@ -88,8 +88,7 @@ public:
 			if (m_stat_sess.conn_size() >= max_siz)
 			{
 				ECO_THIS_ERROR(101) << max_siz;
-				m_topic.publish<WarningTopic>(ops::topic_warning,
-					eco::this_thread::proto::error());
+				m_topic.publish<WarningTopic>(ops::topic_warning, eco::Error());
 				return false;
 			}
 			m_stat_sess.set_conn_size(m_stat_sess.conn_size() + 1);
@@ -113,7 +112,7 @@ public:
 		// add to ddos peer.
 		if (m_option.get_clean_dos_peer_sec() > 0)
 		{
-			peer->impl().m_timer_recv = eco::App::get()->timer().run_after(
+			peer->impl().m_timer_recv = eco::App::get()->timing().run_after(
 				std::bind(&TcpStatistics::on_ddos, this, TcpPeer::wptr(peer)),
 				std_chrono::seconds(m_option.get_clean_dos_peer_sec()), false);
 		}
@@ -144,7 +143,7 @@ public:
 		// heartbeat live peer.
 		if (m_option.get_heartbeat_recv_sec() > 0)
 		{
-			peer->impl().m_timer_recv = eco::App::get()->timer().run_after(
+			peer->impl().m_timer_recv = eco::App::get()->timing().run_after(
 				std::bind(&TcpStatistics::on_live_timeout, this,
 					TcpPeer::wptr(peer), peer->impl().id()),
 				std_chrono::seconds(m_option.get_heartbeat_recv_sec()), false);
@@ -153,7 +152,7 @@ public:
 		// heartbeat send peer.
 		if (m_option.get_heartbeat_send_sec() > 0)
 		{
-			peer->impl().m_timer_send = eco::App::get()->timer().run_after(
+			peer->impl().m_timer_send = eco::App::get()->timing().run_after(
 				std::bind(&TcpStatistics::on_send_heartbeat,
 					this, TcpPeer::wptr(peer)),
 				std_chrono::seconds(m_option.get_heartbeat_send_sec()), true);

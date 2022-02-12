@@ -22,7 +22,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_VALUE_IMPL(Context);
+ECO_VALUE_IMPL(Context, eco::Context);
 ECO_PROPERTY_STR_IMPL(Context, command);
 void Context::Impl::set_command_line(IN const char* cmd_line, IN Context& wrap)
 {

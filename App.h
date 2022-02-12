@@ -69,13 +69,13 @@ public:
 	virtual ~App();
 
 	/*@ get app instance.*/
-	static App* get();
+	static App& get();
 
 	/*@ get app instance template.*/
 	template<typename app_t>
-	static inline app_t* cast()
+	static inline app_t& cast()
 	{
-		return static_cast<app_t*>(get());
+		return static_cast<app_t&>(get());
 	}
 
 	/*@ get command param size. it's parse from argc and argv.*/
@@ -136,7 +136,7 @@ public:
 	net::TcpServer& provider();
 
 	// eco timing wheel.
-	eco::Timing& timer();
+	eco::Timing& timing();
 
 	// eco erx
 	std::shared_ptr<RxDll> get_erx(IN const char* name);
@@ -166,15 +166,14 @@ class Startup
 public:
 	// app mode: main function.
 	typedef int (*CMainFunc)(int argc, char* argv[]);
-	inline Startup(IN App* app, IN CMainFunc main_func)
+	inline Startup(IN App* app, IN CMainFunc)
 	{
 		App::set_app(*app);
-		main_func = nullptr;
 	}
 
 	inline static int main(IN int argc, IN char* argv[])
 	{
-		return App::main(*eco::App::get(), argc, argv);
+		return App::main(eco::App::get(), argc, argv);
 	}
 
 public:

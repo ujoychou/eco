@@ -84,8 +84,8 @@ private:
 			IN TimerWheelT* wheel)
 			: m_task(std::move(task))
 			, m_expire(expire)
-			, m_expire_dur(expire_dur)
 			, m_wheel(wheel)
+			, m_expire_dur(expire_dur)
 		{}
 
 		inline ~TaskEntry()
@@ -129,12 +129,12 @@ public:
 		{}
 
 		inline Timer(typename TaskEntry::wptr& t, TimerWheelT* wheel)
-			: m_entry(std::move(t)), m_wheel(wheel)
+			: m_wheel(wheel), m_entry(std::move(t)) 
 		{}
 
 		inline Timer(Timer&& obj)
-			: m_entry(std::move(obj.m_entry))
-			, m_wheel(obj.m_wheel)
+			: m_wheel(obj.m_wheel)
+			, m_entry(std::move(obj.m_entry))
 		{
 			obj.m_wheel = nullptr;
 		}
@@ -246,7 +246,7 @@ public:
 		};
 
 	public:
-		inline Wheel() : m_time(0), m_prec(0), m_tick(0), m_size(0), m_wheel(0)
+		inline Wheel() : m_tick(0), m_prec(0), m_time(0), m_size(0), m_wheel(0)
 		{}
 
 		inline ~Wheel()
@@ -291,12 +291,12 @@ public:
 		}
 
 		// add timer of task entry to bucket.
-		inline void run_task(TimerWheelT& tw, typename TaskEntry::ptr& ent)
+		inline void run_task(TimerWheelT& tw, typename TaskEntry::ptr&& ent)
 		{
 			uint64_t expire = ent->m_expire;
 			if (expire >= m_time + wheel_ms())
 			{
-				parent(tw).run_task(tw, ent);
+				parent(tw).run_task(tw, std::move(ent));
 			}
 			else if (expire <= m_time)
 			{
@@ -321,8 +321,8 @@ public:
 			// add task entry to wheel bucket.
 			typename TaskEntry::ptr ent = std::make_shared<TaskEntry>(
 				task, expire, expire_dur, (repeat ? &tw : 0));
-			TaskEntry::wptr ent_wptr = ent;
-			run_task(tw, ent);
+			typename TaskEntry::wptr ent_wptr = ent;
+			run_task(tw, std::move(ent));
 			return Timer(ent_wptr, &tw);
 		}
 
@@ -432,7 +432,7 @@ public:
 			for (auto it = ent_set.begin(); it != ent_set.end(); ++it)
 			{
 				// #.execute repeated task.
-				TaskEntry::ptr& ent = *it;
+				typename TaskEntry::ptr& ent = *it;
 				if (ent && ent->repeated() && !ent->canceled())
 				{
 					// "use_count == 2", because of has been repeated.
@@ -481,13 +481,13 @@ public:
 			// 1.1.2.add repeated task entry.
 			for (auto it = set.begin(); it != set.end(); ++it)
 			{
-				TaskEntry::ptr& ent = *it;
+				typename TaskEntry::ptr& ent = *it;
 				// those follow scene will no need to add repeated task: a/b/c.
 				if (!ent->repeated()) continue;
 				if (!ent->canceled() && ent.use_count() == 1)
 				{
 					ent->m_expire += ent->m_expire_dur;
-					run_task(*ent->m_wheel, TaskEntry::ptr(ent));
+					run_task(*ent->m_wheel, typename TaskEntry::ptr(ent));
 					continue;
 				}
 				// [use_count!=1] scene:
@@ -691,7 +691,7 @@ private:
 		if (tik_now == tik_old)	return false;	// in the same bucket.
 
 		ent->m_expire = expire;
-		m_wheel.run_task(*this, ent);
+		m_wheel.run_task(*this, std::move(ent));
 		return true;
 	}
 
@@ -709,7 +709,7 @@ private:
 	Wheel			m_wheel;
 	shared_mutex	m_mutex_wheel;
 };
-typedef TimerWheelT<Closure> TimerWheel;
+typedef TimerWheelT<eco::Task> TimerWheel;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -764,7 +764,7 @@ public:
 	{
 		m_wheel.start(0, prec_mill, wheel_siz);
 		m_running.set_ok(true);
-		m_thread.run(std::bind(&TimingWheelT::work, this), name);
+		m_thread.run(name, std::bind(&TimingWheelT::work, this));
 	}
 
 	// stop wheel.
@@ -881,7 +881,7 @@ private:
 	timer_wheel m_wheel;
 	eco::atomic::State m_running;
 };
-typedef TimingWheelT<Closure> Timing;
+typedef TimingWheelT<eco::Task> Timing;
 
 
 ////////////////////////////////////////////////////////////////////////////////

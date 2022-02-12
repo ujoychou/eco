@@ -30,7 +30,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 eco::loc::Locale& app_locale();
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_REQ(sev) \
@@ -101,8 +101,7 @@ typedef std::weak_ptr<TcpPeer> TcpPeerWptr;
 class DataContext
 {
 public:
-	inline DataContext()
-		: m_protocol(0), m_category(0), m_head_size(0)
+	inline DataContext() : m_category(0), m_head_size(0), m_protocol(0)
 	{}
 
 #ifdef ECO_NO_STD_MOVE
@@ -177,13 +176,13 @@ public:
 		return m_session.connection();
 	}
 
-	inline const uint32_t type() const
+	inline uint32_t type() const
 	{
 		return m_meta.m_message_type;
 	}
 
 	// publish topic content snap.
-	inline const Snap snap() const
+	inline Snap snap() const
 	{
 		return Snap(m_meta.get_req1() & 0xFF);
 	}
@@ -201,7 +200,7 @@ public:
 	}
 
 	// publish topic content stamp.
-	inline const meta::Stamp stamp() const
+	inline meta::Stamp stamp() const
 	{
 		return meta::Stamp(m_meta.get_req1() >> 4);
 	}
@@ -290,12 +289,12 @@ public:
 	}
 	inline void reject(uint32_t type, uint32_t eid)
 	{
-		eco::this_thread::error().key(eid);
+		eco::Error().key(eid);
 		reject(type);
 	}
 	inline void reject(uint32_t type, const std::string& path_)
 	{
-		eco::this_thread::error().key(path_.c_str());
+		eco::Error().key(path_.c_str());
 		reject(type);
 	}
 	inline void reject(uint32_t type, const google::protobuf::Message* msg)
@@ -399,7 +398,7 @@ void Context::send(int type, const google::protobuf::Message* msg,
 	// logging protobuf.
 	if (sev == eco::log::none) return;
 	ECO_LOG_SEV(sev) << Log(*this, name)(rsp)
-		< (msg ? eco::net::to_json(*msg) : empty_str);
+		< (msg ? eco::net::to_json(*msg) : eco::value_empty);
 }
 #endif
 

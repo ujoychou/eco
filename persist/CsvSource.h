@@ -236,7 +236,7 @@ public:
 	virtual void open(IN const char* csv_file, IN const char* mode) override;
 
 	/*@ write data to csv file.*/
-	virtual void write(IN const char* data, IN const int size) override;
+	virtual void write(IN const char* data, IN int size) override;
 
 	/*@ read data to csv file.*/
 	virtual void read(OUT std::string& data) override;

@@ -31,7 +31,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class TcpPeer::Impl : public TcpConnectorHandler
 {
@@ -48,8 +48,8 @@ public:
 	eco::String			m_user;				// user name.
 	eco::String			m_lang;				// lang name.
 	std::auto_ptr<ConnectionData> m_data;	// connection data.
-	TimingWheel::Timer m_timer_recv;		// tcp peer recv heartbeat timer.
-	TimingWheel::Timer m_timer_send;		// tcp peer send heartbeat timer.
+	Timing::Timer m_timer_recv;		// tcp peer recv heartbeat timer.
+	Timing::Timer m_timer_send;		// tcp peer send heartbeat timer.
 
 public:
 	// never be called, this is just for complie success.
@@ -253,7 +253,7 @@ public:
 		if (!m_protocol->encode(data, start, meta))
 		{
 			ECO_ERROR << NetLog(id(), __func__,	meta.m_session_id)
-				<= eco::this_thread::error();
+				<= eco::Error();
 			return;
 		}
 		m_state.set_self_live(true);

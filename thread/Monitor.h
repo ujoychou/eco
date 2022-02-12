@@ -18,6 +18,7 @@ thread safe object state.
 
 *******************************************************************************/
 #include <eco/std/mutex.h>
+#include <eco/std/chrono.h>
 #include <eco/std/condition_variable.h>
 
 
@@ -51,10 +52,10 @@ public:
 	*/
 	inline bool wait()
 	{
-		std_lock_guard lock(mutex());
+		std_unique_lock lock(mutex());
 		if (m_task_count > 0)
 		{
-			m_cond_var.wait();
+			m_cond_var.wait(lock);
 		}
 		return (m_task_count == 0);
 	}
@@ -65,10 +66,11 @@ public:
 	*/
 	inline eco::Result timed_wait(IN int32_t millsec)
 	{
-		std_lock_guard lock(mutex());
+		std_unique_lock lock(mutex());
 		if (m_task_count > 0)
 		{
-			if (!m_cond_var.timed_wait(millsec))
+			if (std_cv_status::timeout == m_cond_var.wait_for(
+				lock, std_chrono::milliseconds(millsec)))
 			{
 				return eco::timeout;
 			}

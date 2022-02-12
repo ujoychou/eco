@@ -12,7 +12,9 @@ include_directories(${PRJ_DIR}/..)
 include_directories(${SRC_DIR})
 # include cpp.
 #aux_source_directory(${SRC_DIR1} CXX_FILES)
-list(APPEND CXX_FILES ${SRC_DIR}/Pch.cpp)
+aux_source_directory(${PRJ_DIR}/detail CXX_FILES)
+aux_source_directory(${PRJ_DIR}/detail/proto CXX_FILES)
+aux_source_directory(${PRJ_DIR}/detail/sys CXX_FILES)
 aux_source_directory(${SRC_DIR} CXX_FILES)
 aux_source_directory(${SRC_DIR}/cmd CXX_FILES)
 aux_source_directory(${SRC_DIR}/codec CXX_FILES)
@@ -20,6 +22,7 @@ aux_source_directory(${SRC_DIR}/config CXX_FILES)
 aux_source_directory(${SRC_DIR}/date_time CXX_FILES)
 aux_source_directory(${SRC_DIR}/loc CXX_FILES)
 aux_source_directory(${SRC_DIR}/log CXX_FILES)
+aux_source_directory(${SRC_DIR}/net CXX_FILES)
 # exclude cpp.
 list(APPEND CXX_FILES_EXCLUDE ${SRC_DIR}/xml/Reader.old.cpp)
 # include lib.

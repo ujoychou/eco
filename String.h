@@ -24,18 +24,195 @@ eco basic type.
 
 *******************************************************************************/
 #include <eco/Object.h>
-#include <eco/Stream.h>
+#include <eco/Cast.h>
 #include <eco/Number.h>
 #include <eco/rx/RxHeap.h>
-#include <cstring>
 #include <cassert>
 
 
-ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef ECO_VC100
 #	define __func__ eco::func(__FUNCTION__)
 #endif
+
+#define ECO_STREAM_OPERATOR_REF(stream_t, value_t, sep)\
+inline stream_t& operator<(IN const value_t& v)\
+{\
+	return *this << v;\
+}\
+inline stream_t& operator<=(IN const value_t& v)\
+{\
+	return *this << sep << v;\
+}
+#define ECO_STREAM_OPERATOR_TPL(stream_t, value_t, sep1, sep2)\
+template<typename T>\
+inline stream_t& operator<<(IN const value_t& v)\
+{\
+	return (*this) << sep1 << v.value << sep2;\
+}\
+template<typename T>\
+inline stream_t& operator<(IN const value_t& v)\
+{\
+	return (*this) << v;\
+}\
+template<typename T>\
+inline stream_t& operator<=(IN const value_t& v)\
+{\
+	return (*this) <= sep1 < v.value < sep2;\
+}
+
+#define ECO_STREAM_OPERATOR(stream_t, member, sep)\
+public:\
+inline stream_t& append(double v, int prec, bool percent)\
+{\
+	eco::Double fmt(v, prec, percent);\
+	member.append(fmt.c_str(), fmt.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN bool v)\
+{\
+	(*this) << eco::cast(v).c_str();\
+	return *this;\
+}\
+inline stream_t& operator<<(IN char v)\
+{\
+	member.append(1, v);\
+	return *this;\
+}\
+inline stream_t& operator<<(IN int8_t v)\
+{\
+	eco::Integer<int8_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN uint8_t v)\
+{\
+	eco::Integer<uint8_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN int16_t v)\
+{\
+	eco::Integer<int16_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN uint16_t v)\
+{\
+	eco::Integer<uint16_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN int32_t v)\
+{\
+	eco::Integer<int32_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN uint32_t v)\
+{\
+	eco::Integer<uint32_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN int64_t v)\
+{\
+	eco::Integer<int64_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN uint64_t v)\
+{\
+	eco::Integer<uint64_t> str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN double v)\
+{\
+	eco::Double str(v);\
+	member.append(str.c_str(), str.size());\
+	return *this;\
+}\
+inline stream_t& operator<<(IN const char* v)\
+{\
+	member.append(v, (uint32_t)strlen(v));\
+	return *this;\
+}\
+template<typename T>\
+inline stream_t& operator<(IN T v)\
+{\
+	return *this << v;\
+}\
+template<typename T>\
+inline stream_t& operator<=(IN T v)\
+{\
+	return *this << sep << v;\
+}\
+inline stream_t& operator<<(IN const eco::Bytes& v)\
+{\
+	member.append(v.c_str(), v.size());\
+	return *this;\
+}\
+ECO_STREAM_OPERATOR_REF(stream_t, eco::Bytes, sep)\
+inline stream_t& operator<<(IN const eco::String& v)\
+{\
+	member.append(v.c_str(), v.size());\
+	return *this;\
+}\
+ECO_STREAM_OPERATOR_REF(stream_t, eco::String, sep)\
+inline stream_t& operator<<(IN const std::string& v)\
+{\
+	member.append(v.c_str(), (uint32_t)v.size());\
+	return *this;\
+}\
+ECO_STREAM_OPERATOR_REF(stream_t, std::string, sep)\
+ECO_STREAM_OPERATOR_TPL(stream_t, eco::GroupT<T>, '(', ')')\
+ECO_STREAM_OPERATOR_TPL(stream_t, eco::SquareT<T>,'[', ']')\
+ECO_STREAM_OPERATOR_TPL(stream_t, eco::BraceT<T>, '{', '}')
+
+
+ECO_NS_BEGIN(eco);
+////////////////////////////////////////////////////////////////////////////////
+template<typename T>
+class GroupT	// ()
+{
+public:
+	inline GroupT(IN const T& v) : value(v) {}
+	const T& value;
+};
+template<typename T>
+inline GroupT<T> group(IN const T& v)
+{
+	return GroupT<T>(v);
+}
+
+template<typename T>
+class SquareT	// []
+{
+public:
+	inline SquareT() {}
+	inline SquareT(IN const T& v) : value(v) {}
+	const T& value;
+};
+template<typename T>
+inline SquareT<T> square(IN const T& v)
+{
+	return SquareT<T>(v);
+}
+
+template<typename T>
+class BraceT	// {}
+{
+public:
+	inline BraceT() {}
+	inline BraceT(IN const T& v) : value(v) {}
+	const T& value;
+};
+template<typename T>
+inline BraceT<T> brace(IN const T& v)
+{
+	return BraceT<T>(v);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -283,7 +460,7 @@ inline void split(OUT array_t& set, IN const char* str, IN char token)
 {
 	const char* v = str;
 	uint32_t pos = eco::find_first(v, token);
-	while (pos != -1)
+	while (pos != uint32_t(-1))
 	{
 		set.push_back(std::string(v, pos));
 		v += pos + 1;
@@ -299,7 +476,7 @@ inline void split(OUT array_t& set, IN const char* str, IN char token)
 {
 	const char* v = str;
 	uint32_t pos = eco::find_first(v, token);
-	while (pos != -1)
+	while (pos != uint32_t(-1))
 	{
 		set.push_back(eco::cast<type_t>(std::string(v, pos)));
 		v += pos + 1;
@@ -846,11 +1023,11 @@ public:
 
 	inline bool next()
 	{
-		if (m_cur_pos == -1) return false;
+		if (m_cur_pos == uint32_t(-1)) { return false; }
 
 		const char* str = m_format + m_cur_pos;
 		m_cur_pos = eco::find_first(str, '%');
-		if (m_cur_pos == -1)
+		if (m_cur_pos == uint32_t(-1))
 		{
 			if (str != m_format) m_stream.append(str);
 			return false;
@@ -908,7 +1085,7 @@ public:
 		{
 			return m_format;
 		}
-		if (m_cur_pos != -1)
+		if (m_cur_pos != uint32_t(-1))
 		{
 			m_stream.append(m_format + m_cur_pos);
 			m_cur_pos = -1;
@@ -929,43 +1106,33 @@ class StringAny
 {
 	ECO_STREAM_OPERATOR(StringAny, m_value, ' ');
 public:
-	inline StringAny(IN const char*);
 	inline StringAny(IN StringAny&&);
 	inline StringAny(IN const StringAny&);
 	inline StringAny& operator=(IN const char*);
+	inline StringAny& operator=(IN const std::string&);
 	inline StringAny& operator=(IN StringAny&&);
 	inline StringAny& operator=(IN const StringAny&);
-	inline bool empty() const;
-	inline const char* c_str() const;
-	inline std::string& str();
-	inline eco::ValueType type() const;
-
-public:
 	inline bool operator==(IN const StringAny&) const;
 	inline bool operator==(IN const char*) const;
-	inline bool operator==(IN const std::string& v) const
-	{
-		return (operator==(v.c_str()));
-	}
+	inline bool operator==(IN const std::string& v) const;
 	template<typename string_t>
-	inline bool operator!=(IN const string_t& v) const
-	{
-		return !(operator==(v));
-	}
+	inline bool operator!=(IN const string_t& v) const;
 
 public:
 	inline StringAny();
 	inline StringAny(IN bool v);
 	inline StringAny(IN char v);
-	inline StringAny(IN unsigned char v);
 	inline StringAny(IN int32_t v);
 	inline StringAny(IN uint32_t v);
 	inline StringAny(IN int64_t v);
 	inline StringAny(IN uint64_t v);
 	inline StringAny(IN double v, IN int precision = -1);
+	inline StringAny(IN const char*);
+	inline StringAny(IN const std::string&);
 
 public:
 	inline operator const char*() const;
+	inline operator const std::string&() const;
 	inline operator char() const;
 	inline operator unsigned char() const;
 	inline operator int16_t() const;
@@ -978,6 +1145,11 @@ public:
 	inline operator double() const;
 	inline operator bool() const;
 
+	inline bool empty() const;
+	inline const char* c_str() const;
+	inline std::string& str();
+	inline eco::ValueType type() const;
+
 private:
 	eco::ValueType m_vtype;
 	std::string m_value;
@@ -987,17 +1159,14 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 StringAny::StringAny() : m_vtype(0) {}
 StringAny::StringAny(IN StringAny&& v)
-	: m_vtype(v.m_vtype), m_value(std::move(v.m_value)) { v.m_vtype = 0; }
+	: m_vtype(v.m_vtype), m_value(std::move(v.m_value)) {
+	v.m_vtype = 0;
+}
 StringAny::StringAny(IN const StringAny& v)
 	: m_vtype(v.m_vtype), m_value(v.m_value)  {}
-StringAny::StringAny(IN const char* v)
-	: m_vtype(type_string), m_value(v) {}
-StringAny::StringAny(IN bool v)
-	: m_vtype(type_bool), m_value(eco::cast(v)) {}
-StringAny::StringAny(IN char v)
-	: m_vtype(type_char), m_value(1, v) {}
-StringAny::StringAny(IN unsigned char v)
-	: m_vtype(type_char), m_value(1, v) {}
+StringAny::StringAny(IN const char* v) : m_vtype(type_string), m_value(v) {}
+StringAny::StringAny(IN bool v) : m_vtype(type_bool), m_value(eco::cast(v)) {}
+StringAny::StringAny(IN char v) : m_vtype(type_char), m_value(1, v) {}
 StringAny::StringAny(IN int32_t v)
 	: m_vtype(type_int32), m_value(eco::Integer<int32_t>(v).c_str()) {}
 StringAny::StringAny(IN uint32_t v)
@@ -1008,7 +1177,11 @@ StringAny::StringAny(IN uint64_t v)
 	: m_vtype(type_int64), m_value(eco::Integer<uint64_t>(v).c_str()) {}
 StringAny::StringAny(IN double v, IN int precision)
 	: m_vtype(type_double), m_value(eco::Double(v, precision).c_str()) {}
+StringAny::StringAny(IN const std::string& v)
+	: m_vtype(type_string), m_value(v) {}
 
+
+////////////////////////////////////////////////////////////////////////////////
 StringAny& StringAny::operator=(IN StringAny&& v)
 {
 	m_value = std::move(v.m_value);
@@ -1028,14 +1201,32 @@ StringAny& StringAny::operator=(IN const char* v)
 	m_value = v;
 	return *this;
 }
-bool StringAny::operator==(IN const char* v) const
+StringAny& StringAny::operator=(IN const std::string& v)
 {
-	return m_value == v;
+	m_vtype = type_string;
+	m_value = v;
+	return *this;
 }
 bool StringAny::operator==(IN const StringAny& obj) const
 {
 	return m_value == obj.m_value && m_vtype == obj.m_vtype;
 }
+bool StringAny::operator==(IN const char* v) const
+{
+	return m_value == v;
+}
+bool StringAny::operator==(IN const std::string& v) const
+{
+	return m_value == v;
+}
+template<typename string_t>
+bool StringAny::operator!=(IN const string_t& v) const
+{
+	return !(operator==(v));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 bool StringAny::empty() const
 {
 	return m_value.empty();
@@ -1052,13 +1243,17 @@ StringAny::operator const char*() const
 {
 	return m_value.c_str();
 }
+StringAny::operator const std::string&() const
+{
+	return m_value;
+}
 StringAny::operator char() const
 {
 	return eco::cast<char>(m_value);
 }
 StringAny::operator unsigned char() const
 {
-	return eco::cast<unsigned char>(m_value);
+	return eco::cast<char>(m_value);
 }
 StringAny::operator int16_t() const
 {
@@ -1100,8 +1295,6 @@ eco::ValueType StringAny::type() const
 {
 	return m_vtype;
 }
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(eco);
 #endif

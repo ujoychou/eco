@@ -32,7 +32,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 class NullRequest {};
 ////////////////////////////////////////////////////////////////////////////////
 class MessageHandler;
@@ -44,7 +44,7 @@ public:
 	inline uint32_t next_req_id()
 	{
 		// promise that: request_id != 0.
-		if (++m_request_id = 0) { ++m_request_id; }
+		if (++m_request_id == 0) { ++m_request_id; }
 		return m_request_id;
 	}
 
@@ -105,7 +105,7 @@ public:
 	typedef uint8_t AuthMode;
 
 	inline MessageHandler() {}
-	virtual ~MessageHandler() = 0 {}
+	virtual ~MessageHandler() {}
 
 	// decode message from bytes string.
 	inline bool on_decode(
@@ -140,14 +140,14 @@ public:
 	// message name.
 	virtual const char* get_name()
 	{
-		return eco::empty_str.c_str();
+		return eco::value_empty.c_str();
 	}
 	// request/response type.
-	virtual const uint32_t get_req_type()
+	virtual uint32_t get_req_type()
 	{
 		return 0;
 	}
-	virtual const uint32_t get_rsp_type()
+	virtual uint32_t get_rsp_type()
 	{
 		return 0;
 	}
@@ -169,11 +169,11 @@ public:
 	{
 		return eco::log::error;
 	}
-	inline static const uint32_t req_type()
+	inline static uint32_t req_type()
 	{
 		return 0;
 	}
-	inline static const uint32_t rsp_type()
+	inline static uint32_t rsp_type()
 	{
 		return 0;
 	}
@@ -196,32 +196,32 @@ public:
 	// post this handler to aysnc map.
 	inline uint32_t post_async()
 	{
-		return Eco::get().post_async(shared_from_this());
+		return Async::get().post_async(shared_from_this());
 	}
 
 	// async management post item.
-	static inline uint32_t post_async(IN MessageHandler::ptr& hdl)
+	static inline uint32_t post_async(IN MessageHandler::ptr&& hdl)
 	{
-		return Eco::get().post_async(hdl);
+		return Async::get().post_async(std::move(hdl));
 	}
 
 	// has async message handler.
 	static inline bool has_async(IN uint32_t req_id)
 	{
-		return Eco::get().has_async(req_id);
+		return Async::get().has_async(req_id);
 	}
 
 	// erase async handler.
 	static inline void erase_async(IN uint32_t req_id)
 	{
-		return Eco::get().erase_async(req_id);
+		return Async::get().erase_async(req_id);
 	}
 
 	// pop async message handler.
 	static inline MessageHandler::ptr pop_async(
 		IN uint32_t req_id,	IN bool last = true)
 	{
-		return Eco::get().pop_async(req_id, last);
+		return Async::get().pop_async(req_id, last);
 	}
 	
 #ifndef ECO_NO_PROTOBUF
@@ -270,12 +270,12 @@ public:
 	}
 	inline void reject(uint32_t eid)
 	{
-		eco::this_thread::error().key(eid);
+		eco::Error().key(eid);
 		reject();
 	}
 	inline void reject(const std::string& path_)
 	{
-		eco::this_thread::error().key(path_.c_str());
+		eco::Error().key(path_.c_str());
 		reject();
 	}
 	inline void reject(IN const google::protobuf::Message* msg)
@@ -330,15 +330,11 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename request_t, typename handler_t>
+template<typename req_t, typename handler_t>
 class RequestHandler : public MessageHandler
 {
-protected:
-	request_t m_request;
-	static const char* s_handler_name;
-
 public:
-	typedef request_t request_t;
+	typedef req_t request_t;
 	typedef std::shared_ptr<handler_t> ptr;
 	
 	inline RequestHandler()
@@ -359,7 +355,6 @@ public:
 	// request that recv from remote peer.
 	// request object type.
 	typedef typename eco::Raw<request_t>::reference reference;
-	typedef typename eco::Raw<request_t>::const_reference const_reference;
 	// same with: inline auto& request()
 	inline reference& request()
 	{
@@ -372,11 +367,11 @@ public:
 		return m_request;
 	}
 	// request/response type.
-	virtual const uint32_t get_req_type() override
+	virtual uint32_t get_req_type() override
 	{
 		return handler_t::req_type();
 	}
-	virtual const uint32_t get_rsp_type() override
+	virtual uint32_t get_rsp_type() override
 	{
 		return handler_t::rsp_type();
 	}
@@ -408,6 +403,10 @@ public:
 		return std::dynamic_pointer_cast<handler_t>(
 			MessageHandler::pop_async(req_id, last));
 	}
+
+protected:
+	request_t m_request;
+	static const char* s_handler_name;
 };
 
 // default handler name.

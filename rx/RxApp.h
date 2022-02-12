@@ -22,12 +22,10 @@
 *******************************************************************************/
 #include <eco/Object.h>
 #include <eco/App.h>
-#include <eco/DllObject.h>
+#include <eco/rx/RxObject.h>
 
 
 namespace eco {;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // app message send to erx dll.
 enum RxMessageId
@@ -41,7 +39,7 @@ enum RxMessageId
 
 typedef eco::Result (*RxEntryPoint)(IN eco::RxMessageId msg, IN void* ap);
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API RxDll : public DllObject
+class ECO_API RxDll : public eco::RxObject
 {
 	ECO_OBJECT(RxDll);
 public:
@@ -50,8 +48,8 @@ public:
 		IN const char* dll_name = "")
 		: m_rx_msg(0)
 	{
-		DllObject::load(dll_path, dll_name);
-		m_entry_point = cast_function<RxEntryPoint>("erx_entry_point");
+		eco::RxObject::load(dll_path, dll_name);
+		m_entry_point = cast_func<RxEntryPoint>("erx_entry_point");
 	}
 
 	// notify erx when app init.

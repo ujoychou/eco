@@ -1,5 +1,5 @@
-#ifndef ECO_NET_DISPATCH_SERVER_H
-#define ECO_NET_DISPATCH_SERVER_H
+#ifndef ECO_NET_ROUTER_H
+#define ECO_NET_ROUTER_H
 /*******************************************************************************
 @ name
 
@@ -29,9 +29,9 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-class DispatchHandler : public eco::DispatchHandler<int, Context>
+class RouterHandler : public eco::RouterHandler<int, Context>
 {
 public:
 	// set receive mode: recv event.
@@ -67,7 +67,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 // tcp client dispatch server.
-class Router : public eco::MessageServer<DataContext, DispatchHandler>
+class Router : public eco::Worker<DataContext, RouterHandler, eco::Thread>
 {
 public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
@@ -85,8 +85,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 // tcp server dispatch server.
-class DispatchServerPool :
-	public eco::MessageServerPool<DataContext, DispatchHandler>
+class RouterPool : public eco::WorkerPool<DataContext, RouterHandler>
 {
 public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
@@ -100,7 +99,6 @@ public:
 		message_handler().set_default(hf);
 	}
 };
-typedef DispatchServerPool::MessageWorker MessageWorker;
 
 
 ////////////////////////////////////////////////////////////////////////////////

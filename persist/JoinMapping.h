@@ -125,7 +125,7 @@ public:
 	}
 
 	// get object map table alias.
-	inline static const char get_table_alias(IN const uint32_t i)
+	inline static char get_table_alias(IN uint32_t i)
 	{
 		return 'A' + i;
 	}
@@ -164,15 +164,15 @@ public:
 	}
 
 	// get join object map size.
-	inline const size_t size() const
+	inline size_t size() const
 	{
 		return m_join_meta.size();
 	}
-	inline const ObjectMapping* operator[](IN const size_t i) const
+	inline const ObjectMapping* operator[](IN size_t i) const
 	{
 		return m_join_meta[i]->m_map;
 	}
-	inline const ObjectMapping* get_map(IN const size_t i) const
+	inline const ObjectMapping* get_map(IN size_t i) const
 	{
 		return m_join_meta[i]->m_map;
 	}
@@ -226,7 +226,7 @@ public:
 		for (size_t r = 0; r < record_set.size(); ++r)
 		{
 			// create object.
-			object_set_t::value_type obj;
+			typename object_set_t::value_type obj;
 			eco::make(obj);
 
 			// set main table object property value.
@@ -261,7 +261,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 private:
-	std::auto_ptr<JoinMeta<object_t>>	m_main_meta;
+	std::unique_ptr<JoinMeta<object_t>> m_main_meta;
 	std::vector<JoinMeta<object_t>*>  m_join_meta;
 };
 

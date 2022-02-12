@@ -35,6 +35,9 @@ class ECO_API Core
 {
 	ECO_SINGLETON_API(Core);
 public:
+	// singleton object.
+	static Core& get();
+
 	/*@ option: severity level. */
 	void set_severity_level(IN const char* v, IN int flag = 0);
 	void set_severity_level(IN SeverityLevel v, IN int flag = 0);
@@ -81,8 +84,7 @@ public:
 	Core& file_roll_size(IN uint32_t);
 
 	/*@ file sink: logging file changed callback.*/
-	void set_file_on_create(
-		IN eco::log::OnChangedLogFile& func);
+	void set_file_on_create(IN eco::log::OnChangedLogFile& func);
 
 	/*@ run logging.*/
 	void run();
@@ -94,11 +96,10 @@ public:
 	void join();
 
 	/*@ append log info.*/
-	void append(IN eco::Bytes& buf, IN SeverityLevel level);
+	void append(IN const eco::Bytes& buf, IN SeverityLevel level);
 };
 
 
-ECO_API Core& core();
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(log);
 ECO_NS_END(eco);

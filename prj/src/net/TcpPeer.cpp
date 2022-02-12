@@ -11,7 +11,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ECO_OBJECT_IMPL(TcpPeer);
 /* this thread local data has two serious error:
 1.now is: acceptor thread recv data, but not io thread.
@@ -57,7 +57,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	{
 		ECO_THIS_ERROR(e_websocket_shakehand_get) <
 			"websocket shakehand req find 'GET ' fail.";
-		ECO_INFO << NetLog(id(), __func__) <= eco::this_thread::error();
+		ECO_INFO << NetLog(id(), __func__) <= eco::Error();
 		close_and_notify();
 		return;
 	}
@@ -67,7 +67,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_req(
 	{
 		ECO_THIS_ERROR(e_websocket_shakehand_req) <
 			"websocket req shakehand invalid.";
-		ECO_INFO << NetLog(id(), __func__) <= eco::this_thread::error();
+		ECO_INFO << NetLog(id(), __func__) <= eco::Error();
 		close_and_notify();
 		return;
 	}
@@ -85,7 +85,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
 	{
 		ECO_THIS_ERROR(e_websocket_shakehand_http) <
 			"websocket shakehand rsp find 'HTTP ' fail.";
-		ECO_INFO << NetLog(id(), __func__) <= eco::this_thread::error();
+		ECO_INFO << NetLog(id(), __func__) <= eco::Error();
 		close_and_notify();
 		return;
 	}
@@ -94,7 +94,7 @@ inline void TcpPeer::Impl::handle_websocket_shakehand_rsp(
 	{
 		ECO_THIS_ERROR(e_websocket_shakehand_rsp) <
 			"websocket rsp shakehand invalid.";
-		ECO_INFO << NetLog(id(), __func__) <= eco::this_thread::error();
+		ECO_INFO << NetLog(id(), __func__) <= eco::Error();
 		close_and_notify();
 		return;
 	}
@@ -154,7 +154,7 @@ void TcpPeer::Impl::on_read(IN MessageHead& head, eco::String& data, bool err)
 {
 	if (err)	// if peer occur error, release it.
 	{
-		ECO_DEBUG << NetLog(id(), __func__) <= eco::this_thread::error();
+		ECO_DEBUG << NetLog(id(), __func__) <= eco::Error();
 		close_and_notify();
 		return;
 	}
@@ -182,7 +182,7 @@ void TcpPeer::Impl::on_write(IN uint32_t size, bool err)
 {
 	if (err)
 	{
-		ECO_DEBUG << NetLog(id(), __func__) <= eco::this_thread::error();
+		ECO_DEBUG << NetLog(id(), __func__) <= eco::Error();
 		close_and_notify();
 		return;
 	}

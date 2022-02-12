@@ -23,8 +23,8 @@ log queue.
 *******************************************************************************/
 #include <eco/log/Type.h>
 #include <eco/std/thread.h>
-#include <eco/std/condition_variable.h>
 #include <eco/thread/State.h>
+#include <eco/std/condition_variable.h>
 #include <boost/ptr_container/ptr_deque.hpp>
 
 
@@ -164,7 +164,7 @@ public:
 				move_avail();
 			}
 		}
-		pack = boost::ptr_container::move(m_logging.pop_front());
+		pack = m_logging.pop_front();
 	}
 
 	inline int is_open()

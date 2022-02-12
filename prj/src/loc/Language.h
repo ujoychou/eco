@@ -23,7 +23,7 @@ log server.
 *******************************************************************************/
 #include <eco/Object.h>
 #include <eco/Config.h>
-#include <eco/eco/Proto.h>
+#include <eco/detail/proto/Proto.h>
 #include <eco/filesystem/Path.h>
 #include <eco/thread/Thread.h>
 

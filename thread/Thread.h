@@ -107,7 +107,7 @@ private:
 ECO_NS_BEGIN(this_thread);
 // get current thread id.
 ECO_API size_t id();
-ECO_API const char* get_id();
+ECO_API const char* sid();
 
 // get current thread name.
 ECO_API const char* name();

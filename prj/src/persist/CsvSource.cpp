@@ -26,7 +26,7 @@ void CsvSourceFile::open(IN const char* csv_file, IN const char* mode)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void CsvSourceFile::write(IN const char* data, IN const int size)
+void CsvSourceFile::write(IN const char* data, IN int size)
 {
 	impl().m_csv->write(data, size);
 }

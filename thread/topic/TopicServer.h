@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/Any.h>
 #include <eco/thread/topic/Topic.h>
-#include <eco/thread/MessageServer.h>
+#include <eco/thread/Worker.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -90,8 +90,9 @@ public:
 		Topic::ptr topic = find_topic(topic_id);
 		if (topic != nullptr)
 		{
-			ContentData::ptr newc(new IdContentDataT<topic_t::object_id>(
-				obj_id, eco::meta::stamp_delete));
+			ContentData::ptr newc = std::make_shared<
+				IdContentDataT<typename topic_t::object_id>>(
+				obj_id, eco::meta::stamp_delete);
 			m_impl.publish_new(topic, newc);
 		}
 	}
@@ -115,7 +116,8 @@ public:
 		IN const object_t& obj,
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
-		ContentData::ptr newc(new ContentDataT<object_t, object_t>(obj, stamp));
+		ContentData::ptr newc = std::make_shared<
+			ContentDataT<object_t, object_t>>(obj, stamp);
 		m_impl.publish_new(topic, newc);
 	}
 
@@ -127,7 +129,8 @@ public:
 		IN eco::meta::Stamp stamp = eco::meta::stamp_clean)
 	{
 		typedef std::shared_ptr<object_t> value_t;
-		ContentData::ptr newc(new ContentDataT<object_t, value_t>(obj, stamp));
+		ContentData::ptr newc = std::make_shared<
+			ContentDataT<object_t, value_t>>(obj, stamp);
 		m_impl.publish_new(topic, newc);
 	}
 
@@ -499,63 +502,63 @@ class ServerImpl
 public:
 	inline void start(const char* name)
 	{
-		m_publish_server.run(name, 1);
+		m_publish_worker.run(name, 1);
 	}
 
 	inline void stop()
 	{
-		m_publish_server.stop();
+		m_publish_worker.stop();
 	}
 
 	inline void join()
 	{
-		m_publish_server.join();
+		m_publish_worker.join();
 	}
 
 	inline void set_capacity(uint32_t capacity)
 	{
-		m_publish_server.set_capacity(capacity);
+		m_publish_worker.set_capacity(capacity);
 	}
 
-	inline uint32_t capacity() const
+	inline uint32_t capacity()
 	{
-		return m_publish_server.get_queue().capacity();
+		return m_publish_worker.channel().capacity();
 	}
 
-	inline uint32_t size() const
+	inline uint32_t size()
 	{
-		return m_publish_server.get_queue().size();
+		return m_publish_worker.channel().size();
 	}
 
 	inline void publish_new(
 		IN eco::Topic::ptr& topic,
 		IN eco::ContentData::ptr& newc)
 	{
-		m_publish_server.post(Publisher(topic, newc));
+		m_publish_worker.post(Publisher(topic, newc));
 	}
 
 	inline void publish_snap(
 		IN eco::Topic::ptr& topic,
 		IN eco::AutoRefPtr<eco::Subscription>& sub)
 	{
-		m_publish_server.post(Publisher(topic, sub));
+		m_publish_worker.post(Publisher(topic, sub));
 	}
 
 	inline void publish_erase(
 		IN eco::Topic::ptr& topic)
 	{
-		m_publish_server.post(Publisher(topic, Publisher::mode_publish_erase));
+		m_publish_worker.post(Publisher(topic, Publisher::mode_publish_erase));
 	}
 
 	inline void publish_clear(
 		IN eco::Topic::ptr& topic)
 	{
-		m_publish_server.post(Publisher(topic, Publisher::mode_publish_clear));
+		m_publish_worker.post(Publisher(topic, Publisher::mode_publish_clear));
 	}
 
 private:
 	// publish topic message thread.
-	eco::MessageServer<Publisher, PublisherHandler> m_publish_server;
+	eco::Worker<Publisher, PublisherHandler, eco::Thread> m_publish_worker;
 };
 typedef TopicServerT<ServerImpl> TopicServer;
 

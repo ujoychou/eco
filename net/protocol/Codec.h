@@ -29,7 +29,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class Codec
 {
@@ -87,7 +87,7 @@ public:
 	}
 
 	// constructor.
-	inline explicit WrapCodec(Codec& c, MakeFunc f) : m_make(f), Codec(&c)
+	inline explicit WrapCodec(Codec& c, MakeFunc f) : Codec(&c), m_make(f) 
 	{}
 
 	// codec object.

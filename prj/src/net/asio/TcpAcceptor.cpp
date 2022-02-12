@@ -8,7 +8,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class TcpPeerPool : public eco::Object<TcpPeerPool>
 {
@@ -52,7 +52,7 @@ public:
 		// release peer user defined data.
 		try
 		{
-			eco::this_thread::lock().set_object(id);
+			eco::this_thread::dead_lock().begin();
 			delete peer;	// std::auto_ptr<TcpPeer>
 		}
 		catch (std::exception& e)
@@ -63,9 +63,10 @@ public:
 
 public:
 	// connecntion pool.
+	typedef std::function<void(TcpPeer*)> TcpPeerFunc;
+	TcpPeerFunc m_recycle;
 	TcpServer::Impl* m_server;
-	eco::MessageServer<TcpPeer*> m_destroyer;
-	std::function<void(TcpPeer*)> m_recycle;
+	eco::Worker<TcpPeer*, TcpPeerFunc, eco::Thread> m_destroyer;
 };
 
 

@@ -121,24 +121,17 @@ BOOST_PP_CAT & BOOST_PP_VARIADIC_SIZE;
 #define ECO_MACRO_STR(a) ECO_MACRO_STR_(a)
 #define ECO_MACRO_GETN_(n0,n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14,n15,\
 n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,size,...) size
-// ECO_MACRO_CAT_WIN for windows and linux.
-#ifdef ECO_WIN
-#	define ECO_MACRO_CAT_WIN ECO_MACRO_CAT
-#else
-#	define ECO_MACRO_CAT_WIN_(a, b) a
-#	define ECO_MACRO_CAT_WIN(a, b) ECO_MACRO_CAT_WIN_(a, b)
-#endif
-#define ECO_MACRO_GETN(...) ECO_MACRO_CAT_WIN(ECO_MACRO_GETN_(__VA_ARGS__,32,\
+#define ECO_MACRO_GETN(...) ECO_MACRO_CAT(ECO_MACRO_GETN_(__VA_ARGS__,32,\
 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,\
 3,2,1,),)
-#define ECO_MACRO(macro, ...) ECO_MACRO_CAT(ECO_MACRO_CAT(macro,\
-ECO_MACRO_GETN(__VA_ARGS__))(__VA_ARGS__), )
+#define ECO_MACRO(macro, ...) \
+ECO_MACRO_CAT(macro, ECO_MACRO_GETN(__VA_ARGS__))(__VA_ARGS__)
 
 // lib name: exp "eco.lib.2.3.0"
 #define ECO_LIB_NAME_CAT(name, major, minor, patch) \
 ECO_LIB_NAME_CAT_(name, major, minor, patch)
 #define ECO_LIB_NAME_CAT_(name, major, minor, patch) \
-ECO_MACRO_STR_(name.lib.major.minor.patch)
+ECO_MACRO_STR(name.lib.major.minor.patch)
 #define ECO_LIB_NAME(name) \
 ECO_LIB_NAME_CAT(name, ECO_LIB_MAJOR, ECO_LIB_MINOR, ECO_LIB_PATCH)
 

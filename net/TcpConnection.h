@@ -23,13 +23,14 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/Memory.h>
 #include <eco/rx/RxApi.h>
 #include <eco/net/TcpPeer.h>
 #include <eco/net/protocol/ProtobufCodec.h>
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 class DataContext;
 ////////////////////////////////////////////////////////////////////////////////
 // noncopyable conn data, only can be used in local.
@@ -40,7 +41,8 @@ class ConnectionDataPtr
 	ECO_PTR_MEMBER(ConnectionDataT, m_data);
 public:
 	inline ConnectionDataPtr(IN TcpPeer::ptr& peer)
-		: m_peer(peer), m_data(static_cast<ConnectionDataT*>(m_peer->data()))
+		: m_peer(peer)
+		, m_data(static_cast<ConnectionDataT*>(m_peer->data()))
 	{}
 
 	inline ConnectionDataPtr(IN ConnectionDataPtr&& v)
@@ -107,7 +109,7 @@ public:
 	inline bool authorized() const;
 
 	// get tcp connection id.
-	inline const SessionId id() const
+	inline SessionId id() const
 	{
 		return m_id;
 	}
@@ -207,7 +209,7 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN int  type, IN bool last_)
 	{
-		send(ProtobufCodec(&msg), type, last_);
+		send(eco::lvalue(ProtobufCodec(&msg)), type, last_);
 	}
 
 	// async send response by context.
@@ -215,7 +217,7 @@ public:
 		IN const google::protobuf::Message& msg,
 		IN int type, bool last_, const Context& c)
 	{
-		response(ProtobufCodec(&msg), type, last_, c);
+		response(eco::lvalue(ProtobufCodec(&msg)), type, last_, c);
 	}
 
 	// async publish protobuf.
@@ -246,7 +248,7 @@ public:
 	inline ConnectionData() {}
 
 	// #.event: after server connection close.
-	virtual ~ConnectionData() = 0 {}
+	virtual ~ConnectionData() {}
 
 	// get connection object.
 	inline TcpConnection& connection()
@@ -258,7 +260,7 @@ public:
 		return m_conn;
 	}
 
-	inline const SessionId id() const
+	inline SessionId id() const
 	{
 		return m_conn.id();
 	}

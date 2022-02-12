@@ -48,12 +48,12 @@ public:
 	inline Version(IN const char* name_) : m_value(0), m_module(name_)
 	{}
 
-	inline operator const uint32_t() const
+	inline operator uint32_t() const
 	{
 		return m_value;
 	}
 
-	inline Version& value(IN const uint32_t v)
+	inline Version& value(IN uint32_t v)
 	{
 		m_value = v;
 		m_timestamp = eco::date_time::Timestamp(eco::date_time::fmt_std);
@@ -94,7 +94,7 @@ public:
 			return object().m_module;
 		else if (strcmp(p, "timestamp") == 0)
 			return object().m_timestamp;
-		return eco::empty_str;
+		return eco::value_empty;
 	}
 };
 ECO_NS_END(persist);

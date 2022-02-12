@@ -27,7 +27,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 template<typename codec_t, typename err_t>
 inline void TcpClient::call_reject(

@@ -74,9 +74,9 @@ public:
 	inline const std::string& name() const { return m_name; }
 
 	/*@ set message queue capacity.*/
-	inline void set_capacity(IN const uint32_t capacity)
+	inline void set_capacity(IN uint32_t capacity)
 	{
-		m_capacity = (capacity > 0) ? capacity : default_capacity;
+		m_capacity = (capacity > 0) ? capacity : uint32_t(default_capacity);
 	}
 	inline uint32_t capacity() const { return m_capacity; }
 

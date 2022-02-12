@@ -17,7 +17,10 @@ ECO_NS_BEGIN(this_thread);
 thread_local eco::log::PusherT<eco::String>* t_logbuf = 0;
 eco::log::PusherT<eco::String>& logbuf()
 {
-	if (t_logbuf == 0) { t_logbuf = new eco::log::PusherT<eco::String>(); }
+	if (t_logbuf == 0) 
+	{
+		t_logbuf = new eco::log::PusherT<eco::String>();
+	}
 	t_logbuf->stream().clear();
 	return *t_logbuf;
 }
@@ -58,6 +61,8 @@ public:
 
 	// async logging.
 	inline void operator()(IN const Pack& buf);
+	// nouse: compatible with eco::Worker<>.
+	inline void operator()(IN const eco::Bytes& buf) {}
 
 private:
 	Core::Impl* m_core;
@@ -67,9 +72,12 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 class Core::Impl
 {
+	ECO_IMPL_INIT(Core);
 public:
+	Impl();
+
 	// async server.
-	Server<Handler>::ptr m_server;
+	Server<eco::log::Handler>::ptr m_server;
 
 	// core option.
 	uint16_t m_init;
@@ -80,22 +88,15 @@ public:
 
 	// console sink.
 	std_mutex m_sync_mutex;
-	std::auto_ptr<FileSink> m_file_sink;
-	std::auto_ptr<ConsoleSink> m_console_sink;
 	SeverityLevel m_file_sev;
 	SeverityLevel m_console_sev;
+	std::unique_ptr<FileSink> m_file_sink;
+	std::unique_ptr<ConsoleSink> m_console_sink;
 	
 	// file sink option.
-	std::string m_file_path;
 	uint32_t m_file_roll_size;
+	std::string m_file_path;
 	OnChangedLogFile m_on_create;
-
-	// singleton instance.
-	static Core s_object;
-
-public:
-	Impl();
-	void init(IN Core& wrap) {}
 };
 
 
@@ -107,24 +108,21 @@ ECO_PROPERTY_VAR_IMPL(Core, SinkOption, sink_option);
 ECO_PROPERTY_VAR_IMPL(Core, uint32_t, capacity);
 ECO_PROPERTY_VAR_IMPL(Core, uint32_t, async_flush);
 ECO_PROPERTY_VAR_IMPL(Core, uint32_t, file_roll_size);
-ECO_API Core& core()
-{
-	return eco::Singleton<Core>::get();
-}
+Core& Core::get() { return eco::Singleton<Core>::get(); }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 Core::Impl::Impl()
-	: m_async(true)
-	, m_init(false)
+	: m_init(false)
+	, m_async(true)
+	, m_sink_option(eco::log::console_sink | eco::log::file_sink)
 	, m_capacity(queue_size)
+	, m_async_flush(3000)
+	, m_file_sev(eco::log::debug)
+	, m_console_sev(eco::log::info)
 	, m_file_roll_size(eco::log::file_roll_size)
 	, m_file_path("log")
 	, m_on_create(nullptr)
-	, m_sink_option(eco::log::console_sink | eco::log::file_sink)
-	, m_file_sev(eco::log::debug)
-	, m_console_sev(eco::log::info)
-	, m_async_flush(3000)
 {}
 
 
@@ -158,7 +156,7 @@ void Handler::operator()(IN const Pack& buf)
 ////////////////////////////////////////////////////////////////////////////////
 void Core::run()
 {
-	if (impl().m_init) return;
+	if (impl().m_init) { return; }
 
 	// create file path, if file path is not exist.
 	boost::system::error_code e;
@@ -173,15 +171,15 @@ void Core::run()
 
 	if (impl().m_async)
 	{
-		impl().m_server.reset(new Server<Handler>);
-		impl().m_server->set_message_handler(Handler(impl()));
 		if (impl().m_capacity < min_queue_size)
 			impl().m_capacity = min_queue_size;
 		if (impl().m_async_flush < min_sync_interval)
 			impl().m_async_flush = min_sync_interval;
-		impl().m_server->run("eco_log", 1);
+		impl().m_server.reset(new Server<eco::log::Handler>);
+		impl().m_server->set_handler(eco::log::Handler(impl()));
 		impl().m_server->set_capacity(impl().m_capacity);
 		impl().m_server->set_sync_interval(impl().m_async_flush);
+		impl().m_server->run("eco_log");
 	}
 
 	// console logging output.
@@ -266,7 +264,7 @@ void Core::set_file_on_create(IN eco::log::OnChangedLogFile& func)
 {
 	impl().m_on_create = func;
 }
-void Core::append(IN eco::Bytes& buf, IN SeverityLevel level)
+void Core::append(IN const eco::Bytes& buf, IN SeverityLevel level)
 {
 	if (impl().m_server == nullptr)
 	{
@@ -280,7 +278,7 @@ void Core::append(IN eco::Bytes& buf, IN SeverityLevel level)
 		// async write file.
 		if (impl().m_file_sink.get() && level >= impl().m_file_sev)
 		{
-			impl().m_server->queue().post(buf);
+			impl().m_server->channel().post(buf);
 		}
 		Handler(impl()).cout(buf, level);
 	}

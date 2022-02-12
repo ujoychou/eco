@@ -36,17 +36,6 @@ class Logger
 {
 public:
 	inline eco::String& set(
-		IN const char* func_name,
-		IN const char* file_name,
-		IN int file_line,
-		IN SeverityLevel sev_level)
-	{
-		m_buf = &eco::this_thread::logbuf();
-		return m_buf->set(eco::Bytes(func_name),
-			file_name, file_line, sev_level).stream();
-	}
-
-	inline eco::String& set(
 		IN const eco::Bytes& func_name,
 		IN const char* file_name,
 		IN int file_line,
@@ -83,7 +72,7 @@ ECO_NS_END(eco);
 */
 #define ECO_LOG_1(sev) ECO_LOG_2(sev, nullptr)
 #define ECO_LOG_2(sev, func) \
-if (eco::log::sev >= eco::log::core().severity_level())\
+if (eco::log::sev >= eco::log::Core::get().severity_level())\
 	eco::log::Logger().set(func, __FILE__, __LINE__, eco::log::sev)
 #define ECO_LOG(...) ECO_MACRO(ECO_LOG_,__VA_ARGS__)
 #define ECO_FUNC(sev) ECO_LOG(sev, __func__)
@@ -93,7 +82,7 @@ if (eco::log::sev >= eco::log::core().severity_level())\
 // logging message with a severity level value "integer type".
 #define ECO_LOG_SEV_1(sev) ECO_LOG_SEV_2(sev, nullptr)
 #define ECO_LOG_SEV_2(sev, func)\
-if (sev >= eco::log::core().severity_level())\
+if (sev >= eco::log::Core::get().severity_level())\
 	eco::log::Logger().set(func, __FILE__, __LINE__, sev)
 #define ECO_LOG_SEV(...) ECO_MACRO(ECO_LOG_SEV_,__VA_ARGS__)
 

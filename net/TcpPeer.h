@@ -31,7 +31,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 class IoWorker;
 class TcpPeer;
 class Context;
@@ -41,7 +41,7 @@ class ProtocolFamily;
 class TcpOwner
 {
 public:
-	inline TcpOwner() : m_server(false), m_owner(0)
+	inline TcpOwner() : m_owner(0), m_server(false)
 	{}
 
 	inline TcpOwner(void* owner, bool server)

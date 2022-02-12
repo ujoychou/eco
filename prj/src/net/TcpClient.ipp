@@ -184,7 +184,7 @@ public:
 	OnConnect m_on_open;
 	OnDisconnect m_on_close;
 	std::vector<LoadEvent::ptr> m_load_events;
-	TimingWheel::Timer m_timer_load_events;
+	Timing::Timer m_timer_load_events;
 
 	// session data management.
 	MakeSessionData m_make_session;
@@ -305,7 +305,7 @@ public:
 			// timer_recv as the timer connect, and set recv timer when peer
 			// has connected.
 			peer().m_timer_recv.cancel();
-			peer().m_timer_recv = eco::Eco::get().timer().run_after([=] {
+			peer().m_timer_recv = eco::Eco::get().timing().run_after([=] {
 				if (!get_state().connected() && !m_manual_close)
 					this->connect(2000);
 			}, std_chrono::seconds(m_option.auto_reconnect_sec()), false);

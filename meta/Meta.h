@@ -83,11 +83,11 @@ public:
 	{
 		m_object = (object_t*)obj.get();
 	}
-	inline void attach(std::auto_ptr<object_t>& obj)
+	inline void attach(std::unique_ptr<object_t>& obj)
 	{
 		m_object = (object_t*)obj.get();
 	}
-	inline void attach(const std::auto_ptr<object_t>& obj)
+	inline void attach(const std::unique_ptr<object_t>& obj)
 	{
 		m_object = (object_t*)obj.get();
 	}

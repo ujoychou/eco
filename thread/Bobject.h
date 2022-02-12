@@ -60,7 +60,7 @@ public:
 	}
 
 	// occupy this business object.
-	inline const TaskState occupy(
+	inline TaskState occupy(
 		IN std::shared_ptr<Btask> task,
 		IN const uint32_t task_sour_state,
 		IN const uint32_t task_dest_state,
@@ -150,6 +150,7 @@ public:
 		m_object = rr.m_object;
 		m_data_occupy = rr.m_data_occupy;
 		rr.clear();
+		return *this;
 	}
 
 	inline ~Lock()
@@ -202,12 +203,12 @@ public:
 protected:
 	inline void clear()
 	{
-		m_data_occupy = task_no_ready;
 		m_object = nullptr;
+		m_data_occupy = task_no_ready;
 	}
 
-	uint32_t m_data_occupy;
 	Bobject* m_object;
+	uint32_t m_data_occupy;
 };
 
 
@@ -219,8 +220,8 @@ public:
 	inline Relock(
 		IN Bobject& bo,
 		IN const uint32_t is_release = true)
-		: m_object(bo)
-		, m_release(is_release)
+		: m_release(is_release)
+		, m_object(bo)
 	{}
 
 	inline ~Relock()
@@ -231,9 +232,7 @@ public:
 		}
 	}
 
-	inline void finish(
-		IN const uint32_t task_dest_state,
-		IN const uint32_t task_erase_state)
+	inline void finish(uint32_t task_dest_state, uint32_t task_erase_state)
 	{
 		if (m_release)
 		{

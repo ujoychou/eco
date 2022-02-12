@@ -53,7 +53,7 @@ public:
 
 	virtual uint32_t byte_size() const override
 	{
-		return message().ByteSize();
+		return message().ByteSizeLong();
 	}
 
 	virtual void encode(OUT char* bytes, IN uint32_t size) const override
@@ -80,7 +80,7 @@ inline std::string to_json(const google::protobuf::Message& msg)
 }
 inline std::string to_json(const NullRequest&)
 {
-	return eco::empty_str;
+	return eco::value_empty;
 }
 
 

@@ -1,6 +1,5 @@
-#ifndef ECO_PROTO_H
-#define ECO_PROTO_H
-#ifndef ECO_NO_PROTOBUF
+#ifndef ECO_DETAIL_PROTO_H
+#define ECO_DETAIL_PROTO_H
 /*******************************************************************************
 @ 名称
 
@@ -18,7 +17,9 @@
 * 版权所有(c) 2016 - 2019, siberia corp, 保留所有权利。
 
 *******************************************************************************/
+#ifndef ECO_NO_PROTOBUF
 #include <eco/Object.h>
+#include <eco/String.h>
 #ifndef ECO_PROTOBUF2
 #	include <eco/detail/proto/Eco.pb.h>
 #	include <eco/detail/proto/Monitor.pb.h>
@@ -53,7 +54,7 @@ StreamT& operator<<(OUT StreamT& stream, IN const eco::proto::Error& e)
 template<typename StreamT>
 StreamT& operator<<(OUT StreamT& stream, IN const eco::proto::Property& p)
 {
-	stream <= p.user_id() < '-';
+	stream <= p.user() < '-';
 	if (p.object() != 0) stream < p.object();
 	if (!p.entity().empty()) stream < p.entity();
 	stream <= p.name() <= p.value();

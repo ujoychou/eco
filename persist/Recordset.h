@@ -27,19 +27,19 @@ class ECO_API Record
 	ECO_OBJECT_API(Record);
 public:
 	// reserve data size.
-	void reserve(IN const size_t size);
+	void reserve(IN size_t size);
 
 	// get data size.
-	const size_t size() const;
+	size_t size() const;
 
 	// add data.
 	void add(IN const char* item);
 
 	// get data set value by index. 
-	const char* at(IN const size_t index) const;
+	const char* at(IN size_t index) const;
 
 	// get data set value by index. 
-	const char* operator[](IN const size_t index) const;
+	const char* operator[](IN size_t index) const;
 
 	// clear data.
 	void clear();
@@ -52,21 +52,21 @@ class ECO_API Recordset
 	ECO_OBJECT_API(Recordset);
 public:
 	// reserve data size.
-	void reserve(IN const size_t size);
+	void reserve(IN size_t size);
 
 	// get data size.
-	const size_t size() const;
+	size_t size() const;
 
 	// add data.
 	Record& add_item();
 
 	// get dataset of the datasheet.
-	Record& at(IN const size_t index);
-	const Record& at(IN const size_t index) const;
+	Record& at(IN size_t index);
+	const Record& at(IN size_t index) const;
 
 	// get dataset of the datasheet.
-	Record& operator[](IN const size_t index);
-	const Record& operator[](IN const size_t index) const;
+	Record& operator[](IN size_t index);
+	const Record& operator[](IN size_t index) const;
 
 	// clear data.
 	void clear();

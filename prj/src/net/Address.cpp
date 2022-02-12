@@ -4,13 +4,12 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class Address::Impl
 {
 	ECO_IMPL_INIT(Address);
 public:
-	// "�Ϻ�����"/"���Ե�ַ1" and so on.
 	std::string m_name;
 
 	// server ip address or host name.
@@ -71,7 +70,7 @@ void Address::set(IN const char* v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void Address::set(IN const char* ip, IN const uint32_t port)
+void Address::set(IN const char* ip, IN uint32_t port)
 {
 	impl().m_host_name = ip;
 	impl().m_service_name = eco::Integer<uint32_t>(port).c_str();
@@ -79,11 +78,11 @@ void Address::set(IN const char* ip, IN const uint32_t port)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-const uint32_t Address::port() const
+uint32_t Address::port() const
 {
 	return eco::cast<uint32_t>(impl().m_service_name);
 }
-const eco::String Address::value() const
+eco::String Address::value() const
 {
 	eco::String temp(impl().m_host_name);
 	temp << ':' << impl().m_service_name;

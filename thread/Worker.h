@@ -29,7 +29,7 @@ ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename Message,
-	typename Handler = std::function<void (Message&)>,
+	typename Handler = std::function<void(Message&)>,
 	typename ThreadPool = eco::ThreadPool,
 	typename Channel = eco::Channel<Message>>
 class Worker
@@ -37,7 +37,7 @@ class Worker
 	ECO_OBJECT(Worker);
 protected:
 	// thread work: handle channel message.
-	inline void work()
+	virtual void work()
 	{
 		while (true)
 		{

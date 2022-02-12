@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 
 static std::string s_ip;
 static std::string s_hostname;

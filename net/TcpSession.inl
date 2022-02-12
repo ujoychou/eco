@@ -26,7 +26,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API TcpSessionInner
 {
@@ -74,7 +74,7 @@ SessionData::ptr TcpSession::data() const
 {
 	return m_impl.m_session_wptr.lock();
 }
-const SessionId TcpSession::id() const
+SessionId TcpSession::id() const
 {
 	return m_impl.m_session_id;
 }

@@ -172,8 +172,7 @@ ECO_NS_END(eco);
 
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(std);
-template<>
-class hash<eco::TopicId>
+template<> class hash<eco::TopicId>
 {
 public:
 	inline std::size_t operator()(IN const eco::TopicId& v) const
@@ -190,12 +189,10 @@ class ContentData
 {
 	ECO_OBJECT(ContentData);
 public:
-	inline ContentData(IN const eco::meta::Stamp v)	: m_stamp(v)
-	{}
+	inline ContentData(IN const eco::meta::Stamp v)	: m_stamp(v) {}
 
 	// destructor.
-	virtual ~ContentData() = 0 
-	{}
+	virtual ~ContentData() {}
 
 	// set topic content object_t.
 	virtual void* get_object() = 0;
@@ -204,8 +201,8 @@ public:
 	virtual void* get_value() = 0;
 
 	// content type.
-	virtual const uint32_t get_type_id() const = 0;
-	virtual const uint32_t get_object_id() const = 0;
+	virtual uint32_t get_type_id() const = 0;
+	virtual uint32_t get_object_id() const = 0;
 
 	virtual void* get_id()
 	{
@@ -230,7 +227,7 @@ public:
 	{
 		return m_stamp;
 	}
-	inline const eco::meta::Stamp get_stamp() const
+	inline eco::meta::Stamp get_stamp() const
 	{
 		return m_stamp;
 	}
@@ -245,18 +242,18 @@ class ContentDataT : public eco::ContentData
 {
 public:
 	inline ContentDataT(IN const value_t& v, IN eco::meta::Stamp ts)
-		: m_value((value_t&)v), eco::ContentData(ts)
+		: eco::ContentData(ts), m_value((value_t&)v)
 	{}
 
 	virtual ~ContentDataT()
 	{}
 
-	virtual const uint32_t get_type_id() const override
+	virtual uint32_t get_type_id() const override
 	{
 		return eco::TypeId<value_t>::value;
 	}
 
-	virtual const uint32_t get_object_id() const override
+	virtual uint32_t get_object_id() const override
 	{
 		return eco::TypeId<object_t>::value;
 	}
@@ -287,7 +284,7 @@ public:
 
 	virtual void* get_id() override
 	{
-		return &m_value;
+		return &this->m_value;
 	}
 };
 
@@ -334,11 +331,11 @@ public:
 	}
 
 	// content type.
-	inline const uint32_t type_id() const
+	inline uint32_t type_id() const
 	{
 		return (**m_new_c).get_type_id();
 	}
-	inline const uint32_t object_id() const
+	inline uint32_t object_id() const
 	{
 		return (**m_new_c).get_object_id();
 	}
@@ -392,7 +389,7 @@ public:
 	{
 		return (**m_new_c).stamp();
 	}
-	inline const eco::meta::Stamp get_stamp() const
+	inline eco::meta::Stamp get_stamp() const
 	{
 		return (**m_new_c).get_stamp();
 	}
@@ -441,12 +438,12 @@ public:
 
 	// constructor.
 	inline explicit TopicUid(uint64_t v, void* server)
-		: m_type(type_iid), m_server(server)
+		: m_server(server), m_type(type_iid)
 	{
 		m_data.iid = v;
 	}
 	inline explicit TopicUid(const eco::TopicId& v, void* server)
-		: m_type(type_tid), m_server(server)
+		: m_server(server), m_type(type_tid)
 	{
 		m_data.tid = v;
 	}
@@ -543,13 +540,13 @@ public:
 
 public:
 	template<typename topid_id_t>
-	inline topid_id_t cast() const
+	inline topid_id_t cast() const { return *(topid_id_t*)&m_data; }
+	template<uint64_t> inline uint64_t cast() const { return iid();	}
+	template<const char*> inline const char* cast() const { return sid(); }
+	template<const eco::TopicId&> inline const eco::TopicId& cast() const
 	{
-		return *(topid_id_t*)&m_data;
+		return tid();
 	}
-	template<> inline uint64_t cast() const { return iid();	}
-	template<> inline eco::TopicId cast() const	{ return tid();	}
-	template<> inline const char* const cast() const { return sid(); }
 
 	inline uint64_t iid() const
 	{
@@ -561,7 +558,7 @@ public:
 		if (m_type != type_tid) ECO_THROW("invalid type tid");
 		return (TopicId&)m_data.tid;
 	}
-	inline const char* const sid() const
+	inline const char* sid() const
 	{
 		if (m_type != type_sid) ECO_THROW("invalid type sid");
 		return m_data.sid;
@@ -593,7 +590,7 @@ private:
 
 	inline void asign(const char* v, size_t siz = -1)
 	{
-		if (siz == -1) siz = strlen(v);
+		if (siz == size_t(-1)) siz = strlen(v);
 		m_data.sid = new char[siz + 1];
 		memcpy(m_data.sid, v, siz + 1);
 		m_type = type_sid;
@@ -603,7 +600,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 typedef eco::MakeObject MakeTopic;
-#define ECO_TOPIC(topic_t, parent_t) ECO_RTX(topic_t, parent_t)
+#define ECO_TOPIC(topic_t, parent_t) ECO_RTYPE(topic_t, parent_t)
 
 ////////////////////////////////////////////////////////////////////////////////
 class Topic : public detail::Topic, public eco::Subscriber, public RtObject
@@ -640,7 +637,7 @@ public:
 		return m_id;
 	}
 	template<typename topid_id_t>
-	inline const topid_id_t get_id() const
+	inline topid_id_t get_id() const
 	{
 		return m_id.cast<topid_id_t>();
 	}
@@ -713,7 +710,8 @@ public:
 			if (node->m_working)
 			{
 				auto* suber = (Subscriber*)node->m_subscriber;
-				suber->on_publish(*this, Content(new_c, &*old_c, snap_none));
+				suber->on_publish(*this, eco::lvalue(
+					Content(new_c, &*old_c, snap_none)));
 			}
 			node = next;
 		}
@@ -762,17 +760,17 @@ protected:
 	template<typename object_t>
 	inline void push_back_raw(IN const object_t& obj)
 	{
-		ContentData::ptr newc(new ContentDataT<
-			object_t, object_t>(obj, eco::meta::stamp_insert));
-		do_move(newc, ContentData::ptr());
+		ContentData::ptr newc = std::make_shared<ContentDataT<
+			object_t, object_t>>(obj, eco::meta::stamp_insert);
+		do_move(newc, eco::lvalue(ContentData::ptr()));
 	}
 	template<typename object_t>
 	inline void push_back_raw(IN const std::shared_ptr<object_t>& obj)
 	{
 		typedef std::shared_ptr<object_t> value_t;
-		ContentData::ptr newc(new ContentDataT<
-			object_t, value_t>(obj, eco::meta::stamp_insert));
-		do_move(newc, ContentData::ptr());
+		ContentData::ptr newc = std::make_shared<ContentDataT<
+			object_t, value_t>>(obj, eco::meta::stamp_insert);
+		do_move(newc, eco::lvalue(ContentData::ptr()));
 	}
 
 private:
@@ -803,33 +801,33 @@ public:
 	inline Publisher(
 		IN Topic::ptr& topic,
 		IN ContentData::ptr& new_content)
-		: m_topic(std::move(topic))
+		: m_mode(mode_publish_new)
+		, m_topic(std::move(topic))
 		, m_new_content(std::move(new_content))
-		, m_mode(mode_publish_new)
 	{}
 
 	// publish some mode: erase_topic & clear content.
 	inline Publisher(
 		IN Topic::ptr& topic, 
 		IN const Mode publish_mode)
-		: m_topic(std::move(topic))
-		, m_mode(publish_mode)
+		: m_mode(publish_mode)
+		, m_topic(std::move(topic))
 	{}
 
 	// subscriber subscribe topic.
 	inline Publisher(
 		IN Topic::ptr& topic,
 		IN AutoRefPtr<Subscription>& node)
-		: m_topic(std::move(topic))
+		: m_mode(mode_publish_snap)
+		, m_topic(std::move(topic))
 		, m_node(std::move(node))
-		, m_mode(mode_publish_snap)
 	{}
 
 	inline Publisher(Publisher&& pub)
-		: m_topic(std::move(pub.m_topic))
+		: m_mode(pub.m_mode)
+		, m_topic(std::move(pub.m_topic))
 		, m_new_content(std::move(pub.m_new_content))
 		, m_node(std::move(pub.m_node))
-		, m_mode(pub.m_mode)
 	{}
 
 	inline Publisher& operator=(Publisher&& pub)

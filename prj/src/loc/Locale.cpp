@@ -2,6 +2,7 @@
 #include <eco/loc/Locale.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/App.h>
+#include <eco/rx/RxImpl.h>
 #include "Language.h"
 
 
@@ -132,9 +133,9 @@ public:
 		for (buf.clear();;)
 		{
 			uint32_t pos_s = eco::find_first(pos_last, '{');
-			if (pos_s == -1) break;
+			if (pos_s == uint32_t(-1)) break;
 			uint32_t pos_e = eco::find_first(pos_last + (++pos_s), '}');
-			if (pos_e == -1) break;
+			if (pos_e == uint32_t(-1)) break;
 
 			key = mdl; key += '/';
 			key.append(pos_last + pos_s, pos_e);
@@ -186,7 +187,7 @@ public:
 		loc_key += name_;
 		loc_key += '/';
 		loc_key += key;
-		return eco::App::get()->config().find(v, loc_key.c_str());
+		return eco::App::get().config().find(v, loc_key.c_str());
 	}
 };
 
@@ -195,7 +196,7 @@ ECO_OBJECT_IMPL(Locale);
 ////////////////////////////////////////////////////////////////////////////////
 eco::loc::Locale& app_locale()
 {
-	return eco::App::get()->locale();
+	return eco::App::get().locale();
 }
 ////////////////////////////////////////////////////////////////////////////////
 void Locale::add_locale(const eco::proto::Locale& loc, const char* mdl)

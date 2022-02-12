@@ -6,7 +6,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 class Protocol::Impl
 {
@@ -21,7 +21,7 @@ public:
 		m_max_size = -1;
 	}
 };
-ECO_OBJECT_IMPL(Protocol);
+ECO_OBJECT_IMPL(Protocol, ProtocolVersion);
 void Protocol::set_version(uint8_t ver)
 {
 	impl().m_version = ver;

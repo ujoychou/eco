@@ -29,7 +29,7 @@
 
 
 ECO_NS_BEGIN(eco);
-namespace net{;
+ECO_NS_BEGIN(net);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ public:
 	* @ para.ip: net address string. exp:"127.0.0.1"
 	* @ para.port: net address port number. exp:"80"
 	*/
-	void set(IN const char* ip, IN const uint32_t port);
+	void set(IN const char* ip, IN uint32_t port);
 
 	// address name or alias that easy to remember.
 	void set_name(const char*);
@@ -76,10 +76,10 @@ public:
 	Address& service_name(const char*);
 
 	// get port of ip address.
-	const uint32_t port() const;
+	uint32_t port() const;
 
 	// get address value.
-	const eco::String Address::value() const;
+	eco::String value() const;
 
 	// check the address is a ip format or hostname format.
 	bool ip_format() const;
@@ -139,11 +139,11 @@ public:
 	/*@ get address set size.*/
 	size_t size() const;
 	bool empty() const;
-	void reserve(IN const size_t capacity);
+	void reserve(IN size_t capacity);
 
 	/*@ access address by item index.*/
-	Address& at(IN const int i);
-	const Address& at(IN const int i) const;
+	Address& at(IN int i);
+	const Address& at(IN int i) const;
 
 public:
 	// module name or alias that easy to remember.
@@ -152,10 +152,10 @@ public:
 	AddressSet& name(const char*);
 
 	// service mode or router mode.
-	const ServiceMode mode() const;
-	void set_mode(IN const ServiceMode);
+	ServiceMode mode() const;
+	void set_mode(IN ServiceMode);
 	ServiceMode& get_mode();
-	AddressSet& mode(IN const ServiceMode);
+	AddressSet& mode(IN ServiceMode);
 };
 
 

@@ -10,7 +10,6 @@ ECO_NS_BEGIN(codec);
 inline std::string get_md5(IN const std::string& key)
 {
 	MD5 md(key);
-	const char* digest = md.digest();
 	const char* result = md.result();
 	return std::string(result, 32);
 }

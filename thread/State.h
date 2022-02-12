@@ -178,7 +178,7 @@ bool State::operator==(IN uint32_t v) const
 }
 bool State::operator==(IN int v) const
 {
-	return m_value == v;
+	return m_value == uint32_t(v);
 }
 uint32_t State::value() const
 {
