@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include "TcpServer.ipp"
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/service/dev/Cluster.h>
 #include <eco/net/protocol/TcpProtocol2.h>
 #include <net/protocol/WebSocketProtocol.h>
@@ -141,7 +142,7 @@ void TcpServer::Impl::on_accept(IN TcpPeer::ptr& peer, bool error)
 	// hub verify the most tcp_connection num.
 	peer->impl().on_accept_state(make_session_id());
 	peer->impl().set_protocol(m_protocol.protocol_latest());
-	if (m_statistics.accept(peer, ThreadCheck::get().get_time()))
+	if (m_statistics.accept(peer, DeadLockCheck::get_time()))
 	{
 		peer->impl().on_accept(m_option);
 		if (m_on_accept)
@@ -255,8 +256,7 @@ void TcpServer::set_event(OnAccept&& on_accept, OnClose&& on_close)
 }
 void TcpServer::set_recv_event(OnRecvData&& on_recv, OnDecodeHead&& on_decode)
 {
-	impl().m_dispatch_pool.message_handler().set_event(
-		std::move<OnRecvData>(on_recv));
+	impl().m_dispatch_pool.get_handler().set_event(std::move(on_recv));
 	impl().m_peer_handler.m_on_decode_head = on_decode;
 }
 bool TcpServer::receive_mode() const

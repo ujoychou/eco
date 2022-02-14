@@ -21,6 +21,7 @@ using persist in two way:
 
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
 #include <eco/meta/Meta.h>
 #include <eco/persist/Address.h>
 #include <eco/persist/Database.h>
@@ -30,8 +31,6 @@ using persist in two way:
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(persist);
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // database upgrade solution.
 class Version : public eco::Value<Version>

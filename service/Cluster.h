@@ -20,6 +20,7 @@
 
 *******************************************************************************/
 #include <eco/Object.h>
+#include <eco/rx/RxExport.h>
 #include <eco/service/DidProtocol.h>
 #include <eco/service/Service.h>
 #include <eco/service/Machine.h>

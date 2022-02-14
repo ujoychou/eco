@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "TcpOuter.h"
 #include <eco/App.h>
+#include <eco/rx/RxImpl.h>
 #include <eco/net/protocol/TcpProtocol2.h>
 #include <random>
 
@@ -11,11 +12,11 @@
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-void LoadBalancer::add_address(IN const Address& addr)
+void LoadBalancer::add_address(IN Address& addr)
 {
 	m_address_set.push_back(addr);
 }
-void LoadBalancer::update_address(IN const AddressSet& addr)
+void LoadBalancer::update_address(IN AddressSet& addr)
 {
 	m_address_set = addr;
 	m_address_cur = -1;		// need random again.
@@ -135,14 +136,18 @@ void TcpClient::Impl::async_connect()
 		ECO_LOG(info) << logging();
 	}
 }
+void TcpClient::Impl::async_connect(AddressSet& addr)
+{
+	update_address(addr);
+	async_connect();
+}
 void TcpClient::Impl::connect(uint32_t millsec)
 {
 	async_connect();
 	eco::thread::time_wait(std::bind(
 		&TcpState::connected, &peer().state()), millsec);
 }
-void TcpClient::Impl::connect(
-	const eco::net::AddressSet& addr, uint32_t millsec)
+void TcpClient::Impl::connect(AddressSet& addr, uint32_t millsec)
 {
 	update_address(addr);
 	connect(millsec);
@@ -224,7 +229,7 @@ TcpSession TcpClient::Impl::open_session()
 	sess.make_client_session();
 	pack->m_user_observer = sess.impl().m_user;
 	// save pack.
-	void* session_key = sess.impl().m_user.get();
+	//void* session_key = sess.impl().m_user.get();
 	//set_authority(session_key, pack);
 	return session;
 }
@@ -255,13 +260,13 @@ eco::Result TcpClient::Impl::request(
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpClient::Impl::async(IN MessageMeta& req, IN ResponseFunc& rsp_func)
+void TcpClient::Impl::async(IN MessageMeta& req, IN ResponseFunc&& rsp_func)
 {
 	// async send message.
 	uint32_t req_id = ++m_request_id;
 	req.set_request_data(req_id);
 	eco::add(req.m_category, category_sync);
-	post_async(req_id, rsp_func);
+	post_async(req_id, std::move(rsp_func));
 	send(req);
 }
 
@@ -307,7 +312,7 @@ void TcpClient::Impl::on_connect_ok()
 	if (m_option.heartbeat_recv_sec() > 0)
 	{
 		peer().m_timer_recv.cancel();
-		peer().m_timer_recv = eco::App::get()->timing().run_after(
+		peer().m_timer_recv = eco::App::get().timing().run_after(
 			[=] { this->on_live_timeout(); },
 			std_chrono::seconds(m_option.heartbeat_recv_sec()), false);
 	}
@@ -315,7 +320,7 @@ void TcpClient::Impl::on_connect_ok()
 	// async load data.
 	on_load_data();
 	m_timer_load_events.cancel();
-	m_timer_load_events = eco::App::get()->timing().run_after(
+	m_timer_load_events = eco::App::get().timing().run_after(
 		[=] { this->on_load_data(); },
 		std_chrono::seconds(m_option.get_load_event_sec()), true);
 }
@@ -391,7 +396,7 @@ void TcpClient::Impl::on_load_locale(eco::atomic::State& state)
 		ECO_LOG(error, "load_locale") < e;
 	},
 		[&state, this](eco::proto::Locale& loc, eco::net::Context& c) {
-		eco::App::get()->locale().add_locale(loc, m_option.module_());
+		eco::App::get().locale().add_locale(loc, m_option.module_());
 		state.set_ok(true);
 		ECO_LOG(info, "load_locale");
 	});
@@ -415,7 +420,7 @@ void TcpClient::Impl::on_read(
 	// #.dispatch data context.
 	DataContext dc;
 	peer->get_data_context(dc, head, data);
-	m_dispatch.queue().post(dc);
+	m_dispatch.channel().post(std::move(dc));
 }
 void TcpClient::Impl::on_send(IN void* peer, IN uint32_t size)
 {}
@@ -440,7 +445,7 @@ void TcpClient::set_event(OnConnect&& on_open, OnDisconnect&& on_close)
 }
 void TcpClient::set_recv_event(OnRecvData&& on_recv, OnDecodeHead&& on_decode)
 {
-	impl().m_dispatch.message_handler().set_event(std::move(on_recv));
+	impl().m_dispatch.get_handler().set_event(std::move(on_recv));
 	impl().m_peer_handler.m_on_decode_head = on_decode;
 }
 void TcpClient::set_timeout(uint32_t millsec)
@@ -483,7 +488,7 @@ uint32_t TcpClient::add_load_event(OnLoadEvent&& func)
 
 	// 2.event link node async call step by step.
 	OnLoadEvent link_evt = std::move(prev_evt->m_on_event);
-	prev_evt->m_on_event = [=](OnLoadFinish& f) {
+	prev_evt->m_on_event = [=](OnLoadFinish f) {
 		link_evt([=](void) { f(); (*curr_evt)(); });
 	};
 	return uint32_t(impl().m_load_events.size() - 1);
@@ -558,11 +563,11 @@ Protocol* TcpClient::protocol_latest() const
 {
 	return impl().m_protocol.protocol_latest();
 }
-void TcpClient::add_address(IN const Address& addr)
+void TcpClient::add_address(IN Address& addr)
 {
 	impl().add_address(addr);
 }
-void TcpClient::set_address(IN const AddressSet& addr)
+void TcpClient::set_address(IN AddressSet& addr)
 {
 	impl().update_address(addr);
 	impl().m_option.set_name(addr.name());
@@ -571,7 +576,7 @@ void TcpClient::async_connect()
 {
 	impl().async_connect();
 }
-void TcpClient::async_connect(IN const AddressSet& addr)
+void TcpClient::async_connect(IN AddressSet& addr)
 {
 	impl().async_connect(addr);
 }
@@ -579,7 +584,7 @@ void TcpClient::connect(IN uint32_t millsec)
 {
 	impl().connect(millsec);
 }
-void TcpClient::connect(IN const AddressSet& addr, IN uint32_t millsec)
+void TcpClient::connect(IN AddressSet& addr, IN uint32_t millsec)
 {
 	impl().connect(addr, millsec);
 }
@@ -606,9 +611,9 @@ eco::Result TcpClient::request(
 {
 	return impl().request(req, err_codec, rsp_codec, rsp_set);
 }
-void TcpClient::async(IN MessageMeta& req, IN ResponseFunc& rsp_func)
+void TcpClient::async(IN MessageMeta& req, IN ResponseFunc&& rsp_func)
 {
-	impl().async(req, rsp_func);
+	impl().async(req, std::move(rsp_func));
 }
 
 

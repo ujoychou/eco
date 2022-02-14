@@ -17,8 +17,9 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/persist/ObjectMapping.h>
+#include <eco/Memory.h>
 #include <eco/meta/Meta.h>
+#include <eco/persist/ObjectMapping.h>
 
 
 ECO_NS_BEGIN(eco);

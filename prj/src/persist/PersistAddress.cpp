@@ -1,6 +1,8 @@
 #include "Pch.h"
 #include <eco/persist/Address.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
+#include <eco/Cast.h>
 
 
 ECO_NS_BEGIN(eco);

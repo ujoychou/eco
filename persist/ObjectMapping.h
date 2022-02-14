@@ -18,6 +18,7 @@
 
 *******************************************************************************/
 #include <eco/Object.h>
+#include <eco/meta/Meta.h>
 #include <eco/persist/PropertyMapping.h>
 #include <eco/persist/Recordset.h>
 #include <vector>

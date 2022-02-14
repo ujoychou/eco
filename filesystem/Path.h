@@ -16,8 +16,7 @@
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <cstring>
-#include <eco/Object.h>
+#include <eco/String.h>
 
 
 ECO_NS_BEGIN(eco);

@@ -25,7 +25,6 @@
 *******************************************************************************/
 #include <eco/thread/Eco.h>
 #include <eco/thread/Map.h>
-#include <eco/thread/Atomic.h>
 #include <eco/thread/Timing.h>
 #include <eco/net/TcpServer.h>
 #include <eco/net/TcpAcceptor.h>
@@ -58,7 +57,7 @@ public:
 	TcpPeerHandler m_peer_handler;
 
 	// dispatch server.
-	DispatchServerPool m_dispatch_pool;
+	eco::net::RouterPool m_dispatch_pool;
 
 	// connection timer
 	Timing::Timer m_timer_close;
@@ -82,8 +81,8 @@ public:
 
 public:
 	inline Impl()
-		: m_make_session(0)
-		, m_statistics(m_option)
+		: m_statistics(m_option)
+		, m_make_session(0)
 	{
 		m_session_ts = 0;
 		m_session_seq = 0;
@@ -111,7 +110,7 @@ public:
 
 	inline bool receive_mode() const
 	{
-		return m_dispatch_pool.get_message_handler().receive_mode();
+		return m_dispatch_pool.handler().receive_mode();
 	}
 
 	inline const char* websocket_key() const
@@ -122,7 +121,7 @@ public:
 	// whether dispatch mode, else recv mode.
 	inline bool dispatch_mode() const
 	{
-		return m_dispatch_pool.get_message_handler().dispatch_mode();
+		return m_dispatch_pool.handler().dispatch_mode();
 	}
 	
 //////////////////////////////////////////////////////////////////////// SESSION

@@ -7,14 +7,11 @@
 #include <boost/asio/detail/socket_ops.hpp>
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
-
 static std::string s_ip;
 static std::string s_hostname;
-
 ////////////////////////////////////////////////////////////////////////////////
 const char* get_hostname()
 {
@@ -90,6 +87,25 @@ void hton(OUT char* str, IN  const uint32_t val)
 	using namespace boost::asio::detail::socket_ops;
 	uint32_t be32 = host_to_network_long(val);
 	::memcpy(str, &be32, sizeof(be32));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+uint16_t ntoh(IN uint16_t val)
+{
+	return boost::asio::detail::socket_ops::network_to_host_short(val);
+}
+uint16_t hton(IN uint16_t val)
+{
+	return boost::asio::detail::socket_ops::host_to_network_short(val);
+}
+uint32_t ntoh(IN uint32_t val)
+{
+	return boost::asio::detail::socket_ops::network_to_host_long(val);
+}
+uint32_t hton(IN uint32_t val)
+{
+	return boost::asio::detail::socket_ops::host_to_network_long(val);
 }
 
 

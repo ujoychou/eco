@@ -20,12 +20,11 @@
 
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
 
 
 namespace eco{ ;
 namespace service{ ;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Service
 {

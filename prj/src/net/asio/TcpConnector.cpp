@@ -4,6 +4,7 @@
 #include <deque>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <eco/rx/RxImpl.h>
 #include <eco/net/asio/Worker.h>
 #include "../TcpPeer.ipp"
 
@@ -60,10 +61,10 @@ public:
 	{
 	public:
 		inline String(eco::String& d, uint32_t s)
-			: m_data(std::move(d)), m_start(s) {}
+			: m_start(s), m_data(std::move(d)) {}
 
 		inline String(String&& s) 
-			: m_data(std::move(s.m_data)), m_start(s.m_start)
+			: m_start(s.m_start), m_data(std::move(s.m_data))
 		{}
 
 		inline uint32_t size() const
@@ -117,9 +118,9 @@ class TcpConnector::Impl
 public:
 	// socket for connection.
 	asio::Worker* m_worker;
-	boost::asio::ip::tcp::socket m_socket;
 	TcpConnectorHandler* m_handler;
 	std::weak_ptr<TcpPeer> m_peer_observer;
+	boost::asio::ip::tcp::socket m_socket;
 	eco::String m_buffer;
 #ifndef ECO_WIN
 	SendingQueue m_send_msg;
@@ -236,7 +237,7 @@ public:
 		if (ec)		// error tcp peer will close this socket.
 		{
 			ECO_THIS_ERROR(ec.value()) < ec.message();
-			close_error_peer(MessageHead(), m_buffer);
+			close_error_peer(eco::lvalue(MessageHead()), m_buffer);
 			peer.reset();
 		}
 		return peer;
@@ -275,7 +276,7 @@ public:
 		// find reverse.
 		m_buffer.resize(m_buffer.size() + (uint32_t)bytes_transferred);
 		uint32_t pos = m_buffer.find_reverse(delimiter.c_str(), -1, rend);
-		if (pos == -1)
+		if (pos == uint32_t(-1))
 		{
 			reverse_buffer();
 			async_read_until(delimiter);
@@ -284,7 +285,7 @@ public:
 		{
 			eco::String buff(m_buffer.c_str(), pos + delimiter.size());
 			m_buffer.erase(0, buff.size());
-			m_handler->on_read(MessageHead(), buff, false);
+			m_handler->on_read(eco::lvalue(MessageHead()), buff, false);
 		}
 	}
 
@@ -435,10 +436,10 @@ public:
 			if (ec)
 			{
 				ECO_THIS_ERROR(ec.value()) < ec.message();
-				m_handler->on_write((uint32_t)bytes_transferred);
+				m_handler->on_write((uint32_t)bytes_transferred, true);
 				return;
 			}
-			m_handler->on_write((uint32_t)bytes_transferred);
+			m_handler->on_write((uint32_t)bytes_transferred, false);
 
 			// release sended data and send next msg.
 			std_lock_guard lock(m_send_msg.m_mutex);
@@ -574,7 +575,8 @@ void TcpConnector::async_read()
 }
 void TcpConnector::async_read_until(IN const char* delimiter)
 {
-	impl().async_read_until(eco::String(delimiter));
+	eco::String s(delimiter);
+	impl().async_read_until(s);
 }
 void TcpConnector::async_write(IN eco::String& data, IN const uint32_t start)
 {

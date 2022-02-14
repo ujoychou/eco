@@ -23,6 +23,7 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/Error.h>
 #include <eco/net/protocol/Protocol.h>
 
 

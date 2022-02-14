@@ -2,10 +2,11 @@
 #include <eco/sys/Sys.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/sys/WinAutoHandler.h>
-#include <eco/filesystem/path.h>
+#include <eco/filesystem/Path.h>
 #include <boost/filesystem/path.hpp>
 #include <boost/algorithm/string.hpp>
 
+#ifdef ECO_WIN
 // windows header and lib.
 #include "windows.h"
 #include "shellapi.h"
@@ -282,3 +283,4 @@ std::string GetModuleFile(void* func_addr)
 ////////////////////////////////////////////////////////////////////////////////
 ECO_NS_END(sys);
 ECO_NS_END(eco);
+#endif

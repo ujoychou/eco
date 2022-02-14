@@ -18,6 +18,7 @@ singleton model solution.
 
 *******************************************************************************/
 #include <eco/Object.h>
+#include <eco/rx/RxExport.h>
 
 
 ECO_NS_BEGIN(eco);

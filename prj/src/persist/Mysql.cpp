@@ -4,8 +4,8 @@
 #include <vector>
 #include <mysql/mysql.h>
 #include <eco/Object.h>
-#include <eco/thread/Atomic.h>
 #include <eco/std/mutex.h>
+#include <eco/rx/RxImpl.h>
 
 // import eco/log.
 #undef ECO_API

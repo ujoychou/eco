@@ -192,7 +192,7 @@ inline void remove_files_by_suffix(
 	{
 		eco::filesystem::remove_files_if(sour_dir, 0,
 			[&](const boost::filesystem::path& file)-> bool {
-			return suffix.find(file.extension().string()) != -1;
+			return suffix.find(file.extension().string()) != std::string::npos;
 		});
 	}
 }

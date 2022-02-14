@@ -152,16 +152,16 @@ public:
 	TcpSession open_session();
 
 	// service mode: set address ready to connect to service.
-	void add_address(IN const eco::net::Address&);
-	void set_address(IN const eco::net::AddressSet&);
+	void add_address(IN eco::net::Address&);
+	void set_address(IN eco::net::AddressSet&);
 
 	// service mode: async connect to service.
 	void async_connect();
-	void async_connect(IN const eco::net::AddressSet&);
+	void async_connect(IN eco::net::AddressSet&);
 
 	// service mode. sync connect to service.
 	void connect(IN uint32_t millsec);
-	void connect(IN const eco::net::AddressSet&, IN uint32_t millsec);
+	void connect(IN eco::net::AddressSet&, IN uint32_t millsec);
 
 	// async send message.
 	void send(IN eco::String& data, IN const uint32_t start);
@@ -192,7 +192,7 @@ public:
 
 	// req/rsp mode: send async message.
 	typedef std::function<void(eco::net::Context&)> ResponseFunc;
-	void async(IN MessageMeta& req, IN ResponseFunc& rsp_func);
+	void async(IN MessageMeta& req, IN ResponseFunc&& rsp_func);
 
 /////////////////////////////////////////////////////////////////// SYNC REQUEST
 public:

@@ -60,15 +60,15 @@ public:
 		IN const object_t& obj,
 		IN const ObjectMapping& mapping)
 	{
-		if (mapping.get_map().empty()) return;
+		if (mapping.map().empty()) return;
 
 		// csv data.
 		meta_t meta;
 		meta.attach(obj);
-		auto it = mapping.get_map().begin();
-		for (; it != mapping.get_map().end(); ++it)
+		auto it = mapping.map().begin();
+		for (; it != mapping.map().end(); ++it)
 		{
-			data += meta.get_value(it->get_property(), "eco_csv");
+			data += meta.get_value(it->property(), "eco_csv");
 			data += ',';					// tab
 		}
 		data.at(data.size() - 1) = '\n';	// enter
@@ -84,7 +84,7 @@ public:
 		std::string data;
 		get_head(data, mapping);
 
-		object_set_t::const_iterator it = obj_set.begin();
+		typename object_set_t::const_iterator it = obj_set.begin();
 		for (; it != obj_set.end(); ++it)
 		{
 			get_data<meta_t>(data, *it, mapping);
@@ -207,7 +207,7 @@ private:
 		for (; pos != -1 && pi < prop_set.size() && fdata + pos < row_end; ++fi)
 		{
 			eco::Bytes val(fdata, pos);
-			if (prop_set[pi]->get_field_index() == fi)
+			if (prop_set[pi]->field_index() == fi)
 			{
 				meta.set_value(*prop_set[pi++], val, "eco_csv");
 			}
@@ -217,7 +217,7 @@ private:
 		if (pi < prop_set.size())
 		{
 			eco::Bytes val(fdata, row_end - fdata);
-			if (prop_set[pi]->get_field_index() == fi)
+			if (prop_set[pi]->field_index() == fi)
 			{
 				meta.set_value(*prop_set[pi++], val, "eco_csv");
 			}

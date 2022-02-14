@@ -23,10 +23,8 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <unordered_map>
 #include <eco/App.h>
 #include <eco/ops/Ops.h>
-#include <eco/cpp/Thread.h>
 #include <eco/thread/topic/TopicServer.h>
 #include "TcpPeer.ipp"
 
@@ -112,7 +110,7 @@ public:
 		// add to ddos peer.
 		if (m_option.get_clean_dos_peer_sec() > 0)
 		{
-			peer->impl().m_timer_recv = eco::App::get()->timing().run_after(
+			peer->impl().m_timer_recv = eco::App::get().timing().run_after(
 				std::bind(&TcpStatistics::on_ddos, this, TcpPeer::wptr(peer)),
 				std_chrono::seconds(m_option.get_clean_dos_peer_sec()), false);
 		}
@@ -143,7 +141,7 @@ public:
 		// heartbeat live peer.
 		if (m_option.get_heartbeat_recv_sec() > 0)
 		{
-			peer->impl().m_timer_recv = eco::App::get()->timing().run_after(
+			peer->impl().m_timer_recv = eco::App::get().timing().run_after(
 				std::bind(&TcpStatistics::on_live_timeout, this,
 					TcpPeer::wptr(peer), peer->impl().id()),
 				std_chrono::seconds(m_option.get_heartbeat_recv_sec()), false);
@@ -152,7 +150,7 @@ public:
 		// heartbeat send peer.
 		if (m_option.get_heartbeat_send_sec() > 0)
 		{
-			peer->impl().m_timer_send = eco::App::get()->timing().run_after(
+			peer->impl().m_timer_send = eco::App::get().timing().run_after(
 				std::bind(&TcpStatistics::on_send_heartbeat,
 					this, TcpPeer::wptr(peer)),
 				std_chrono::seconds(m_option.get_heartbeat_send_sec()), true);

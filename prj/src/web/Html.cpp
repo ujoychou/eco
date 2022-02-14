@@ -2,6 +2,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <map>
 #include <eco/web/Html.h>
+#include <eco/rx/RxImpl.h>
 #include <eco/filesystem/File.h>
 #include <eco/filesystem/Operations.h>
 #include <boost/algorithm/string/replace.hpp>

@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include <eco/service/Service.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include "Impl.h"
 
 

@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include <eco/persist/Persist.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/meta/Meta.h>
 #include <eco/rx/RxObject.h>
 #include <eco/persist/Database.h>
@@ -24,7 +25,7 @@ eco::Database* create_database(IN const persist::SourceType type)
 	{
 		static eco::RxObject sqlite;
 		sqlite.load("eco_sqlite.dll");
-		create_func = sqlite.cast_function<CreateFunc>("create");
+		create_func = sqlite.cast_func<CreateFunc>("create");
 	}
 	return (create_func != nullptr) ? create_func() : nullptr;
 }
@@ -139,7 +140,7 @@ void Persist::Impl::on_live_raw()
 
 		// get database version.
 		char cond_sql[64] = { 0 };
-		const char* app_name = eco::App::get()->name();
+		const char* app_name = eco::App::get().name();
 		sprintf(cond_sql, "where %s='%s' order by %s desc",
 			m_orm_version.find("module")->field(), app_name,
 			m_orm_version.find("value")->field());
@@ -217,7 +218,7 @@ void Persist::start()
 	impl().on_live();
 
 	// 3.live timer.
-	impl().m_timer = eco::App::get()->timing().run_after(
+	impl().m_timer = eco::App::get().timing().run_after(
 		std::bind(&Persist::Impl::on_live, &impl()),
 		std_chrono::seconds(impl().m_live_interval), true);
 }

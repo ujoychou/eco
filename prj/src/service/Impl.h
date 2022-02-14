@@ -19,7 +19,6 @@
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rx/RxApi.h>
 #include <eco/service/Service.h>
 
 

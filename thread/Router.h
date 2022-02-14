@@ -100,7 +100,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 template<
 	typename type_t, typename msg_t,
-	typename Message = RouterHandler<type_t, msg_t>::Message >
+	typename Message = typename RouterHandler<type_t, msg_t>::Message >
 class Router : public eco::Worker<Message, RouterHandler<type_t, msg_t> >
 {
 public:

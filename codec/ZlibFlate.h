@@ -16,16 +16,12 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/codec/Zlib.h>
+#include <eco/codec/ZlibCodec.h>
 #include <assert.h>
 
 ECO_NS_BEGIN(eco);
 namespace codec{;
 namespace zlib{;
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class Flate
 {

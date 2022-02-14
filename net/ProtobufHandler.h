@@ -40,14 +40,14 @@ public:
 
 	inline bool on_decode(IN const char* bytes, IN uint32_t size)
 	{
-		ProtobufCodec codec(&request());
+		ProtobufCodec codec(&this->request());
 		return codec.decode(bytes, size) != nullptr;
 	}
 
 	inline void to_request()
 	{
 		if (handler_t::req_sev() == 0) return;
-		ECO_REQ_SEV(handler_t::req_sev()) << eco::net::to_json(request());
+		ECO_REQ_SEV(handler_t::req_sev()) << eco::net::to_json(this->request());
 	}
 };
 
@@ -63,7 +63,7 @@ public:
 	inline void on_request()
 	{
 		ECO_REQ(debug);
-		resolve(&eco::App::get()->locale().data());
+		resolve(&eco::App::get().locale().data());
 		ECO_RSP(debug);
 	}
 };

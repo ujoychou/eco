@@ -23,8 +23,8 @@
 * copyright(c) 2015 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/Prec.h>
 #include <eco/rx/RxApi.h>
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +176,12 @@ inline void ntoh(OUT int64_t& val, OUT uint32_t& pos, IN const char* str)
 	pos += sizeof(uint64_t);
 }
 
-
-}}
+// ntoh/hton int to int.
+ECO_API uint32_t hton(IN uint32_t val);
+ECO_API uint32_t ntoh(IN uint32_t val);
+ECO_API uint16_t hton(IN uint16_t val);
+ECO_API uint16_t ntoh(IN uint16_t val);
 ////////////////////////////////////////////////////////////////////////////////
+ECO_NS_END(net);
+ECO_NS_END(eco);
 #endif

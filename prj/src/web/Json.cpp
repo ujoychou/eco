@@ -2,6 +2,7 @@
 #include <eco/web/Json.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <map>
+#include <eco/rx/RxImpl.h>
 #include <eco/filesystem/Operations.h>
 #include <boost/algorithm/string/replace.hpp>
 #include "JsonClassFinder.ipp"

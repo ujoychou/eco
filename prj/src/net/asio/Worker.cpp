@@ -2,7 +2,7 @@
 #include <eco/net/Worker.h>
 #include <eco/net/asio/Worker.h>
 ////////////////////////////////////////////////////////////////////////////////
-
+#include <eco/rx/RxImpl.h>
 
 
 ECO_NS_BEGIN(eco);

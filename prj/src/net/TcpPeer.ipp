@@ -37,12 +37,11 @@ class TcpPeer::Impl : public TcpConnectorHandler
 {
 	ECO_IMPL_INIT(TcpPeer);
 public:
-	
 	TcpState			m_state;			// peer socket state.
 	TcpPeer::wptr		m_peer_observer;	// this peer.
 	TcpPeerHandler*		m_handler;			// peer handler.
 	TcpConnector		m_connector;		// socket io.
-	MessageWorker*		m_server;			// message server post.
+	RouterPool::Worker*	m_server;			// message server post.
 	SessionId			m_id;				// peer session id, uuid.
 	Protocol*			m_protocol;			// current protocol.
 	eco::String			m_user;				// user name.
@@ -64,12 +63,12 @@ public:
 
 	inline Impl(
 		IN IoWorker* io_server,
-		IN MessageWorker* msg_server,
+		IN RouterPool::Worker* msg_server,
 		IN TcpPeerHandler* hdl)
 		: m_handler(hdl)
 		, m_connector(io_server)
 		, m_server(msg_server)
-		, m_id(0), m_protocol(0)
+		, m_id(0), m_protocol(nullptr)
 	{}
 
 	inline ~Impl()
@@ -209,7 +208,7 @@ public:
 	}
 
 	// async recv.
-	inline void async_recv();
+	void async_recv();
 
 	// ready for receiving data.
 	inline void async_recv_by_client()
@@ -339,7 +338,7 @@ public:
 	{
 		eco::net::DataContext dc;
 		get_data_context(dc, head, data);
-		m_server->queue().post(dc);
+		m_server->channel().post(std::move(dc));
 	}
 
 public:

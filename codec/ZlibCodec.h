@@ -1,5 +1,5 @@
-#ifndef ECO_CODEC_ZLIB_H
-#define ECO_CODEC_ZLIB_H
+#ifndef ECO_CODEC_ZLIB_CODEC_H
+#define ECO_CODEC_ZLIB_CODEC_H
 /*******************************************************************************
 @ name
 
@@ -22,13 +22,12 @@
 #ifndef ZLIB_WINAPI
 #	define ZLIB_WINAPI
 #endif
-#include <zlib/zlib.h>
+#include <zlib.h>
 
 
 ECO_NS_BEGIN(eco);
 namespace codec{;
 namespace zlib{;
-
 ////////////////////////////////////////////////////////////////////////////////
 /*@ generate data bytes "check sum". 
 * @ para.data: data bytes.

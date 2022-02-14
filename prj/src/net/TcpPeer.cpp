@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include "TcpPeer.ipp"
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/net/Ecode.h>
 #include <eco/log/Log.h>
 #include <eco/net/protocol/StringCodec.h>
@@ -233,7 +234,7 @@ eco::Result TcpPeer::Impl::on_decode_head(
 //##############################################################################
 TcpPeer::TcpPeer(IoWorker* io_server, void* msg_server, TcpPeerHandler* hdl)
 {
-	m_impl = new Impl(io_server, (MessageWorker*)msg_server, hdl);
+	m_impl = new Impl(io_server, (RouterPool::Worker*)msg_server, hdl);
 	m_impl->init(*this);
 }
 TcpPeer::ptr TcpPeer::make(IoWorker* io_srv, void* msg_srv, TcpPeerHandler* hdl)

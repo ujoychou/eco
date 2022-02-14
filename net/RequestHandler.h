@@ -425,15 +425,15 @@ public: inline static int auth() { return auth_v; }
 
 #define ECO_HANDLE_LOG(req_sev_, rsp_sev_, err_sev_) \
 public:\
-inline static int req_sev() { return eco::log::##req_sev_; }\
-inline static int rsp_sev() { return eco::log::##rsp_sev_; }\
-inline static int err_sev() { return eco::log::##err_sev_; }
+inline static int req_sev() { return eco::log::req_sev_; }\
+inline static int rsp_sev() { return eco::log::rsp_sev_; }\
+inline static int err_sev() { return eco::log::err_sev_; }
 
 #define ECO_HANDLE_1(reqtype) ECO_HANDLE_2(reqtype, 0)
 #define ECO_HANDLE_2(reqtype, rsptype)\
 public:\
-inline static const uint32_t req_type() { return reqtype;}\
-inline static const uint32_t rsp_type() { return rsptype;}
+inline static uint32_t req_type() { return reqtype;}\
+inline static uint32_t rsp_type() { return rsptype;}
 #define ECO_HANDLE_3(reqtype, rsptype, name_v)\
 ECO_HANDLE_2(reqtype, rsptype)\
 inline static const char* name() { return name_v; }\

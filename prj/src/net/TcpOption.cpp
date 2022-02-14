@@ -2,6 +2,7 @@
 #include <eco/rx/RxImpl.h>
 #include <eco/net/TcpOption.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/String.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -141,7 +142,7 @@ ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint32_t, clean_dos_peer_sec);
 ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint16_t, io_thread_size);
 ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint16_t, business_thread_size);
 ////////////////////////////////////////////////////////////////////////////////
-const uint32_t TcpServerOption::horizontal_virtual_service_number() const
+uint32_t TcpServerOption::horizontal_virtual_service_number() const
 {
 	return 8192;
 }

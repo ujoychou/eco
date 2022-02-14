@@ -24,14 +24,12 @@
 
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
-#include <eco/Object.h>
-
+#include <eco/rx/RxExport.h>
+#include <eco/String.h>
 
 
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
-
-
 ////////////////////////////////////////////////////////////////////////////////
 enum  
 {

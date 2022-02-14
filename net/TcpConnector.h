@@ -39,6 +39,8 @@ class MessageHead;
 class TcpConnectorHandler
 {
 public:
+	virtual ~TcpConnectorHandler() {}
+	
 	virtual void on_connect(bool err) {}
 
 	virtual void on_read(MessageHead& head, eco::String& data, bool err) = 0;

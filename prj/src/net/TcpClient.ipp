@@ -77,17 +77,17 @@ public:
 		IN Codec& err_codec,
 		IN Codec& rsp_codec,
 		IN std::vector<void*>* rsp_set)
-		: m_err_codec(err_codec)
+		: m_err(false)
+		, m_err_codec(err_codec)
 		, m_rsp_codec(rsp_codec)
 		, m_rsp_set(rsp_set)
-		, m_err(false)
 	{}
 
 	// if decode "error or response" message fail. return false, else true.
 	inline bool decode(const eco::Bytes& msg, bool err)
 	{
 		// 1.parse reject error object.
-		if (m_err = err)
+		if ((m_err = err))
 		{
 			if (!m_err_codec.empty() && 
 				!m_err_codec.decode(msg.m_data, msg.m_size))
@@ -125,13 +125,13 @@ class LoadEvent
 	ECO_OBJECT(LoadEvent);
 public:
 	inline LoadEvent(OnLoadEvent& evt, uint32_t group, bool app_read_evt)
-		: m_on_event(evt), m_group(group)
+		: m_group(group), m_on_event(evt)
 	{
 		m_state.set(app_read_evt, eco::atomic::State::_aa);
 	}
 
 	inline LoadEvent(OnLoadState& evt, bool app_read_evt)
-		: m_on_state(evt), m_group(0)
+		: m_group(0), m_on_state(evt) 
 	{
 		m_state.set(app_read_evt, eco::atomic::State::_aa);
 	}
@@ -200,11 +200,11 @@ public:
 
 public:
 	inline Impl() 
-		: m_make_session(nullptr)
+		: m_manual_close(false)
 		, m_on_open(nullptr)
 		, m_on_close(nullptr)
+		, m_make_session(nullptr)
 		, m_timeout_millsec(5000)
-		, m_manual_close(false)
 	{
 		// create peer.
 		m_balancer.m_peer = TcpPeer::make(
@@ -316,7 +316,7 @@ public:
 	// async management post item.
 	inline AsyncRequest::ptr post_async(
 		IN const uint32_t req_id,
-		IN std::function<void(eco::net::Context&)>& rsp_func)
+		IN std::function<void(eco::net::Context&)>&& rsp_func)
 	{
 		std_lock_guard lock(m_mutex);
 		auto& ptr = m_async_manager[req_id];
@@ -359,22 +359,18 @@ public:
 
 	// async connect to server.
 	inline void async_connect();
-	inline void async_connect(IN eco::net::AddressSet& addr)
-	{
-		update_address(addr);
-		async_connect();
-	}
+	inline void async_connect(IN eco::net::AddressSet& addr);
 	inline String logging();
 
 	// connect to server.
-	void connect(uint32_t millsec);
-	void connect(eco::net::AddressSet& addr, uint32_t millsec);
+	void connect(IN uint32_t millsec);
+	void connect(IN eco::net::AddressSet& addr, IN uint32_t millsec);
 
 	// close tcp client and connection.
-	inline void close();
+	void close();
 
 	// release tcp client and connection.
-	inline void release();
+	void release();
 
 	// set a tick timer to do some work in regular intervals.
 	void on_connect_ok();
@@ -412,7 +408,7 @@ public:
 
 	inline void async(
 		IN MessageMeta& req,
-		IN ResponseFunc& rsp_func);
+		IN ResponseFunc&& rsp_func);
 
 	template<typename codec_t, typename err_t, typename rsp_t>
 	inline void async(
@@ -452,7 +448,7 @@ public:
 	// whether dispatch mode, else recv mode.
 	inline bool dispatch_mode() const
 	{
-		return m_dispatch.get_message_handler().dispatch_mode();
+		return m_dispatch.handler().dispatch_mode();
 	}
 };
 

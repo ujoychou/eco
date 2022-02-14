@@ -308,7 +308,8 @@ protected:
 			if (index == m_snap_map.size() - 1)
 				eco::add(snap, snap_last);
 			it->second->stamp() = eco::meta::stamp_insert;
-			suber->on_publish(*this, Content(it->second, nullptr, snap));
+			suber->on_publish(
+				*this, eco::lvalue(Content(it->second, nullptr, snap)));
 		}
 	}
 

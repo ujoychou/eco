@@ -131,7 +131,7 @@ public:
 	*/
 	inline void post(IN Message&& msg)
 	{
-		m_channel.post(msg);
+		m_channel.post(std::move(msg));
 	}
 	inline void post(IN const Message& msg)
 	{
@@ -148,9 +148,9 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Message, typename Handler = std::function<void(Message&)> >
-class WorkPool
+class WorkerPool
 {
-	ECO_OBJECT(WorkPool);
+	ECO_OBJECT(WorkerPool);
 public:
 	struct WorkerHandler
 	{
@@ -171,7 +171,7 @@ public:
 
 public:
 	// constructor.
-	inline WorkPool() {}
+	inline WorkerPool() {}
 
 	// handler.
 	inline Handler& get_handler() { return m_handler; }
@@ -190,7 +190,7 @@ public:
 	{
 		std::string namei;
 		m_pool.resize(thread_size == 0 ? 1 : thread_size);
-		for (auto i = 0; i != m_pool.size(); ++i)
+		for (size_t i = 0; i != m_pool.size(); ++i)
 		{
 			namei = name;
 			namei += eco::cast(i);
@@ -249,7 +249,7 @@ public:
 		return it_min->get();
 	}
 
-private:
+protected:
 	Handler m_handler;
 	std::vector<typename Worker::ptr> m_pool;
 };

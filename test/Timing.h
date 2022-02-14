@@ -19,12 +19,11 @@ timing.
 
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
 
 
 ECO_NS_BEGIN(eco);
 namespace test{;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // timer for task.
 class ECO_API Timing

@@ -17,7 +17,9 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/rx/RxExport.h>
 #include <eco/persist/Database.h>
+
 
 #ifndef ECO_AUTO_LINK_NO
 #	if !defined(ECO_EXPORT)

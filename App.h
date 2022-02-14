@@ -216,14 +216,14 @@ ECO_NS_END(eco);
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename MainT>
-int main(int argc, char* argv[])
+int maint(int argc, char* argv[])
 {
 	return MainT::main(argc, argv);
 }
 /*@ eco app declare: implement a app instance.*/
 #define ECO_APP(AppClass, AppGet)\
 ECO_NAME(AppClass, AppGet)\
-const eco::Startup eco_startup(&AppGet(), &main<eco::Startup>)
+const eco::Startup eco_startup(&AppGet(), &maint<eco::Startup>)
 
 
 ////////////////////////////////////////////////////////////////////////////////

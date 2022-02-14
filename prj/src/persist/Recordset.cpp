@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include <eco/persist/Recordset.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -15,11 +16,11 @@ public:
 };
 ECO_OBJECT_IMPL(Record);
 ////////////////////////////////////////////////////////////////////////////////
-void Record::reserve(IN const size_t size)
+void Record::reserve(IN size_t size)
 {
 	impl().m_record.reserve(size);
 }
-const size_t Record::size() const
+size_t Record::size() const
 {
 	return impl().m_record.size();
 }
@@ -27,11 +28,11 @@ void Record::add(IN const char* item)
 {
 	impl().m_record.push_back(item);
 }
-const char* Record::at(IN const size_t index) const
+const char* Record::at(IN size_t index) const
 {
 	return impl().m_record.at(index).c_str();
 }
-const char* Record::operator[](IN const size_t index) const
+const char* Record::operator[](IN size_t index) const
 {
 	return impl().m_record.at(index).c_str();
 }
@@ -52,11 +53,11 @@ public:
 };
 ECO_OBJECT_IMPL(Recordset);
 ////////////////////////////////////////////////////////////////////////////////
-void Recordset::reserve(IN const size_t size)
+void Recordset::reserve(IN size_t size)
 {
 	impl().m_record_set.reserve(size);
 }
-const size_t Recordset::size() const
+size_t Recordset::size() const
 {
 	return impl().m_record_set.size();
 }
@@ -66,19 +67,19 @@ Record& Recordset::add_item()
 	impl().m_record_set.push_back(std::move(item));
 	return impl().m_record_set.back();
 }
-Record& Recordset::at(IN const size_t index)
+Record& Recordset::at(IN size_t index)
 {
 	return impl().m_record_set.at(index);
 }
-const Record& Recordset::at(IN const size_t index) const
+const Record& Recordset::at(IN size_t index) const
 {
 	return impl().m_record_set.at(index);
 }
-Record& Recordset::operator[](IN const size_t index)
+Record& Recordset::operator[](IN size_t index)
 {
 	return impl().m_record_set.at(index);
 }
-const Record& Recordset::operator[](IN const size_t index) const
+const Record& Recordset::operator[](IN size_t index) const
 {
 	return impl().m_record_set.at(index);
 }

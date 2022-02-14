@@ -25,7 +25,7 @@
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
 #include <eco/net/Ecode.h>
-#include <eco/Object.h>
+#include <eco/String.h>
 
 
 ECO_NS_BEGIN(eco);

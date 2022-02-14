@@ -27,6 +27,7 @@
 #include <codec/sha1.h>
 #include <codec/base64.h>
 #include <eco/Object.h>
+#include <eco/net/Net.h>
 
 
 ECO_NS_BEGIN(eco);
@@ -108,7 +109,7 @@ public:
 			sha.Result(message_digest);
 			for (int i = 0; i < 5; i++)
 			{
-				message_digest[i] = htonl(message_digest[i]);
+				message_digest[i] = eco::net::hton(message_digest[i]);
 			}
 
 			m_resp.reserve(1024);
@@ -214,10 +215,9 @@ private:
 		IN  const char* request,
 		IN  const uint32_t size)
 	{
-		const char* data = request;
 		uint32_t start = eco::find_last(request, size, '\n');
 		uint32_t len = size - start - 1;
-		if (start != -1 && len > 0)
+		if (start != uint32_t(-1) && len > 0)
 		{
 			value.assign(&request[start + 1], len);
 			return true;

@@ -1,6 +1,7 @@
 ﻿#include "Pch.h"
 #include <eco/persist/CsvSource.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/filesystem/File.h>
 #include <eco/sys/Win.h>
 

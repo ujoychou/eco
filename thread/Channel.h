@@ -120,7 +120,7 @@ public:
 	* @ para.msg: message type is like "std::function", "std::shared_ptr",
 	and some can be operated by "std::move()".
 	*/
-	inline void post(IN Message& msg)
+	inline void post(IN Message&& msg)
 	{
 		{
 			std_unique_lock lock(m_mutex);

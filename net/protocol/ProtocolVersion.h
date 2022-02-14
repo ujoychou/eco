@@ -23,8 +23,8 @@
 * copyright(c) 2016 - 2019, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/Number.h>
 #include <eco/rx/RxHeap.h>
-#include <eco/Object.h>
 #include <eco/net/Net.h>
 #include <eco/net/Ecode.h>
 

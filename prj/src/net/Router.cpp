@@ -12,7 +12,7 @@ ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
 // return whether need to dispatch meta context.
-void DispatchHandler::handle_server(Context& c, TcpPeer& peer)
+void RouterHandler::handle_server(Context& c, TcpPeer& peer)
 {
 	const char* func = "server_dc";
 	TcpSessionOuter sess(c.m_session);
@@ -51,7 +51,7 @@ void DispatchHandler::handle_server(Context& c, TcpPeer& peer)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void DispatchHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
+void RouterHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
 {
 	TcpSessionOuter sess(c.m_session);
 	auto* client = (TcpClient::Impl*)sess.impl().m_owner.m_owner;
@@ -105,7 +105,7 @@ void DispatchHandler::handle_client(OUT Context& c, IN TcpPeer& peer)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void DispatchHandler::operator()(IN DataContext& dc)
+void RouterHandler::operator()(IN DataContext& dc)
 {
 	const char* func = "handle_dc";
 	// check whether peer is expired.

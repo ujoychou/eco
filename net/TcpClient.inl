@@ -61,7 +61,7 @@ inline bool TcpClient::call_resolve(
 		ECO_LOG(error, name_) < "parse object fail "
 			< typeid(rsp_t).name() <= c.m_message.m_size;
 		c.m_meta.error(true);
-		reject(err_t(), c);
+		reject(eco::lvalue(err_t()), c);
 		return false;
 	}
 	return true;

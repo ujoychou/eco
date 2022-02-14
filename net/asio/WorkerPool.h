@@ -57,7 +57,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 public:
 	// io service run.
-	inline void run(IN size_t io_thread_size, const char* name)
+	inline void run(const char* name, size_t io_thread_size)
 	{
 		std::string xname;
 		m_balancer.reserve(io_thread_size);

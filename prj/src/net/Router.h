@@ -73,12 +73,12 @@ public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
 	inline void register_handler(IN int id, IN HandlerFunc&& hf)
 	{
-		message_handler().set_dispatch(id, hf);
+		m_handler.set_dispatch(id, hf);
 	}
 
 	inline void register_default(IN HandlerFunc&& hf)
 	{
-		message_handler().set_default(hf);
+		m_handler.set_default(hf);
 	}
 };
 
@@ -91,12 +91,12 @@ public:
 	typedef std::function<void(IN Context&)> HandlerFunc;
 	inline void register_handler(IN int id, IN HandlerFunc&& hf)
 	{
-		message_handler().set_dispatch(id, hf);
+		m_handler.set_dispatch(id, hf);
 	}
 
 	inline void register_default(IN HandlerFunc&& hf)
 	{
-		message_handler().set_default(hf);
+		m_handler.set_default(hf);
 	}
 };
 

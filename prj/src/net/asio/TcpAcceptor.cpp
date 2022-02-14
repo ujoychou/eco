@@ -3,6 +3,7 @@
 #include <boost/bind.hpp>
 #include <eco/net/TcpAcceptor.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/net/asio/WorkerPool.h>
 #include "../TcpServer.ipp"
 
@@ -22,7 +23,7 @@ public:
 		m_recycle = std::bind(&TcpPeerPool::recycle, 
 			this, std::placeholders::_1);
 		m_destroyer.run("peer_pool", 1);
-		m_destroyer.set_message_handler(std::bind(
+		m_destroyer.set_handler(std::bind(
 			&TcpPeerPool::release, this, std::placeholders::_1));
 	}
 

@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include <eco/App.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/rx/RxApp.h>
 #include <eco/sys/Sys.h>
 #include <eco/cmd/Engine.h>
@@ -486,7 +487,7 @@ inline void App::Impl::init_consumer()
 	for (auto it = nodes.begin(); it != nodes.end(); ++it)
 	{
 		eco::net::TcpClient client;
-		client.set_address(init_address(*it));
+		client.set_address(eco::lvalue(init_address(*it)));
 		init_option(client.get_option(), *it);
 		client.get_option().set_module_(client.option().name());
 		if (nullptr != (v = it->find("module")))

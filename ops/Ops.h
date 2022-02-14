@@ -18,7 +18,7 @@
 
 *******************************************************************************/
 #include <eco/rx/RxExport.h>
-#include <eco/ops/Monitor.pb.h>
+#include <eco/detail/proto/Monitor.pb.h>
 
 
 ECO_NS_BEGIN(eco);

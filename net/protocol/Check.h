@@ -17,15 +17,12 @@
 
 *******************************************************************************/
 #include <eco/net/Net.h>
-#include <eco/codec/Zlib.h>
+#include <eco/codec/ZlibCodec.h>
 #include <exception>
-
 
 
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
-
-
 ////////////////////////////////////////////////////////////////////////////////
 class Check
 {

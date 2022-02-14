@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include <eco/net/protocol/ProtocolFamily.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/Error.h>
 #include <eco/rx/RxImpl.h>
 #include <unordered_map>
 
@@ -21,7 +22,7 @@ public:
 		m_max_size = -1;
 	}
 };
-ECO_OBJECT_IMPL(Protocol, ProtocolVersion);
+ECO_OBJECT_IMPL(Protocol);
 void Protocol::set_version(uint8_t ver)
 {
 	impl().m_version = ver;
@@ -47,7 +48,7 @@ class ProtocolFamily::Impl
 public:
 	inline Impl() : m_protocol_latest(0) {}
 
-	typedef std::auto_ptr<Protocol> ProtocolPtr;
+	typedef std::shared_ptr<Protocol> ProtocolPtr;
 	Protocol* m_protocol_latest;
 	std::unordered_map<int, ProtocolPtr> m_protocol_map;
 };

@@ -16,8 +16,7 @@
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Object.h>
-#include <eco/rx/RxImpl.h>
+#include <eco/Error.h>
 #include <eco/persist/DatabaseConfig.h>
 
 

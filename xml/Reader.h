@@ -23,6 +23,8 @@ xml key value reader.
 
 *******************************************************************************/
 #include <eco/Object.h>
+#include <eco/Config.h>
+#include <eco/rx/RxExport.h>
 
 
 ECO_NS_BEGIN(eco);

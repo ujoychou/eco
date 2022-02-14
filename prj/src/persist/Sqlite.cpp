@@ -1,19 +1,11 @@
 #include "Pch.h"
 #include <eco/persist/Sqlite.h>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/thread/Atomic.h>
 #include <eco/std/mutex.h>
-#include <vector>
+#include <eco/rx/RxImpl.h>
 #include <sqlite/sqlite3.h>
 #include <boost/filesystem/operations.hpp>
-
-// import eco/log.
-#undef ECO_API
-#define ECO_API __declspec(dllimport)
-#include <eco/log/Log.h>
-#pragma comment(lib, "eco.lib")
-#undef ECO_API
-#define ECO_API __declspec(dllexport)
+#include <vector>
 
 
 ////////////////////////////////////////////////////////////////////////////////

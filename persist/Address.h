@@ -21,6 +21,7 @@
 
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
+#include <eco/rx/RxExport.h>
 
 
 ECO_NS_BEGIN(eco);

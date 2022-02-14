@@ -48,11 +48,11 @@ ECO_LOG(sev) << eco::net::Log(m_context, name())(eco::net::sub)
 
 ////////////////////////////////////////////////////////////////////////////////
 #define ECO_REQ_SEV(sev) \
-ECO_LOG_SEV(sev) << eco::net::Log(m_context, get_name())(eco::net::req)
+ECO_LOG_SEV(sev) << eco::net::Log(this->m_context, this->get_name())(eco::net::req)
 #define ECO_SUB_SEV(sev) \
-ECO_LOG_SEV(sev) << eco::net::Log(m_context, get_name())(eco::net::sub)
+ECO_LOG_SEV(sev) << eco::net::Log(this->m_context, this->get_name())(eco::net::sub)
 #define ECO_RSP_SEV(sev) \
-ECO_LOG_SEV(sev) << eco::net::Log(m_context, get_name())(eco::net::rsp)
+ECO_LOG_SEV(sev) << eco::net::Log(this->m_context, this->get_name())(eco::net::rsp)
 
 
 ////////////////////////////////////////////////////////////////////////////////
