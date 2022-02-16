@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
 # project name version.
-project(Eco VERSION 2.0.1)
+project(Eco VERSION 1.0.1)
 # project param for cppxx.cmake
 set(PRJ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(SRC_DIR ${PRJ_DIR}/prj/src)
