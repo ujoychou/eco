@@ -21,16 +21,8 @@
 #include <eco/persist/Database.h>
 
 
-#ifndef ECO_AUTO_LINK_NO
-#	if !defined(ECO_EXPORT)
-#		pragma comment(lib, "eco_sqlite.lib")
-#	endif
-#endif
-
-extern "C" ECO_API eco::Database* create();
-
-
 ECO_NS_BEGIN(eco);
+extern "C" ECO_API eco::Database* create();
 ////////////////////////////////////////////////////////////////////////////////
 class ECO_API Sqlite : public eco::Database
 {

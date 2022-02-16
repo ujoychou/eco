@@ -24,6 +24,29 @@ thread safe object state.
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
+class ScopeLock : public eco::Object<ScopeLock>
+{
+public:
+	inline explicit ScopeLock(IN std_mutex& mutex) : m_mutex(&mutex)
+	{
+		m_mutex->lock();
+	}
+	inline explicit ScopeLock(IN std_mutex& mutex, IN bool is_lock)
+		: m_mutex(is_lock ? &mutex : nullptr)
+	{
+		if (m_mutex != nullptr) { m_mutex->lock(); }
+	}
+	inline ~ScopeLock()
+	{
+		if (m_mutex != nullptr) { m_mutex->unlock(); }
+	}
+
+private:
+	std_mutex* m_mutex;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 class OrderLock : public eco::Object<eco::OrderLock>
 {
 public:

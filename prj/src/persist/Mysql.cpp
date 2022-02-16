@@ -2,18 +2,13 @@
 #include <eco/persist/MySql.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <vector>
-#include <mysql/mysql.h>
+#include <mysql.h>
 #include <eco/Object.h>
 #include <eco/std/mutex.h>
 #include <eco/rx/RxImpl.h>
-
-// import eco/log.
-#undef ECO_API
-#define ECO_API __declspec(dllimport)
+#include <eco/thread/Lock.h>
+#include <eco/Error.h>
 #include <eco/log/Log.h>
-#pragma comment(lib, "eco.lib")
-#undef ECO_API
-#define ECO_API __declspec(dllexport)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +20,7 @@ eco::Database* create()
 
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-__declspec(thread) uint32_t	t_trans_level = 0;
+thread_local uint32_t t_trans_level = 0;
 inline bool has_transaction()
 {
 	return t_trans_level > 0;
@@ -359,7 +354,7 @@ void MySql::open(
 	IN const char* password,
 	IN const persist::Charset charset)
 {
-	std_lock_guard lock(impl().m_mysql_mutex);
+	eco::ScopeLock lock(impl().m_mysql_mutex);
 	impl().m_config.m_port = port;
 	impl().m_config.m_db_name = db_name;
 	impl().m_config.m_user_id = user_id;
@@ -373,7 +368,7 @@ void MySql::open(
 ////////////////////////////////////////////////////////////////////////////////
 void MySql::close()
 {
-	std_lock_guard lock(impl().m_mysql_mutex);
+	eco::ScopeLock lock(impl().m_mysql_mutex);
 	impl().close();
 }
 
@@ -381,7 +376,7 @@ void MySql::close()
 ////////////////////////////////////////////////////////////////////////////////
 bool MySql::is_open()
 {
-	std_lock_guard lock(impl().m_mysql_mutex, !has_transaction());
+	eco::ScopeLock lock(impl().m_mysql_mutex, !has_transaction());
 	return (impl().m_mysql != nullptr);
 }
 
@@ -403,7 +398,7 @@ bool MySql::select(OUT Record& obj, IN  const char* sql)
 ////////////////////////////////////////////////////////////////////////////////
 void MySql::select(OUT Recordset& obj_sheet, IN const char* sql)
 {
-	std_lock_guard lock(impl().m_mysql_mutex, !has_transaction());
+	eco::ScopeLock lock(impl().m_mysql_mutex, !has_transaction());
 
 	// query sql fail, reconnect it.
 	impl().query_sql(sql);
@@ -445,7 +440,7 @@ void MySql::select(OUT Recordset& obj_sheet, IN const char* sql)
 ////////////////////////////////////////////////////////////////////////////////
 uint64_t MySql::execute_sql(IN const char* sql)
 {
-	std_lock_guard lock(impl().m_mysql_mutex, !has_transaction());
+	eco::ScopeLock lock(impl().m_mysql_mutex, !has_transaction());
 
 	// query sql fail, reconnect it.
 	return impl().execute_sql(sql);
@@ -455,7 +450,7 @@ uint64_t MySql::execute_sql(IN const char* sql)
 ////////////////////////////////////////////////////////////////////////////////
 bool MySql::ping()
 {
-	std_lock_guard lock(impl().m_mysql_mutex, !has_transaction());
+	eco::ScopeLock lock(impl().m_mysql_mutex, !has_transaction());
 	impl().open_once();
 	return impl().ping();
 }
@@ -477,7 +472,7 @@ uint64_t MySql::get_system_time()
 		temp.erase(10, 1);
 		temp.erase(7, 1);
 		temp.erase(4, 1);
-		return _atoi64(temp.c_str());
+		return eco::cast<uint64_t>(temp.c_str());
 	}
 	return 0;
 }

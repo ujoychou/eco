@@ -34,6 +34,8 @@ aux_source_directory(${SRC_DIR}/persist CXX_FILES)
 
 # exclude cpp.
 list(APPEND CXX_FILES_EXCLUDE ${SRC_DIR}/xml/Reader.old.cpp)
+list(APPEND CXX_FILES_EXCLUDE ${SRC_DIR}/persist/Mysql.cpp)
+list(APPEND CXX_FILES_EXCLUDE ${SRC_DIR}/persist/Sqlite.cpp)
 # include lib.
 set(CXX_LIBS libprotobufd.so libpthread.so)
 list(APPEND CXX_LIBS libboost_filesystem.so libboost_thread.so)

@@ -1,23 +1,18 @@
 #include "Pch.h"
 #include <eco/persist/Sqlite.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <sqlite3.h>
 #include <eco/std/mutex.h>
 #include <eco/rx/RxImpl.h>
-#include <sqlite/sqlite3.h>
+#include <eco/thread/Lock.h>
 #include <boost/filesystem/operations.hpp>
-#include <vector>
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco::Database* create()
-{
-	return new eco::Sqlite();
-}
-
-
+eco::Database* create() { return new eco::Sqlite(); }
 ECO_NS_BEGIN(eco);
 ////////////////////////////////////////////////////////////////////////////////
-__declspec(thread) uint32_t	t_trans_level = 0;
+thread_local uint32_t t_trans_level = 0;
 inline bool has_transaction()
 {
 	return t_trans_level > 0;
@@ -194,7 +189,7 @@ void Sqlite::open(
 	IN const char* db_name,
 	IN const persist::Charset charset)
 {
-	std_lock_guard lock(impl().m_sqlite_mutex);
+	eco::ScopeLock lock(impl().m_sqlite_mutex);
 	impl().m_config.m_db_name = db_name;
 	impl().m_config.set_charset(charset);
 	impl().open();
@@ -204,7 +199,7 @@ void Sqlite::open(
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::close()
 {
-	std_lock_guard lock(impl().m_sqlite_mutex);
+	eco::ScopeLock lock(impl().m_sqlite_mutex);
 	impl().close();
 }
 
@@ -212,7 +207,7 @@ void Sqlite::close()
 ////////////////////////////////////////////////////////////////////////////////
 bool Sqlite::is_open()
 {
-	std_lock_guard lock(impl().m_sqlite_mutex, !has_transaction());
+	eco::ScopeLock lock(impl().m_sqlite_mutex, !has_transaction());
 	return (impl().m_sqlite != nullptr);
 }
 
@@ -234,7 +229,7 @@ bool Sqlite::select(OUT Record& obj, IN  const char* sql)
 ////////////////////////////////////////////////////////////////////////////////
 void Sqlite::select(OUT Recordset& rd_set, IN  const char* sql)
 {
-	std_lock_guard lock(impl().m_sqlite_mutex, !has_transaction());
+	eco::ScopeLock lock(impl().m_sqlite_mutex, !has_transaction());
 	impl().open_once();
 
 	// query sql.
@@ -267,7 +262,7 @@ void Sqlite::select(OUT Recordset& rd_set, IN  const char* sql)
 ////////////////////////////////////////////////////////////////////////////////
 uint64_t Sqlite::execute_sql(IN const char* sql)
 {
-	std_lock_guard lock(impl().m_sqlite_mutex, !has_transaction());
+	eco::ScopeLock lock(impl().m_sqlite_mutex, !has_transaction());
 	impl().open_once();
 
 	// execute sql fail.
@@ -326,7 +321,7 @@ bool Sqlite::has_field(const char* table, const char* field, const char* db)
 	sql += table;
 	sql += ")";
 	select(rec_set, sql.c_str());
-	for (auto i = rec_set.size() - 1; i != -1; --i)
+	for (size_t i = rec_set.size() - 1; i != size_t(-1); --i)
 	{
 		auto& rec = rec_set.at(i);
 		if (eco::equal(rec.at(1), field))
