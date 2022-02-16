@@ -1,7 +1,9 @@
 ﻿#include "Pch.h"
 #include <eco/date_time/DateTime.h>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/rx/RxImpl.h>
 #include <eco/date_time/Time.h>
+#include <eco/thread/Thread.h>
 
 
 ECO_NS_BEGIN(eco);
