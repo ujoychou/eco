@@ -3,13 +3,12 @@ cmake_minimum_required(VERSION 3.0.0)
 project(Eco VERSION 1.0.1)
 # project param for cppxx.cmake
 set(PRJ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(SRC_DIR ${PRJ_DIR}/prj/src)
+set(SRC_DIR ${PRJ_DIR}/src)
 set(VER_FILE ${PRJ_DIR}/rx/RxVersion.h)
 
 # include dir.
 include_directories(${SRC_DIR})
-include_directories(${PRJ_DIR}/..)
-include_directories(${SRC_DIR})
+include_directories(${PRJ_DIR}/inc)
 # include cpp.
 #aux_source_directory(${SRC_DIR1} CXX_FILES)
 aux_source_directory(${PRJ_DIR}/detail CXX_FILES)
