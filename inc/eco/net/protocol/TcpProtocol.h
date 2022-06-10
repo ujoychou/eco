@@ -323,8 +323,8 @@ public:
 	}
 
 private:
-	std::auto_ptr<Crypt> m_crypt;
-	std::auto_ptr<Check> m_check;
+	std::unique_ptr<Crypt> m_crypt;
+	std::unique_ptr<Check> m_check;
 };
 
 

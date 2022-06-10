@@ -160,12 +160,12 @@ private:
 		// parse header field.
 		const char* fdata = row_start;
 		uint32_t row = eco::find_first(fdata, '\n');
-		if (row == -1) return nullptr;
+		if (row == uint32_t(-1)) return nullptr;
 
 		int fi = 0;
 		const char* row_end = fdata + row;
 		uint32_t pos = eco::find_first(fdata, ',');
-		for (; pos != -1 && fdata + pos < row_end; ++fi)
+		for (; pos != uint32_t(-1) && fdata + pos < row_end; ++fi)
 		{
 			PropertyMapping* pm = mapping.find_field_n(fdata, pos);
 			if (pm != nullptr)

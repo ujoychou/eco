@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <deque>
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <eco/rx/RxImpl.h>
 #include <eco/net/asio/Worker.h>
 #include "../TcpPeer.ipp"

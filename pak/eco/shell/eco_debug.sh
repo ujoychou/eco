@@ -5,4 +5,4 @@ SHELL_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 PRJ="Eco"
 CFG="Debug"
 PRJ_DIR=${SHELL_DIR}/../../..
-source ${PRJ_DIR}/pak/shell/build.sh
+source ${PRJ_DIR}/inc/eco/pak/shell/build.sh

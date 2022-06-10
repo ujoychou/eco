@@ -46,9 +46,9 @@ public:
 	Protocol*			m_protocol;			// current protocol.
 	eco::String			m_user;				// user name.
 	eco::String			m_lang;				// lang name.
-	std::auto_ptr<ConnectionData> m_data;	// connection data.
-	Timing::Timer m_timer_recv;		// tcp peer recv heartbeat timer.
-	Timing::Timer m_timer_send;		// tcp peer send heartbeat timer.
+	Timing::Timer m_timer_recv;				// tcp peer recv heartbeat timer.
+	Timing::Timer m_timer_send;				// tcp peer send heartbeat timer.
+	std::unique_ptr<ConnectionData> m_data;	// connection data.
 
 public:
 	// never be called, this is just for complie success.

@@ -20,14 +20,14 @@ BIN_DIR=${PRJ_DIR}/.bin
 
 # conan: install 3rdparty library.
 mkdir -p ${TMP_DIR}/${PRJ_CFG}
-conan install ${CONAN_DIR}/${PRJ_CFG}.txt -if ${TMP_DIR}/${PRJ_CFG}
+conan install ${CONAN_DIR}/conanfile.txt -if ${TMP_DIR}/${PRJ_CFG}
 
 # cmake: create makefile.
 cd ${TMP_DIR}/${PRJ_CFG}
 echo "== -> "`pwd`
 cmake ${CMAKE_DIR}/ -DCMAKE_BUILD_TYPE=${CFG}
 # make: build & move to bin.
-make -j
+make -j8
 mkdir -p ${BIN_DIR}/${PRJ_CFG}
 #mv ${TMP_DIR}/${PRJ_CFG}/${PRJ} ${BIN_DIR}/${PRJ_CFG}/
 

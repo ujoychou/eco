@@ -1,6 +1,6 @@
 #include "Pch.h"
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <eco/net/TcpAcceptor.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/rx/RxImpl.h>
