@@ -47,6 +47,7 @@ link_directories(${CXX_LIB_DIRS})
 # include library: logging.
 message("== INC_CONAN=${CONAN_INCLUDE_DIRS}")
 message("== LIB_CONAN=${CONAN_LIB_DIRS}")
+message("== LIB_DIR=${CXX_LIB_DIRS}")
 message("---------------------------------------------------------------------")
 
 # pre compiler: protobuf

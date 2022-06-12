@@ -41,7 +41,7 @@
 #else
 #	define ECO_API __declspec(dllimport)
 #	ifndef ECO_AUTO_LINK_NO
-#		pragma comment(lib, ECO_LIB_NAME(eco))
+//#		pragma comment(lib, ECO_LIB_NAME(eco))
 #	endif
 #endif
 #endif
