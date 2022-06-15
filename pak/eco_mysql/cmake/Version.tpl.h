@@ -4,10 +4,10 @@
 #include <eco/Prec.h>
 
 // configure eco version.
-#define ECO_LIB_MAJOR @Eco_VERSION_MAJOR@
-#define ECO_LIB_MINOR @Eco_VERSION_MINOR@
-#define ECO_LIB_PATCH @Eco_VERSION_PATCH@
-#define ECO_LIB_TWEAK @Eco_VERSION_TWEAK@
+#define ECO_LIB_MAJOR @EcoMysql_VERSION_MAJOR@
+#define ECO_LIB_MINOR @EcoMysql_VERSION_MINOR@
+#define ECO_LIB_PATCH @EcoMysql_VERSION_PATCH@
+#define ECO_LIB_TWEAK @EcoMysql_VERSION_TWEAK@
 
 // configure eco prec.
 #define ECO_LINUX

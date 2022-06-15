@@ -127,14 +127,21 @@ n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,size,...) size
 #define ECO_MACRO(macro, ...) \
 ECO_MACRO_CAT(macro, ECO_MACRO_GETN(__VA_ARGS__))(__VA_ARGS__)
 
-// lib name: exp "eco.lib.2.3.0"
+// eco lib name define.
 #define ECO_LIB_NAME_CAT(name, major, minor, patch) \
 ECO_LIB_NAME_CAT_(name, major, minor, patch)
 #define ECO_LIB_NAME_CAT_(name, major, minor, patch) \
-ECO_MACRO_STR(name.lib.major.minor.patch)
-#define ECO_LIB_NAME(name) \
-ECO_LIB_NAME_CAT(name, ECO_LIB_MAJOR, ECO_LIB_MINOR, ECO_LIB_PATCH)
+ECO_MACRO_STR(name.major.minor.patch)
 
+// linux lib: "libeco.so.2.3.0"
+#ifdef ECO_LINUX
+#define ECO_LIB_NAME(name) \
+ECO_LIB_NAME_CAT(lib#name, ECO_LIB_MAJOR, ECO_LIB_MINOR, ECO_LIB_PATCH)
+// windows lib: exp "eco.lib.2.3.0"
+#else 
+#define ECO_LIB_NAME(name) \
+ECO_LIB_NAME_CAT(name.lib, ECO_LIB_MAJOR, ECO_LIB_MINOR, ECO_LIB_PATCH)
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef ECO_WIN32

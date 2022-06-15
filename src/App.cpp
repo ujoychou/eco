@@ -16,6 +16,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <vector>
 #include "Eco.ipp"
+#pragma message(ECO_LIB_NAME(eco))
 
 
 ECO_NS_BEGIN(eco);
