@@ -2,7 +2,7 @@
 SHELL_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
 # build eco
-PRJ="EcoMysql"
+PRJ="eco_mysql"
 CFG="Debug"
 PRJ_DIR=${SHELL_DIR}/../../..
 ECO_DIR=${PRJ_DIR}/inc/eco/

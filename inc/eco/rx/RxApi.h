@@ -22,49 +22,51 @@
 * copyright(c) 2016 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
+#include <eco/Prec.h>
 #include <eco/rx/RxVersion.h>
 
 
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef ECO_API
-// linux so.
-#ifdef ECO_LINUX
+// export eco_api
 #ifdef ECO_EXPORT
-#	define ECO_API __attribute__(visibility("default"))
-#endif
-#endif
-
-// windows dll.
-#ifdef ECO_WIN
-#ifdef ECO_EXPORT
-#	define ECO_API __declspec(dllexport)
+#   ifdef ECO_LINUX
+#	    define ECO_API __attribute__(visibility("default"))
+#   elif defined ECO_WIN
+#	    define ECO_API __declspec(dllexport)
+#   endif
+// import eco_api
 #else
-#	define ECO_API __declspec(dllimport)
+#   ifdef ECO_WIN
+#	    define ECO_API __declspec(dllimport)
+#	endif
 #	ifndef ECO_AUTO_LINK_NO
 #		pragma comment(lib, ECO_LIB_NAME(eco))
 #	endif
 #endif
 #endif
-#endif // ECO_API
 
 
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef ECO_ERX_API
-// linux so.
-#ifdef ECO_LINUX
-#ifdef ECO_EXPORT
-#	define ECO_ERX_API __attribute__(visibility("default"))
+// export eco_erx_api
+#ifdef ECO_ERX_EXPORT
+#   ifdef ECO_LINUX
+#	    define ECO_ERX_API __attribute__(visibility("default"))
+#   elif defined ECO_WIN
+#	    define ECO_ERX_API __declspec(dllexport)
+#   endif
+// import eco_erx_api
+#else
+#   ifdef ECO_WIN
+#	    define ECO_ERX_API __declspec(dllimport)
+#	endif
+#	ifndef ECO_AUTO_LINK_NO
+#		pragma comment(lib, ECO_LIB_NAME(eco))
+#	endif
 #endif
 #endif
 
-// windows dll.
-#ifdef ECO_WIN
-#ifdef ECO_EXPORT
-// load erx api dynamically, not using dll hint import.
-#	define ECO_ERX_API __declspec(dllexport)
-#endif
-#endif
-#endif // ECO_ERX_API
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif

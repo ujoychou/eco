@@ -1,5 +1,7 @@
 #include "Pch.h"
 #include <eco/persist/Sqlite.h>
+#include <eco/persist/SqliteVersion.h>
+#pragma message(ECO_LIB_NAME(eco_sqlite))
 ////////////////////////////////////////////////////////////////////////////////
 #include <sqlite3.h>
 #include <eco/std/mutex.h>

@@ -135,12 +135,12 @@ ECO_MACRO_STR(name.major.minor.patch)
 
 // linux lib: "libeco.so.2.3.0"
 #ifdef ECO_LINUX
-#define ECO_LIB_NAME(name) \
-ECO_LIB_NAME_CAT(lib#name, ECO_LIB_MAJOR, ECO_LIB_MINOR, ECO_LIB_PATCH)
-// windows lib: exp "eco.lib.2.3.0"
-#else 
-#define ECO_LIB_NAME(name) \
-ECO_LIB_NAME_CAT(name.lib, ECO_LIB_MAJOR, ECO_LIB_MINOR, ECO_LIB_PATCH)
+#define ECO_LIB_NAME(name) ECO_LIB_NAME_CAT(\
+lib##name.so, name##_lib_major, name##_lib_minor, name##_lib_patch)
+// windows lib: "eco.lib.2.3.0"
+#else
+#define ECO_LIB_NAME(name) ECO_LIB_NAME_CAT(\
+name.lib, name##_lib_major, name##_lib_minor, name##_lib_patch)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////

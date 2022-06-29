@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.0.0) 
 
 # project name version.
-project(EcoMysql VERSION 1.0.1)
+project(eco_mysql VERSION 1.0.1)
 # project param for cppxx.cmake
 set(PRJ_FMT "lib")
 set(PRJ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(PRJ_VER_FILE ${PRJ_DIR}/inc/eco/rx/RxEcoMysqlVersion.h)
+set(PRJ_VER_FILE ${PRJ_DIR}/src/eco/persist/MysqlVersion.h)
 
 # src files: directory.
 set(SRC_DIRS ${PRJ_DIR}/src/persist)
@@ -23,12 +23,12 @@ set(INC_DIRS ${PRJ_DIR}/src)
 include_directories(${PRJ_DIR}/src)
 # include lib & dir: target private
 set(LINK_LIBS libpthread.so)
-list(APPEND LINK_LIBS ${PRJ_DIR}/lib/eco/libEco.so.1.0.2)
+#list(APPEND LINK_LIBS ${PRJ_DIR}/lib/eco/libEco.so.1.0.2)
 set(LINK_LIB_DIRS ${PRJ_DIR}/lib/eco)
 # include lib & dir: global
 link_directories(${PRJ_DIR}/lib/eco)
 link_libraries(libpthread.so)
-link_libraries(${PRJ_DIR}/lib/eco/libEco.so.1.0.2)
+#link_libraries(${PRJ_DIR}/lib/eco/libEco.so.1.0.2)
 
 # install dir
 set(INS_DIR ${PRJ_DIR}/lib/eco)

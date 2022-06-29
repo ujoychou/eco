@@ -1,5 +1,7 @@
 #include "Pch.h"
 #include <eco/persist/MySql.h>
+#include <eco/persist/MysqlVersion.h>
+#pragma message(ECO_LIB_NAME(eco_mysql))
 ////////////////////////////////////////////////////////////////////////////////
 #include <vector>
 #include <mysql.h>

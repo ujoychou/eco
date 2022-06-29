@@ -10,10 +10,7 @@
 #define ECO_UTT_LIB_TWEAK 
 
 // configure eco prec.
-#define ECO_LINUX
 #define ECO_API
-#define ECO_ERX_API
-#define ECO_NO_STD_SHARED_MUTEX
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif
