@@ -3,13 +3,21 @@
 # SRC_DIRS: dedicated the source files to build.
 # PRJ_VER_FILE: the output version file.
 ################################################################################
-# project version config name. "eco-3.2.0-debug".
+# project platform. win32/linux/win64
+if(PRJ_LINUX)
+    add_definitions(-DECO_LINUX)
+endif()
+if(PRJ_WIN32)
+    add_definitions(-DECO_WIN32)
+endif()
+# project version config name. "eco-3.2.0-debug-linux".
 set(PRJ_CFG ${PROJECT_NAME}_${CMAKE_BUILD_TYPE})
 string(TOLOWER ${PRJ_CFG} PRJ_CFG)
 # project version template file.
 if(PRJ_VER_FILE)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.tpl.h ${PRJ_VER_FILE})
 endif()
+
 
 # option: for ccmake.
 option(MSVC_PCH "msvc precompile header file in windows." OFF)

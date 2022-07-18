@@ -18,10 +18,10 @@ list(APPEND SRC_FILES_EXCLUDE ${PRJ_DIR}/src/persist/CsvSource.cpp)
 set(INC_DIRS ${PRJ_DIR}/src) 
 # include lib & dir: target private
 set(LINK_LIBS libpthread.so)
-set(LINK_LIB_DIRS ${PRJ_DIR}/lib/eco)
+set(LINK_LIB_DIRS ${PRJ_DIR}/.lib/eco)
 
 # install dir
-set(INS_DIR ${PRJ_DIR}/lib/eco)
+set(INS_DIR ${PRJ_DIR}/.lib/eco)
 
 # apply with cpp11
 include(${PRJ_DIR}/inc/eco/pak/cmake/cpp11.cmake)

@@ -23,15 +23,15 @@ set(INC_DIRS ${PRJ_DIR}/src)
 include_directories(${PRJ_DIR}/src)
 # include lib & dir: target private
 set(LINK_LIBS libpthread.so)
-#list(APPEND LINK_LIBS ${PRJ_DIR}/lib/eco/libEco.so.1.0.2)
-set(LINK_LIB_DIRS ${PRJ_DIR}/lib/eco)
+#list(APPEND LINK_LIBS ${PRJ_DIR}/.lib/eco/libEco.so.1.0.2)
+set(LINK_LIB_DIRS ${PRJ_DIR}/.lib/eco)
 # include lib & dir: global
-link_directories(${PRJ_DIR}/lib/eco)
+link_directories(${PRJ_DIR}/.lib/eco)
 link_libraries(libpthread.so)
-#link_libraries(${PRJ_DIR}/lib/eco/libEco.so.1.0.2)
+#link_libraries(${PRJ_DIR}/.lib/eco/libEco.so.1.0.2)
 
 # install dir
-set(INS_DIR ${PRJ_DIR}/lib/eco)
+set(INS_DIR ${PRJ_DIR}/.lib/eco)
 
 # apply with cpp11
 include(${PRJ_DIR}/inc/eco/pak/cmake/cpp11.cmake)

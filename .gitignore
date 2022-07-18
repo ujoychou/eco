@@ -37,3 +37,4 @@
 # directory
 .tmp
 .bin
+.lib
