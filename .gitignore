@@ -35,5 +35,6 @@
 *.ipdb
 
 # directory
-obj
-build
+.tmp
+.bin
+.lib

@@ -1,0 +1,12 @@
+[requires]
+boost/1.78.0
+protobuf/3.17.1
+zlib/1.2.11
+mysql-connector-c/6.1.11
+sqlite3/3.37.2
+
+[imports]
+
+
+[generators]
+cmake

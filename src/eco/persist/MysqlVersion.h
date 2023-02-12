@@ -1,0 +1,13 @@
+#ifndef RX_MYSQL_VERSION_H
+#define RX_MYSQL_VERSION_H
+////////////////////////////////////////////////////////////////////////////////
+// configure eco version.
+#define eco_mysql_lib_major 1
+#define eco_mysql_lib_minor 0
+#define eco_mysql_lib_patch 1
+#define eco_mysql_lib_tweak 
+
+// configure macro
+
+////////////////////////////////////////////////////////////////////////////////
+#endif

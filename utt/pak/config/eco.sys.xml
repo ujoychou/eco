@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--#.日志选项-->
+  <logging>
+    <async value="true"/>
+    <async_flush value="3000"/>
+    <memcache value="5M"/>
+    <file_sink enable="true">
+      <level value="debug"/>
+      <file_path>log</file_path>
+      <roll_size>50M</roll_size>
+      <full_path>20170104-160222.ujoychou-PC.00051124.log</full_path>
+    </file_sink>
+    <console_sink enable="true">
+      <level value="info"/>
+    </console_sink>
+  </logging>
+
+  <!--国际化-->
+  <locale default="zh-cn">
+    <zh-cn path="locale/zh-cn" note="中文">
+      <word  file="word.xml"/>
+      <word  file="word_tr.xml"  module="tr" note="交易"/>
+      <error file="error.xml"/>
+      <error file="error_rc.xml" module="rc"/>
+    </zh-cn>
+    <en-us path="locale/en-us" note="English">
+      <word  file="word_tr.xml"  module="tr" note="trade"/>
+      <error file="error.xml"/>
+      <error file="error_rc.xml" module="rc"/>
+    </en-us>
+    <vi-ta path="locale/vi-ta" note="English">
+    </vi-ta>
+  </locale>
+
+  <!--#.生命机制-->
+  <eco enable="true">
+    <task_thread_size>1</task_thread_size>
+  </eco>
+
+  <!--#.插件管理-->
+  <erx enable="false">
+  </erx>
+
+  <!--#.路由中心-->
+  <router enable="true">
+    <front_router>
+      <addr_shdx>127.0.0.1:40001</addr_shdx>
+      <addr_shlt>127.0.0.1:40002</addr_shlt>
+    </front_router>
+    <trade_router enable="true">
+      <addr_shdx>127.0.0.1:40003</addr_shdx>
+      <addr_shlt>127.0.0.1:40004</addr_shlt>
+    </trade_router>
+  </router>
+
+  <!--#.服务者-->
+  <provider router="front_router" enable="true">
+    <service>hornet</service>
+    <port>50000</port>
+    <io_thread_size value="2"/>
+    <business_thread_size value="4"/>
+    <send_capacity value="5000"/>
+    <context_capacity value="5000"/>
+    <max_byte_size value="15M"/>
+    <max_session_size value="50000"/>
+    <max_connection_size value="5000"/>
+    <no_delay value="true"/>
+    <websocket value="false"/>
+    <send_buffer_size>0</send_buffer_size>
+    <recv_buffer_size>0</recv_buffer_size>
+    <send_low_watermark>0</send_low_watermark>
+    <recv_low_watermark>0</recv_low_watermark>
+    <heartbeat_rhythm>true</heartbeat_rhythm>
+    <clean_dos_peer_sec>5</clean_dos_peer_sec>
+    <heartbeat_recv_sec>45</heartbeat_recv_sec>
+    <heartbeat_send_sec>15</heartbeat_send_sec>
+</provider>
+
+  <!--#.消费者-->
+  <consumer enable="true">
+    <!--团队服务-->
+    <team router="" enable="true">
+      <address>
+        <dev_env>39.104.67.41:40001</dev_env>
+        <test_env>39.104.67.41:50001</test_env>
+      </address>
+      <suspend>false</suspend>
+      <no_delay>true</no_delay>
+      <balance>average</balance>
+      <websocket>false</websocket>
+      <max_byte_size>15M</max_byte_size>
+      <send_buffer_size>0</send_buffer_size>
+      <recv_buffer_size>0</recv_buffer_size>
+      <send_low_watermark>0</send_low_watermark>
+      <recv_low_watermark>0</recv_low_watermark>
+      <load_event_sec>5</load_event_sec>
+      <auto_reconnect_sec>5</auto_reconnect_sec>
+      <heartbeat_recv_sec>45</heartbeat_recv_sec>
+      <heartbeat_send_sec>15</heartbeat_send_sec>
+    </team>
+  </consumer>
+
+  <!--#.数据库-->
+  <persist enable="true">
+    <test_env type="mysql">
+      <user>root</user>
+      <charset>utf8</charset>
+      <database>dev</database>
+      <password>123456</password>
+      <address>127.0.0.1:3306</address>
+    </test_env>
+  </persist>
+
+  <import>eco.xml</import>
+</root>
