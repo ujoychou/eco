@@ -102,11 +102,11 @@ public:
 
 	// when peer has read a completed message.
 	// m_on_read(peer, head, data)
-	std::function<void(IN void*, IN MessageHead&, IN String&)> m_on_read;
+	std::function<void(IN void*, IN MessageTcp&, IN String&)> m_on_read;
 
 	// when recv data size, check the bytes tcp size edge.
 	// m_on_decode_head(head, byte, size, error)
-	std::function<eco::Result(IN MessageHead&, IN const char*, IN uint32_t)>
+	std::function<eco::Result(IN MessageTcp&, IN const char*, IN uint32_t)>
 		m_on_decode_head;
 
 	// when peer has been closed.

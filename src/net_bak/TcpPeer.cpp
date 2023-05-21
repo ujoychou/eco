@@ -151,7 +151,7 @@ void TcpPeer::Impl::on_connect(IN bool err)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void TcpPeer::Impl::on_read(IN MessageHead& head, eco::String& data, bool err)
+void TcpPeer::Impl::on_read(IN MessageTcp& head, eco::String& data, bool err)
 {
 	if (err)	// if peer occur error, release it.
 	{
@@ -195,7 +195,7 @@ void TcpPeer::Impl::on_write(IN uint32_t size, bool err)
 
 ////////////////////////////////////////////////////////////////////////////////
 eco::Result TcpPeer::Impl::on_decode_head(
-	MessageHead& head, const char* buff, uint32_t size)
+	MessageTcp& head, const char* buff, uint32_t size)
 {
 	/*@forbid memory explosion and crush when [on_decode_head] aways
 	return false, and head.message_size() is (A)==0 or (B)>size.

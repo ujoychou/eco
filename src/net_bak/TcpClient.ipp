@@ -40,7 +40,7 @@ public:
 
 	inline void on_connect(uint16_t balanc)
 	{
-		if (balanc == TcpClientOption::balance_order)
+		if (balanc == TcpOptionClient::balance_order)
 		{
 			m_address_cur = position();		// reset reconnect times.
 		}
@@ -171,7 +171,7 @@ class TcpClient::Impl
 	ECO_IMPL_INIT(TcpClient);
 public:
 	LoadBalancer	m_balancer;		// load balance for multi server.
-	TcpClientOption	m_option;		// client option.
+	TcpOptionClient	m_option;		// client option.
 	ProtocolFamily  m_protocol;		// client protocol.
 	TcpPeerHandler	m_peer_handler;
 	uint32_t		m_manual_close;	// manual close means no need auto connect.
@@ -432,7 +432,7 @@ public:
 	void on_load_locale(eco::atomic::State& state);
 
 	// when peer has received a message data bytes.
-	void on_read(IN void* peer, IN MessageHead& head, IN eco::String& data);
+	void on_read(IN void* peer, IN MessageTcp& head, IN eco::String& data);
 
 	// when peer has sended a data, async notify sended data size.
 	void on_send(IN void* peer, IN uint32_t size);

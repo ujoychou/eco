@@ -34,7 +34,7 @@ ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 class TcpSocket;
 class IoWorker;
-class MessageHead;
+class MessageTcp;
 ////////////////////////////////////////////////////////////////////////////////
 class TcpConnectorHandler
 {
@@ -43,7 +43,7 @@ public:
 	
 	virtual void on_connect(bool err) {}
 
-	virtual void on_read(MessageHead& head, eco::String& data, bool err) = 0;
+	virtual void on_read(MessageTcp& head, eco::String& data, bool err) = 0;
 
 	virtual void on_write(uint32_t siz, bool err) = 0;
 };

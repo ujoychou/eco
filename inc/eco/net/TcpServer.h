@@ -1,5 +1,4 @@
-#ifndef ECO_NET_TCP_SERVER_H
-#define ECO_NET_TCP_SERVER_H
+#pragma once
 /*******************************************************************************
 @ name
 
@@ -25,17 +24,15 @@
 *******************************************************************************/
 #include <eco/rx/RxApi.h>
 #include <eco/net/TcpOption.h>
-#include <eco/net/TcpDispatch.h>
-#include <eco/net/TcpConnection.h>
-#include <eco/net/protocol/Protocol.h>
+#include <eco/net/Protocol.h>
 
 
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpServer : public TcpDispatch
+class ECO_API TcpServer
 {
-	ECO_SHARED_API(TcpServer);
+	ECO_OBJECT_API(TcpServer);
 public:
 	/*@ start tcp server.*/
 	void start();
@@ -47,45 +44,43 @@ public:
 	void join();
 
 	// network server option.
-	void set_option(IN const TcpServerOption&);
-	TcpServerOption& get_option();
-	const TcpServerOption& option() const;
-	TcpServer& option(IN const TcpServerOption&);
-
-	// protocol
-	template<typename protocol_t>
-	inline void add_protocol()
-	{
-		add_protocol(new protocol_t());
-	}
-	void add_protocol(IN Protocol*);
-
-	// get latest protocol.
-	Protocol* protocol_latest() const;
-	Protocol* protocol(int ver) const;
+	TcpOptionServer& option();
 
 	// set connection data type.
-	template<typename connection_data_t>
-	inline void set_connection_data()
+	template<typename TTcpConnect>
+	inline void set_connect()
 	{
-		set_connection_data(&make_connection_data<connection_data_t>);
+		set_connect(&TcpConnect::make<TTcpConnect>);
 	}
-	void set_connection_data(IN MakeConnectionData&& make);
 
-	// set session data class and tcp session mode.
-	template<typename session_data_t>
-	inline void set_session_data()
+	// register route of message handler
+	template<typename TTcpSession>
+	inline void route(int id, TTcpSession::Handler&& handler)
 	{
-		set_session_data(&make_session_data<session_data_t>);
+		TcpSession::Handler handler_tcp = std::bind(
+			&TTcpSession::on_request, std::placeholder::_1, handler);
+		this->route(id, TTcpSession::make, handler_tcp);
 	}
-	void set_session_data(IN MakeSessionData&& make);
 
-	// make session id.
-	uint64_t make_object_id(uint32_t& ts, uint32_t& seq, int ver = 1);
+	// register route of message default handler
+	void route_default(TcpSession::Handler&& handler);
 
-	// register dispatch handler.
-	virtual void register_default(IN HandlerFunc&& hf) override;
-	virtual void register_handler(IN int id, IN HandlerFunc&& hf) override;
+public:
+	// set tcp protocol
+	void protocol_tcp(ProtocolTcp* tcp);
+
+	// template protocol derived from protocol
+	template<typename TProtocol>
+	inline void protocol_add()
+	{
+		protocol_add(new TProtocol());
+	}
+
+	// get latest protocol
+	Protocol* protocol_latest() const;
+
+	// get protocol by version
+	Protocol* protocol(int version) const;
 
 public:
 	// set connection open close event
@@ -99,9 +94,19 @@ public:
 
 	// is dispatch mode: using eco dispatch mechanism to handle message.
 	bool dispatch_mode() const;
+
+private:
+	// websocket, protocol-eco, ftdc, so on.
+	void protocol_add(IN Protocol* heap);
+
+	// set connection make func
+	void set_connect(TcpConnect::Make make);
+	
+	// set route of session handler
+	void route(int id, TcpSession::Make make, TcpSession::Handler& handler);
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
-#endif
+ECO_NS_END(net)
+ECO_NS_END(eco)

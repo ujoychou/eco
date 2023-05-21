@@ -309,7 +309,7 @@ typedef std::function<void(eco::atomic::State& state)> OnLoadState;
 typedef std::function<void(SessionId)> OnAccept;
 typedef std::function<void(SessionId)> OnClose;
 typedef std::function<void(TcpPeer::ptr&, DataContext&)> OnRecvData;
-typedef std::function<eco::Result(MessageHead&, const char*, uint32_t)> OnDecodeHead;
+typedef std::function<eco::Result(MessageTcp&, const char*, uint32_t)> OnDecodeHead;
 
 
 ////////////////////////////////////////////////////////////////////////////////

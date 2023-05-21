@@ -1,5 +1,4 @@
-#ifndef ECO_NET_TCP_SESSION_H
-#define ECO_NET_TCP_SESSION_H
+#pragma once
 /*******************************************************************************
 @ name
 
@@ -10,228 +9,111 @@
 @ exception
 
 
-@ remark
+@ note
 
 
 --------------------------------------------------------------------------------
 @ history ver 1.0 @
-@ records: ujoy modifyed on 2016-11-12.
+@ records: ujoy modifyed on 2016-11-17.
 1.create and init this class.
 
 
 --------------------------------------------------------------------------------
-* copyright(c) 2016 - 2019, ujoy, reserved all right.
+* copyright(c) 2023 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rx/RxApi.h>
-#include <eco/net/TcpConnection.h>
-#include <memory>
+#include <eco/log/Log.h>
+#include <eco/net/Protocol.h>
 
 
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-// client access user handler, and user access client.
-typedef std::shared_ptr<int> ClientUser;
-typedef std::weak_ptr<int> ClientUserObserver;
-////////////////////////////////////////////////////////////////////////////////
-// define session data holder. (using the boost::any<type> mechanism)
-class SessionData : public eco::RxHeap
+template<bool check_auth, bool check_app_ready>
+struct ReqOption
 {
-	ECO_OBJECT(SessionData);
+};
+using REQ_OPT_AUTH = ReqOption<true, true>;
+using REQ_OPT_INIT = ReqOption<false, true>;
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<int req_srv, int rsp_srv, int err_srv>
+struct ReqLogger
+{
+};
+using REQ_LOG_INFO = ReqLogger<info, info, error>;
+using REQ_LOG_DEBUG = ReqLogger<debug, debug, error>;
+
+
+////////////////////////////////////////////////////////////////////////////////
+class TcpSession : public eco::RxHeap
+{
 public:
-	// #.event: after server session connect.
-	inline SessionData(
-		IN const eco::net::SessionId id_,
-		IN const eco::net::TcpConnection& conn)
-		: m_id(id_), m_conn(conn)
-	{}
+    // session handle event
+    typedef void (*RspFunc)(TcpSession&);
+    typedef void (*ReqFunc)(TcpSession::ptr&);
+    typedef std::function<void(TcpSession::ptr&)> Handler;
+    typedef TcpSession::ptr (*Make)(MessageMeta&, MessageTcp&);
 
-	// #.event: after server session close.
-	virtual ~SessionData() {}
+    // 1.session create
+    static inline TcpSession::ptr make(MessageMeta& meta, MessageTcp& data)
+    {
+        return std::make_shared<TcpSession>(meta, data);
+    }
+};
 
-	// get user id.
-	virtual uint64_t user_id() const
-	{
-		return 0;
-	}
 
-	// get user name.
-	virtual const char* user_name() const
-	{
-		return nullptr;
-	}
+////////////////////////////////////////////////////////////////////////////////
+template<
+typename TReq,
+typename TRsp,
+typename TCodec,
+typename ReqOption = REQ_OPT_AUTH,
+typename ReqLogger = REQ_LOG_INFO>
+class TReqSession : public TcpSession
+{
+    ECO_OBJECT(TReqSession);
+public:
+    // session handle event
+    typedef TReqSession<TReq, TRsp, TCodec, ReqOption, ReqLogger> ReqSession;
+    typedef void (*RspFunc)(ReqSession&);
+    typedef void (*ReqFunc)(ReqSession::ptr&);
+    typedef std::function<void(ReqSession::ptr&)> Handler;
 
-	// get connection object.
-	inline TcpConnection& connection()
-	{
-		return m_conn;
-	}
-	inline const TcpConnection& get_connection() const
-	{
-		return m_conn;
-	}
-
-	inline SessionId id() const
-	{
-		return m_id;
-	}
-
-	// async send message.
-	inline void send(IN MessageMeta& meta)
-	{
-		m_conn.send(meta.session_id(m_id));
-	}
-
-	// async send message.
-	inline void send(IN Codec& cdc, IN int type, IN bool last_)
-	{
-		MessageMeta meta;
-		meta.codec(cdc).message_type(type).last(last_);
-		m_conn.send(meta);
-	}
-
-	// async publish message.
-	inline void publish(IN Codec& cdc, IN int type, IN char snap_)
-	{
-		MessageMeta meta;
-		meta.codec(cdc).message_type(type).snap(snap_);
-		m_conn.send(meta);
-	}
-
-#ifndef ECO_NO_PROTOBUF
-	// async send protobuf.
-	inline void send(
-		IN const google::protobuf::Message& msg,
-		IN int type, IN bool last_)
-	{
-		send(eco::lvalue(ProtobufCodec(&msg)), type, last_);
-	}
-
-	// async publish protobuf.
-	inline void publish(
-		IN const google::protobuf::Message& msg,
-		IN int type, IN char snap_)
-	{
-		MessageMeta meta;
-		ProtobufCodec cdc(&msg);
-		send(meta.codec(cdc).message_type(type).snap(snap_));
-	}
-#endif
+    // 1.session create
+    inline static TcpSession::ptr make(IN MessageMeta& meta, IN TcpData& data)
+    {
+        return std::make_shared<ReqSession>(meta, data);
+    }
 
 private:
-	SessionId		m_id;
-	TcpConnection	m_conn;
-	friend class SessionDataOuter;
-};
+    // 2.session constructor.
+    inline TReqSession(IN MessageMeta& meta, IN TcpData& data) 
+        : TcpSession(meta, data)
+    {}
 
+    // 3.decode tcp message to message.
+    virtual bool on_decode() override
+    {
+        TCodec codec(&this->req);
+        return codec.decode(this->TcpSession::data, this->TcpSession::size);
+    }
 
-
-////////////////////////////////////////////////////////////////////////////////
-// default session factory function.
-template<typename SessionDataT>
-inline static SessionData* make_session_data(
-	IN const SessionId session_id,
-	IN const TcpConnection& connection)
-{
-	return new SessionDataT(session_id, connection);
-}
-
-// set session factory to create session of tcp server peer.
-typedef SessionData* (*MakeSessionData)(
-	IN const SessionId session_id,
-	IN const TcpConnection& connection);
-
-
-////////////////////////////////////////////////////////////////////////////////
-class TcpSessionImpl
-{
 public:
-	TcpConnection		m_conn;
+    // 4.handle request message.
+    inline static void on_request(TcpSession::ptr& sess, ReqFunc on_req)
+    {
+        // cast session and notify event.
+        on_req(std::dynamic_cast<ReqSession>(sess));
+    }
 
-	// session data
-	SessionData::wptr	m_session_wptr;		// session data.
-	SessionId			m_session_id;		// session id.
-	
-	// session owner: client or server.
-	TcpOwner			m_owner;
-	ClientUser			m_user;
-
-	inline TcpSessionImpl() : m_session_id(none_session)
-	{}
+public:
+    TReq req;
+    TRsp rsp;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class Context;
-class TcpSession
-{
-public:
-	// close session, release session data.
-	inline void close();
-
-	// check whether session has been opened.
-	inline bool authorized() const;
-
-	// get connection.
-	inline TcpConnection& connection() const;
-
-	// get session data.
-	inline SessionId id() const;
-
-	// get session data.
-	inline SessionData::ptr data() const;
-
-	// get and cast session data.
-	template<typename SessionDataT>
-	inline std::shared_ptr<SessionDataT> cast();
-
-public:
-	// async response message.
-	inline void response(IN MessageMeta& meta, IN const Context& c);
-
-	// async send message.
-	inline void send(IN const MessageMeta& meta);
-
-	// async send authority info.
-	inline void authorize(IN const MessageMeta& meta);
-
-#ifndef ECO_NO_PROTOBUF
-	// async send protobuf.
-	inline void send(
-		IN const google::protobuf::Message& msg,
-		IN int type, IN bool last_)
-	{
-		ProtobufCodec cdc(&msg);
-		send(MessageMeta().codec(cdc).message_type(type).last(last_));
-	}
-
-	// async send protobuf authority info.
-	inline void authorize(
-		IN const google::protobuf::Message& msg,
-		IN int type, IN bool last_)
-	{
-		ProtobufCodec cdc(&msg);
-		send(MessageMeta().codec(cdc).message_type(type).last(last_));
-	}
-
-	// async send response to client by context.
-	inline void response(
-		IN const google::protobuf::Message& msg,
-		IN int type, IN bool last_, IN const Context& c)
-	{
-		ProtobufCodec cdc(&msg);
-		response(MessageMeta().codec(cdc).message_type(type).last(last_), c);
-	}
-#endif
-
-private:
-	// implement.
-	mutable TcpSessionImpl m_impl;
-	friend class TcpSessionOuter;
-};
-}}
-
-#include <eco/net/TcpSession.inl>
-////////////////////////////////////////////////////////////////////////////////
-#endif
+ECO_NS_END(net)
+ECO_NS_END(eco)

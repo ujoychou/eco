@@ -540,7 +540,7 @@ inline void App::Impl::init_provider()
 	
 	// #.init provider service option.
 	const eco::StringAny* v = nullptr;
-	eco::net::TcpServerOption& option = m_provider.get_option();
+	eco::net::TcpOptionServer& option = m_provider.get_option();
 	eco::ContextNode node = m_config.get_node("provider");
 	init_option(option, node);
 	if (nullptr != (v = node.find("service")))

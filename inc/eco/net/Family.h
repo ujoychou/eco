@@ -1,5 +1,4 @@
-#ifndef ECO_NET_PROTOCOL_FAMILY_H
-#define ECO_NET_PROTOCOL_FAMILY_H
+#pragma once
 /*******************************************************************************
 @ name
 
@@ -24,28 +23,33 @@
 
 *******************************************************************************/
 #include <eco/Error.h>
-#include <eco/net/protocol/Protocol.h>
+#include <eco/net/Protocol.h>
 
 
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API ProtocolFamily
+class ECO_API Family
 {
-	ECO_OBJECT_API(ProtocolFamily);
+	ECO_OBJECT_API(Family);
 public:
-	/*@ register protocol.*/
-	void add_protocol(IN Protocol*);
+	// add tcp protocol
+	void protocol_tcp(IN ProtocolTcp*);
 
-	/*@ get protocol by it's version.*/
-	Protocol* protocol(int version) const;
+	// get protocol of lastest version
+	ProtocolTcp* protocol_tcp();
 
-	/*@ get protocol of lastest version.*/
-	Protocol* protocol_latest() const;
+	// register protocol
+	void protocol_add(IN Protocol*);
+
+	// get protocol by it's version.
+	Protocol* protocol(int version);
+
+	// get protocol of lastest version.
+	Protocol* protocol_latest();
 
 public:
-	inline eco::Result on_decode_head(
-		MessageHead& head, const char* buff, uint32_t size) const
+	eco::Result on_decode_head(MessageTcp& tcp, const char* buff, uint32_t size)
 	{
 		/*@ eco::fail: check the message edge.
 		1.if message bytes not enough to check, need read more bytes.
@@ -64,40 +68,39 @@ public:
 		*/
 
 		// #.get message version & category.
-		Protocol* prot = protocol_latest();
-		auto res = prot->decode_version(head, buff, size);	// (1.A)
-		if (res != eco::ok) return res;
+		auto res = protocol_tcp()->decode(tcp, buff, size);	// (1.A)
+		if (res != eco::ok) { return res; }
 
-		if (!is_heartbeat(head.m_category) &&
-			!eco::has(head.m_category, category_message))	// (2.A)
+		if (!is_heartbeat(tcp.m_category) &&
+			!eco::has(tcp.m_category, category_message))	// (2.A)
 		{
 			ECO_THIS_ERROR(e_message_category)
-				< "category error: " < head.m_category;
+				< "category error: " < tcp.m_category;
 			return eco::error;
 		}
 
 		// #.get protocol by head version.
-		head.m_protocol = protocol(head.m_version);
-		if (head.m_protocol == nullptr)	// (2.B)
+		tcp.m_protocol = protocol(tcp.m_version);
+		if (tcp.m_protocol == nullptr)	// (2.B)
 		{
 			ECO_THIS_ERROR(e_protocol_invalid)
-				< "protocol ver error: " < head.m_version;
+				< "protocol ver error: " < tcp.m_version;
 			return eco::error;
 		}
 		// message size = head_size + size_size + data_size.
-		if (!head.m_protocol->decode_size(head, buff, size))	// (1.B)
+		if (!tcp.m_protocol->decode_tcp(head, buff, size))	// (1.B)
 		{
 			return eco::fail;
 		}
-		if (head.message_size() > size)							// (1.B)
+		if (tcp.message_size() > size)							// (1.B)
 		{
 			return eco::fail;
 		}
-		if (head.message_size() > head.m_protocol->max_size())	// (2.C)
+		if (tcp.message_size() > tcp.m_protocol->max_size())	// (2.C)
 		{
 			ECO_THIS_ERROR(e_message_overszie)
 				< "message size over max size: "
-				< head.message_size() < '>' < prot->max_size();
+				< tcp.message_size() < '>' < prot->max_size();
 			return eco::error;
 		}
 		return eco::ok;		// (3.A/B)
@@ -106,5 +109,5 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
-#endif
+ECO_NS_END(eco);
+ECO_NS_END(net);

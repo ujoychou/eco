@@ -219,7 +219,7 @@ public:
 		}
 	}
 
-	inline void close_error_peer(MessageHead& head, String& buff)
+	inline void close_error_peer(MessageTcp& head, String& buff)
 	{
 		m_handler->on_read(head, buff, true);
 	}
@@ -237,7 +237,7 @@ public:
 		if (ec)		// error tcp peer will close this socket.
 		{
 			ECO_THIS_ERROR(ec.value()) < ec.message();
-			close_error_peer(eco::lvalue(MessageHead()), m_buffer);
+			close_error_peer(eco::lvalue(MessageTcp()), m_buffer);
 			peer.reset();
 		}
 		return peer;
@@ -285,7 +285,7 @@ public:
 		{
 			eco::String buff(m_buffer.c_str(), pos + delimiter.size());
 			m_buffer.erase(0, buff.size());
-			m_handler->on_read(eco::lvalue(MessageHead()), buff, false);
+			m_handler->on_read(eco::lvalue(MessageTcp()), buff, false);
 		}
 	}
 
@@ -336,7 +336,7 @@ public:
 				break;
 			}
 
-			MessageHead head;
+			MessageTcp head;
 			eco::Result result = peer->impl().on_decode_head(
 				head, &m_buffer[start], size);
 			if (result == eco::error)	// (6/7)

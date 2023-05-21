@@ -39,7 +39,7 @@ private:
 	std::unordered_map<uint64_t, TcpPeer::ptr> m_peer_map;
 
 	// tcp server option.
-	TcpServerOption&		m_option;
+	TcpOptionServer&		m_option;
 	MakeConnectionData		m_make_conn;
 
 	// session statistic.
@@ -62,7 +62,7 @@ private:
 
 public:
 	// constructor.
-	inline TcpStatistics(IN TcpServerOption& opt)
+	inline TcpStatistics(IN TcpOptionServer& opt)
 		: m_option(opt), m_make_conn(nullptr)
 	{}
 	inline void set_make_connnection_data(IN MakeConnectionData& make_conn)

@@ -222,11 +222,11 @@ public:
 	inline ~Topic();
 
 	// add subscriber to this topic.
-	inline AutoRefPtr<Subscription> reserve_subscribe(
+	inline Autoref<Subscription> reserve_subscribe(
 		IN Subscriber* subscriber);
 
 	template<typename data_t>
-	inline AutoRefPtr<Subscription> reserve_subscribe(
+	inline Autoref<Subscription> reserve_subscribe(
 		IN Subscriber* subscriber, IN data_t& data);
 
 	// erase subscriber from this topic.
@@ -353,9 +353,9 @@ inline Topic::~Topic()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-AutoRefPtr<Subscription> Topic::reserve_subscribe(IN Subscriber* subscriber)
+Autoref<Subscription> Topic::reserve_subscribe(IN Subscriber* subscriber)
 {
-	AutoRefPtr<Subscription> aref;
+	Autoref<Subscription> aref;
 	if (has_subscriber(subscriber)) return aref;
 
 	aref.reset(new Subscription(this, subscriber));
@@ -365,10 +365,10 @@ AutoRefPtr<Subscription> Topic::reserve_subscribe(IN Subscriber* subscriber)
 	return aref;
 }
 template<typename data_t>
-AutoRefPtr<Subscription> Topic::reserve_subscribe(
+Autoref<Subscription> Topic::reserve_subscribe(
 	IN Subscriber* subscriber, IN data_t& data)
 {
-	AutoRefPtr<Subscription> aref;
+	Autoref<Subscription> aref;
 	if (has_subscriber(subscriber)) return aref;
 	aref.reset(new SubscriptionT<data_t>(this, subscriber, data));
 

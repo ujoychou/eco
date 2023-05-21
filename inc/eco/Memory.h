@@ -55,7 +55,7 @@ public:\
 	}\
 	inline bool null() const\
 	{\
-		return m_data == nullptr;\
+		return m_data == 0;\
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ class AutoDelete
 	ECO_PTR_MEMBER(Object, m_ptr);
 public:
 	inline AutoDelete(
-		IN Object* ptr = nullptr,
+		IN Object* ptr = 0,
 		IN bool auto_delete = true)
 		: m_ptr(ptr), m_auto_delete(auto_delete)
 	{}
@@ -79,7 +79,7 @@ public:
 		}
 	}
 
-	inline void reset(Object* ptr = nullptr, bool auto_delete = true)
+	inline void reset(Object* ptr = 0, bool auto_delete = true)
 	{
 		if (m_ptr == ptr)
 		{
@@ -97,7 +97,7 @@ public:
 
 	inline void release()
 	{
-		m_ptr = nullptr;
+		m_ptr = 0;
 		m_auto_delete = false;
 	}
 
@@ -129,7 +129,7 @@ public:
 	inline T* release(IN size_t i)
 	{
 		T* data = (T*)m_data[i];
-		m_data[i] = nullptr;
+		m_data[i] = 0;
 		return data;
 	}
 
@@ -172,11 +172,11 @@ private:
 // auto ref count to manage object life cycle.
 #define ECO_OBJECT_AUTOREF()\
 public:\
-	inline void add_ref()\
+	inline void ref_add()\
 	{\
 		++m_ref;\
 	}\
-	inline void del_ref()\
+	inline void ref_del()\
 	{\
 		if (--m_ref == 0)\
 			delete this;\
@@ -192,95 +192,91 @@ private:\
 ////////////////////////////////////////////////////////////////////////////////
 // auto ref ptr help manage auto ref object life cycle.
 template<typename ObjectT>
-class AutoRefPtr
+class Autoref
 {
-public:
-	inline ~AutoRefPtr()
+private:
+	inline void ref_add()
 	{
-		reset(nullptr);
+		if (m_ptr != 0) { m_ptr->ref_add(); }
+	}
+
+	ObjectT* m_ptr;
+
+public:
+	inline ~Autoref()
+	{
+		reset(0);
 	}
 
 	// add ref operation.
-	inline explicit AutoRefPtr(ObjectT* obj_ptr = nullptr) : m_obj_ptr(obj_ptr)
+	inline explicit Autoref(ObjectT* ptr = 0) : m_ptr(ptr)
 	{
-		add_ref();
+		ref_add();
 	}
 
-	inline AutoRefPtr(IN const AutoRefPtr& other) : m_obj_ptr(other.m_obj_ptr)
+	inline Autoref(IN const Autoref& other) : m_ptr(other.m_ptr)
 	{
-		add_ref();
+		ref_add();
 	}
 
-	inline AutoRefPtr& operator=(IN const AutoRefPtr& other)
+	inline Autoref& operator=(IN const Autoref& other)
 	{
-		reset(other.m_obj_ptr);
+		reset(other.m_ptr);
 		return *this;
 	}
 
-	inline AutoRefPtr(AutoRefPtr&& other) : m_obj_ptr(other.m_obj_ptr)
+	inline Autoref(Autoref&& other) : m_ptr(other.m_ptr)
 	{
-		other.m_obj_ptr = nullptr;
+		other.m_ptr = 0;
 	}
-	inline AutoRefPtr& operator=(IN AutoRefPtr&& other)
+	inline Autoref& operator=(IN Autoref&& other)
 	{
 		move(other);
 		return *this;
 	}
 
-	inline void reset(ObjectT* obj_ptr)
+	inline void reset(ObjectT* ptr)
 	{
-		if (m_obj_ptr != nullptr)		// del old object.
-			m_obj_ptr->del_ref();
-		m_obj_ptr = obj_ptr;			// set new object.
-		add_ref();
+		// del old object
+		if (m_ptr != 0) { m_ptr->ref_del(); }
+		// set new object
+		m_ptr = ptr;
+		ref_add();
 	}
 
-public:
 	inline ObjectT* operator->()
 	{
-		return m_obj_ptr;
+		return m_ptr;
 	}
 	inline const ObjectT* operator->() const
 	{
-		return m_obj_ptr;
+		return m_ptr;
 	}
 	inline ObjectT& operator*()
 	{
-		return *m_obj_ptr;
+		return *m_ptr;
 	}
 	inline const ObjectT& operator*() const
 	{
-		return *m_obj_ptr;
+		return *m_ptr;
 	}
 
-	inline void swap(IN AutoRefPtr& other)
+	inline void swap(IN Autoref& other)
 	{
-		std::swap(m_obj_ptr, other.m_obj_ptr);
+		std::swap(m_ptr, other.m_ptr);
 	}
 
-	inline void move(IN AutoRefPtr& other)
+	inline void move(IN Autoref& other)
 	{
-		if (m_obj_ptr != nullptr)
-			m_obj_ptr->del_ref();
-		m_obj_ptr = other.m_obj_ptr;
-		other.m_obj_ptr = nullptr;
+		if (m_ptr != 0) { m_ptr->ref_del(); }
+		m_ptr = other.m_ptr;
+		other.m_ptr = 0;
 	}
 
 	inline bool null() const
 	{
-		return m_obj_ptr == nullptr;
+		return m_ptr == 0;
 	}
-
-private:
-	inline void add_ref()
-	{
-		if (m_obj_ptr != nullptr)
-		{
-			m_obj_ptr->add_ref();
-		}
-	}
-
-	ObjectT* m_obj_ptr;
 };
 
 

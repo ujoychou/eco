@@ -1,0 +1,16 @@
+#pragma once
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+class SocketLinux
+{
+public:
+    // create socket fd
+    inline SocketLinux()
+    {
+        
+    }
+
+};

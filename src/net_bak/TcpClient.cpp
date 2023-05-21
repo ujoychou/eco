@@ -1,9 +1,12 @@
 #include "Pch.h"
-#include "TcpClient.h"
+#include "TcpClient.ipp"
 ////////////////////////////////////////////////////////////////////////////////
+#include "TcpOuter.h"
 #include <eco/App.h>
 #include <eco/rx/RxImpl.h>
+#include <eco/net/protocol/TcpProtocol2.h>
 #include <random>
+
 
 
 ECO_NS_BEGIN(eco);
@@ -210,7 +213,34 @@ void TcpClient::Impl::close()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco::Result TcpClient::sync(MessageMeta& meta, TcpSessionSync& item)
+TcpSession TcpClient::Impl::open_session()
+{
+	// create new session.
+	TcpSession session;
+	TcpSessionOuter sess(session);
+	// set connection data.
+	TcpConnectionOuter conn(sess.impl().m_conn);
+	conn.set_peer(peer().m_peer_observer);
+	// set pack data.
+	SessionDataPack::ptr pack(new SessionDataPack);
+	pack->m_session.reset(m_make_session(none_session, sess.impl().m_conn));
+	sess.impl().m_session_wptr = pack->m_session;
+	sess.impl().m_owner.set(this, false);
+	sess.make_client_session();
+	pack->m_user_observer = sess.impl().m_user;
+	// save pack.
+	//void* session_key = sess.impl().m_user.get();
+	//set_authority(session_key, pack);
+	return session;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco::Result TcpClient::Impl::request(
+	IN MessageMeta& req,
+	IN Codec& err_codec,
+	IN Codec& rsp_codec,
+	IN std::vector<void*>* rsp_set)
 {
 	// async manager.
 	uint32_t req_id = ++m_request_id;

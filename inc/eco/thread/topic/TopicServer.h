@@ -476,7 +476,7 @@ public:
 
 	inline void publish_snap(
 		IN eco::Topic::ptr& topic,
-		IN eco::AutoRefPtr<eco::Subscription>& sub)
+		IN eco::Autoref<eco::Subscription>& sub)
 	{
 		topic->publish_snap(*sub);
 	}
@@ -539,7 +539,7 @@ public:
 
 	inline void publish_snap(
 		IN eco::Topic::ptr& topic,
-		IN eco::AutoRefPtr<eco::Subscription>& sub)
+		IN eco::Autoref<eco::Subscription>& sub)
 	{
 		m_publish_worker.post(Publisher(topic, sub));
 	}

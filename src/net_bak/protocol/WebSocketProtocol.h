@@ -421,7 +421,7 @@ public:
 	}
 
 	virtual eco::Result decode_version(
-		OUT eco::net::MessageHead& head,
+		OUT eco::net::MessageTcp& head,
 		IN const char* byte,
 		IN const uint32_t size) const override
 	{
@@ -453,8 +453,8 @@ public:
 		return eco::ok;
 	}
 
-	virtual bool decode_size(
-		OUT IN eco::net::MessageHead& head,
+	virtual bool decode_tcp(
+		OUT IN eco::net::MessageTcp& head,
 		IN  const char* bytes,
 		IN  const uint32_t size) const override
 	{

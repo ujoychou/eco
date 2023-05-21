@@ -70,9 +70,9 @@ ECO_PROPERTY_VAR_IMPL(TcpOption, uint32_t, max_byte_size);
 
 //##############################################################################
 //##############################################################################
-class TcpClientOption::Impl : public TcpOption::Impl
+class TcpOptionClient::Impl : public TcpOption::Impl
 {
-	ECO_IMPL_INIT(TcpClientOption);
+	ECO_IMPL_INIT(TcpOptionClient);
 public:
 	std::string m_module_;
 	uint16_t m_suspend;
@@ -82,19 +82,19 @@ public:
 
 	inline Impl() : TcpOption::Impl()
 	{
-		m_balance = TcpClientOption::balance_average;
+		m_balance = TcpOptionClient::balance_average;
 		m_auto_reconnect_sec = 5;
 		m_load_event_sec = 5;
 		m_suspend = false;
 	}
 };
-ECO_VALUE_IMPL(TcpClientOption, TcpOption);
-ECO_PROPERTY_STR_IMPL(TcpClientOption, module_);
-ECO_PROPERTY_BOL_IMPL(TcpClientOption, suspend);
-ECO_PROPERTY_VAR_IMPL(TcpClientOption, uint16_t, balance);
-ECO_PROPERTY_VAR_IMPL(TcpClientOption, uint16_t, load_event_sec);
-ECO_PROPERTY_VAR_IMPL(TcpClientOption, uint16_t, auto_reconnect_sec);
-void TcpClientOption::set_balance(IN const char* v)
+ECO_VALUE_IMPL(TcpOptionClient, TcpOption);
+ECO_PROPERTY_STR_IMPL(TcpOptionClient, module_);
+ECO_PROPERTY_BOL_IMPL(TcpOptionClient, suspend);
+ECO_PROPERTY_VAR_IMPL(TcpOptionClient, uint16_t, balance);
+ECO_PROPERTY_VAR_IMPL(TcpOptionClient, uint16_t, load_event_sec);
+ECO_PROPERTY_VAR_IMPL(TcpOptionClient, uint16_t, auto_reconnect_sec);
+void TcpOptionClient::set_balance(IN const char* v)
 {
 	if (eco::iequal(v, "average"))
 		impl().m_balance = balance_average;
@@ -105,9 +105,9 @@ void TcpClientOption::set_balance(IN const char* v)
 
 //##############################################################################
 //##############################################################################
-class TcpServerOption::Impl : public TcpOption::Impl
+class TcpOptionServer::Impl : public TcpOption::Impl
 {
-	ECO_IMPL_INIT(TcpServerOption);
+	ECO_IMPL_INIT(TcpOptionServer);
 public:
 	uint32_t m_port;
 	uint32_t m_max_session_size;
@@ -134,15 +134,15 @@ public:
 		m_business_thread_size = 4;
 	}
 };
-ECO_VALUE_IMPL(TcpServerOption, TcpOption);
-ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint32_t, port);
-ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint32_t, max_session_size);
-ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint32_t, max_connection_size);
-ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint32_t, clean_dos_peer_sec);
-ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint16_t, io_thread_size);
-ECO_PROPERTY_VAR_IMPL(TcpServerOption, uint16_t, business_thread_size);
+ECO_VALUE_IMPL(TcpOptionServer, TcpOption);
+ECO_PROPERTY_VAR_IMPL(TcpOptionServer, uint32_t, port);
+ECO_PROPERTY_VAR_IMPL(TcpOptionServer, uint32_t, max_session_size);
+ECO_PROPERTY_VAR_IMPL(TcpOptionServer, uint32_t, max_connection_size);
+ECO_PROPERTY_VAR_IMPL(TcpOptionServer, uint32_t, clean_dos_peer_sec);
+ECO_PROPERTY_VAR_IMPL(TcpOptionServer, uint16_t, io_thread_size);
+ECO_PROPERTY_VAR_IMPL(TcpOptionServer, uint16_t, business_thread_size);
 ////////////////////////////////////////////////////////////////////////////////
-uint32_t TcpServerOption::horizontal_virtual_service_number() const
+uint32_t TcpOptionServer::horizontal_virtual_service_number() const
 {
 	return 8192;
 }

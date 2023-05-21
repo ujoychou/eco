@@ -1,5 +1,4 @@
-#ifndef ECO_NET_PROTOCOL_VERSION_H
-#define ECO_NET_PROTOCOL_VERSION_H
+#pragma once
 /*******************************************************************************
 @ name
 
@@ -32,6 +31,7 @@
 ECO_NS_BEGIN(eco);
 ECO_NS_BEGIN(net);
 class Protocol;
+class TcpSocket;
 ////////////////////////////////////////////////////////////////////////////////
 // support message option for message to send.
 enum
@@ -46,8 +46,6 @@ enum
 	category_encrypted			= 0x10,
 	// category: sync request, else aysnc.
 	category_sync				= 0x20,
-	// category: session mode.
-	category_session			= 0x40,
 };
 // for user define: MessageCategory is uint16_t.
 typedef uint16_t MessageCategory;
@@ -58,29 +56,35 @@ inline bool is_heartbeat(MessageCategory category)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class MessageHead
+class MessageTcp
 {
 public:
-	uint16_t		m_version;
-	MessageCategory m_category;
-	uint32_t		m_head_size;
-	uint32_t		m_data_size;
-	Protocol*		m_protocol;
+	// message head
+	uint16_t		version;
+	MessageCategory category;
 
-	inline MessageHead()
+	// tcp data
+	uint32_t		headsize;
+	uint32_t		datasize;
+	eco::String 	buffer;
+
+	Protocol*		protocol;
+	TcpSocket::ref  socket;
+	
+	inline MessageTcp()
 	{
 		memset(this, 0, sizeof(*this));
 	}
 
-	inline uint32_t message_size() const
+	inline uint32_t size() const
 	{
-		return m_head_size + m_data_size;
+		return headsize + datasize;
 	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API ProtocolVersion : public eco::RxHeap
+class ECO_API ProtocolTcp : public eco::RxHeap
 {
 public:
 	inline static uint16_t max_uint16()
@@ -93,18 +97,30 @@ public:
 	}
 
 	/*@ get message head size. check same protocol cluster.*/
-	virtual uint32_t version_size() const = 0;
+	virtual uint32_t size() const = 0
+	{
+		return pos_size;
+	}
 
 	/*@ decode message head.
 	* @ para.bytes: message head bytes.
 	*/
-	virtual eco::Result decode_version(
-		OUT eco::net::MessageHead& head,
+	virtual eco::Result decode(
+		OUT eco::net::MessageTcp& tcp,
 		IN const char* bytes,
-		IN const uint32_t size) const = 0;
+		IN const uint32_t size) const = 0
+	{
+		if (size >= pos_size)
+		{
+			head.m_version = bytes[pos_version];
+			head.m_category = bytes[pos_category];
+			return eco::ok;
+		}
+		return eco::fail;
+	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
-#endif
+ECO_NS_END(net)
+ECO_NS_END(eco)

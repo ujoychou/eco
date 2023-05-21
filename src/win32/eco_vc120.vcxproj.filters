@@ -192,13 +192,13 @@
     <ClCompile Include="..\DllObjectWin.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
-    <ClCompile Include="..\net\TcpClientOption.cpp">
+    <ClCompile Include="..\net\TcpOptionClient.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
     <ClCompile Include="..\net\TcpServer.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
-    <ClCompile Include="..\net\TcpServerOption.cpp">
+    <ClCompile Include="..\net\TcpOptionServer.cpp">
       <Filter>src\net</Filter>
     </ClCompile>
     <ClCompile Include="..\net\asio\TcpAcceptor.cpp">
@@ -452,7 +452,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpClient.h">
       <Filter>lib\net</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpClientOption.h">
+    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpOptionClient.h">
       <Filter>lib\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpConnector.h">
@@ -461,7 +461,7 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpServer.h">
       <Filter>lib\net</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpServerOption.h">
+    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpOptionServer.h">
       <Filter>lib\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpState.h">

@@ -40,10 +40,10 @@ class ECO_API TcpClient : public TcpDispatch
 	ECO_SHARED_API(TcpClient);
 public:
 	// network server option.
-	void set_option(IN const TcpClientOption&);
-	TcpClientOption& get_option();
-	const TcpClientOption& option() const;
-	TcpClient& option(IN const TcpClientOption&);
+	void set_option(IN const TcpOptionClient&);
+	TcpOptionClient& get_option();
+	const TcpOptionClient& option() const;
+	TcpClient& option(IN const TcpOptionClient&);
 
 	// service name.
 	inline const char* name() const

@@ -131,7 +131,7 @@ public:
 
 	// check tcp message is finished.
 	eco::Result on_decode_head(
-		OUT MessageHead& head, 
+		OUT MessageTcp& head, 
 		IN  const char* buff, 
 		IN  const uint32_t size);
 
@@ -323,7 +323,7 @@ public:
 	// get data context that to be handled by dispatch server.
 	inline void get_data_context(
 		OUT DataContext& dc,
-		IN  MessageHead& head,
+		IN  MessageTcp& head,
 		IN  eco::String& data)
 	{
 		dc.m_category = head.m_category;
@@ -334,7 +334,7 @@ public:
 	}
 
 	// tcp server: recv request.
-	inline void post(IN MessageHead& head, IN eco::String& data)
+	inline void post(IN MessageTcp& head, IN eco::String& data)
 	{
 		eco::net::DataContext dc;
 		get_data_context(dc, head, data);
@@ -352,7 +352,7 @@ public:
 
 	// when the peer has received data.
 	virtual void on_read(
-		IN MessageHead& head,
+		IN MessageTcp& head,
 		IN eco::String& data, bool err) override;
 
 	// the peer has send data.

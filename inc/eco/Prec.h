@@ -86,6 +86,12 @@ namespace eco{}
 #ifndef OUT
 #	define OUT
 #endif
+#ifndef OT
+#	define OT
+#endif
+#ifndef OI
+#	define OI
+#endif
 #ifndef TODO
 #	define TODO(something)
 #endif

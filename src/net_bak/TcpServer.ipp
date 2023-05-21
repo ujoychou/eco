@@ -48,7 +48,7 @@ public:
 	};
 
 	// server option.
-	TcpServerOption m_option;
+	TcpOptionServer m_option;
 	ProtocolFamily m_protocol;
 
 	// tcp acceptor.
@@ -239,7 +239,7 @@ public:
 /////////////////////////////////////////////////////////////// TCP PEER HANDLER
 public:
 	// when peer has received a message data bytes.
-	void on_read(IN void* peer, IN MessageHead& head, IN eco::String& data);
+	void on_read(IN void* peer, IN MessageTcp& head, IN eco::String& data);
 
 	// when peer has sended a data, async notify sended data size.
 	void on_send(IN void* peer, IN uint32_t size);
