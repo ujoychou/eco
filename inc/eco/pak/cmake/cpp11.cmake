@@ -21,6 +21,7 @@ endif()
 
 # option: for ccmake.
 option(MSVC_PCH "msvc precompile header file in windows." OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 # logging ccmake options.
 message("---------------------------------------------------------------------")
 message("== ${PROJECT_NAME}-${PROJECT_VERSION}-${PRJ_CFG}")

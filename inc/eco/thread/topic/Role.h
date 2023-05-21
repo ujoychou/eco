@@ -817,7 +817,7 @@ public:
 	// subscriber subscribe topic.
 	inline Publisher(
 		IN Topic::ptr& topic,
-		IN AutoRefPtr<Subscription>& node)
+		IN Autoref<Subscription>& node)
 		: m_mode(mode_publish_snap)
 		, m_topic(std::move(topic))
 		, m_node(std::move(node))
@@ -862,7 +862,7 @@ private:
 	uint32_t m_mode;
 	Topic::ptr m_topic;
 	ContentData::ptr m_new_content;
-	AutoRefPtr<Subscription> m_node;
+	Autoref<Subscription> m_node;
 };
 class PublisherHandler
 {

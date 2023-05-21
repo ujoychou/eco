@@ -140,9 +140,9 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpClientOption : public TcpOption
+class ECO_API TcpOptionClient : public TcpOption
 {
-	ECO_VALUE_API(TcpClientOption, TcpOption);
+	ECO_VALUE_API(TcpOptionClient, TcpOption);
 public:
 	enum
 	{
@@ -153,38 +153,38 @@ public:
 	// client module name.
 	void set_module_(IN const char*);
 	const char* module_() const;
-	TcpClientOption& module_(IN const char*);
+	TcpOptionClient& module_(IN const char*);
 
 	/* the time auto reconnect to server.*/
 	void set_auto_reconnect_sec(IN uint16_t);
 	uint16_t& get_auto_reconnect_sec();
 	uint16_t auto_reconnect_sec() const;
-	TcpClientOption& auto_reconnect_sec(IN uint16_t);
+	TcpOptionClient& auto_reconnect_sec(IN uint16_t);
 
 	/*@ load_evnets timeout.*/
 	void set_load_event_sec(IN uint16_t);
 	uint16_t& get_load_event_sec();
 	uint16_t load_event_sec() const;
-	TcpClientOption& load_event_sec(IN uint16_t);
+	TcpOptionClient& load_event_sec(IN uint16_t);
 
 	/*@ connect server with balance algorithm.*/
 	void set_balance(IN uint16_t);
 	uint16_t& get_balance();
 	uint16_t balance() const;
-	TcpClientOption& balance(IN uint16_t);
+	TcpOptionClient& balance(IN uint16_t);
 	void set_balance(IN const char*);
 
 	// whether client suspend.
 	void set_suspend(IN bool);
 	bool suspend() const;
-	TcpClientOption& suspend(IN bool);
+	TcpOptionClient& suspend(IN bool);
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API TcpServerOption : public TcpOption
+class ECO_API TcpOptionServer : public TcpOption
 {
-	ECO_VALUE_API(TcpServerOption, TcpOption);
+	ECO_VALUE_API(TcpOptionServer, TcpOption);
 public:
 	// server horizontal virtual service number.
 	uint32_t horizontal_virtual_service_number() const;
@@ -193,38 +193,38 @@ public:
 	void set_port(IN uint32_t);
 	uint32_t& get_port();
 	uint32_t port() const;
-	TcpServerOption& port(IN uint32_t);
+	TcpOptionServer& port(IN uint32_t);
 
 	// max connection size this server can accept.
 	void set_max_connection_size(IN uint32_t);
 	uint32_t& get_max_connection_size();
 	uint32_t max_connection_size() const;
-	TcpServerOption& max_connection_size(IN uint32_t);
+	TcpOptionServer& max_connection_size(IN uint32_t);
 
 	// max session size this server can contain.
 	void set_max_session_size(IN uint32_t);
 	uint32_t& get_max_session_size();
 	uint32_t max_session_size() const;
-	TcpServerOption& max_session_size(IN uint32_t);
+	TcpOptionServer& max_session_size(IN uint32_t);
 
 	/*@ set clean dos peer tick time.
 	*/
 	void set_clean_dos_peer_sec(IN uint32_t);
 	uint32_t& get_clean_dos_peer_sec();
 	uint32_t clean_dos_peer_sec() const;
-	TcpServerOption& clean_dos_peer_sec(IN uint32_t);
+	TcpOptionServer& clean_dos_peer_sec(IN uint32_t);
 
 	/*@ server io thread size to handle net data.*/
 	void set_io_thread_size(IN uint16_t);
 	uint16_t& get_io_thread_size();
 	uint16_t io_thread_size() const;
-	TcpServerOption& io_thread_size(IN uint16_t);
+	TcpOptionServer& io_thread_size(IN uint16_t);
 
 	/*@ server business thread size to handle request.*/
 	void set_business_thread_size(IN uint16_t);
 	uint16_t& get_business_thread_size();
 	uint16_t business_thread_size() const;
-	TcpServerOption& business_thread_size(IN uint16_t);
+	TcpOptionServer& business_thread_size(IN uint16_t);
 
 public:
 	inline uint32_t	horizental_number() const

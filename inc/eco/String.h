@@ -775,8 +775,7 @@ public:
 			if (new_size < c) { new_size = c; }
 
 			// keep old value.
-			char* new_data = (char*)RxHeap::
-				operator new[](new_size + 1);
+			char* new_data = (char*)RxHeap::operator new[](new_size + 1);
 			if (old_size > 0)
 			{
 				memcpy(new_data, m_data, old_size);
@@ -934,7 +933,10 @@ public:
 	}
 	inline uint32_t append(IN uint32_t size, IN char c)
 	{
-		if (size == 1) return append(c);
+		if (size == 1)
+		{
+			return append(c);
+		}
 		if (avail() >= size)
 		{
 			memset(&m_data[m_size], c, size);

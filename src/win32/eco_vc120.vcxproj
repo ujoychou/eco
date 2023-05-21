@@ -138,10 +138,10 @@
     <ClCompile Include="..\net\TcpClient.cpp" />
     <ClCompile Include="..\net\Net.cpp" />
     <ClCompile Include="..\net\TcpSession.cpp" />
-    <ClCompile Include="..\net\TcpClientOption.cpp" />
+    <ClCompile Include="..\net\TcpOptionClient.cpp" />
     <ClCompile Include="..\net\TcpPeer.cpp" />
     <ClCompile Include="..\net\TcpServer.cpp" />
-    <ClCompile Include="..\net\TcpServerOption.cpp" />
+    <ClCompile Include="..\net\TcpOptionServer.cpp" />
     <ClCompile Include="..\persist\CsvSource.cpp" />
     <ClCompile Include="..\process\ProcessWin.cpp" />
     <ClCompile Include="..\proxy\Proxy.cpp" />
@@ -207,12 +207,12 @@
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\StringHandler.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpAcceptor.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpClient.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpClientOption.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpOptionClient.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpSession.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpConnector.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpPeer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpServer.h" />
-    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpServerOption.h" />
+    <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpOptionServer.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpPeerSet.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\TcpState.h" />
     <ClInclude Include="..\..\..\..\..\contrib\eco\net\IoTimer.h" />
