@@ -22,45 +22,58 @@
 
 namespace eco {
 ////////////////////////////////////////////////////////////////////////////////
-template<typename T>
-class GroupT	// ()
+template<typename type_t, int id>
+class decoration
 {
 public:
-	inline GroupT(IN const T& v) : value(v) {}
-	const T& value;
+	inline decoration(const type_t& v) : value(v) {}
+	const type_t& value;
 };
-template<typename T>
-inline GroupT<T> group(IN const T& v)
-{
-	return GroupT<T>(v);
-}
+template<typename type_t> using square_t = decoration<type_t, 1>;
+template<typename type_t> using group_t = decoration<type_t, 2>;
+template<typename type_t> using brace_t = decoration<type_t, 3>;
+template<typename type_t> using space_t = decoration<type_t, 4>;
+template<typename type_t> using upper_t = decoration<type_t, 5>;
+template<typename type_t> using lower_t = decoration<type_t, 6>;
 
-template<typename T>
-class SquareT	// []
-{
-public:
-	inline SquareT() {}
-	inline SquareT(IN const T& v) : value(v) {}
-	const T& value;
-};
-template<typename T>
-inline SquareT<T> square(IN const T& v)
-{
-	return SquareT<T>(v);
-}
+template<typename type_t>
+inline square_t<type_t> square(const type_t& v) { return square_t<type_t>(v); }
+template<typename type_t>
+inline group_t<type_t> group(const type_t& v) { return group_t<type_t>(v); }
+template<typename type_t>
+inline brace_t<type_t> brace(const type_t& v) { return brace_t<type_t>(v); }
+template<typename type_t>
+inline space_t<type_t> space(const type_t& v) { return space_t<type_t>(v); }
+template<typename type_t>
+inline upper_t<type_t> upper(const type_t& v) { return upper_t<type_t>(v); }
+template<typename type_t>
+inline lower_t<type_t> lower(const type_t& v) { return lower_t<type_t>(v); }
 
-template<typename T>
-class BraceT	// {}
+
+////////////////////////////////////////////////////////////////////////////////
+class precision_t
 {
 public:
-	inline BraceT() {}
-	inline BraceT(IN const T& v) : value(v) {}
-	const T& value;
-};
-template<typename T>
-inline BraceT<T> brace(IN const T& v)
+	inline precision_t(double value, int prec) 
+		: value(value), prec(prec) {}
+	int prec;
+	double value;
+}
+inline precision_t precision(double v, int prec)
 {
-	return BraceT<T>(v);
+	return precision_t(v, prec);
+}
+class percent_t
+{
+public:
+	inline percent_t(double value, int prec)
+		: value(value), prec(prec) {}
+	int prec;
+	double value;
+}
+inline percent_t percent(const type_t& v, int prec)
+{
+	return percent_t(v, prec);
 }
 
 
@@ -69,49 +82,72 @@ template<typename type_t>
 class stream
 {
 public:
-	inline type_t& append(double v, int prec, bool percent)
+	template<typename type_t>
+	inline type_t& operator<<(const group_t<type_t>& v)
 	{
-		eco::Double fmt(v, prec, percent);
+		return rthis() << '(' << v.value << ')';
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const square_t<type_t>& v)
+	{
+		return rthis() << '[' << v.value << ']';
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const brace_t<type_t>& v)
+	{
+		return rthis() << '{' << v.value << '}';
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const space_t<type_t>& v)
+	{
+		return rthis() << ' ' << v.value;
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const upper_t<type_t>& v)
+	{
+		return rthis() << ' ' << v.value;
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const lower_t<type_t>& v)
+	{
+		return rthis() << ' ' << v.value;
+	}
+	inline type_t& operator<<(const percent_t& v)
+	{
+		eco::Double fmt(v.value, v.prec, true);
 		return rthis().append(fmt.c_str(), fmt.size());
 	}
-
-	template<typename T>
-	inline type_t& operator<(T v)
+	inline type_t& operator<<(const precision_t& v)
 	{
-		return *this << v;
+		eco::Double fmt(v.value, v.prec, false);
+		return rthis().append(fmt.c_str(), fmt.size());
 	}
-	template<typename T>
-	inline type_t& operator<=(T v)
-	{
-		return *this << sep << v;
-	}
-	inline type_t& operator<<(const eco::Bytes& v)
-	{
-		return rthis().append(v.c_str(), v.size());
-		return (type_t&)(*this);
-	}
-	ECO_STREAM_OPERATOR_REF(type_t, eco::Bytes, sep)
-	inline type_t& operator<<(const eco::String& v)
-	{
-		return rthis().append(v.c_str(), v.size());
-		return (type_t&)(*this);
-	}
-	ECO_STREAM_OPERATOR_REF(type_t, eco::String, sep)
-	inline type_t& operator<<(const std::string& v)
-	{
-		return rthis().append(v.c_str(), (uint32_t)v.size());
-		return (type_t&)(*this);
-	}
+};
+	
 
 public:
 	inline type_t& rthis()
 	{
 		return (type_t&)(*this);
 	}
+	inline type_t& operator<<(const eco::Bytes& v)
+	{
+		return rthis().append(v.c_str(), v.size());
+	}
+	inline type_t& operator<<(const eco::String& v)
+	{
+		return rthis().append(v.c_str(), v.size());
+	}
+	inline type_t& operator<<(const std::string& v)
+	{
+		return rthis().append(v.c_str(), (uint32_t)v.size());
+	}
 	inline type_t& operator<<(const char* v)
 	{
 		return rthis().append(v, (uint32_t)strlen(v));
 	}
+
+public:
 	inline type_t& operator<<(bool v)
 	{
 		(*this) << eco::cast(v).c_str();
