@@ -17,37 +17,42 @@
 
 *******************************************************************************/
 #include <stdint.h>
-#include <functional>
-#include <eco/service/session.hpp>
+#include <eco/service/service.hpp>
 
 
-eco_namespace(eco);
+
+namespace eco {
 ////////////////////////////////////////////////////////////////////////////////
-class method
+class app
 {
+	ECO_SINGLE(app);
+protected:
+	app();
+
+	// init app config
+	virtual void on_init() {}
+
+	// init command
+	virtual void on_cmd()  {}
+
+	// load business data through the initialized object
+	virtual void on_load() {}
+
+	// app exit
+	virtual void on_exit() {}
+
 public:
-	template<typename request_t>
-	inline void bind(std::function<void(eco::session_request<request_t>&)>&& f)
-	{
-	}
+	eco::service service(uint32_t domain, uint32_t service);
+	eco::service service(uint32_t service);
 
-	void sync(const eco::string& request, eco::string& reply)
-	{
-		ECO_THROW(101);
-	}
+	template<typename service_t>
+	service_t service(uint32_t domain, uint32_t service);
 
-	template<typename reply_t, typename request_t>
-	void sync(const request_t& request, reply_t& reply)
-	{
-		ECO_THROW(101);
-	}
-
-	template<typename reply_t, typename request_t>
-	void async(
-		const request_t& request,
-		std::function<void(eco::session_reply<reply_t>&)>&& reply_func);
+	template<typename service_t>
+	service_t service(uint32_t service);
 };
 
 
+#define ECO_APP(app_class)
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(eco);
+} // namespace eco

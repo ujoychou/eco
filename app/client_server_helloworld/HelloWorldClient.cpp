@@ -34,6 +34,12 @@ public:
 			ECO_LOG(info, "async say hello to %s reply back.", 
 				sess.reply().name().c_str());
 		});
+
+
+		const char* name = "sssssdddsss";
+		ECO_INFO() << eco::gr(name) << eco::sq(name) << eco::br(name) << eco::sp(name);
+		ECO_INFO() << eco::group(name) << eco::square(name) << eco::brace(name) << eco::space(name)
+		<< eco::upper(eco::boolean(true, 1)) << eco::percent(name) << eco::brace(name) << eco::space(name);
 	}
 
 public:
