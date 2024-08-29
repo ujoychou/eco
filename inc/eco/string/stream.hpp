@@ -51,103 +51,12 @@ inline lower_t<type_t> lower(const type_t& v) { return lower_t<type_t>(v); }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class precision_t
-{
-public:
-	inline precision_t(double value, int prec) 
-		: value(value), prec(prec) {}
-	int prec;
-	double value;
-}
-inline precision_t precision(double v, int prec)
-{
-	return precision_t(v, prec);
-}
-class percent_t
-{
-public:
-	inline percent_t(double value, int prec)
-		: value(value), prec(prec) {}
-	int prec;
-	double value;
-}
-inline percent_t percent(const type_t& v, int prec)
-{
-	return percent_t(v, prec);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 template<typename type_t>
 class stream
 {
 public:
-	template<typename type_t>
-	inline type_t& operator<<(const group_t<type_t>& v)
-	{
-		return rthis() << '(' << v.value << ')';
-	}
-	template<typename type_t>
-	inline type_t& operator<<(const square_t<type_t>& v)
-	{
-		return rthis() << '[' << v.value << ']';
-	}
-	template<typename type_t>
-	inline type_t& operator<<(const brace_t<type_t>& v)
-	{
-		return rthis() << '{' << v.value << '}';
-	}
-	template<typename type_t>
-	inline type_t& operator<<(const space_t<type_t>& v)
-	{
-		return rthis() << ' ' << v.value;
-	}
-	template<typename type_t>
-	inline type_t& operator<<(const upper_t<type_t>& v)
-	{
-		return rthis() << ' ' << v.value;
-	}
-	template<typename type_t>
-	inline type_t& operator<<(const lower_t<type_t>& v)
-	{
-		return rthis() << ' ' << v.value;
-	}
-	inline type_t& operator<<(const percent_t& v)
-	{
-		eco::Double fmt(v.value, v.prec, true);
-		return rthis().append(fmt.c_str(), fmt.size());
-	}
-	inline type_t& operator<<(const precision_t& v)
-	{
-		eco::Double fmt(v.value, v.prec, false);
-		return rthis().append(fmt.c_str(), fmt.size());
-	}
-};
-	
+	inline type_t& rthis() { return (type_t&)(*this); }
 
-public:
-	inline type_t& rthis()
-	{
-		return (type_t&)(*this);
-	}
-	inline type_t& operator<<(const eco::Bytes& v)
-	{
-		return rthis().append(v.c_str(), v.size());
-	}
-	inline type_t& operator<<(const eco::String& v)
-	{
-		return rthis().append(v.c_str(), v.size());
-	}
-	inline type_t& operator<<(const std::string& v)
-	{
-		return rthis().append(v.c_str(), (uint32_t)v.size());
-	}
-	inline type_t& operator<<(const char* v)
-	{
-		return rthis().append(v, (uint32_t)strlen(v));
-	}
-
-public:
 	inline type_t& operator<<(bool v)
 	{
 		(*this) << eco::cast(v).c_str();
@@ -202,9 +111,48 @@ public:
 		eco::Double str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
+	inline type_t& operator<<(const char* v)
+	{
+		return rthis().append(v, (uint32_t)strlen(v));
+	}
+
+public:
+	template<typename type_t>
+	inline type_t& operator<<(const group_t<type_t>& v)
+	{
+		return rthis() << '(' << v.value << ')';
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const square_t<type_t>& v)
+	{
+		return rthis() << '[' << v.value << ']';
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const brace_t<type_t>& v)
+	{
+		return rthis() << '{' << v.value << '}';
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const space_t<type_t>& v)
+	{
+		return rthis() << ' ' << v.value;
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const upper_t<type_t>& v)
+	{
+		return rthis() << ' ' << v.value;
+	}
+	template<typename type_t>
+	inline type_t& operator<<(const lower_t<type_t>& v)
+	{
+		return rthis() << ' ' << v.value;
+	}
+	inline type_t& operator<<(const precision& v)
+	{
+		return rthis().append(v.buff, v.size);
+	}
 };
 
 
-#define ECO_APP(app_class)
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace eco
