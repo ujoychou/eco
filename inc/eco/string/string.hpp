@@ -16,19 +16,15 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <stdint.h>
-#include <eco/service/service.hpp>
+#include <eco/string/stream.hpp>
 
 
 
 namespace eco {
 ////////////////////////////////////////////////////////////////////////////////
-class app
+class string : public eco::stream<eco::string>
 {
-	ECO_SINGLE(app);
 protected:
-	app();
-
 	// init app config
 	virtual void on_init() {}
 

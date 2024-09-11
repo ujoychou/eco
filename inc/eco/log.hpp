@@ -18,6 +18,7 @@
 *******************************************************************************/
 #include <stdint.h>
 #include <stdarg.h>
+#include <eco/string/stream.hpp>
 
 
 namespace eco {
@@ -74,9 +75,8 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class stream
+class stream : public eco::stream<eco::log::stream>
 {
-    ECO_STREAM_DELARE();
 public:
     inline stream(
         level level, const char* file, int line, const char* title,
@@ -96,20 +96,20 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define ECO_LOG_LEVEL(level, title, ...) \
+#define eco_log_level(level, title, ...) \
   level <= log_level() ? (void)0 : \
   eco::log::stream(level, __FILE__, __LINE__, title, ##__VA_ARGS__, NULL)
-#define ECO_LOG(level, title, ...) \
+#define eco_log(level, title, ...) \
   eco::log::level <= log_level() ? (void)0 : \
   eco::log::stream(##level, __FILE__, __LINE__, title, ##__VA_ARGS__, NULL)
 
-#define ECO_TRACE(...) ECO_LOG(trace, 0, ##__VA_ARGS__)
-#define ECO_DEBUG(...) ECO_LOG(debug, 0, ##__VA_ARGS__)
-#define ECO_INFO(...)  ECO_LOG(info,  0, ##__VA_ARGS__)
-#define ECO_WARN(...)  ECO_LOG(warn,  0, ##__VA_ARGS__)
-#define ECO_ERROR(...) ECO_LOG(error, 0, ##__VA_ARGS__)
-#define ECO_FATAL(...) ECO_LOG(fatal, 0, ##__VA_ARGS__)
-#define ECO_FUNC(level, ...) ECO_LOG(level, __func__, __VA_ARGS__)
+#define eco_trace(...) eco_log(trace, 0, ##__VA_ARGS__)
+#define eco_debug(...) eco_log(debug, 0, ##__VA_ARGS__)
+#define eco_info(...)  eco_log(info,  0, ##__VA_ARGS__)
+#define eco_warn(...)  eco_log(warn,  0, ##__VA_ARGS__)
+#define eco_error(...) eco_log(error, 0, ##__VA_ARGS__)
+#define eco_fatal(...) eco_log(fatal, 0, ##__VA_ARGS__)
+#define eco_func(level, ...) eco_log(level, __func__, __VA_ARGS__)
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace log
 } // namespace eco

@@ -38,6 +38,7 @@
 #define eco_todo(thing)
 #define eco_note(thing)
 
+// c++ macro override
 #define eco_macro_cat_(a, b) a##b
 #define eco_macro_cat(a, b) eco_macro_cat_(a, b)
 #define eco_macro_str_(a) #a
@@ -52,5 +53,5 @@ eco_macro_cat(macro, eco_macro_getn(__VA_ARGS__))(__VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace(eco)
-using Bool = uint32_t;
+using bool_t = uint32_t;
 eco_namespace_end(eco)
