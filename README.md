@@ -19,6 +19,7 @@ code
     eco-pack
       cpp11.cmake
     eco-mysql
+  erx
   ref
     github/boost
     github/fast_float
@@ -26,7 +27,6 @@ code
     eco
     module1/
     module2/
-conan
 demo
 doc
 pack
