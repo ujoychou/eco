@@ -100,9 +100,15 @@ public:
 		static_cast<integer_to_string<integer_t>&>(result)(v, fmt);
 	}
 
-	c_str(double v, uint32_t precision, bool_t percent)
+	c_str(float v, uint32_t precision, bool_t percent)
 	{
 		//double_to_string_format fmt(base, width, hold);
+		//static_cast<double_to_string<integer_t>&>(result)(v, fmt);
+	}
+
+	c_str(double v, uint32_t precision, bool_t percent)
+	{
+		//float_to_string_format fmt(base, width, hold);
 		//static_cast<double_to_string<integer_t>&>(result)(v, fmt);
 	}
 
@@ -113,12 +119,14 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 // cast type to string
-inline std::string cast(bool v, cast::bool_format format = cast::bool_01)
+inline std::string cast(bool v, cast::bool_format format = cast::bool_format_01)
 {
-	if (format == cast::bool_01)
+	if (format == cast::bool_format_01)
 		return v ? "1" : "0";
-	if (format == cast::bool_true_false)
+	if (format == cast::bool_format_tf)
 		return v ? "true" : "false";
+	if (format == cast::bool_format_yn)
+		return v ? "yes" : "no";
 	return "bool";
 }
 inline std::string cast(int16_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')

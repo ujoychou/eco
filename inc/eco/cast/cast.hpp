@@ -26,8 +26,9 @@ eco_namespace(cast);
 ////////////////////////////////////////////////////////////////////////////////
 enum
 {
-    bool_01             = 1,
-    bool_true_false     = 2
+    bool_format_01    = 1,
+    bool_format_tf    = 2,
+	bool_format_yn    = 3,
 };
 typedef int bool_format;
 
