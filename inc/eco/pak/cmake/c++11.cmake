@@ -3,6 +3,7 @@
 # SRC_DIRS: dedicated the source files to build.
 # PRJ_VER_FILE: the output version file.
 ################################################################################
+
 # project platform. win32/linux/win64
 if(PRJ_LINUX)
     add_definitions(-DECO_LINUX)

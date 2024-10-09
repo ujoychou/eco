@@ -17,7 +17,6 @@
 
 *******************************************************************************/
 #include <eco/macro.hpp>
-#include <eco/string/stream.hpp>
 #include <eco/string/string.hpp>
 
 
@@ -36,8 +35,8 @@ eco_namespace_end(detail);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace(this_thread);
 // thread local error data
+eco_namespace(this_thread);
 eco::detail::error_data& error();
 eco_namespace_end(this_thread);
 
@@ -51,16 +50,16 @@ public:
         data.id = id;
     }
 
+    inline error(const char* path) : data(eco::this_thread::error())
+    {
+        data.path = path;
+    }
+
     inline error(int id, const char* format, ...)
         : data(eco::this_thread::error())
     {
         data.id = id;
         data.format = format;
-    }
-
-    inline error(const char* path) : data(eco::this_thread::error())
-    {
-        data.path = path;
     }
 
     inline error(const char* path, const char* format, ...)
