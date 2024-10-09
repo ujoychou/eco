@@ -37,15 +37,18 @@ inline T cast(const eco::string_view& v, uint32_t size)
 
 template<> inline bool cast(const eco::string_view& v)
 {
-	return !v.null() && (v[0] == '1' || eco::iequal(v.c_str(), "true"));
+	if (v.null()) { return false; }
+	return v[0] == '1' 
+		|| eco::iequal(v.c_str(), "yes")
+	    || eco::iequal(v.c_str(), "true");
 }
 template<> inline int8_t cast(const eco::string_view& v)
 {
-	return v[0];
+	return static_cast<uint8_t>(string_to_integer<int32_t>(v).value);
 }
 template<> inline uint8_t cast(const eco::string_view& v)
 {
-	return v[0];
+	return static_cast<uint8_t>(string_to_integer<int32_t>(v).value);
 }
 template<> inline int16_t cast(const eco::string_view& v)
 {
@@ -112,6 +115,12 @@ public:
 		//static_cast<double_to_string<integer_t>&>(result)(v, fmt);
 	}
 
+	c_str(double v, uint32_t precision, bool_t percent)
+	{
+		//float_to_string_format fmt(base, width, hold);
+		//static_cast<double_to_string<integer_t>&>(result)(v, fmt);
+	}
+
 private:
 	eco::cast::string_result result;
 };
@@ -119,7 +128,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 // cast type to string
-inline std::string cast(bool v, cast::bool_format format = cast::bool_format_01)
+inline const char* cast(bool v, cast::bool_format format = cast::bool_format_01)
 {
 	if (format == cast::bool_format_01)
 		return v ? "1" : "0";
@@ -131,35 +140,43 @@ inline std::string cast(bool v, cast::bool_format format = cast::bool_format_01)
 }
 inline std::string cast(int16_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 {
-	return eco::c_str(v, base, width, hold).value();
+	eco::c_str s(v, base, width, hold).value();
+	return std::string(s.c_str(), s.size());
 }
 inline std::string cast(uint16_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 {
-	return eco::c_str(v, base, width, hold).value();
+	eco::c_str s(v, base, width, hold).value();
+	return std::string(s.c_str(), s.size());
 }
 inline std::string cast(int32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 {
-	return eco::c_str(v, base, width, hold).value();
+	eco::c_str s(v, base, width, hold).value();
+	return std::string(s.c_str(), s.size());
 }
 inline std::string cast(uint32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 {
-	return eco::c_str(v, base, width, hold).value();
+	eco::c_str s(v, base, width, hold).value();
+	return std::string(s.c_str(), s.size());
 }
 inline std::string cast(int64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 {
-	return eco::c_str(v, base, width, hold).value();
+	eco::c_str s(v, base, width, hold).value();
+	return std::string(s.c_str(), s.size());
 }
 inline std::string cast(uint64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 {
-	return eco::c_str(v, base, width, hold).value();
+	eco::c_str s(v, base, width, hold);
+	return std::string(s.c_str(), s.size());
 }
 inline std::string cast(double v)
 {
-	return std::string(c_str(v, 0, false));
+	eco::c_str s(v, 0, false);
+	return std::string(s.c_str(), s.size());
 }
 inline std::string cast(double v, int precision, bool_t percent = false)
 {
-	return std::string(c_str(v, precision, percent));
+	eco::c_str s(v, precision, percent);
+	return std::string(s.c_str(), s.size());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

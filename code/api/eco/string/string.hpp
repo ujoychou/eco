@@ -20,35 +20,20 @@
 
 
 
-namespace eco {
+eco_namespace(eco)
 ////////////////////////////////////////////////////////////////////////////////
 class string : public eco::stream<eco::string>
 {
-protected:
-	// init app config
-	virtual void on_init() {}
-
-	// init command
-	virtual void on_cmd()  {}
-
-	// load business data through the initialized object
-	virtual void on_load() {}
-
-	// app exit
-	virtual void on_exit() {}
-
 public:
-	eco::service service(uint32_t domain, uint32_t service);
-	eco::service service(uint32_t service);
+	inline void append(const char c, uint32_t size)
+	{
+	}
 
-	template<typename service_t>
-	service_t service(uint32_t domain, uint32_t service);
-
-	template<typename service_t>
-	service_t service(uint32_t service);
+	inline void append(const char* str, uint32_t size)
+	{
+	}
 };
 
 
-#define ECO_APP(app_class)
 ////////////////////////////////////////////////////////////////////////////////
-} // namespace eco
+eco_namespace_end(eco)

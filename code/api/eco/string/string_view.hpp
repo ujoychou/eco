@@ -27,11 +27,14 @@ class string_view
 public:
 	template<typename string_t>
 	inline string_view(const string_t& v) 
-		: data_(v.c_str()), size_((uint32_t)v.size()) {}
+		: data_(v.c_str()), size_(static_cast<uint32_t>(v.size()))
+	{}
 
-	inline string_view(const char* v) : data_(v), size_(-1) {}
+	inline string_view(const char* v) : data_(v), size_(-1)
+	{}
 
-	inline string_view(const char* v, uint32_t size) : data_(v), size_(size) {}
+	inline string_view(const char* v, uint32_t size) : data_(v), size_(size)
+	{}
 
 	inline bool null() const
 	{
@@ -50,7 +53,7 @@ public:
 
 	inline char operator[](uint32_t index) const
 	{
-		return null() ? 0 : data_[0];
+		return null() ? 0 : data_[index];
 	}
 
 	inline uint32_t size() const
@@ -71,6 +74,5 @@ private:
 };
 
 
-#define eco_app(app_class)
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(eco)

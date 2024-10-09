@@ -91,11 +91,8 @@ inline integer_t to_positive(integer_t v)
 }
 inline uint32_t to_base_shift(uint32_t base)
 {
-	if (base < 2 || (base & (base - 1)) != 0)
-	{
-		return 0;
-	}
 	uint32_t shift = 1;
+	if (base < 2 || (base & (base - 1)) != 0) { return 0; }
 	for (; base > 2; base >>= 1, ++shift) {}
 	return shift;
 }
@@ -123,7 +120,7 @@ inline char first(const char* v)
 inline bool iequal(const char* s1, const char* s2)
 {
 	char c1, c2;
-	do
+	do 
 	{
 		c1 = to_upper(*s1++);
 		c2 = to_upper(*s2++);
@@ -135,7 +132,7 @@ inline int snprintf(char* buff, size_t size, const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	int result = _vsnprintf(buff, size, format, arglist);
+	int result = _vsnprintf(buff, size, format, args);
 	va_end(args);
 	return result;
 }

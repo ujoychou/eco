@@ -1,5 +1,13 @@
 ﻿{
+  "trade": {
+    "subaccount": {
+      "401": "The balance of sub-account %1 is insufficient. The current balance is %2, which is less than the %3 required for this transaction."
+    }
+  },
   "tr": {
     "401":  ""
   }
 }
+
+
+

@@ -18,9 +18,10 @@
 *******************************************************************************/
 #include <stdint.h>
 #include <string>
+#include <eco/string_view.hpp>
 
 
-namespace eco {
+eco_namespace(eco)
 ////////////////////////////////////////////////////////////////////////////////
 template<typename type_t, int id>
 class decoration
@@ -59,61 +60,78 @@ public:
 
 	inline type_t& operator<<(bool v)
 	{
-		(*this) << eco::cast(v).c_str();
-		return (type_t&)(*this);
+		const char* str = eco::cast(v, eco::cast::bool_format_01);
+		return rthis().append(str[0], 1);
 	}
 	inline type_t& operator<<(char v)
 	{
-		return rthis().append(1, v);
+		return rthis().append(v, 1);
 	}
 	inline type_t& operator<<(int8_t v)
 	{
-		eco::Integer<int8_t> str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(uint8_t v)
 	{
-		eco::Integer<uint8_t> str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(int16_t v)
 	{
-		eco::Integer<int16_t> str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(uint16_t v)
 	{
-		eco::Integer<uint16_t> str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(int32_t v)
 	{
-		eco::Integer<int32_t> str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(uint32_t v)
 	{
-		eco::Integer<uint32_t> str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(int64_t v)
 	{
-		eco::Integer<int64_t> str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(uint64_t v)
 	{
-		eco::Integer<uint64_t> str(v);
+		eco::c_str str(v);
+		return rthis().append(str.c_str(), str.size());
+	}
+	inline type_t& operator<<(float v)
+	{
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(double v)
 	{
-		eco::Double str(v);
+		eco::c_str str(v);
 		return rthis().append(str.c_str(), str.size());
 	}
 	inline type_t& operator<<(const char* v)
 	{
 		return rthis().append(v, (uint32_t)strlen(v));
+	}
+	inline type_t& operator<<(const eco::string_view& v)
+	{
+		return rthis().append(v.c_str(), v.size());
+	}
+	inline type_t& operator<<(const eco::c_str& v)
+	{
+		return rthis().append(v.c_str(), v.size());
+	}
+	inline type_t& operator<<(const std::string& v)
+	{
+		return rthis().append(v.c_str(), v.size());
 	}
 
 public:
@@ -140,19 +158,15 @@ public:
 	template<typename type_t>
 	inline type_t& operator<<(const upper_t<type_t>& v)
 	{
-		return rthis() << ' ' << v.value;
+		return rthis() << to_upper(v.value);
 	}
 	template<typename type_t>
 	inline type_t& operator<<(const lower_t<type_t>& v)
 	{
-		return rthis() << ' ' << v.value;
-	}
-	inline type_t& operator<<(const precision& v)
-	{
-		return rthis().append(v.buff, v.size);
+		return rthis() << to_lower(v.value);
 	}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-} // namespace eco
+eco_namespace_end(eco)

@@ -10,7 +10,7 @@ set(PRJ_VER_FILE ${PRJ_DIR}/inc/eco/rx/RxVersion.h)
 # src files: directory.
 set(SRC_DIRS ${PRJ_DIR}/src)
 # src files: exclude cpp.
-list(APPEND SRC_DIRS_EXCLUDE ${SRC_DIRS}/service)
+list(APPEND SRC_DIRS_EXCLUDE  ${SRC_DIRS}/service)
 list(APPEND SRC_FILES_EXCLUDE ${SRC_DIRS}/persist/Mysql.cpp)
 list(APPEND SRC_FILES_EXCLUDE ${SRC_DIRS}/persist/Sqlite.cpp)
 list(APPEND SRC_FILES_EXCLUDE ${SRC_DIRS}/xml/Reader.old.cpp)
@@ -22,4 +22,4 @@ set(LINK_LIBS libpthread.so libprotobufd.so libz.a)
 set(INS_DIR ${PRJ_DIR}/lib/eco)
 
 # apply with cpp11
-include(${PRJ_DIR}/inc/eco/pak/cmake/cpp11.cmake)
+include(${PRJ_DIR}/inc/eco/pak/cmake/c++11.cmake)

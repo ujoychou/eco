@@ -22,48 +22,66 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// error key: id & path
 eco_namespace(eco);
-eco_namespace(data);
-struct error
+eco_namespace(detail);
+struct error_data
 {
     int id;
     eco::string path;
     eco::string message;
+    const char* format;
 };
-eco_namespace_end(data);
+eco_namespace_end(detail);
 
+
+////////////////////////////////////////////////////////////////////////////////
 eco_namespace(this_thread);
-eco::data::error& error();
+// thread local error data
+eco::detail::error_data& error();
 eco_namespace_end(this_thread);
 
 
-
-template<typename type_t>
-class format
+////////////////////////////////////////////////////////////////////////////////
+class error : public eco::stream<eco::error>
 {
 public:
-    inline type_t& rthis() { return (type_t&)(*this); }
+    inline error(int id) : data(eco::this_thread::error())
+    {
+        data.id = id;
+    }
+
+    inline error(int id, const char* format, ...)
+        : data(eco::this_thread::error())
+    {
+        data.id = id;
+        data.format = format;
+    }
+
+    inline error(const char* path) : data(eco::this_thread::error())
+    {
+        data.path = path;
+    }
+
+    inline error(const char* path, const char* format, ...)
+        : data(eco::this_thread::error())
+    {
+        data.path = path;
+        data.format = format;
+    }
 
     inline type_t& operator % (int v)
     {
         return (type_t&)(*this);
     }
-};
 
-////////////////////////////////////////////////////////////////////////////////
-class error : 
-    public std::exception,
-    public eco::stream<eco::error>,
-    public eco::format<eco::error>
-{
-public:
-    inline error(int id) : data(eco::this_thread::error()) {}
-    inline error(int id, const char* format, ...);
-    inline error(const char* path);
-    inline error(const char* path, const char* format, ...);
+    inline const eco::string& message()
+    {
+        return data.message;
+    }
 
 private:
-    eco::data::error& data;
+    eco::detail::error_data& data;
 };
 
 

@@ -52,10 +52,8 @@ const char* tables::int_to_char_100 = "00010203040506070809"
 "101112131415161718192021222324252627282930313233343536373839"
 "404142434445464748495051525354555657585960616263646566676869"
 "707172737475767778798081828384858687888990919293949596979899";
-const char* tables::int_to_char_upper = 
-"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const char* tables::int_to_char_lower = 
-"0123456789abcdefghijklmnopqrstuvwxyz";
+const char* tables::int_to_char_upper = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const char* tables::int_to_char_lower = "0123456789abcdefghijklmnopqrstuvwxyz";
 const uint8_t tables::ascii_to_int[80] = {
 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  36, 36, 36, 36, 36, 36, 36, 10, 11, 12, 
 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 
