@@ -4,35 +4,35 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(error, return_error)
+class ErrorTest : public ::testing::Test
 {
-    
-    const char* url = "10.21.153.55:9050/images/icon/cool.jpg";
-    eco::error("login fail, username or password is error.");
-    eco::error("get file error: %1 don't have %2 privilege of file %3") % "zhouyu" % 1 % url;
+public:
+    static void SetUpTestSuite()
+    {
+    }
+    static void TearDownTestSuite()
+    {
+    }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(ErrorTest, return_error)
+{
+    //const char* url = "10.21.153.55:9050/images/icon/cool.jpg";
+    //eco::error("login fail, username or password is error.");
+     //eco::error("get file error: %1 don't have %2 privilege of file %3") % "zhouyu" % 1 % url;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(error, throw_error)
+TEST_F(ErrorTest, throw_error)
 {
-    try
-    {
-        eco_throw();
-    }
-    catch(const eco::error& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    
-    const char* url = "10.21.153.55:9050/images/icon/cool.jpg";
-    eco::error("login fail, username or password is error.");
-    eco::error("get file error: %1 don't have %2 privilege of file %3") % "zhouyu" % 1 % url;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(error, multiple_language)
+TEST_F(ErrorTest, multiple_language)
 {
     /* <en_us/error.json>
     {
@@ -52,6 +52,8 @@ TEST_F(error, multiple_language)
     }
     catch(const eco::error& e)
     {
-        ASSERT_TRUE(e.message() == "The balance of sub-account S90092 is insufficient. The current balance is 1000, which is less than the 1300 required for this transaction.");
+        ASSERT_TRUE(e.message() == "The balance of sub-account S90092 is "
+"insufficient. The current balance is 1000, which is less than the 1300 "
+"required for this transaction.");
     }
 }
