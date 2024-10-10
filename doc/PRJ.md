@@ -23,8 +23,6 @@
   * 构建基础模块：值语义、对象语义、共享语义
   value/share/object/single
 
-
-
 异常场景：
 多语言的解决方案：
 * 给用户的显示信息支持多语言，也支持语言的切换。
@@ -39,3 +37,15 @@
   性能测试：使用python3/locust
 
   在linux环境下，使用sqlite3，执行sql语句没有执行结果的原因是：没有添加分号；
+
+
+### CONAN使用
+* conan说明文档有问题，按照如下设置会报错误
+compiler.cppstd=gnu17
+应修改为
+compiler.cppstd=17
+
+[option]
+应该像如此设置
+gtest/&:shared=True gtest项目设置
+gtest/*:shared=True gtest依赖项设置

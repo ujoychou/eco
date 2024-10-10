@@ -3,13 +3,12 @@ os=Linux
 arch=x86_64
 build_type=Release
 compiler=gcc
-compiler.cppstd=gnu17
+compiler.cppstd=17
 compiler.libcxx=libstdc++11
 compiler.version=11
 
 [options]
-fPIC=True
-shared=False
-build_gmock=True
-hide_symbols=False
-disable_pthreads=False
+gtest/&:shared=True
+gtest/&:build_gmock=True
+gtest/&:hide_symbols=False
+gtest/&:disable_pthreads=False
