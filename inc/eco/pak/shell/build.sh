@@ -1,12 +1,13 @@
 #!/bin/bash
 ################################################################################
-#PROJECT: project name. [eco/vision]
-#VERSION: project version. [1.3.1]
-#BUILD_TYPE: configure name. [debug/release]
-#BUILD_PATH: where project root directory. [git/eco]
-#PLATFORM_HOST: platform name. [linux-x64/linux-aarch64/win-x64]
-#PLATFORM_BUILD: 
-#THREADS: compile source code with multiple threads. [1/4/8]
+# PROJECT: project name. [eco/vision]
+# VERSION: project version. [1.3.1]
+# BUILD_TYPE: [debug/release]
+# BUILD_PATH: build output directory. [git/eco]
+# PLATFORM_HOST: [linux-x64/linux-aarch64/win-x64]
+# PLATFORM_BUILD: 
+# COMPILER: [gcc/msvc/clang]
+# THREADS: compile source code with multiple threads. [1/4/8]
 ################################################################################
 
 echo "-------------------------------------------------------------------------"
@@ -30,8 +31,8 @@ conan install ${CONAN_DIR}/conanfile.txt -of ${TMP_DIR}/${PRJ_CFG} \
 # cmake: create makefile.
 cd ${TMP_DIR}/${PRJ_CFG}
 echo "== -> "`pwd`
-cmake ${CMAKE_DIR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DPLATFORM=${PLATFORM_HOST} \
--DVERSION=${VERSION}
+cmake ${CMAKE_DIR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DVERSION=${VERSION} \
+-DPLATFORM=${PLATFORM_HOST} -DCOMPILER=${COMPILER}
 # make: build & move to bin.
 make -j${THREADS}
 mkdir -p ${BIN_DIR}/${PRJ_CFG}

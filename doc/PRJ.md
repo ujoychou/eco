@@ -49,3 +49,6 @@ compiler.cppstd=17
 应该像如此设置
 gtest/&:shared=True gtest项目设置
 gtest/*:shared=True gtest依赖项设置
+
+[layout]
+when using cmake_layout, conan will make build/Release/generators directory
