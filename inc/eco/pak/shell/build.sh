@@ -30,7 +30,6 @@ conan install ${CONAN_DIR}/conanfile.txt -of ${TMP_DIR}/${PRJ_CFG} \
 
 # cmake: create makefile.
 cd ${TMP_DIR}/${PRJ_CFG}
-echo "== -> "`pwd`
 cmake ${CMAKE_DIR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DVERSION=${VERSION} \
 -DPLATFORM=${PLATFORM_HOST} -DCOMPILER=${COMPILER}
 # make: build & move to bin.
