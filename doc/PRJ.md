@@ -1,0 +1,54 @@
+
+## ECO开发计划
+
+### 新架构结构：应用场景、框架结构、任务机制
+[zhouyu 20240629]
+* 构建服务框架的类结构
+* 构建服务框架的使用案例
+* 构建任务机制
+
+
+* 实现动态订阅的方案：1个Server有1万客户端订阅者
+  * 客户端可通知服务端创建主题，相当于Reader可根据需要创建主题信息，从而实现Topic动态创建。
+  * 类似于DDS的Content Filter Topic CFT（订阅者太多，则不太适用，效率会变得很低，改适用于订阅者不多的场景）
+  * 方案：
+    * 按组订阅 + 按Topic订阅。
+    * 支持订阅者创建服务端的Topic。
+
+
+  [zhouyu 20240821 20240822 20240904]
+  * 构建使用场景
+  * 构建服务框架的类结构与接口
+  * 构建基础模块：日志、异常、多语言
+  * 构建基础模块：值语义、对象语义、共享语义
+  value/share/object/single
+
+异常场景：
+多语言的解决方案：
+* 给用户的显示信息支持多语言，也支持语言的切换。
+* APP界面：加载对应语言包的形式，切换语言时，加载对应的语言包。
+* 提示信息：前置机服务代理Front/Agent支持语言切换，根据Session的语言返回对应语言的提示。
+* 日志信息：日志信息是供软件服务商与运营商查看的信息，可以设置单独的语言。前置机与服务打印日志的语言支持统一设置。
+
+  [zhouyu 20240822]
+  * 构建基础模块：插件机制
+
+
+  性能测试：使用python3/locust
+
+  在linux环境下，使用sqlite3，执行sql语句没有执行结果的原因是：没有添加分号；
+
+
+### CONAN使用
+* conan说明文档有问题，按照如下设置会报错误
+compiler.cppstd=gnu17
+应修改为
+compiler.cppstd=17
+
+[option]
+应该像如此设置
+gtest/&:shared=True gtest项目设置
+gtest/*:shared=True gtest依赖项设置
+
+[layout]
+when using cmake_layout, conan will make build/Release/generators directory
