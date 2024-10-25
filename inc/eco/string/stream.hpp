@@ -16,9 +16,8 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <stdint.h>
 #include <string>
-#include <eco/string_view.hpp>
+#include <eco/cast.hpp>
 
 
 eco_namespace(eco)
@@ -70,52 +69,52 @@ public:
 	inline type_t& operator<<(int8_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(uint8_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(int16_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(uint16_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(int32_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(uint32_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(int64_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(uint64_t v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(float v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(double v)
 	{
 		eco::c_str str(v);
-		return rthis().append(str.c_str(), str.size());
+		return rthis().append(str.value(), str.size());
 	}
 	inline type_t& operator<<(const char* v)
 	{
@@ -123,15 +122,15 @@ public:
 	}
 	inline type_t& operator<<(const eco::string_view& v)
 	{
-		return rthis().append(v.c_str(), v.size());
+		return rthis().append(v.value(), v.size());
 	}
 	inline type_t& operator<<(const eco::c_str& v)
 	{
-		return rthis().append(v.c_str(), v.size());
+		return rthis().append(v.value(), v.size());
 	}
 	inline type_t& operator<<(const std::string& v)
 	{
-		return rthis().append(v.c_str(), v.size());
+		return rthis().append(v.value(), v.size());
 	}
 
 public:

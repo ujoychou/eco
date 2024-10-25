@@ -85,9 +85,12 @@ eco_trace(...) eco::error(#ARGS).trace(__func__, __line__)
 
 
 // eco::error重新赋值时，会重置错误信息，并清空错误调用堆栈。
+// lambda()表达式可以不使用返回值表达式。
+// 
 
 bool f1()
 {
+	
 	return eco_trace("trade/accout/E001") << account;
 }
 

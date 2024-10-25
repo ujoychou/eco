@@ -52,3 +52,8 @@ gtest/*:shared=True gtest依赖项设置
 
 [layout]
 when using cmake_layout, conan will make build/Release/generators directory
+
+
+
+
+stream/字符串/cast/error/log/

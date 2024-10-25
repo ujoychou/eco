@@ -38,11 +38,10 @@ enum
     l9      = 9,
     // log general level
     debug	= 10,
-    trace	= 11,
-    info	= 12,
-    warn	= 13,
-    error	= 14,
-    fatal	= 15,
+    info	= 11,
+    warn	= 12,
+    error	= 13,
+    fatal	= 14,
 };
 typedef int level;
 
@@ -85,6 +84,7 @@ public:
         va_list args;
         va_start(args, format);
         log_args(level, file, line, title, format, &args);
+        printf();
         va_end(args);
     }
 

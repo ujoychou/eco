@@ -19,7 +19,7 @@
 #include <eco/macro.hpp>
 #include <eco/string/string_c.hpp>
 #include <eco/string/string_view.hpp>
-#include <eco/cast/cast.hpp>
+#include <eco/cast/cast_def.hpp>
 
 
 eco_namespace(eco);

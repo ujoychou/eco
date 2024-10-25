@@ -1,0 +1,36 @@
+{
+    "version": "2.0.1",
+    "configurations": [
+        {
+            "name": "replayer",
+            "type": "cppdbg",
+            "request": "launch",
+            "environment": [
+                {
+                    "name": "XXX",
+                    "value": "XXX"
+                },
+            ],
+            "cwd": "${workspaceFolder}/build/bin",
+            "program": "${workspaceFolder}/build/bin/replayer",
+            "args": ["${workspaceFolder}/build/bin/replayer_config_file_0.xml"],
+            "stopAtEntry": false,
+            "externalConsole": false,
+            "logging": {
+                "engineLogging": true,
+                "trace": true,
+                "programOutput": true
+            },
+
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "enable pretty printing.",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+        }
+    ]
+}

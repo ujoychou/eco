@@ -17,56 +17,56 @@
 
 *******************************************************************************/
 #include <eco/macro.hpp>
-#include <string>
 #include <stdio.h>
 
 
 eco_namespace(eco)
 ////////////////////////////////////////////////////////////////////////////////
-inline bool is_upper(char v)
+inline bool upper(char v)
 {
 	return v >= 'A' && v <= 'Z';
 }
-inline bool is_lower(char v)
+inline bool lower(char v)
 {
 	return v <= 'z' && v >= 'a';
 }
-inline bool is_char(char v)
+inline bool letter(char v)
 {
-	return is_upper(v) || is_lower(v);
+	return upper(v) || lower(v);
 }
-inline char to_upper(char v)
-{
-	return is_lower(v) ? v + ('A' - 'a') : v;
-}
-inline char to_lower(char v)
-{
-	return is_upper(v) ? v + ('a' - 'A') : v;
-}
-inline bool is_newline(char v)
+inline bool newline(char v)
 {
 	return (v == '\n' || v == '\r');
 }
-inline bool is_space(char v)
+inline bool space(char v)
 {
 	return (v == ' ' || v == '	');
 }
-inline bool is_empty(char v)
+inline bool empty(char v)
 {
-	return is_space(v) || is_newline(v);
+	return space(v) || newline(v);
+}
+////////////////////////////////////////////////////////////////////////////////
+inline char to_upper(char v)
+{
+	return lower(v) ? v + ('A' - 'a') : v;
+}
+inline char to_lower(char v)
+{
+	return upper(v) ? v + ('a' - 'A') : v;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool is_number(char v)
+inline bool number(char v)
 {
 	return v >= '0' && v <= '9';
 }
-inline bool is_number(const char* v)
+inline bool number(const char* v)
 {
 	for (const char* c = v; *c != 0; ++c)
 	{
-		if (!is_number(*c)) { return false; }
+		if (!number(*c)) { return false; }
 	}
 	return true;
 }
@@ -79,6 +79,7 @@ inline bool little_endian()
 {
 	return !big_endian();
 }
+////////////////////////////////////////////////////////////////////////////////
 template<typename integer_t>
 inline integer_t to_negative(integer_t v)
 {
@@ -99,32 +100,23 @@ inline uint32_t to_base_shift(uint32_t base)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline char* to_upper(char* v)
-{
-	for (char* c = v; *c != 0; ++c) { *c = to_upper(*c); }
-	return v;
-}
-inline char* to_lower(char* v)
-{
-	for (char* c = v; *c != 0; ++c) { *c = to_lower(*c); }
-	return v;
-}
 inline bool empty(const char* v)
 {
 	return (v == NULL || v[0] == 0);
 }
 inline char first(const char* v)
 {
-	return empty(v) ? v[0] : 0;
+	return !empty(v) ? v[0] : 0;
 }
-inline bool iequal(const char* s1, const char* s2)
+inline bool iequal(const char* s1, const char* s2, uint32_t size)
 {
+	assert(size > 0);
 	char c1, c2;
 	do 
 	{
 		c1 = to_upper(*s1++);
 		c2 = to_upper(*s2++);
-	} while (c1 == c2 && c1 != 0);
+	} while (c1 == c2 && c1 != 0 && --size > 0);
 	return c1 == c2;
 }
 #ifdef eco_win32
@@ -137,7 +129,29 @@ inline int snprintf(char* buff, size_t size, const char* format, ...)
 	return result;
 }
 #endif
-
+////////////////////////////////////////////////////////////////////////////////
+inline char* to_upper(char* v)
+{
+	for (char* c = v; *c != 0; ++c) { *c = to_upper(*c); }
+	return v;
+}
+inline char* to_lower(char* v)
+{
+	for (char* c = v; *c != 0; ++c) { *c = to_lower(*c); }
+	return v;
+}
+// clear the string data.
+inline void clear(char* v)
+{
+	v[0] = 0;
+}
+// get string end size.
+inline size_t fit(const char* str, size_t size)
+{
+	size_t i = size - 1;
+	for (; i != size_t(-1) && str[i] == 0; --i) {}
+	return ++i;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

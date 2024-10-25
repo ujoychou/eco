@@ -45,13 +45,18 @@ eco_namespace_end(this_thread);
 class error : public eco::stream<eco::error>
 {
 public:
+    inline error() : data(eco::this_thread::error())
+    {}
+
     inline error(int id) : data(eco::this_thread::error())
     {
         data.id = id;
+        data.path.clear();
     }
 
     inline error(const char* path) : data(eco::this_thread::error())
     {
+        data.id = 0;
         data.path = path;
     }
 
@@ -59,12 +64,14 @@ public:
         : data(eco::this_thread::error())
     {
         data.id = id;
+        data.path.clear();
         data.format = format;
     }
 
     inline error(const char* path, const char* format, ...)
         : data(eco::this_thread::error())
     {
+        data.id = 0;
         data.path = path;
         data.format = format;
     }
@@ -84,6 +91,7 @@ private:
 };
 
 
-#define eco_throw(...) throw eco::error(##__VA_ARGS__)
+#define eco_throw(...) throw eco::error(##__VA_ARGS__, NULL)
+#define eco_trace(...) eco::error(##__VA_ARGS__, NULL)
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(eco);

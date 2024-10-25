@@ -2,7 +2,9 @@
 <root>
   <!--#.日志选项-->
   <logging>
+    <!--use a thread to write log, 1-->
     <async value="false"/>
+    <!--use a thread to write log, 1-->
     <file_sink enable="true">
       <level value="debug"/>
     </file_sink>
@@ -13,6 +15,7 @@
 
   <!--国际化-->
   <locale default="zh-cn">
+    <default>cool</default>
     <zh-cn path="locale/zh-cn" note="中文">
       <word  file="word.xml"/>
       <word  file="word_tr.xml"  module="tr" note="交易"/>
