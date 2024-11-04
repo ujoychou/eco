@@ -24,7 +24,7 @@
 
 eco_namespace(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class float_to_string : public eco::cast::string_result
+class float_to_string : public eco::cast_detail::string_result
 {
 public:
     inline bool operator()(double v, int precision, bool_t percent)
@@ -32,6 +32,7 @@ public:
         (void)v;
         (void)precision;
         (void)percent;
+        return true;
     }
 };
 

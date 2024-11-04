@@ -2,6 +2,7 @@
 # PLATFORM
 # COMPILER
 
+# PRJ_FMT
 # PRJ_DIR: project directory, which include: bin/doc/inc/src/test, .tmp/.bin
 # PRJ_VER: the output version file.
 # CPP_VER: 
@@ -98,7 +99,7 @@ message("---------------------------------------------------------------------")
 
 
 ################################################################################
-# c++ target: output name. (exe/so/a)
+# c++ target: output name. (exe/shared/static)
 eco_project(OUTPUT_FILE ${PRJ_FMT} ${INSTALL_DIR})
 # c++ target: inc & lib & install
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRS})

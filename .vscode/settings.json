@@ -59,7 +59,10 @@
         "stdexcept": "cpp",
         "stop_token": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "cinttypes": "cpp"
     },
     "cmake.sourceDirectory": "/home/ujoy/space/eco-new/bin/eco/cmake"
 }

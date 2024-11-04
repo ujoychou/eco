@@ -97,17 +97,6 @@ public:
 	}
 
 public:
-	inline void move_from(eco::string& v)
-	{
-		release();
-		m_data = v.m_data;
-		m_size = v.m_size;
-		m_capacity = v.m_capacity;
-		v.m_data = nullptr;
-		v.m_size = 0;
-		v.m_capacity = 0;
-	}
-
 	inline string& operator=(eco::string&& v)
 	{
 		release();

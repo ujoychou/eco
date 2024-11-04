@@ -27,7 +27,7 @@ inline const char* filename(const char* name, int nth)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void stream::log_args(level level, const char* file, int line, const char* title,
+void stream::log_format(level level, const char* file, int line, const char* title,
                       const char* format, va_list* args)
 {
     // "[time] [thread] [level] <title> message (file) "
@@ -62,6 +62,16 @@ void stream::log_args(level level, const char* file, int line, const char* title
         size += snprintf(buf + size, (size_t)left, " (%s:%d)", file, line);
     }
     thread_buff << '\n';
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void stream::log_args(level level, const char* file, int line, const char* title,
+                      const char* format, va_list* args)
+{
+    // "[time] [thread] [level] <title> message (file) "
+    // [20230912 15:53:35.899984] [T3928X938] [ INFO] <title> msg...(file.c:161)
+    log_format();
 	eco::log::post(thread_buff);
 }
 

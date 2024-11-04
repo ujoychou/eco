@@ -31,13 +31,13 @@ public:
 	{
 		if (v)
 		{
-			int_chars = eco::cast::tables::int_to_char_upper;
+			int_chars = eco::cast_detail::tables::int_to_char_upper;
 			prefix_bin = 'B';
 			prefix_hex = 'X';
 		}
 		else
 		{
-			int_chars = eco::cast::tables::int_to_char_lower;
+			int_chars = eco::cast_detail::tables::int_to_char_lower;
 			prefix_bin = 'b';
 			prefix_hex = 'x';
 		}
@@ -52,14 +52,14 @@ public:
 	inline integer_to_string_format()
 		: prefix_bin('B'), prefix_hex('X'), negative('-'), positive(0)
 		, base(10), fast_dec(0), placehold(' '), placehold_width(0)
-		, int_chars(eco::cast::tables::int_to_char_upper)
+		, int_chars(eco::cast_detail::tables::int_to_char_upper)
 	{}
 
 	inline integer_to_string_format(
 		uint8_t base = 10, uint32_t width = 0, char hold = ' ')
 		: prefix_bin('B'), prefix_hex('X'), negative('-'), positive(0)
 		, base(base), fast_dec(0), placehold(hold), placehold_width(width)
-		, int_chars(eco::cast::tables::int_to_char_upper)
+		, int_chars(eco::cast_detail::tables::int_to_char_upper)
 	{}
 
 public:
@@ -77,12 +77,11 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename type_t>
-class integer_to_string : public eco::cast::string_result
+class integer_to_string : public eco::cast_detail::string_result
 {
 public:
 	inline bool operator()(type_t v, const integer_to_string_format& fmt)
 	{
-		integer_to_string_result::init();
 		if (fmt.base < 2 || fmt.base > 36)
 		{
 			return false;
@@ -105,33 +104,33 @@ private:
 	inline void set_prefix(bool_t negative, const integer_to_string_format& fmt)
 	{
 		// placeholder: "000123"
-		if (fmt.width > 0)
+		if (fmt.placehold_width > 0)
 		{
-			int hold_size = fmt.width - size();
-			while (hold_size-- > 0) { buff_[--size_] = fmt.hold; }
+			int hold_size = fmt.placehold_width - size();
+			while (hold_size-- > 0) { this->buff[--this->pos] = fmt.placehold; }
 		}
 
 		// prefix: "0X/0B/0"
 		if (fmt.base == 16)
 		{
-			buff_[--size_] = fmt.prefix_hex;
-			buff_[--size_] = '0';
+			this->buff[--this->pos] = fmt.prefix_hex;
+			this->buff[--this->pos] = '0';
 		}
 		else if (fmt.base == 8)
 		{
-			buff_[--size_] = '0';
+			this->buff[--this->pos] = '0';
 		}
 		else if (fmt.base == 2)
 		{
-			buff_[--size_] = fmt.prefix_bin;
-			buff_[--size_] = '0';
+			this->buff[--this->pos] = fmt.prefix_bin;
+			this->buff[--this->pos] = '0';
 		}
 		
 		// signed: "+/-"
 		if (negative)
-			buff_[--size_] = fmt.negative;
-		else if (fmt.has_positive)
-			buff_[--size_] = fmt.positive;
+			this->buff[--this->pos] = fmt.negative;
+		else if (fmt.has_positive())
+			this->buff[--this->pos] = fmt.positive;
 	}
 
 public:
@@ -144,8 +143,8 @@ public:
 		do
 		{
 			uint32_t pos = (uint32_t)(positive & base);
-			buff_[--size_] = fmt.int_chars[pos];
-			positive >> shift;
+			this->buff[--this->pos] = fmt.int_chars[pos];
+			positive >>= shift;
 		} while (positive > 0);
 
 		set_prefix(v < 0, fmt);
@@ -154,20 +153,21 @@ public:
 public:
 	inline void cast_dec(type_t v, const integer_to_string_format& fmt)
 	{
+		typedef eco::cast_detail::tables eco_tables;
 		type_t positive = to_positive(v);
 		while (true)
 		{
 			if (positive < 10)
 			{
 				size_t pos = (size_t)positive;
-				buff_[--size_] = eco::cast::tables::int_to_char_upper[pos];
+				this->buff[--this->pos] = eco_tables::int_to_char_upper[pos];
 				break;
 			}
 			else if (positive < 100)
 			{
 				size_t pos = size_t(positive << 1);
-				buff_[--size_] = eco::cast::tables::int_to_char_100[pos + 1];
-				buff_[--size_] = eco::cast::tables::int_to_char_100[pos];
+				this->buff[--this->pos] = eco_tables::int_to_char_100[pos + 1];
+				this->buff[--this->pos] = eco_tables::int_to_char_100[pos];
 				break;
 			}
 			else
@@ -175,8 +175,8 @@ public:
 				do
 				{
 					size_t pos = size_t(positive % 100) << 1;
-					buff_[--size_] = eco::cast::tables::int_to_char_100[pos + 1];
-					buff_[--size_] = eco::cast::tables::int_to_char_100[pos];
+					this->buff[--this->pos] = eco_tables::int_to_char_100[pos + 1];
+					this->buff[--this->pos] = eco_tables::int_to_char_100[pos];
 					positive /= 100;
 				} while (positive >= 100);
 			}
@@ -197,7 +197,7 @@ public:
 		do
 		{ 
 			size_t pos = size_t(positive % fmt.base);
-			buff_[--size_] = fmt.int_chars[pos];
+			this->buff[--this->pos] = fmt.int_chars[pos];
 			positive /= fmt.base;
 		} while (positive >= 100);
 
@@ -218,22 +218,22 @@ struct string_to_integer
 	inline string_to_integer(
 		const eco::string_view& v, int base = 0) : value(0)
 	{
-		if (sizeof(type_t) < 2) { return set_fail(); }
+		if (sizeof(type_t) < 2) { set_fail(); return ; }
 		
 		// skip whitespace/tab/enter char
 		const char* c = v.c_str();
 		const char* c_end = v.c_end();
-		for (; c < c_end && is_empty(*c); ++c) {}
-		if (c >= c_end) { return set_fail(); }
+		for (; c < c_end && eco::empty(*c); ++c) {}
+		if (c >= c_end) { set_fail(); return ; }
 
 		// parse negative sign
 		int typesign = ((type_t)-1 < 0);
 		int negative = (*c == '-');
 		if (*c == '+') { ++c; }
-		if (c >= c_end) { return false; }
+		if (c >= c_end) { set_fail(); return ; }
 		// negative number must cast to the signed integer
 		// exp: "-33 can't cast to uint32_t"
-		if (!typesign && negative) { return set_fail(); }
+		if (!typesign && negative) { set_fail(); return ; }
 
 		// parse integer base: 16/10/8
 		if (base == 0)
@@ -248,20 +248,20 @@ struct string_to_integer
 		}
 		else if (base < 2 || base > 36) 
 		{
-			return set_fail();
+			set_fail(); return ;
 		}
 
 		// cast value
 		for (; c < c_end; ++c)
 		{
 			// check invalid char, and save ascii_to_int.
-			type_t digit = eco::cast::tables::to_int(c);
-			if (digit >= base) { return set_fail(); }
+			type_t digit = eco::cast_detail::tables::to_int(*c);
+			if (digit >= (type_t)base) { set_fail(); return ; }
 			type_t last = value;
 			value *= base;
 			value += digit;
 			// check integer overflow
-			if (value < last) { return set_fail(); }
+			if (value < last) { set_fail(); return ; }
 		}
 		if (negative) { value *= -1; }
 	}

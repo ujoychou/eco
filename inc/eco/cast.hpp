@@ -23,14 +23,14 @@
 
 eco_namespace(eco);
 ////////////////////////////////////////////////////////////////////////////////
-inline bool cast(const eco::string_view& v, cast::bool_format format)
+inline bool cast(const eco::string_view& v, eco::bool_format format)
 {
 	if (v.null()) { return false; }
-	if (format == cast::bool_format_01)
+	if (format == eco::bool_format_01)
 		return v[0] == '1';
-	if (format == cast::bool_format_tf)
+	if (format == eco::bool_format_tf)
 		return iequal(v.c_str(), "true", v.size());
-	if (format == cast::bool_format_yn)
+	if (format == eco::bool_format_yn)
 		return iequal(v.c_str(), "yes", v.size());
 	return false;
 }
@@ -39,14 +39,10 @@ inline bool cast(const eco::string_view& v, cast::bool_format format)
 // cast string to type
 template <typename T>
 inline T cast(const eco::string_view& v);
-template <typename T>
-inline T cast(const eco::string_view& v, uint32_t size)
-{
-	return cast<T>(v.size(size));
-}
+
 template<> inline bool cast(const eco::string_view& v)
 {
-	return cast(v, cast::bool_format_01);
+	return cast(v, bool_format_01);
 }
 template<> inline int8_t cast(const eco::string_view& v)
 {
@@ -128,19 +124,20 @@ public:
 	}
 	
 private:
-	eco::cast::string_result result;
+	eco::cast_detail::string_result result;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // cast type to string
-inline const char* cast(bool v, cast::bool_format format = cast::bool_format_01)
+inline const char* cast(
+	bool v, eco::bool_format format = eco::bool_format_01)
 {
-	if (format == cast::bool_format_01)
+	if (format == eco::bool_format_01)
 		return v ? "1" : "0";
-	if (format == cast::bool_format_tf)
+	if (format == eco::bool_format_tf)
 		return v ? "true" : "false";
-	if (format == cast::bool_format_yn)
+	if (format == eco::bool_format_yn)
 		return v ? "yes" : "no";
 	return "bool";
 }

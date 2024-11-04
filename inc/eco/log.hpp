@@ -74,6 +74,53 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+#define ECO_API
+class ECO_API logger
+{
+public:
+    typedef std::shared_ptr<logger> ptr;
+
+    static inline const char* type()
+    {
+        return "eco::log::logger";
+    }
+
+    virtual void init(eco::log::config& conf);
+
+    virtual void log() = 0;
+
+    void log_args(
+        level level, const char* file, int line, const char* title,
+        const char* format, va_list* args);
+};
+
+
+class plugin
+{
+    template<typename api_t>
+    inline eco::log::logger::ptr get()
+    {
+    }
+
+    eco::logger::ptr logger;
+};
+
+
+class Rx
+{
+public:
+    void* api_create();
+    void  api_delete(void*);
+    const char* api_name() const;
+};
+eco::app::plugin().add_path();
+eco::app::plugin().get_path();
+api_t::ptr api = eco::app::plugin().get<api_t>("api_name");
+eco::app::plugin().erase<api_t>("api_name");
+eco::log::stream::logger = api;
+
+
+////////////////////////////////////////////////////////////////////////////////
 class stream : public eco::stream<eco::log::stream>
 {
 public:
@@ -81,17 +128,23 @@ public:
         level level, const char* file, int line, const char* title,
         const char* format, ...)
     {
+        if (logger == NULL)
+        {
+            printf("please set plugin [eco::log::logger] before use.\n");            
+            return;
+        }
+
         va_list args;
         va_start(args, format);
-        log_args(level, file, line, title, format, &args);
-        printf();
+        logger->log(level, file, line, title, format, &args);
         va_end(args);
     }
 
     // format: "time thread [level] <title> message ... (@file:line)"
-    void log_args(
-        level level, const char* file, int line, const char* title,
-        const char* format, va_list* args);
+    
+
+private:
+    static eco::log::logger* logger;
 };
 
 

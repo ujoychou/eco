@@ -21,13 +21,15 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// error key: id & path
 eco_namespace(eco);
 eco_namespace(detail);
 struct error_data
 {
+    // error key: id & path
+    int option;
     int id;
     eco::string path;
+    // error message: "message / params of message"
     eco::string message;
     const char* format;
 };
@@ -35,33 +37,24 @@ eco_namespace_end(detail);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// thread local error data
-eco_namespace(this_thread);
-eco::detail::error_data& error();
-eco_namespace_end(this_thread);
+enum
+{
+    result_true 	    = 0,
+    result_false        = 1,
+    result_error	    = 2,
+    result_timeout      = 3,
+};
+typedef int result;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 class error : public eco::stream<eco::error>
 {
 public:
-    inline error() : data(eco::this_thread::error())
+    inline error() : data(this_thread_data())
     {}
 
-    inline error(int id) : data(eco::this_thread::error())
-    {
-        data.id = id;
-        data.path.clear();
-    }
-
-    inline error(const char* path) : data(eco::this_thread::error())
-    {
-        data.id = 0;
-        data.path = path;
-    }
-
-    inline error(int id, const char* format, ...)
-        : data(eco::this_thread::error())
+    inline error(int id, const char* format, ...) : data(this_thread_data())
     {
         data.id = id;
         data.path.clear();
@@ -69,16 +62,17 @@ public:
     }
 
     inline error(const char* path, const char* format, ...)
-        : data(eco::this_thread::error())
+        : data(this_thread_data())
     {
         data.id = 0;
         data.path = path;
         data.format = format;
+        data.message.format(format, );
     }
 
-    inline type_t& operator % (int v)
+    inline error& operator % (int v)
     {
-        return (type_t&)(*this);
+        return (*this);
     }
 
     inline const eco::string& message()
@@ -86,11 +80,27 @@ public:
         return data.message;
     }
 
+    inline error& sys(bool_t value)
+    {
+        if (value)
+            data.id |= 0x1000000;
+        else
+            data.id &= ~0x1000000;
+    }
+    inline bool sys() const
+    {
+        return (data.id & 0x1000000) != 0;
+    }
+
+private:
+    static eco::detail::error_data& this_thread_data();
+
 private:
     eco::detail::error_data& data;
 };
 
 
+////////////////////////////////////////////////////////////////////////////////
 #define eco_throw(...) throw eco::error(##__VA_ARGS__, NULL)
 #define eco_trace(...) eco::error(##__VA_ARGS__, NULL)
 ////////////////////////////////////////////////////////////////////////////////

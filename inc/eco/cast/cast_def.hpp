@@ -22,17 +22,16 @@
 
 
 eco_namespace(eco);
-eco_namespace(cast);
 ////////////////////////////////////////////////////////////////////////////////
-enum
+enum bool_format
 {
     bool_format_01    = 1,
     bool_format_tf    = 2,
 	bool_format_yn    = 3,
 };
-typedef int bool_format;
 
 
+eco_namespace(cast_detail);
 ////////////////////////////////////////////////////////////////////////////////
 struct tables
 {
@@ -65,26 +64,26 @@ const uint8_t tables::ascii_to_int[80] = {
 struct string_result
 {
 protected:
-	char buff_[24];
-	uint32_t size_;
-
-	inline void init()
-	{
-		size_ = sizeof(buff_) - 1;
-		buff_[size_] = 0;
-	}
+	char buff[32];
+	uint32_t pos;
 
 public:
+	inline string_result()
+	{
+		pos = sizeof(buff) - 1;
+		buff[pos] = 0;
+	}
+
 	inline uint32_t size() const
 	{
-		return sizeof(buff_) - 1 - size_;
+		return sizeof(buff) - 1 - pos;
 	}
 
 	inline const char* c_str() const
 	{
-		return &buff_[size_];
+		return &buff[pos];
 	}
 };
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(cast);
+eco_namespace_end(cast_detail);
 eco_namespace_end(eco);
