@@ -30,6 +30,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// c++ namespace
 #undef eco_namespace
 #undef eco_namespace_end
 #undef eco_todo
@@ -53,6 +54,7 @@ eco_macro_cat(macro, eco_macro_getn(__VA_ARGS__))(__VA_ARGS__)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// typedef
 eco_namespace(eco)
 using bool_t = uint32_t;
 eco_namespace_end(eco)

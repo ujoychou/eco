@@ -8,12 +8,6 @@
 class TestThrow : public ::testing::Test
 {
 public:
-    static void SetUpTestSuite()
-    {}
-    static void TearDownTestSuite()
-    {}
-
-public:
     struct return_control
     {
         bool f11_user_exist;
@@ -48,6 +42,7 @@ public:
         }
     }
 
+public:
     inline void f1_login(const std::string& user, const std::string& password)
     {
         // check user and password empty
@@ -111,27 +106,20 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(TestError, format)
-{
-
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-TEST_F(TestError, args)
+TEST_F(TestThrow, format)
 {
     int v1 = 20241030;
     float v2 = 3.1415926
     double v3 = 3.1415926
     const char* v4 = "pi-value-is";
-    // argv setting: using %
-    eco::error(1001).format("argc1=%1 argc2=%2 argc3=%3 argc4=%4")
+    // arg setting: using %
+    eco_error(1001, "argc1=%1 argc2=%2 argc3=%3 argc4=%4")
         % v1 % eco::precision(v2, 4, true) %  eco::precision(v2, 2) % v4;
-    ASSERT_EQ(eco::error().message(),
+    ASSERT_EQ(eco_error().message(),
         "argc1=20241030 argc2=3.1416 argc3=3.14 argc4=pi-value-is");
-    // argv setting
-    eco::error(1001).format("argc1=%3 argc2=%1 argc3=%4 argc4=%2").
-        argv(v1).argv(v2, 4, true).argv(v2, 2).argv(v4);
-    ASSERT_EQ(eco::error().message(),
+    // arg setting
+    eco_error(1001, "argc1=%3 argc2=%1 argc3=%4 argc4=%2").
+        arg(v1).arg(v2, 4, true).arg(v2, 2).arg(v4);
+    ASSERT_EQ(eco_error().message(),
         "argc1=3.14 argc2=pi-value-is argc3=20241030 argc4=3.1416");
 }

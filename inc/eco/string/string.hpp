@@ -17,11 +17,14 @@
 
 *******************************************************************************/
 #include <eco/string/stream.hpp>
+#include <eco/string/format.hpp>
 
 
 eco_namespace(eco)
 ////////////////////////////////////////////////////////////////////////////////
-class string : public eco::stream<eco::string>
+class string 
+	: public eco::stream<eco::string>
+	, public eco::format<eco::string>
 {
 public:
 	inline void append(char c)

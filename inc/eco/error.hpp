@@ -25,49 +25,54 @@ eco_namespace(eco);
 eco_namespace(detail);
 struct error_data
 {
-    // error key: id & path
+private:
     int option;
+    // error key: id & path
     int id;
     eco::string path;
+
     // error message: "message / params of message"
     eco::string message;
     const char* format;
+
+    friend class eco::error;
 };
 eco_namespace_end(detail);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-enum
+enum class result : int
 {
-    result_true 	    = 0,
-    result_false        = 1,
-    result_error	    = 2,
-    result_timeout      = 3,
+    ok 	        = 0,
+    fail        = 1,
+    error	    = 2,
+    timeout     = 3,
+
+    syserr      = 0x1 << 31,
 };
-typedef int result;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class error : public eco::stream<eco::error>
+class error : public eco::stream<eco::error>, public eco::format<eco::error>
 {
 public:
     inline error() : data(this_thread_data())
     {}
 
-    inline error(int id, const char* format, ...) : data(this_thread_data())
+    inline error(int id, const char* format) : data(this_thread_data())
     {
         data.id = id;
         data.path.clear();
         data.format = format;
     }
 
-    inline error(const char* path, const char* format, ...)
+    inline error(const char* path, const char* format)
         : data(this_thread_data())
     {
         data.id = 0;
         data.path = path;
         data.format = format;
-        data.message.format(format, );
+        //data.message.format(format, );
     }
 
     inline error& operator % (int v)
@@ -80,28 +85,30 @@ public:
         return data.message;
     }
 
-    inline error& sys(bool_t value)
+    inline eco::error& sys(bool_t value)
     {
         if (value)
-            data.id |= 0x1000000;
+            data.id |= eco::result::syserr;
         else
-            data.id &= ~0x1000000;
+            data.id &= ~eco::result::syserr;
     }
     inline bool sys() const
     {
-        return (data.id & 0x1000000) != 0;
+        return (data.id & eco::result::syserr) != 0;
     }
 
 private:
-    static eco::detail::error_data& this_thread_data();
-
-private:
     eco::detail::error_data& data;
+    static eco::detail::error_data& this_thread_data();
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// return error mode: set error information in sub function
+#define eco_error(...) eco::error(##__VA_ARGS__, NULL)
+
+// throw error mode: throw error(a spice) object in sub function
 #define eco_throw(...) throw eco::error(##__VA_ARGS__, NULL)
-#define eco_trace(...) eco::error(##__VA_ARGS__, NULL)
+
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(eco);

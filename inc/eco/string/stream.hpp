@@ -51,116 +51,116 @@ inline lower_t<type_t> lower(const type_t& v) { return lower_t<type_t>(v); }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename steam_t>
+template<typename actual_t>
 class stream
 {
 public:
-	inline steam_t& rthis() { return (steam_t&)(*this); }
+	inline actual_t& rthis() { return (actual_t&)(*this); }
 
-	inline steam_t& operator<<(bool v)
+	inline actual_t& operator<<(bool v)
 	{
 		const char* str = eco::cast(v, eco::bool_format_01);
 		return rthis().append(str[0], 1);
 	}
-	inline steam_t& operator<<(char v)
+	inline actual_t& operator<<(char v)
 	{
 		return rthis().append(v, 1);
 	}
-	inline steam_t& operator<<(int8_t v)
+	inline actual_t& operator<<(int8_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(uint8_t v)
+	inline actual_t& operator<<(uint8_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(int16_t v)
+	inline actual_t& operator<<(int16_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(uint16_t v)
+	inline actual_t& operator<<(uint16_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(int32_t v)
+	inline actual_t& operator<<(int32_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(uint32_t v)
+	inline actual_t& operator<<(uint32_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(int64_t v)
+	inline actual_t& operator<<(int64_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(uint64_t v)
+	inline actual_t& operator<<(uint64_t v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(float v)
+	inline actual_t& operator<<(float v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(double v)
+	inline actual_t& operator<<(double v)
 	{
 		eco::c_str str(v);
 		return rthis().append(str.value(), str.size());
 	}
-	inline steam_t& operator<<(const char* v)
+	inline actual_t& operator<<(const char* v)
 	{
 		return rthis().append(v, (uint32_t)strlen(v));
 	}
-	inline steam_t& operator<<(const eco::string_view& v)
+	inline actual_t& operator<<(const eco::string_view& v)
 	{
 		return rthis().append(v.c_str(), v.size());
 	}
-	inline steam_t& operator<<(const eco::c_str& v)
+	inline actual_t& operator<<(const eco::c_str& v)
 	{
 		return rthis().append(v.value(), v.size());
 	}
-	inline steam_t& operator<<(const std::string& v)
+	inline actual_t& operator<<(const std::string& v)
 	{
 		return rthis().append(v.c_str(), v.size());
 	}
 
 public:
 	template<typename type_t>
-	inline steam_t& operator<<(const group_t<type_t>& v)
+	inline actual_t& operator<<(const group_t<type_t>& v)
 	{
 		return rthis() << '(' << v.value << ')';
 	}
 	template<typename type_t>
-	inline steam_t& operator<<(const square_t<type_t>& v)
+	inline actual_t& operator<<(const square_t<type_t>& v)
 	{
 		return rthis() << '[' << v.value << ']';
 	}
 	template<typename type_t>
-	inline steam_t& operator<<(const brace_t<type_t>& v)
+	inline actual_t& operator<<(const brace_t<type_t>& v)
 	{
 		return rthis() << '{' << v.value << '}';
 	}
 	template<typename type_t>
-	inline steam_t& operator<<(const space_t<type_t>& v)
+	inline actual_t& operator<<(const space_t<type_t>& v)
 	{
 		return rthis() << ' ' << v.value;
 	}
 	template<typename type_t>
-	inline steam_t& operator<<(const upper_t<type_t>& v)
+	inline actual_t& operator<<(const upper_t<type_t>& v)
 	{
 		return rthis() << to_upper(v.value);
 	}
 	template<typename type_t>
-	inline steam_t& operator<<(const lower_t<type_t>& v)
+	inline actual_t& operator<<(const lower_t<type_t>& v)
 	{
 		return rthis() << to_lower(v.value);
 	}

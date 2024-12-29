@@ -2,7 +2,7 @@
     "version": "2.0.1",
     "configurations": [
         {
-            "name": "replayer",
+            "name": "eco_test_unit",
             "type": "cppdbg",
             "request": "launch",
             "environment": [
@@ -11,9 +11,9 @@
                     "value": "XXX"
                 },
             ],
-            "cwd": "${workspaceFolder}/build/bin",
-            "program": "${workspaceFolder}/build/bin/replayer",
-            "args": ["${workspaceFolder}/build/bin/replayer_config_file_0.xml"],
+            "cwd": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1",
+            "program": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1/eco_test_unit",
+            "args": [""],
             "stopAtEntry": false,
             "externalConsole": false,
             "logging": {

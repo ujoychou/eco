@@ -78,7 +78,10 @@ public:
 class ECO_API logger
 {
 public:
-    typedef std::shared_ptr<logger> ptr;
+    inline static logger& get()
+    {
+
+    }
 
     static inline const char* type()
     {
@@ -95,33 +98,31 @@ public:
 };
 
 
-class plugin
-{
-    template<typename api_t>
-    inline eco::log::logger::ptr get()
-    {
-    }
-
-    eco::logger::ptr logger;
-};
-
-
-class Rx
+////////////////////////////////////////////////////////////////////////////////
+class ECO_API plugin
 {
 public:
-    void* api_create();
-    void  api_delete(void*);
-    const char* api_name() const;
+    void set_logger(eco::log::logger& );
 };
-eco::app::plugin().add_path();
-eco::app::plugin().get_path();
-api_t::ptr api = eco::app::plugin().get<api_t>("api_name");
-eco::app::plugin().erase<api_t>("api_name");
-eco::log::stream::logger = api;
 
+
+struct logdata
+{
+    uint64_t reqid;
+    uint32_t count;
+    const int   line;
+    const char* file;
+};
+
+struct callstack
+{
+    const char* func;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
-class stream : public eco::stream<eco::log::stream>
+class stream
+    : public eco::stream<eco::log::stream>
+    , public eco::format<eco::log::stream>
 {
 public:
     inline stream(
@@ -133,6 +134,13 @@ public:
             printf("please set plugin [eco::log::logger] before use.\n");            
             return;
         }
+        tdata.file = file;
+        tdata.line = line;
+        if (format == NULL)
+        {
+            return;
+        }
+        
 
         va_list args;
         va_start(args, format);
@@ -140,10 +148,32 @@ public:
         va_end(args);
     }
 
+    inline stream(
+        level level, const char* file, int line, const char* title,
+        bool_t when, uint32_t each, const char* format, ...)
+    {
+        if (when) { return; }
+        if (!logger->each(file, line, each)) { return; }
+    }
+
+    inline stream& when(bool_t islog)
+    {
+        if (!islog)
+        {
+            this->file = NULL;            
+        }
+    }
+    inline stream& each(uint32_t nth)
+    {
+        return when(logger->each(file, line, nth));
+    }
+
     // format: "time thread [level] <title> message ... (@file:line)"
     
 
 private:
+    int line;
+    const char* file;
     static eco::log::logger* logger;
 };
 
@@ -152,17 +182,17 @@ private:
 #define eco_log_level(level, title, ...) \
   level <= log_level() ? (void)0 : \
   eco::log::stream(level, __FILE__, __LINE__, title, ##__VA_ARGS__, NULL)
-#define eco_log(level, title, ...) \
+#define eco_log_title(level, title, ...) \
   eco::log::level <= log_level() ? (void)0 : \
   eco::log::stream(##level, __FILE__, __LINE__, title, ##__VA_ARGS__, NULL)
+#define eco_log_func(level, ...) eco_log(level, __func__, __VA_ARGS__)
+#define eco_log(level, ...) eco_log_title(level, 0, ##__VA_ARGS__)
 
-#define eco_trace(...) eco_log(trace, 0, ##__VA_ARGS__)
-#define eco_debug(...) eco_log(debug, 0, ##__VA_ARGS__)
-#define eco_info(...)  eco_log(info,  0, ##__VA_ARGS__)
-#define eco_warn(...)  eco_log(warn,  0, ##__VA_ARGS__)
-#define eco_error(...) eco_log(error, 0, ##__VA_ARGS__)
-#define eco_fatal(...) eco_log(fatal, 0, ##__VA_ARGS__)
-#define eco_func(level, ...) eco_log(level, __func__, __VA_ARGS__)
+eco_logd();
+eco_loge();
+eco_logf();
+eco_logw();
+eco_logi();
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace log
 } // namespace eco

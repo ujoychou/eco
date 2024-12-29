@@ -62,7 +62,8 @@
         "typeinfo": "cpp",
         "numbers": "cpp",
         "semaphore": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "charconv": "cpp"
     },
     "cmake.sourceDirectory": "/home/ujoy/space/eco-new/bin/eco/cmake"
 }

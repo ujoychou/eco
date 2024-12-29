@@ -16,9 +16,9 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/cast/cast_float.hpp>	
 #include <eco/cast/cast_double.hpp>
 #include <eco/cast/cast_integer.hpp>
+#include <string>
 
 
 eco_namespace(eco);
@@ -78,7 +78,7 @@ template<> inline uint64_t cast(const eco::string_view& v)
 }
 template<> inline float cast(const eco::string_view& v)
 {
-	return string_to_float(v).value;
+	return 0.0; //string_to_float(v).value;
 }
 template<> inline double cast(const eco::string_view& v)
 {
@@ -106,25 +106,25 @@ public:
 		return result.size();
 	}
 
-	template<typename integer_t> inline
-	c_str(integer_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	template<typename int_t>
+	inline c_str(int_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 	{
 		integer_to_string_format fmt(base, width, hold);
-		static_cast<integer_to_string<integer_t>&>(result)(v, fmt);
+		static_cast<integer_to_string<int_t>&>(result)(v, fmt);
 	}
 
-	c_str(float v, uint32_t precision, bool_t percent)
+	inline c_str(float v, uint32_t precision, bool_t percent)
 	{
-		static_cast<float_to_string&>(result)(v, precision, percent);
+		static_cast<eco::double_to_string<float>&>(result)(v, precision, 1, percent);
 	}
 
-	c_str(double v, uint32_t precision, bool_t percent)
+	inline c_str(double v, uint32_t precision, bool_t percent)
 	{
-		static_cast<double_to_string&>(result)(v, precision, percent);
+		static_cast<eco::double_to_string<double>&>(result)(v, precision, 1, percent);
 	}
 	
 private:
-	eco::cast_detail::string_result result;
+	eco::cast_detail::string_result_double result;
 };
 
 

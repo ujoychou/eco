@@ -8,12 +8,6 @@
 class TestError : public ::testing::Test
 {
 public:
-    static void SetUpTestSuite()
-    {}
-    static void TearDownTestSuite()
-    {}
-
-public:
     enum
     {
         e_user_empty                = 1001,
@@ -22,12 +16,9 @@ public:
         e_password_unmatch          = 2002,
         e_user_pwd_invalid          = 2003,
         e_user_pwd_error            = 2004,
-
         e_query_user                = 3004,
         e_query_password            = 3005,
     };
-    typedef int result;
-
 
     struct return_control
     {
@@ -58,12 +49,12 @@ public:
         // check user and password empty
         if (user.empty())
         {
-            eco_trace(e_user_empty, "user name is empty");
+            eco_error(e_user_empty, "user name is empty");
             return false;
         }
         if (password.empty())
         {
-            eco_trace(e_password_empty, "password is empty");
+            eco_error(e_password_empty, "password is empty");
             return false;
         }
         
@@ -72,24 +63,24 @@ public:
         // error when check business
         if (rc == eco::result_error)
         {
-            eco_trace(e_user_pwd_error).sys(0) << "login check error";
+            eco_error(e_user_pwd_error).sys(0) << "login check error";
             return false;
         }
         if (rc == eco::result_false)
         {
-            eco_trace(e_user_pwd_invalid, "user is not exist");
+            eco_error(e_user_pwd_invalid, "user is not exist");
             return false;
         }
         
         // business: whether password is match
         eco::result rc = f12_check_password(user, password);
-        if (rc == eco::result_error)
+        if (rc == eco::result::error)
         {
             return false;
         }
-        if (rc == eco::result_false)
+        if (rc == eco::result::fail)
         {
-            eco_trace(e_user_pwd_invalid) << "password unmatch";
+            eco_error(e_user_pwd_invalid) << "password unmatch";
             return false;
         }
         return true;
@@ -102,13 +93,14 @@ public:
         // database error
         if (!f2_query_user(user))
         {
-            return eco::result_error;
+            return eco::result::error;
         }
+        // business error
         if (!ctrl.f11_user_exist)
         {
-            return eco::result_false;
+            return eco::result::fail;
         }
-        return eco::result_true;
+        return eco::result::ok;
     }
 
 
@@ -118,15 +110,14 @@ public:
         std::string current_pwd;
         if (!f2_query_password(user, current_pwd))
         {
-            return eco::result_error;
+            return eco::result::error;
         }
-
         // business error
         if (ctrl.f11_password_unmatch)
         {
-            return eco::result_false;
+            return eco::result::fail;
         }
-        return eco::result_true;
+        return eco::result::ok;
     }
 
     inline bool f2_query_user(const std::string&)
@@ -134,7 +125,7 @@ public:
         if (ctrl.f2_query_user)
         {
             const char* sql = "select * from account where user=";
-            eco_trace(e_query_user, "database sql error: %s", sql);
+            eco_error(e_query_user, "database sql error: %s", sql);
             return false;
         }
         return true;
@@ -145,7 +136,7 @@ public:
         if (ctrl.f2_query_password)
         {
             const char* sql = "select * from account where user= or pwd=";
-            eco_trace(e_query_password).sys(true) << "database sql error: " << sql;
+            eco_error(e_query_password).sys(true) << "database sql error: " << sql;
             return false;
         }
         return true;
@@ -159,35 +150,19 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(TestError, format)
 {
-    eco::error(1001);
-    eco::error(1001, 
-    "format: dmax=%d/dmin=%d umax=%u/umin=%u fmax=%f/fmin=%f dmax=%g/dmin=%g "
-    "string=%s",
-    std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(),
-    std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::min(),
-    std::numeric_limits<float>::max(), std::numeric_limits<float>::min(),
-    std::numeric_limits<double>::max(), std::numeric_limits<double>::min(),
-    "string_test_format_error");
-    ASSERT_EQ(!eco::error().message().empty(), true);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-TEST_F(TestError, args)
-{
     int v1 = 20241030;
     float v2 = 3.1415926
     double v3 = 3.1415926
     const char* v4 = "pi-value-is";
-    // argv setting: using %
-    eco::error(1001).format("argc1=%1 argc2=%2 argc3=%3 argc4=%4")
+    // arg setting: using %
+    eco_error(1001, "argc1=%1 argc2=%2 argc3=%3 argc4=%4")
         % v1 % eco::precision(v2, 4, true) %  eco::precision(v2, 2) % v4;
-    ASSERT_EQ(eco::error().message(),
+    ASSERT_EQ(eco_error().message(),
         "argc1=20241030 argc2=3.1416 argc3=3.14 argc4=pi-value-is");
-    // argv setting
-    eco::error(1001).format("argc1=%3 argc2=%1 argc3=%4 argc4=%2").
-        argv(v1).argv(v2, 4, true).argv(v2, 2).argv(v4);
-    ASSERT_EQ(eco::error().message(),
+    // arg setting
+    eco_error(1001, "argc1=%3 argc2=%1 argc3=%4 argc4=%2").
+        args(v1).args(v2, 4, true).args(v2, 2).args(v4);
+    ASSERT_EQ(eco_error().message(),
         "argc1=3.14 argc2=pi-value-is argc3=20241030 argc4=3.1416");
 }
 class error_data
@@ -234,7 +209,7 @@ TEST_F(TestError, return_error)
 {
     if (!user_login())
     {
-        eco_trace();
+        eco_error();
         return false;
     }
     

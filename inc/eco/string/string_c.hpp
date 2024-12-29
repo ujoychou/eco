@@ -18,31 +18,34 @@
 *******************************************************************************/
 #include <eco/macro.hpp>
 #include <stdio.h>
+#include <string>
+#include <string.h>
 
 
 eco_namespace(eco)
 ////////////////////////////////////////////////////////////////////////////////
-inline bool upper(char v)
+// char
+inline bool_t upper(char v)
 {
 	return v >= 'A' && v <= 'Z';
 }
-inline bool lower(char v)
+inline bool_t lower(char v)
 {
 	return v <= 'z' && v >= 'a';
 }
-inline bool letter(char v)
+inline bool_t letter(char v)
 {
 	return upper(v) || lower(v);
 }
-inline bool newline(char v)
+inline bool_t newline(char v)
 {
 	return (v == '\n' || v == '\r');
 }
-inline bool space(char v)
+inline bool_t space(char v)
 {
 	return (v == ' ' || v == '	');
 }
-inline bool empty(char v)
+inline bool_t empty(char v)
 {
 	return space(v) || newline(v);
 }
@@ -58,11 +61,12 @@ inline char to_lower(char v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool number(char v)
+// number
+inline bool_t number(char v)
 {
 	return v >= '0' && v <= '9';
 }
-inline bool number(const char* v)
+inline bool_t number(const char* v)
 {
 	for (const char* c = v; *c != 0; ++c)
 	{
@@ -70,37 +74,11 @@ inline bool number(const char* v)
 	}
 	return true;
 }
-inline bool big_endian()
-{
-	uint32_t v = 1;
-	return *reinterpret_cast<char*>(&v) == 1;
-}
-inline bool little_endian()
-{
-	return !big_endian();
-}
-////////////////////////////////////////////////////////////////////////////////
-template<typename integer_t>
-inline integer_t to_negative(integer_t v)
-{
-	return v <= 0 ? v : (0 - v);
-}
-template<typename integer_t>
-inline integer_t to_positive(integer_t v)
-{
-	return v >= 0 ? v : (0 - v);
-}
-inline uint32_t to_base_shift(uint32_t base)
-{
-	uint32_t shift = 1;
-	if (base < 2 || (base & (base - 1)) != 0) { return 0; }
-	for (; base > 2; base >>= 1, ++shift) {}
-	return shift;
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-inline bool empty(const char* v)
+// char*
+inline bool_t empty(const char* v)
 {
 	return (v == NULL || v[0] == 0);
 }
@@ -108,7 +86,7 @@ inline char first(const char* v)
 {
 	return !empty(v) ? v[0] : 0;
 }
-inline bool iequal(const char* s1, const char* s2, uint32_t size)
+inline bool_t iequal(const char* s1, const char* s2, uint32_t size)
 {
 	assert(size > 0);
 	char c1, c2;
@@ -153,6 +131,172 @@ inline size_t fit(const char* str, size_t size)
 	return ++i;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+class string_c
+{
+public:
+	inline void append(char c)
+	{
+		reserve(this->size + 1);
+		this->data[this->size++] = c;
+		this->data[this->size] = 0;
+	}
+
+	inline void append(char c, uint32_t size)
+	{
+		if (size == 0) return;
+		if (size == 1) return append(c);
+		reserve(this->size + size);
+		memset(&this->data[this->size], c, size);
+		this->size += size;
+		this->data[this->size] = 0;
+	}
+
+	inline void append(const char* str, uint32_t size)
+	{
+		if (size == 0) return;
+		reserve(this->size + size);
+		memcpy(&this->data[this->size], str, size);
+		this->size += size;
+		this->data[this->size] = 0;
+	}
+
+public:
+	inline string_c()
+		: data(nullptr), size(0), capacity(0)
+	{}
+
+	explicit inline string_c(uint32_t size, bool_t reserved = false)
+		: data(nullptr), size(0), capacity(0)
+	{
+		reserved ? reserve(size) : resize(size);
+	}
+
+	explicit inline string_c(const char* v)
+		: data(nullptr), size(0), capacity(0)
+	{
+		assign(v);
+	}
+
+	explicit inline string_c(const char* v, uint32_t size)
+		: data(nullptr), size(0), capacity(0)
+	{
+		assign(v, size);
+	}
+
+	explicit inline string_c(const std::string& v)
+		: data(nullptr), size(0), capacity(0)
+	{
+		assign(v.c_str(), (uint32_t)v.size());
+	}
+
+	inline string_c(eco::string_c&& v)
+		: data(v.data), size(v.size), capacity(v.capacity)
+	{
+		v.data = nullptr;
+		v.size = 0;
+		v.capacity = 0;
+	}
+
+	inline ~string_c()
+	{
+		release();
+	}
+
+public:
+	inline void swap(eco::string_c& v)
+	{
+		std::swap(this->data, v.data);
+		std::swap(this->size, v.size);
+		std::swap(this->capacity, v.capacity);
+	}
+
+	inline void assign(const char* v)
+	{
+		assign(v, static_cast<uint32_t>(strlen(v)));
+	}
+	inline void assign(const char* v, uint32_t size)
+	{
+		resize(size);
+		if (size > 0) { memcpy(&this->data[0], v, size); }
+	}
+	inline void assign(const std::string& v)
+	{
+		assign(v.c_str(), (uint32_t)v.size());
+	}
+
+	inline void erase(uint32_t pos, uint32_t count)
+	{
+		if (count > 0 && this->size > pos)
+		{
+			uint32_t size = this->size - pos;
+			if (count < size) { size = count; }
+			count = this->size - pos - size;
+			if (count > 0)
+			{
+				memcpy(&this->data[pos], &this->data[pos + size], count);
+			}
+			this->size -= size;
+			this->data[this->size] = 0;
+		}
+	}
+
+	inline void resize(uint32_t size)
+	{
+		reserve(size);
+		this->size = size;
+		if (this->data != nullptr) { this->data[this->size] = 0; }
+	}
+
+	inline void reserve(uint32_t c)
+	{
+		if (this->capacity < c)
+		{
+			// exponential growth.
+			if (c < 32) { c = 32; }
+			uint32_t old_size = this->size;
+			uint32_t new_size = this->capacity * 2;
+			if (new_size < c) { new_size = c; }
+
+			// keep old value.
+			char* new_data = (char*)malloc(new_size + 1);
+			if (old_size > 0) { memcpy(new_data, this->data, old_size); }
+			new_data[old_size] = 0;
+			
+			release();
+			this->data = new_data;
+			this->size = old_size;
+			this->capacity = new_size;
+		}
+	}
+
+	inline void fit()
+	{
+		resize(uint32_t(eco::fit(this->data, this->size) - 1));
+	}
+
+	inline void clear()
+	{
+		resize(0);
+	}
+
+	inline void release()
+	{
+		if (this->data != nullptr)
+		{
+			free(this->data);
+			this->data = nullptr;
+			this->size = 0;
+			this->capacity = 0;
+		}
+	}
+
+private:
+	char*    data;
+	uint32_t size;
+	uint32_t capacity;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(eco);

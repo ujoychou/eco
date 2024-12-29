@@ -10,7 +10,7 @@
             "cStandard": "c11",
             "cppStandard": "c++11",
             "intelliSenseMode": "linux-gcc-x64",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            "compileCommands": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1/compile_commands.json"
         }
     ],
     "version": 4
