@@ -63,7 +63,18 @@
         "numbers": "cpp",
         "semaphore": "cpp",
         "cinttypes": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "csignal": "cpp",
+        "any": "cpp",
+        "bitset": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "future": "cpp",
+        "iomanip": "cpp",
+        "span": "cpp",
+        "typeindex": "cpp",
+        "variant": "cpp",
+        "stack": "cpp"
     },
     "cmake.sourceDirectory": "/home/ujoy/space/eco-new/bin/eco/cmake"
 }

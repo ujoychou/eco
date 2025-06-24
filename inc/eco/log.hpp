@@ -184,7 +184,7 @@ private:
   eco::log::stream(level, __FILE__, __LINE__, title, ##__VA_ARGS__, NULL)
 #define eco_log_title(level, title, ...) \
   eco::log::level <= log_level() ? (void)0 : \
-  eco::log::stream(##level, __FILE__, __LINE__, title, ##__VA_ARGS__, NULL)
+  eco::log::stream(eco::log::level, __FILE__, __LINE__, title, ##__VA_ARGS__, NULL)
 #define eco_log_func(level, ...) eco_log(level, __func__, __VA_ARGS__)
 #define eco_log(level, ...) eco_log_title(level, 0, ##__VA_ARGS__)
 
@@ -193,6 +193,11 @@ eco_loge();
 eco_logf();
 eco_logw();
 eco_logi();
+
+
+eco_log(debug, "discovery", 12345) << 23444;
+eco_log(debug, "discovery") << "cool" << 3.1415;
+eco_log(debug) << 2344;
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace log
 } // namespace eco

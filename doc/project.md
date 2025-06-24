@@ -57,3 +57,11 @@ when using cmake_layout, conan will make build/Release/generators directory
 
 
 stream/字符串/cast/error/log/
+
+// 头脑风暴想法
+then().fail().error();
+when_ok().when_fail().when_error();
+
+
+
+

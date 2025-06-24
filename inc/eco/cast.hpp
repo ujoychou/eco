@@ -106,25 +106,40 @@ public:
 		return result.size();
 	}
 
-	template<typename int_t>
-	inline c_str(int_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	inline c_str(int32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
 	{
-		integer_to_string_format fmt(base, width, hold);
-		static_cast<integer_to_string<int_t>&>(result)(v, fmt);
+		integer_format fmt(base, width, hold);
+		integer_to_string(result)(v, fmt);
+	}
+	inline c_str(uint32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	{
+		integer_format fmt(base, width, hold);
+		integer_to_string(result)(v, fmt);
+	}
+	inline c_str(int64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	{
+		integer_format fmt(base, width, hold);
+		integer_to_string(result)(v, fmt);
+	}
+	inline c_str(uint64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	{
+		integer_format fmt(base, width, hold);
+		integer_to_string(result)(v, fmt);
 	}
 
-	inline c_str(float v, uint32_t precision, bool_t percent)
+	inline c_str(float v, int precision, bool_t sicentific, bool_t percent)
 	{
-		static_cast<eco::double_to_string<float>&>(result)(v, precision, 1, percent);
+		double_format fmt(precision, sicentific, percent);
+		eco::double_to_string<float>(result)(v, fmt);
 	}
-
-	inline c_str(double v, uint32_t precision, bool_t percent)
+	inline c_str(double v, int precision, bool_t sicentific, bool_t percent)
 	{
-		static_cast<eco::double_to_string<double>&>(result)(v, precision, 1, percent);
+		double_format fmt(precision, sicentific, percent);
+		eco::double_to_string<double>(result)(v, fmt);
 	}
 	
 private:
-	eco::cast_detail::string_result_double result;
+	eco::cast_result result;
 };
 
 

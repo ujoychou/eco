@@ -22,15 +22,6 @@
 
 
 eco_namespace(eco);
-////////////////////////////////////////////////////////////////////////////////
-enum bool_format
-{
-    bool_format_01    = 1,
-    bool_format_tf    = 2,
-	bool_format_yn    = 3,
-};
-
-
 eco_namespace(cast_detail);
 ////////////////////////////////////////////////////////////////////////////////
 struct tables
@@ -58,18 +49,54 @@ const uint8_t tables::ascii_to_int[80] = {
 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 
 33, 34, 35, 36, 36, 36, 36, 36, 36, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 36, 36, 36, 36};
+eco_namespace_end(cast_detail);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-struct string_result
+enum bool_format
+{
+    bool_format_01    = 1,
+    bool_format_tf    = 2,
+	bool_format_yn    = 3,
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+struct cast_result
 {
 public:
-	static const uint32_t capacity = 32;
+	static const uint32_t capacity = 36;
 
-	inline string_result() : pos(capacity - 1)
+	inline cast_result() : pos(capacity - 1)
 	{
 		buff[pos] = 0;
 	}
+
+	inline uint32_t size() const
+	{
+		return (capacity - 1 - pos);
+	}
+
+	inline const char* c_str() const
+	{
+		return &this->buff[0];
+	}
+
+	inline cast_result& fail(bool_t v)
+	{
+		buff[0] = (char)v;
+		return *this;
+	}
+
+	inline bool fail() const
+	{
+		return (buff[0] == 1);
+	}
+
+protected:
+	friend class eco::integer_to_string_decimal;
+	friend class eco::integer_to_string;
+	friend class eco::cast_detail::double_to_string_result;
 
 	inline void push_front(char c)
 	{
@@ -91,50 +118,10 @@ public:
 		for (; buff[pos] == 0 && pos < (capacity - 1); ++pos);
 	}
 
-	inline uint32_t size() const
-	{
-		return (capacity - 1 - pos);
-	}
-
-	inline const char* c_str() const
-	{
-		return &this->buff[0];
-	}
-
-	inline string_result& fail(bool_t v)
-	{
-		buff[0] = (char)v;
-		return *this;
-	}
-
-	inline bool fail() const
-	{
-		return (buff[0] == 1);
-	}
-
-protected:
-	uint32_t pos;
-	char buff[capacity];
+	uint32_t 	pos;
+	char 		buff[capacity];
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-struct result
-{
-	inline result& fail(bool_t v)
-	{
-		this->succ = !v;
-		return *this;
-	}
-
-	inline bool_t fail() const
-	{
-		return !succ;
-	}
-
-private:
-	bool_t succ;
-};
-////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(cast_detail);
 eco_namespace_end(eco);

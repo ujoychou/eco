@@ -105,7 +105,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 // return error mode: set error information in sub function
-#define eco_error(...) eco::error(##__VA_ARGS__, NULL)
+//#define eco_error(...) eco::error(##__VA_ARGS__, NULL)
 
 // throw error mode: throw error(a spice) object in sub function
 #define eco_throw(...) throw eco::error(##__VA_ARGS__, NULL)

@@ -7,8 +7,8 @@
             "request": "launch",
             "environment": [
                 {
-                    "name": "XXX",
-                    "value": "XXX"
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "$LD_LIBRARY_PATH:${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1"
                 },
             ],
             "cwd": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1",

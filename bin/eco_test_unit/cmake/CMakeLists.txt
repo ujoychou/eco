@@ -8,7 +8,10 @@ set(PRJ_VER ${PRJ_DIR}/inc/eco/rx/RxVersion.h)
 set(CPP_VER 17)
 # include & link
 set(LINK_LIBS GTest::gtest GTest::gtest_main)
+set(INCLUDE_DIRS ${PRJ_DIR}/test/unit)
 # source
-set(SRC_FILES ${PRJ_DIR}/test/unit/test_string.cpp)
+set(SRC_FILES
+    ${PRJ_DIR}/test/unit/test_lockfree.cpp
+    ${PRJ_DIR}/test/unit/test_number.cpp)
 
 include(${PRJ_DIR}/inc/eco/pak/cmake/c++.cmake)

@@ -24,15 +24,15 @@
 
 eco_namespace(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class integer_to_string_format
+class integer_format
 {
 public:
-	inline integer_to_string_format(uint8_t base, uint8_t width, char hold)
+	inline integer_format(uint8_t base, uint8_t width, char hold)
 		: int_chars(eco::cast_detail::tables::int_to_char_upper)
 		, positive(0), base(base), hold(hold), width(width)
 	{}
 
-	inline integer_to_string_format& upper(bool_t v)
+	inline integer_format& upper(bool_t v)
 	{
 		int_chars = v 
 			? eco::cast_detail::tables::int_to_char_upper
@@ -58,7 +58,7 @@ public:
 class integer_to_string_decimal
 {
 	typedef eco::cast_detail::tables eco_tables;
-	typedef eco::cast_detail::string_result string_result;
+	typedef eco::cast_result string_result;
 public:
 	inline integer_to_string_decimal(string_result& r) : result(r)
 	{}
@@ -208,7 +208,7 @@ public:
 	}
 
 private:
-	eco::cast_detail::string_result& result;
+	eco::cast_result& result;
 };
 
 
@@ -218,7 +218,7 @@ class integer_to_string
 	typedef integer_to_string this_t;
 
 	template<typename uint_t>
-	inline void cast(uint_t v, const integer_to_string_format& f)
+	inline void cast(uint_t v, const integer_format& f)
 	{
 		static_assert(sizeof(uint_t) >= 2);
 
@@ -242,7 +242,7 @@ class integer_to_string
 	}
 
 public:
-	inline void format(bool_t negative, const integer_to_string_format& f)
+	inline void format(bool_t negative, const integer_format& f)
 	{
 		// placeholder: "000123"
 		if (f.width > 0)
@@ -275,8 +275,7 @@ public:
 	}
 
 	template<typename uint_t>
-	inline void cast_shift(
-		uint_t v, uint32_t shift, const integer_to_string_format& f)
+	inline void cast_shift(uint_t v, uint32_t shift, const integer_format& f)
 	{
 		const uint8_t mode_flag = f.base - 1;
 		do
@@ -288,7 +287,7 @@ public:
 	}
 
 	template<typename uint_t>
-	inline void cast_number(uint_t v, const integer_to_string_format& f)
+	inline void cast_number(uint_t v, const integer_format& f)
 	{
 		do
 		{
@@ -301,31 +300,31 @@ public:
 	}
 
 public:
-	inline integer_to_string(eco::cast_detail::string_result& r) : result(r)
+	inline integer_to_string(eco::cast_result& r) : result(r)
 	{}
 
-	inline this_t& operator()(int32_t v, const integer_to_string_format& f)
+	inline this_t& operator()(int32_t v, const integer_format& f)
 	{
 		cast<uint32_t>(static_cast<uint32_t>(v < 0 ? -v : v), f);
 		if (!result.fail()) { format(v < 0, f); }
 		return *this;
 	}
 
-	inline this_t& operator()(uint32_t v, const integer_to_string_format& f)
+	inline this_t& operator()(uint32_t v, const integer_format& f)
 	{
 		cast<uint32_t>(v, f);
 		if (!result.fail()) { format(0, f); }
 		return *this;
 	}
 
-	inline this_t& operator()(int64_t v, const integer_to_string_format& f)
+	inline this_t& operator()(int64_t v, const integer_format& f)
 	{
 		cast<uint64_t>(static_cast<uint64_t>(v < 0 ? -v : v), f);
 		if (!result.fail()) { format(v < 0, f); }
 		return *this;
 	}
 
-	inline this_t& operator()(uint64_t v, const integer_to_string_format& f)
+	inline this_t& operator()(uint64_t v, const integer_format& f)
 	{
 		cast<uint64_t>(v, f);
 		if (!result.fail()) { format(0, f); }
@@ -333,13 +332,13 @@ public:
 	}
 
 private:
-	eco::cast_detail::string_result& result;
+	eco::cast_result& result;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename type_t>
-struct string_to_integer : public eco::cast_detail::result
+struct string_to_integer
 {
 	// cast result
 	type_t value;
