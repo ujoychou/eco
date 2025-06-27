@@ -39,8 +39,8 @@ public:
     inline market_client()
     {
         dom = eco::domain::get(domain_market, "market");
-        realtime = dom->service(service_realtime, "realtime");
-        history = dom->service(service_history, "history");
+        realtime = dom->service(service_realtime);
+        history = dom->service("history");
 
         // 实时行情
     }

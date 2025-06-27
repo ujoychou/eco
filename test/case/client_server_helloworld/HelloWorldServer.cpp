@@ -20,7 +20,7 @@ public:
         {
             ECO_THROW(1002) << rsp.name();
         }
-        sess.reply(rsp);
+        sess.reply(rsp, proto3::HelloWorldRspMeta);
     }
 };
 
@@ -40,8 +40,8 @@ public:
 
 		// service method
 		using namespace std::placeholders;
-		this->helloworld.method(HelloWorld_ID::say_hello).bind<
-			proto3::HelloWorldReq>(
+		this->helloworld.method(HelloWorld_ID::say_hello)
+			.bind<proto3::HelloWorldReq, proto3::HelloWorldReqMeta>(
 			std::bind(&HelloWorldService::SayHello, &helloworld, _1));
 	}
 

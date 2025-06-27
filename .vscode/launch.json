@@ -13,7 +13,7 @@
             ],
             "cwd": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1",
             "program": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1/eco_test_unit",
-            "args": [""],
+            "args": ["--gtest_filter=Freelist.spsc"],
             "stopAtEntry": false,
             "externalConsole": false,
             "logging": {

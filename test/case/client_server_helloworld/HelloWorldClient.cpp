@@ -21,11 +21,14 @@ public:
 	{
 		proto3::HelloWorldReq req;
 		proto3::HelloWorldRsp rsp;
-		this->helloworld.method(HelloWorld_ID::say_hello).sync(req, rsp);
+
+		// sync request
+		this->helloworld.method(HelloWorld_ID::say_hello).sync(
+			req, rsp, proto3::HelloWorldReqMeta, proto3::HelloWorldRspMeta);
 		ECO_INFO("say hello to %s reply back.", rsp.name().c_str());
 
-		this->helloworld.method(HelloWorld_ID::say_hello).async<
-			proto3::HelloWorldRsp>(req, 
+		// async request
+		this->helloworld.method(HelloWorld_ID::say_hello).async(req,
 			[&](eco::session_reply<proto3::HelloWorldRsp>& sess) {
 			if (sess.has_error())
 			{
@@ -33,7 +36,7 @@ public:
 			}
 			ECO_LOG(info, "async say hello to %s reply back.", 
 				sess.reply().name().c_str());
-		});
+		}, proto3::HelloWorldReqMeta, proto3::HelloWorldRspMeta);
 
 
 		const char* name = "sssssdddsss";

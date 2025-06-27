@@ -115,7 +115,7 @@ TEST_F(TestThrow, format)
     // arg setting: using %
     eco_error(1001, "argc1=%1 argc2=%2 argc3=%3 argc4=%4")
         % v1 % eco::precision(v2, 4, true) %  eco::precision(v2, 2) % v4;
-    ASSERT_EQ(eco_error().message(),
+    ASSERT_EQ(eco::error().message(),
         "argc1=20241030 argc2=3.1416 argc3=3.14 argc4=pi-value-is");
     // arg setting
     eco_error(1001, "argc1=%3 argc2=%1 argc3=%4 argc4=%2").
