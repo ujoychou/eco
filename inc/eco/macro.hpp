@@ -22,12 +22,29 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// platform: os
 #ifdef __WIN32
 #	define eco_win32
 #else
 #   define eco_linux
 #endif
 
+// platform: complier
+#ifdef __clang__
+#   define eco_clang
+#elif defined (__GNUC__)
+#   define eco_gnuc
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////
+#if defined(eco_gnuc) || defined(eco_clang)
+#  define likely(x)     __builtin_expect(!!(x), 1)
+#  define unlikely(x)   __builtin_expect(!!(x), 0)
+#else
+#  define likely(x)     (x)
+#  define unlikely(x)   (x)
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // c++ namespace
@@ -54,8 +71,17 @@ eco_macro_cat(macro, eco_macro_getn(__VA_ARGS__))(__VA_ARGS__)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// typedef
+// c++ typedef
 eco_namespace(eco)
 using bool_t = uint32_t;
 using offset_t = uint32_t;
+enum class result : int
+{
+    ok 	        = 0,
+    fail        = 1,
+    error	    = 2,
+    timeout     = 3,
+
+    syserr      = 0x1 << 31,
+};
 eco_namespace_end(eco)

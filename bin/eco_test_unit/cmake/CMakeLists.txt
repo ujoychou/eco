@@ -11,11 +11,14 @@ set(LINK_LIBS GTest::gtest GTest::gtest_main)
 set(INCLUDE_DIRS ${PRJ_DIR}/test/unit)
 # source
 set(SRC_FILES
-    ${PRJ_DIR}/test/unit/lockfree/test_freepool.cpp
-    ${PRJ_DIR}/test/unit/lockfree/test_spanpool.cpp
-    ${PRJ_DIR}/test/unit/lockfree/test_freelist.cpp
+    ${PRJ_DIR}/test/unit/cast/test_cast_integer_2.cpp
+    ${PRJ_DIR}/test/unit/cast/test_cast_integer_2_ai.cpp
+    ${PRJ_DIR}/test/unit/cast/test_cast_integer_1.cpp
     ${PRJ_DIR}/test/unit/lockfree/test_queue.cpp
     ${PRJ_DIR}/test/unit/sync/test_spinlock.cpp
-    ${PRJ_DIR}/test/unit/test_number.cpp)
+    ${PRJ_DIR}/test/unit/test_number.cpp
+    ${PRJ_DIR}/test/unit/lockfree/test_freepool.cpp
+    ${PRJ_DIR}/test/unit/lockfree/test_spanpool.cpp
+    ${PRJ_DIR}/test/unit/lockfree/test_freelist.cpp)
 
 include(${PRJ_DIR}/inc/eco/pak/cmake/c++.cmake)

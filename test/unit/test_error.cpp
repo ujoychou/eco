@@ -27,9 +27,11 @@ public:
         bool f2_query_password;
     };
 
+    #define eco_ui(x, y)
+
     inline void ui_login(const std::string& user, const std::string& password)
     {
-        if (!f1_login())
+        if (!f1_login(user, password))
         {
             if (eco::error().sys())
             {

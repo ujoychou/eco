@@ -41,6 +41,7 @@ public:
 		auto cur = std::chrono::steady_clock::now();
 		auto dur = std::chrono::duration_cast<
 			std::chrono::milliseconds>(cur - m_clock);
+		m_clock = cur;
 		return dur.count();
 	}
 

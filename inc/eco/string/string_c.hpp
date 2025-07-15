@@ -124,10 +124,10 @@ inline void clear(char* v)
 	v[0] = 0;
 }
 // get string end size.
-inline size_t fit(const char* str, size_t size)
+inline size_t fit(const char* v, size_t size)
 {
 	size_t i = size - 1;
-	for (; i != size_t(-1) && str[i] == 0; --i) {}
+	for (; i != size_t(-1) && v[i] == 0; --i) {}
 	return ++i;
 }
 

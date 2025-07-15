@@ -25,7 +25,8 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(LogTest, factory)
-{   
+{
+    std::string x;
 }
 
 
@@ -67,6 +68,23 @@ TEST_F(LogTest, level)
 
     eco_log(debug, "sdfsdfsdfsdfsdfs", 1, 2.33, "cool").each(3).when(a > 9);
     eco_log(debug, (a > 9), 100, "sdfsdfsdfsdfsdfs", 1, 2.33, "cool");
+
+
+    eco::log::logger().each();
+
+eco_log(debug);
+eco_log(debug, "fixdebug");
+eco_log(debug, "fixdebug", 1250);
+
+eco_log(debug, "fixdebug", 1250)
+	.when([]()->bool{ return it->data; })
+	.each(100)
+	.text("this is the message content %s", name);
+eco_log(debug)
+	.when([]()->bool{ return it->data; })
+	.each(100)
+	<< "this is the message content " << name;
+
 }
 
 

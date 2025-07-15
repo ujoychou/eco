@@ -145,12 +145,17 @@ typedef ieee_754_value<double> double_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 // integer
-inline bool_t big_endian()
+template<typename int_t>
+inline eco::bool_t signed_int()
+{
+    return static_cast<int_t>(-1) < 0;
+}
+inline eco::bool_t big_endian()
 {
 	eco::union_memory<uint32_t, char[4]> um(1);
 	return um.u.out[0] == 1;
 }
-inline bool_t little_endian()
+inline eco::bool_t little_endian()
 {
 	return !big_endian();
 }
@@ -231,13 +236,13 @@ inline uint32_t count_highest_bit_ge(uint32_t value)
 
 ////////////////////////////////////////////////////////////////////////////////
 // double
-inline bool_t sign(double v)
+inline eco::bool_t sign(double v)
 {
 	eco::union_memory<double, uint64_t> um(v);
 	return (um.u.out >> 63) != 0;
 }
 
-inline bool_t inf(double v)
+inline eco::bool_t inf(double v)
 {
 	eco::union_memory<double, uint64_t> um(v);
 	// get exponent and significand
@@ -246,7 +251,7 @@ inline bool_t inf(double v)
 	return (e == (uint64_t(1) << 11) - 1) && f == 0;
 }
 
-inline bool_t nan(double v)
+inline eco::bool_t nan(double v)
 {
 	eco::union_memory<double, uint64_t> um(v);
 	// get exponent and significand

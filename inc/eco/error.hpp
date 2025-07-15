@@ -41,18 +41,6 @@ eco_namespace_end(detail);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-enum class result : int
-{
-    ok 	        = 0,
-    fail        = 1,
-    error	    = 2,
-    timeout     = 3,
-
-    syserr      = 0x1 << 31,
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 class error : public eco::stream<eco::error>, public eco::format<eco::error>
 {
 public:

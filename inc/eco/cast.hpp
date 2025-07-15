@@ -16,7 +16,7 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/cast/cast_double.hpp>
+//#include <eco/cast/cast_double.hpp>
 #include <eco/cast/cast_integer.hpp>
 #include <string>
 
@@ -87,7 +87,7 @@ template<> inline double cast(const eco::string_view& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// cast type to const c_str(char*)
+// cast type to const c_str(char*), shim class.
 class c_str
 {
 public:
@@ -106,45 +106,37 @@ public:
 		return result.size();
 	}
 
-	inline c_str(int32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	inline c_str(int32_t v, uint8_t base = 0, uint8_t width = 0, char hold = ' ')
 	{
-		integer_format fmt(base, width, hold);
-		integer_to_string(result)(v, fmt);
+		integer_to_string().format(base, width, hold).cast(v, result);
 	}
-	inline c_str(uint32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	inline c_str(uint32_t v, uint8_t base = 0, uint8_t width = 0, char hold = ' ')
 	{
-		integer_format fmt(base, width, hold);
-		integer_to_string(result)(v, fmt);
+		integer_to_string().format(base, width, hold).cast(v, result);
 	}
-	inline c_str(int64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	inline c_str(int64_t v, uint8_t base = 0, uint8_t width = 0, char hold = ' ')
 	{
-		integer_format fmt(base, width, hold);
-		integer_to_string(result)(v, fmt);
+		integer_to_string().format(base, width, hold).cast(v, result);
 	}
-	inline c_str(uint64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+	inline c_str(uint64_t v, uint8_t base = 0, uint8_t width = 0, char hold = ' ')
 	{
-		integer_format fmt(base, width, hold);
-		integer_to_string(result)(v, fmt);
+		integer_to_string().format(base, width, hold).cast(v, result);
 	}
 
-	inline c_str(float v, int precision, bool_t sicentific, bool_t percent)
+	inline c_str(float v, int prec, eco::bool_t sicentific, eco::bool_t percent)
 	{
-		double_format fmt(precision, sicentific, percent);
-		eco::double_to_string<float>(result)(v, fmt);
 	}
-	inline c_str(double v, int precision, bool_t sicentific, bool_t percent)
+	inline c_str(double v, int prec, eco::bool_t sicentific, eco::bool_t percent)
 	{
-		double_format fmt(precision, sicentific, percent);
-		eco::double_to_string<double>(result)(v, fmt);
 	}
 	
 private:
-	eco::cast_result result;
+	eco::cast_detail::result result;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// cast type to string
+// cast bool to string
 inline const char* cast(
 	bool v, eco::bool_format format = eco::bool_format_01)
 {
@@ -156,52 +148,29 @@ inline const char* cast(
 		return v ? "yes" : "no";
 	return "bool";
 }
-inline std::string cast(
-	int16_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+
+// cast integer to string
+template<typename int_t>
+inline std::string cast(int_t v, uint8_t width = 0, char hold = ' ')
 {
-	eco::c_str s(v, base, width, hold);
+	static_assert(std::is_integral_v<int_t> && sizeof(int_t) >= 4,
+        "int_t must be a 32-bit or 64-bit integer type");
+	eco::c_str s(v, 10, width, hold);
 	return std::string(s, s.size());
 }
-inline std::string cast(
-	uint16_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
+
+// cast float to string
+template<typename float_t>
+inline std::string cast(float_t v, int precision = -1, bool_t percent = false)
 {
-	eco::c_str s(v, base, width, hold);
-	return std::string(s, s.size());
-}
-inline std::string cast(
-	int32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
-{
-	eco::c_str s(v, base, width, hold);
-	return std::string(s, s.size());
-}
-inline std::string cast(
-	uint32_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
-{
-	eco::c_str s(v, base, width, hold);
-	return std::string(s, s.size());
-}
-inline std::string cast(
-	int64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
-{
-	eco::c_str s(v, base, width, hold);
-	return std::string(s, s.size());
-}
-inline std::string cast(
-	uint64_t v, uint32_t base = 0, uint32_t width = 0, char hold = ' ')
-{
-	eco::c_str s(v, base, width, hold);
-	return std::string(s, s.size());
-}
-inline std::string cast(double v)
-{
-	eco::c_str s(v, 0, false);
-	return std::string(s, s.size());
-}
-inline std::string cast(double v, int precision, bool_t percent = false)
-{
+	static_assert(
+        std::is_floating_point_v<float_t>,
+        "float_t must be a floating-point type (float or double)"
+    );
 	eco::c_str s(v, precision, percent);
 	return std::string(s, s.size());
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(eco);

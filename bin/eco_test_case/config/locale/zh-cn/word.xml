@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <type type="enum">
+    <w node="1" value="布尔型"/>
+    <w node="2" value="整数"/>
+    <w node="3" value="整数"/>
+    <w node="4" value="文字"/>
+    <w node="5" value="小数"/>
+    <w node="6" value="日期"/>
+    <w node="7" value="时间"/>
+    <w node="8" value="日期时间"/>
+    <w node="9" value="枚举"/>
+    <w node="10" value="百分数"/>
+  </type>
+</root>

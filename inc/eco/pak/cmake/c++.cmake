@@ -20,7 +20,7 @@
 include(${CMAKE_CURRENT_LIST_DIR}/fun.cmake)
 
 # platform
-if (${PLATFORM} STREQUAL "linux-x64")
+if(${PLATFORM} STREQUAL "linux-x64")
     add_definitions(-DECO_LINUX)
 elseif (${PLATFORM} STREQUAL "linux-aarch64")
     add_definitions(-DECO_LINUX)
@@ -44,7 +44,7 @@ message("---------------------------------------------------------------------")
 # build directory
 set(TMP_DIR ${PRJ_DIR}/.tmp/${PRJ_CFG})
 set(BIN_DIR ${PRJ_DIR}/.bin/${PRJ_CFG})
-if (NOT INSTALL_DIR)
+if(NOT INSTALL_DIR)
     set(INSTALL_DIR ${BIN_DIR})
 endif()
 
@@ -75,7 +75,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # c++ compiler: "compile_commands.json"
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # c++ compiler
-if (${COMPILER} STREQUAL "gcc")
+if(${COMPILER} STREQUAL "gcc")
     add_definitions(-DECO_GCC)
     include(${CMAKE_CURRENT_LIST_DIR}/gcc.cmake)
 elseif (${COMPILER} STREQUAL "msvc")
@@ -130,7 +130,9 @@ eco_messages("== SRC_FILE_EXCLUDE:" ${SRC_FILES_EXCLUDE})
 # c++ target: source files
 eco_files_include(SRC_FILES ${SRC_DIRS})
 eco_files_exclude(SRC_FILES ${SRC_DIRS_EXCLUDE})
-list(REMOVE_ITEM SRC_FILES ${SRC_FILES_EXCLUDE})
+if(SRC_FILES_EXCLUDE)
+    list(REMOVE_ITEM SRC_FILES ${SRC_FILES_EXCLUDE})
+endif()
 target_sources(${PROJECT_NAME} PRIVATE ${SRC_FILES})
 # c++ target: inc & lib & install.
 eco_messages("== SOURCE:" ${SRC_FILES})
