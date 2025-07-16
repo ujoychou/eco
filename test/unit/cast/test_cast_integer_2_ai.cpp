@@ -298,17 +298,17 @@ public:
         这个数据集可以用于测试字符串到int64_t的转换函数，验证其正确性和鲁棒性。
 
         {humman modify}
-
+        1. 溢出的数字使用max/min，这样容易暴露问题
+        2. -4错误情况时，value不为0
         */
         return expects;
     }
 
 public:
-    inline int64_t perf_cast(int64_t& count, int times)
+    inline int64_t perf_cast(
+        int64_t& count, int times, const std::vector<std::string>& datas)
     {
         count = 0;
-        std::vector<std::string> datas = dataset();
-
         eco::test::timer timer;
         for (int i = 0; i < times; i++)
         {
@@ -321,11 +321,10 @@ public:
         return timer.timeup();
     }
 
-    inline int64_t perf_atoi(int64_t& count, int times)
+    inline int64_t perf_atoi(
+        int64_t& count, int times, const std::vector<std::string>& datas)
     {
         count = 0;
-        std::vector<std::string> datas = dataset();
-
         eco::test::timer timer;
         for (int i = 0; i < times; i++)
         {
@@ -371,11 +370,11 @@ TEST_F(cast_integer_2_ai, decimal)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(cast_integer_2_ai, decimal_perf)
 {
-    const int TIMES = 100000;
     int64_t c1 = 0;
     int64_t c2 = 0;
-    int64_t atoi = perf_atoi(c1, TIMES);
-    int64_t cast = perf_cast(c2, TIMES);
+    const int TIMES = 100000;
+    int64_t atoi = perf_atoi(c1, TIMES, dataset());
+    int64_t cast = perf_cast(c2, TIMES, dataset());
     EXPECT_EQ(c1, c2);
     EXPECT_EQ(atoi, cast);
 }

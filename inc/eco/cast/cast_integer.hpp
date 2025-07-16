@@ -38,17 +38,17 @@ public:
 		, positive(0), base(base), hold(hold), width(width)
 	{}
 
-	inline integer_format& upper(bool_t v)
+	inline integer_format& lower(bool_t v)
 	{
 		int_chars = v 
-			? eco::cast_detail::tables<>::CHAR_UPPER
-			: eco::cast_detail::tables<>::CHAR_LOWER;
+			? eco::cast_detail::tables<>::CHAR_LOWER
+			: eco::cast_detail::tables<>::CHAR_UPPER;
 		return *this;
 	}
 
-	inline bool_t upper() const
+	inline bool_t lower() const
 	{
-		return int_chars == eco::cast_detail::tables<>::CHAR_UPPER;
+		return int_chars == eco::cast_detail::tables<>::CHAR_LOWER;
 	}
 
 public:
@@ -74,11 +74,11 @@ public:
 		r.push_front(eco::cast_detail::tables<>::CHAR_UPPER[pos]);
 	}
 
-	inline void cast_10_back(uint32_t v, string_result& r)
+	/*inline void cast_10_back(uint32_t v, string_result& r)
 	{
 		size_t pos = (size_t)v;
 		r.push_back(eco::cast_detail::tables<>::CHAR_UPPER[pos]);
-	}
+	}*/
 
 	inline void cast_100(uint32_t v, string_result& r)
 	{
@@ -87,17 +87,17 @@ public:
 		r.push_front(eco::cast_detail::tables<>::CHAR_100[pos]);
 	}
 
-	inline void cast_100_back(uint32_t v, string_result& r)
+	/*inline void cast_100_back(uint32_t v, string_result& r)
 	{
 		size_t pos = size_t(v << 1);
 		r.push_back(eco::cast_detail::tables<>::CHAR_100[pos]);
 		r.push_back(eco::cast_detail::tables<>::CHAR_100[pos + 1]);
-	}
+	}*/
 
 	inline void cast_10000(uint32_t v, string_result& r)
 	{
 		// when v in [0, 9999]:  v / 100 = v * 10486 / 1048576 (<< 20)
-		uint32_t tens_div = (v * 10486) << 20;
+		uint32_t tens_div = (v * 10486) >> 20;
 		uint32_t tens_mod = v - tens_div * 100;
 		cast_100(tens_mod, r);
 		cast_100(tens_div, r);
@@ -125,12 +125,13 @@ public:
 		uint32_t h = v / 10000;
 		uint32_t l = v % 10000;
 		uint64_t merged = (uint64_t{h} << 32) | l;
-		uint64_t div100 = (merged * 10486) << 20;
+		uint64_t div100 = (merged * 10486) >> 20;
+		div100 &= ((0x7Full << 32) | 0x7Full);
 		uint64_t mod100 = (merged - div100 * 100);
 		cast_100(mod100 & 0x7Full, r);			// YY
 		cast_100(div100 & 0x7Full, r);			// XX
-		cast_100(mod100 & 0x7Full << 32, r);	// BB
-		cast_100(div100 & 0x7Full << 32, r);	// AA
+		cast_100((mod100 >> 32) & 0x7Full, r);	// BB
+		cast_100((div100 >> 32) & 0x7Full, r);	// AA
 	}
 
 	inline void cast(uint32_t v, string_result& r)
@@ -220,9 +221,10 @@ class integer_to_string
 	typedef integer_to_string this_t;
 
 	template<typename uint_t>
-	inline void cast(uint_t v, eco::cast_detail::result& r)
+	inline void do_cast(uint_t v, eco::cast_detail::result& r)
 	{
-		static_assert(sizeof(uint_t) >= 2);
+		static_assert(sizeof(uint_t) >= 4);
+		r.reset();
 		uint32_t shift = 0;
 		if (m_format.base < 2 || m_format.base > 36)
 		{
@@ -245,34 +247,43 @@ class integer_to_string
 public:
 	inline void format_result(eco::bool_t negative, eco::cast_detail::result& r)
 	{
-		// placeholder: "000123"
+		r.remove_prefix_zero();
+
+		// prefix: "0X/0B/0"
+		if (m_format.base != 10)
+		{
+			if (m_format.base == 16)
+			{
+				r.push_front(m_format.int_chars[37]);
+				r.push_front('0');
+			}
+			else if (m_format.base == 8)
+			{
+				r.push_front('0');
+			}
+			else if (m_format.base == 2)
+			{
+				r.push_front(m_format.int_chars[36]);
+				r.push_front('0');
+			}
+		}
+		
+		// signed: "+/-"
+		if (negative)
+		{
+			r.push_front('-');
+		}
+		else if (m_format.positive)
+		{
+			r.push_front('+');
+		}
+
+		// placeholder: "0000x123" "   0x123"
 		if (m_format.width > 0)
 		{
 			int hold_size = m_format.width - r.size();
 			while (hold_size-- > 0) { r.push_front(m_format.hold); }
 		}
-
-		// prefix: "0X/0B/0"
-		if (m_format.base == 16)
-		{
-			r.push_front(m_format.int_chars[37]);
-			r.push_front('0');
-		}
-		else if (m_format.base == 8)
-		{
-			r.push_front('0');
-		}
-		else if (m_format.base == 2)
-		{
-			r.push_front(m_format.int_chars[36]);
-			r.push_front('0');
-		}
-		
-		// signed: "+/-"
-		if (negative)
-			r.push_front('-');
-		else if (m_format.positive)
-			r.push_front('+');
 	}
 
 	template<typename uint_t>
@@ -312,9 +323,9 @@ public:
 		m_format.hold = hold;
 		return *this;
 	}
-	inline integer_to_string& upper(eco::bool_t v)
+	inline integer_to_string& lower(eco::bool_t v)
 	{
-		m_format.upper(v);
+		m_format.lower(v);
 		return *this;
 	}
 	inline integer_to_string& base(uint8_t v)
@@ -340,28 +351,40 @@ public:
 
 	inline this_t& cast(int32_t v, eco::cast_detail::result& r)
 	{
-		cast<uint32_t>(static_cast<uint32_t>(v < 0 ? -v : v), r);
+		if (v == INT32_MIN)
+		{ 
+			r.uint32_min();
+			format_result(true, r);
+			return *this;
+		}
+		do_cast<uint32_t>(static_cast<uint32_t>(v < 0 ? -v : v), r);
 		if (!r.fail()) { format_result(v < 0, r); }
 		return *this;
 	}
 
 	inline this_t& cast(uint32_t v, eco::cast_detail::result& r)
 	{
-		cast<uint32_t>(v, r);
+		do_cast<uint32_t>(v, r);
 		if (!r.fail()) { format_result(0, r); }
 		return *this;
 	}
 
 	inline this_t& cast(int64_t v, eco::cast_detail::result& r)
 	{
-		cast<uint64_t>(static_cast<uint64_t>(v < 0 ? -v : v), r);
+		if (v == INT64_MIN) 
+		{
+			r.uint64_min();
+			format_result(true, r);
+			return *this;
+		}
+		do_cast<uint64_t>(static_cast<uint64_t>(v < 0 ? -v : v), r);
 		if (!r.fail()) { format_result(v < 0, r); }
 		return *this;
 	}
 
 	inline this_t& cast(uint64_t v, eco::cast_detail::result& r)
 	{
-		cast<uint64_t>(v, r);
+		do_cast<uint64_t>(v, r);
 		if (!r.fail()) { format_result(0, r); }
 		return *this;
 	}
@@ -466,7 +489,7 @@ private:
 
 		// negative number must cast to the signed integer
 		// exp: "-33 can't cast to uint32_t"
-		if (!signed_int<int_t>() && negative) { return -2; }
+		if (!eco::signed_int<int_t>() && negative) { return -2; }
 
 		// parse integer base: 16/10/8
 		int pos = this->base(c, base);

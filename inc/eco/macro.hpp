@@ -39,11 +39,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(eco_gnuc) || defined(eco_clang)
-#  define likely(x)     __builtin_expect(!!(x), 1)
-#  define unlikely(x)   __builtin_expect(!!(x), 0)
+#  define eco_likely(x)     __builtin_expect(!!(x), 1)
+#  define eco_unlikely(x)   __builtin_expect(!!(x), 0)
 #else
-#  define likely(x)     (x)
-#  define unlikely(x)   (x)
+#  define eco_likely(x)     (x)
+#  define eco_unlikely(x)   (x)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -89,7 +89,19 @@ public:
 	inline result() : pos(capacity - 1)
 	{
 		buff[0] = 0;
-		buff[pos] = 0;
+		buff[pos] = '\0';
+	}
+
+	inline void reset()
+	{
+		pos = capacity - 1;
+		buff[0] = 0;
+		buff[pos] = '\0';
+	}
+
+	inline void remove_prefix_zero()
+	{
+		for (; (size() > 1 && buff[pos] == '0'); ++pos);
 	}
 
 	inline uint32_t size() const
@@ -99,10 +111,10 @@ public:
 
 	inline const char* c_str() const
 	{
-		return &this->buff[0];
+		return &this->buff[pos];
 	}
 
-	inline result& fail(bool_t v)
+	inline result& fail(eco::bool_t v)
 	{
 		buff[0] = (char)v;
 		return *this;
@@ -119,7 +131,25 @@ public:
 		buff[--pos] = c;
 	}
 
-	inline void push_back(char c)
+	inline void uint32_min()
+	{
+		reset();
+		const char* c = "2147483648";
+		const uint32_t size = 10;
+		pos -= size;
+		memcpy(&buff[pos], c, size);
+	}
+
+	inline void uint64_min()
+	{
+		reset();
+		const char* c = "9223372036854775808";
+		const uint32_t size = 19;
+		pos -= size;
+		memcpy(&buff[pos], c, size);
+	}
+
+	/*inline void push_back(char c)
 	{
 		buff[pos++] = c;
 	}
@@ -132,7 +162,7 @@ public:
 	inline void pop_front_zero()
 	{
 		for (; buff[pos] == 0 && pos < (capacity - 1); ++pos);
-	}
+	}*/
 
 	uint32_t 	pos;
 	char 		buff[capacity];
