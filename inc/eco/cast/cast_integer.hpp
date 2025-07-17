@@ -232,7 +232,9 @@ class integer_to_string
 		}
 		else if (m_format.base == 10)
 		{
-			integer_to_string_decimal().cast(v, r);
+			// perf: cast ~= cast_general, 
+			// perf: cast  < cast_general debug, and cast_general is simple.
+			integer_to_string_decimal().cast_general(v, r);
 		}
 		else if ((shift = to_base_shift(m_format.base)) > 0)
 		{

@@ -373,8 +373,9 @@ TEST_F(cast_integer_2_ai, decimal_perf)
     int64_t c1 = 0;
     int64_t c2 = 0;
     const int TIMES = 100000;
-    int64_t atoi = perf_atoi(c1, TIMES, dataset());
-    int64_t cast = perf_cast(c2, TIMES, dataset());
+    int64_t cost1 = perf_cast(c1, TIMES, dataset());
+    int64_t cost2 = perf_atoi(c2, TIMES, dataset());
     EXPECT_EQ(c1, c2);
-    EXPECT_EQ(atoi, cast);
+    EXPECT_LE(cost1, cost2);
+    printf("eco_cast(%ld) < atoi(%ld)\n", cost1, cost2);
 }

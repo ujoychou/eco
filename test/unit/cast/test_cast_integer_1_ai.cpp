@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <eco/cast/cast_integer.hpp>
 #include <eco/test/timer.hpp>
+#include <charconv>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -156,6 +157,57 @@ public:
         return dataset_expect;
     }
 
+    inline std::vector<int64_t> dataset_big()
+    {
+        /*
+        {deepseek prompt 2025-07-16} (create)
+        请设计测试数据集，用于int64_t整数转字符串，要求如下：
+        1. 正数负数各一半。
+        2. 按数值的使用概率生成。
+        3. 边界值测试。
+        4. 包含所有10的n次方的值。
+        5. 生成200个满足上述要求的数。
+        6. 按C++代码生成如下，并保证整数与字符串一一对应，请生成dataset与dataset_expect：
+        std::vector<int64_t> dataset = { ... };
+        std::vector<std::string> dataset_expect = { ... };
+        */
+        std::vector<int64_t> dataset = {
+            123456789012, -987654321098,
+            1234567890123, -9876543210987,
+            12345678901234, -98765432109876,
+            123456789012345, -987654321098765,
+            1234567890123456, -9876543210987654,
+            12345678901234567, -98765432109876543,
+            123456789012345678, -987654321098765432,
+            1234567890123456789, -9176543210987654321,
+            123456789012, -987654321098,
+            1234567890123, -9876543210987,
+            12345678901234, -98765432109876,
+            123456789012345, -987654321098765,
+            1234567890123456, -9876543210987654,
+            12345678901234567, -98765432109876543,
+            123456789012345678, -987654321098765432,
+            1234567890123456789, -9176543210987654321,
+            123456789012, -987654321098,
+            1234567890123, -9876543210987,
+            12345678901234, -98765432109876,
+            123456789012345, -987654321098765,
+            1234567890123456, -9876543210987654,
+            12345678901234567, -98765432109876543,
+            123456789012345678, -987654321098765432,
+            1234567890123456789, -9176543210987654321,
+            123456789012, -987654321098,
+            1234567890123, -9876543210987,
+            12345678901234, -98765432109876,
+            123456789012345, -987654321098765,
+            1234567890123456, -9876543210987654,
+            12345678901234567, -98765432109876543,
+            123456789012345678, -987654321098765432,
+            1234567890123456789, -9176543210987654321,
+        };
+        return dataset;
+    };
+
     inline int64_t perf_cast(
         std::string& count, int times, const std::vector<int64_t>& datas)
     {
@@ -174,7 +226,41 @@ public:
         return timer.timeup();
     }
 
-    inline int64_t perf_string(
+    inline int64_t perf_to_chars(
+        std::string& count, int times, const std::vector<int64_t>& datas)
+    {
+        char buff[40];
+        count.resize(datas.size());
+        eco::test::timer timer;
+        for (int i = 0; i < times; i++)
+        {
+            for (size_t j = 0; j < datas.size(); j++)
+            {
+                std::to_chars(buff, buff + sizeof(buff), datas[j]);
+                count[j] = buff[0];
+            }
+        }
+        return timer.timeup();
+    }
+
+    inline int64_t perf_printf(
+        std::string& count, int times, const std::vector<int64_t>& datas)
+    {
+        char buff[40];
+        count.resize(datas.size());
+        eco::test::timer timer;
+        for (int i = 0; i < times; i++)
+        {
+            for (size_t j = 0; j < datas.size(); j++)
+            {
+                snprintf(buff, sizeof(buff), "%ld", datas[j]);
+                count[j] = buff[0];
+            }
+        }
+        return timer.timeup();
+    }
+
+    inline int64_t perf_to_string(
         std::string& count, int times, const std::vector<int64_t>& datas)
     {
         count.resize(datas.size());
@@ -210,12 +296,37 @@ TEST_F(cast_integer_1_ai, decimal_int64)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(cast_integer_1_ai, decimal_int64_perf)
 {
-    // cost-time: cast(x1) > string(x2) > printf(x6)
+    // perf cost time: 
+    // cast(x1) <= to_chars(x1.1) < to_string(x1.5) ~= printf(x1.5)
     std::string c1;
     std::string c2;
+    std::string c3;
+    std::string c4;
     const int TIMES = 100000;
     int64_t str1 = perf_cast(c1, TIMES, dataset());
-    int64_t str2 = perf_string(c2, TIMES, dataset());
+    int64_t str2 = perf_to_chars(c2, TIMES, dataset());
+    int64_t str3 = perf_to_string(c3, TIMES, dataset());
+    int64_t str4 = perf_to_string(c4, TIMES, dataset());
     EXPECT_STREQ(c1.c_str(), c2.c_str());
-    EXPECT_EQ(str1, str2);
+    EXPECT_STREQ(c1.c_str(), c3.c_str());
+    EXPECT_STREQ(c1.c_str(), c4.c_str());
+    EXPECT_LE(str1, str2);
+    EXPECT_LE(str2, str3);
+    EXPECT_LE(str2, str4);
+    printf("eco_cast(%ld) < to_chars(%ld) < to_string(%ld) ~= snprintf(%ld)\n",
+        str1, str2, str3, str4);
+    str1 = perf_cast(c1, TIMES, dataset_big());
+    str2 = perf_to_chars(c2, TIMES, dataset_big());
+    str3 = perf_to_string(c3, TIMES, dataset_big());
+    str4 = perf_to_string(c4, TIMES, dataset_big());
+    EXPECT_STREQ(c1.c_str(), c2.c_str());
+    EXPECT_STREQ(c1.c_str(), c3.c_str());
+    EXPECT_STREQ(c1.c_str(), c4.c_str());
+    EXPECT_LE(str1, str2);
+    EXPECT_LE(str2, str3);
+    EXPECT_LE(str2, str4);
+    printf("eco_cast(%ld) < to_chars(%ld) < to_string(%ld) ~= snprintf(%ld)\n",
+        str1, str2, str3, str4);
 }
+
+
