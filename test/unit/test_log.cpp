@@ -5,41 +5,27 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class LogTest : public ::testing::Test
+class test_log : public ::testing::Test
 {
 public:
-    static void SetUpTestSuite()
-    {
-    }
-    static void TearDownTestSuite()
-    {
-    }
-
-    // parse log result as a structure
-    static inline eco::string& result()
-    {
-        return thread_buff;
-    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(LogTest, factory)
+TEST_F(test_log, factory)
 {
     std::string x;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(LogTest, format)
+TEST_F(test_log, format)
 {
-    eco::log::config& conf = eco::log::logger::get().config();
-    conf.level();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(LogTest, level)
+TEST_F(test_log, level)
 {
     eco_fatal();
     //ASSERT_EQ();
@@ -89,6 +75,6 @@ eco_log(debug)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(LogTest, format)
+TEST_F(test_log, format)
 {
 }

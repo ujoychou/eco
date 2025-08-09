@@ -16,7 +16,7 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-//#include <eco/cast/cast_double.hpp>
+#include <eco/cast/cast_double.hpp>
 #include <eco/cast/cast_integer.hpp>
 #include <string>
 
@@ -46,43 +46,43 @@ template<> inline bool cast(const eco::string_view& v)
 }
 template<> inline int8_t cast(const eco::string_view& v)
 {
-	return static_cast<uint8_t>(string_to_integer<int32_t>(v).value);
+	return static_cast<uint8_t>(eco::string_to_integer<int32_t>(v).value);
 }
 template<> inline uint8_t cast(const eco::string_view& v)
 {
-	return static_cast<uint8_t>(string_to_integer<int32_t>(v).value);
+	return static_cast<uint8_t>(eco::string_to_integer<int32_t>(v).value);
 }
 template<> inline int16_t cast(const eco::string_view& v)
 {
-	return string_to_integer<int16_t>(v).value;
+	return eco::string_to_integer<int16_t>(v).value;
 }
 template<> inline uint16_t cast(const eco::string_view& v)
 {
-	return string_to_integer<uint16_t>(v).value;
+	return eco::string_to_integer<uint16_t>(v).value;
 }
 template<> inline int32_t cast(const eco::string_view& v)
 {
-	return string_to_integer<int32_t>(v).value;
+	return eco::string_to_integer<int32_t>(v).value;
 }
 template<> inline uint32_t cast(const eco::string_view& v)
 {
-	return string_to_integer<uint32_t>(v).value;
+	return eco::string_to_integer<uint32_t>(v).value;
 }
 template<> inline int64_t cast(const eco::string_view& v)
 {
-	return string_to_integer<int64_t>(v).value;
+	return eco::string_to_integer<int64_t>(v).value;
 }
 template<> inline uint64_t cast(const eco::string_view& v)
 {
-	return string_to_integer<uint64_t>(v).value;
+	return eco::string_to_integer<uint64_t>(v).value;
 }
 template<> inline float cast(const eco::string_view& v)
 {
-	return 0.0; //string_to_float(v).value;
+	return eco::string_to_double<float>(v).value;
 }
 template<> inline double cast(const eco::string_view& v)
 {
-	return string_to_double(v).value;
+	return eco::string_to_double<double>(v).value;
 }
 
 

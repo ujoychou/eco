@@ -19,105 +19,19 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <eco/string/stream.hpp>
+#include <eco/string/format.hpp>
+#include <eco/plugin/logger.hpp>
 
 
 namespace eco {
 namespace log {
 ////////////////////////////////////////////////////////////////////////////////
-enum
-{
-	none    = 0,
-    l1      = 1,
-    l2      = 2,
-    l3      = 3,
-    l4      = 4,
-    l5      = 5,
-    l6      = 6,
-    l7      = 7,
-    l8      = 8,
-    l9      = 9,
-    // log general level
-    debug	= 10,
-    info	= 11,
-    warn	= 12,
-    error	= 13,
-    fatal	= 14,
-};
-typedef int level;
-
-enum 
-{
-	// log message persist in file
-	file    = 0x01,
-	// log message display on console
-	console	= 0x02,
-	// log message send to monitor server
-	monitor	= 0x04,
-};
-typedef int notify;
-
-
-////////////////////////////////////////////////////////////////////////////////
-class config
+class factory
 {
 public:
-    level level(void);
-
-    void  init(
-        int console, 
-        const char* directory,
-        const char* filename,
-        int log_level,
-        uint32_t interval,
-        uint32_t size);
+    static eco::plugin::logger& logger();
 };
 
-
-////////////////////////////////////////////////////////////////////////////////
-#define ECO_API
-class ECO_API logger
-{
-public:
-    inline static logger& get()
-    {
-
-    }
-
-    static inline const char* type()
-    {
-        return "eco::log::logger";
-    }
-
-    virtual void init(eco::log::config& conf);
-
-    virtual void log() = 0;
-
-    void log_args(
-        level level, const char* file, int line, const char* title,
-        const char* format, va_list* args);
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class ECO_API plugin
-{
-public:
-    void set_logger(eco::log::logger& );
-};
-
-
-struct logdata
-{
-    uint64_t reqid;
-    uint32_t count;
-    const int   line;
-    const char* file;
-};
-
-struct callstack
-{
-    const char* func;
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 class stream
@@ -125,8 +39,9 @@ class stream
     , public eco::format<eco::log::stream>
 {
 public:
-    inline stream(
-        level level, const char* file, int line, const char* title,
+    inline void log(
+        const char* file, int line,
+        level level, const char* title,
         const char* format, ...)
     {
         if (logger == NULL)
@@ -134,10 +49,9 @@ public:
             printf("please set plugin [eco::log::logger] before use.\n");            
             return;
         }
-        tdata.file = file;
-        tdata.line = line;
         if (format == NULL)
         {
+
             return;
         }
         
@@ -169,12 +83,6 @@ public:
     }
 
     // format: "time thread [level] <title> message ... (@file:line)"
-    
-
-private:
-    int line;
-    const char* file;
-    static eco::log::logger* logger;
 };
 
 
@@ -188,16 +96,24 @@ private:
 #define eco_log_func(level, ...) eco_log(level, __func__, __VA_ARGS__)
 #define eco_log(level, ...) eco_log_title(level, 0, ##__VA_ARGS__)
 
-eco_logd();
-eco_loge();
-eco_logf();
-eco_logw();
-eco_logi();
+
+#define eco_trace(...) eco_log(trace, 0, ##__VA_ARGS__)
+#define eco_debug(...) eco_log(debug, 0, ##__VA_ARGS__)
+#define eco_info(...)  eco_log(info,  0, ##__VA_ARGS__)
+#define eco_warn(...)  eco_log(warn,  0, ##__VA_ARGS__)
+#define eco_error(...) eco_log(error, 0, ##__VA_ARGS__)
+#define eco_fatal(...) eco_log(fatal, 0, ##__VA_ARGS__)
 
 
-eco_log(debug, "discovery", 12345) << 23444;
-eco_log(debug, "discovery") << "cool" << 3.1415;
-eco_log(debug) << 2344;
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace log
 } // namespace eco
+
+
+
+int main()
+{
+    eco::App::get().plugin()::create();
+    eco::log::plugin logg = eco::app().plugin().load("eco::log::logger");
+    return 0;
+}

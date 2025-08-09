@@ -370,6 +370,9 @@ TEST_F(cast_integer_2_ai, decimal)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(cast_integer_2_ai, decimal_perf)
 {
+    // cost_time:
+    // wsl:  eco_cast(266) < atoi(449)
+    // orin: eco_cast(659) < atoi(786)
     int64_t c1 = 0;
     int64_t c2 = 0;
     const int TIMES = 100000;

@@ -61,64 +61,12 @@ public:
 template<typename float_t>
 class double_to_string
 {
-public:
-    typedef ieee_754<float_t>::uint_t uint_t;
-    typedef eco::cast_detail::diyfp<float_t> diyfp_t;
-
-    inline double_to_string(
-        float_t v, 
-        const eco::double_format& f,
-        eco::cast_result& r)
-        : result(f, r)
-	{
-    }
-
-private:
-    inline void simple(diyfp_t& diy)
-    {
-        diy.normalize();
-        if (diy.e >= 0)
-        {
-            this->result.set_integer(diy.f << diy.e);
-        }
-        else
-        {
-            diyfp_t mp;
-            diyfp_t mm;
-            diy.precision(mp, mm);
-            uint32_t shift = -diy.e;
-            uint_t flags = (uint_t(1) << shift) - 1;
-            diyfp_t one(diy.e, uint_t(1) << shift);
-
-            // integer
-            ieee_754<float_t>::uint_t i = (diy.f >> shift);
-            diy.f &= flags;
-            bool_t carry = (one < diy.add(mp));
-            bool_t finish = this->result.set_integer(carry + i);
-
-            // decimal
-            while (!finish && !carry && mm < diy)
-            {
-                diy.f *= 10;
-                mm.f  *= 10;
-                mp.f  *= 10;
-                i = (diy.f >> shift);
-                diy.f &= flags;
-                carry = (one < diy.add(mp));
-                finish = this->result.add_decimal(i + carry);
-            }
-        }
-    }
-
-    inline void dragon4(double v)
-    {
-    }
-
     eco::cast_result result;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
+template<typename float_t>
 class string_to_double
 {
 public:

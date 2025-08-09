@@ -297,7 +297,8 @@ TEST_F(cast_integer_1_ai, decimal_int64)
 TEST_F(cast_integer_1_ai, decimal_int64_perf)
 {
     // perf cost time: 
-    // cast(x1) <= to_chars(x1.1) < to_string(x1.5) ~= printf(x1.5)
+    // wsl: eco_cast(82) < to_chars(102) < to_string(137) ~= snprintf(134)
+    // orin: eco_cast(131) < to_chars(172) < to_string(1297) ~= snprintf(1193)
     std::string c1;
     std::string c2;
     std::string c3;

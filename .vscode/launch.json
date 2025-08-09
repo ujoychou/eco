@@ -8,12 +8,12 @@
             "environment": [
                 {
                     "name": "LD_LIBRARY_PATH",
-                    "value": "$LD_LIBRARY_PATH:${workspaceFolder}/.tmp/eco_test_unit_linux-x64_release_1.3.1"
+                    "value": "$LD_LIBRARY_PATH:${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1"
                 },
             ],
-            "cwd": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_release_1.3.1",
-            "program": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_release_1.3.1/eco_test_unit",
-            "args": ["--gtest_filter=cast_integer_1_ai.*"],
+            "cwd": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1",
+            "program": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1/eco_test_unit",
+            "args": ["--gtest_filter=test_cast_double.*"],
             "stopAtEntry": false,
             "externalConsole": false,
             "logging": {

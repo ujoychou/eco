@@ -27,7 +27,8 @@ inline const char* filename(const char* name, int nth)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void stream::log_format(level level, const char* file, int line, const char* title,
+void stream::format(
+    level level, const char* file, int line, const char* title,
                       const char* format, va_list* args)
 {
     // "[time] [thread] [level] <title> message (file) "

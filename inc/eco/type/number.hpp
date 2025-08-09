@@ -50,7 +50,7 @@ template<> struct ieee_754<float>
     static const int32_t  bias_e    = 127;
     // = bias_e + bits_f
     static const int32_t  bias_all  = 149;
-    static const uint64_t hide_f  = (uint64_t(1) << bits_f); 
+    static const uint64_t hide_f    = (uint64_t(1) << bits_f); 
 };
 
 template<> struct ieee_754<double>

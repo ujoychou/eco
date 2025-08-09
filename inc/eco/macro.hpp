@@ -85,3 +85,8 @@ enum class result : int
     syserr      = 0x1 << 31,
 };
 eco_namespace_end(eco)
+
+
+////////////////////////////////////////////////////////////////////////////////
+// c++ dll export/import
+#define eco_api

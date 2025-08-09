@@ -1,17 +1,42 @@
-#include <gtest/gtest.h>
+#include <eco/app.hpp>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/cast.hpp>
+#include <eco/plugin/logger.hpp>
 
 
+eco_namespace(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class Cast : public ::testing::Test
+class app::impl
 {
+public:
 
+private:
+    // plugins
+    eco::plugin::logger::ptr m_logger;
+    eco::plugin::locale::ptr m_locale;
 };
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(Cast, c_str)
-{
-    
-}
+eco_namespace_end(eco);
