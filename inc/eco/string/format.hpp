@@ -17,60 +17,130 @@
 
 *******************************************************************************/
 #include <eco/cast.hpp>
+#include <eco/string/string_view.hpp>
 #include <eco/string/string_c.hpp>
-#include <string>
 
 
 eco_namespace(eco)
-eco_namespace(detail)
-struct format_data
-{
-	const char* format;
-	eco::string_c args;
-};
-
-eco_namespace_end(detail)
 ////////////////////////////////////////////////////////////////////////////////
 template<typename actual_t>
-class format
+class format_t
 {
 public:
-	inline format(const char* f = NULL) : data(this_format())
+	inline actual_t& rthis() { return (actual_t&)(*this); }
+
+	inline actual_t& operator%(bool v)
 	{
+		const char* str = eco::cast(v, eco::bool_format_01);
+		return rthis().append(str[0], 1);
+	}
+	inline actual_t& operator%(char v)
+	{
+		return rthis().append(v, 1);
+	}
+	inline actual_t& operator%(int8_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(uint8_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(int16_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(uint16_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(int32_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(uint32_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(int64_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(uint64_t v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(float v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(double v)
+	{
+		eco::c_str str(v);
+		return rthis().append(str.value(), str.size());
+	}
+	inline actual_t& operator%(const char* v)
+	{
+		return rthis().append(v, (uint32_t)strlen(v));
+	}
+	inline actual_t& operator%(const eco::string_view& v)
+	{
+		return rthis().append(v.c_str(), v.size());
+	}
+	inline actual_t& operator%(const eco::c_str& v)
+	{
+		return rthis().append(v.value(), v.size());
+	}
+	inline actual_t& operator%(const eco::string_c& v)
+	{
+		return rthis().append(v.c_str(), v.size());
+	}
+	inline actual_t& operator%(const std::string& v)
+	{
+		return rthis().append(v.c_str(), v.size());
 	}
 
-	template<typename type_t>
-	inline actual_t& arg(type_t value)
-	{
-		return rthis();
-	}
+public:
+	inline format_t(const char* format = nullptr)
+		: m_pos(0), m_format(format)
+	{}
 
-	inline actual_t& arg(double value, uint32_t precision, bool_t percent)
+	inline void reset(const char* v)
 	{
-		//eco::c_str s(value, precision, percent);
-		//args.append(s.value(), s.size());
-		return rthis();
-	}
-
-	template<typename type_t>
-	inline actual_t& operator % (type_t value)
-	{
-		//eco::c_str cs(value)
-		//return this->data->append(cs.value(), cs.size());
-		return rthis();
-	}
-
-	inline void result()
-	{
-
+		m_pos = 0;
+		m_format = v;
 	}
 
 protected:
-	inline actual_t& rthis() { return (actual_t&)(*this); }
+	inline bool move_to_next_flag()
+	{
+		if (m_pos != static_cast<uint32_t>(-1))
+		{
+			const char* curr = m_format + m_pos;
+			m_pos = eco::find_first(curr, '%');
+			if (m_pos == static_cast<uint32_t>(-1))
+			{
+				rthis().append(curr);
+				return false;
+			}
+			rthis().append(curr, m_pos++);
+			m_pos += static_cast<uint32_t>(curr - m_format);
+			return true;
+		}
+		return false;
+	}
 
-	static eco::detail::format_data& this_format();
-
-	eco::detail::format_data& data;
+	uint32_t    m_pos;	
+	const char* m_format;
 };
 
 

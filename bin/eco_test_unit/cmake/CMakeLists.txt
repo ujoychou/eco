@@ -15,9 +15,12 @@ set(SRC_FILES
     ${PRJ_DIR}/test/unit/cast/test_cast_integer_2_ai.cpp
     ${PRJ_DIR}/test/unit/cast/test_cast_integer_1.cpp
     ${PRJ_DIR}/test/unit/cast/test_cast_integer_1_ai.cpp
-    ${PRJ_DIR}/test/unit/cast/test_cast_integer_1_ai.cpp
     ${PRJ_DIR}/test/unit/cast/ryu_64.cc
-    ${PRJ_DIR}/test/unit/cast/test_cast_double.cpp
+    ${PRJ_DIR}/test/unit/test_log.cpp
+    ${PRJ_DIR}/src/log.cpp
+    ${PRJ_DIR}/src/logger.cpp
+    ${PRJ_DIR}/src/thread.cpp
+    ${PRJ_DIR}/src/rtti.cpp
     ${PRJ_DIR}/test/unit/lockfree/test_queue.cpp
     ${PRJ_DIR}/test/unit/sync/test_spinlock.cpp
     ${PRJ_DIR}/test/unit/test_number.cpp

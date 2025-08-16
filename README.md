@@ -7,20 +7,14 @@ a c++ distributed services framework.
 </a>
 
 
-
-
-
-
-
 ## 目录结构
-
-
-doc
 bin
   eco
     build.sh
   eco-persist
   eco-rpc
+
+doc
 
 inc
   eco
@@ -36,14 +30,18 @@ test
   case
   unit
 
-README.md
-
-
 ref
   github/boost
   github/fast_float
 
+README.md
+
 ## CAST FLOAT/DOUBLE
+
+## error
+eco_error
+
+## log
 
 
 ## 易用性与性能

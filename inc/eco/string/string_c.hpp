@@ -16,7 +16,7 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/macro.hpp>
+#include <eco/prec.hpp>
 #include <stdio.h>
 #include <string>
 #include <string.h>
@@ -86,6 +86,11 @@ inline char first(const char* v)
 {
 	return !empty(v) ? v[0] : 0;
 }
+inline bool equal(const char* s1, const char* s2)
+{
+	for (; *s1 && *s2 && *s1 == *s2; ++s1, ++s2) {}
+	return *s2 == 0;
+}
 inline bool_t iequal(const char* s1, const char* s2, uint32_t size)
 {
 	assert(size > 0);
@@ -130,6 +135,42 @@ inline size_t fit(const char* v, size_t size)
 	for (; i != size_t(-1) && v[i] == 0; --i) {}
 	return ++i;
 }
+inline uint32_t find_first(const char* key, char flag)
+{
+	uint32_t pos = 0;
+	for (; *key != 0 && *key != flag; ++key, ++pos) {}
+	return (*key == 0) ? -1 : pos;
+}
+inline uint32_t find_last(const char* key, uint32_t end, char flag)
+{
+	const char* it = key + end - 1;
+	for (; *it != flag && it >= key; --it) {}
+	return static_cast<uint32_t>(it - key);
+}
+inline uint32_t find_last(const char* key, char flag)
+{
+	// key format: "logging/file_link/roll_size".
+	uint32_t len = static_cast<uint32_t>(strlen(key));
+	return find_last(key, len, flag);
+}
+inline uint32_t find_nth(const char* key, char flag, uint32_t nth)
+{
+	uint32_t pos = 0;
+	uint32_t cur_seq = 0;
+	for (; *key != 0; ++key, ++pos)
+	{
+		if (*key == flag && ++cur_seq == nth) { break; }
+	}
+	return (*key == 0) ? -1 : pos;
+}
+inline const char* find(const char* dest, const char* v)
+{
+	for (; *dest; ++dest)
+	{
+		if (equal(dest, v)) { return dest; }
+	}
+	return nullptr;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -138,65 +179,101 @@ class string_c
 public:
 	inline void append(char c)
 	{
-		reserve(this->size + 1);
-		this->data[this->size++] = c;
-		this->data[this->size] = 0;
+		reserve(m_size + 1);
+		m_data[m_size++] = c;
+		m_data[m_size] = 0;
 	}
 
 	inline void append(char c, uint32_t size)
 	{
 		if (size == 0) return;
 		if (size == 1) return append(c);
-		reserve(this->size + size);
-		memset(&this->data[this->size], c, size);
-		this->size += size;
-		this->data[this->size] = 0;
+		reserve(m_size + size);
+		memset(&m_data[m_size], c, size);
+		m_size += size;
+		m_data[m_size] = 0;
 	}
 
 	inline void append(const char* str, uint32_t size)
 	{
 		if (size == 0) return;
-		reserve(this->size + size);
-		memcpy(&this->data[this->size], str, size);
-		this->size += size;
-		this->data[this->size] = 0;
+		reserve(m_size + size);
+		memcpy(&m_data[m_size], str, size);
+		m_size += size;
+		m_data[m_size] = 0;
 	}
 
 public:
-	inline string_c()
-		: data(nullptr), size(0), capacity(0)
-	{}
+	inline string_c() {}
 
 	explicit inline string_c(uint32_t size, bool_t reserved = false)
-		: data(nullptr), size(0), capacity(0)
 	{
 		reserved ? reserve(size) : resize(size);
 	}
 
 	explicit inline string_c(const char* v)
-		: data(nullptr), size(0), capacity(0)
 	{
 		assign(v);
 	}
 
 	explicit inline string_c(const char* v, uint32_t size)
-		: data(nullptr), size(0), capacity(0)
 	{
 		assign(v, size);
 	}
 
 	explicit inline string_c(const std::string& v)
-		: data(nullptr), size(0), capacity(0)
 	{
-		assign(v.c_str(), (uint32_t)v.size());
+		assign(v.c_str(), static_cast<uint32_t>(v.size()));
 	}
 
 	inline string_c(eco::string_c&& v)
-		: data(v.data), size(v.size), capacity(v.capacity)
+		: m_data(v.m_data)
+		, m_size(v.m_size)
+		, m_capacity(v.m_capacity)
 	{
-		v.data = nullptr;
-		v.size = 0;
-		v.capacity = 0;
+		v.m_data = nullptr;
+		v.m_size = 0;
+		v.m_capacity = 0;
+	}
+
+	inline string_c& operator=(eco::string_c&& v)
+	{
+		release();
+		m_data = v.m_data;
+		m_size = v.m_size;
+		m_capacity = v.m_capacity;
+		v.m_data = nullptr;
+		v.m_size = 0;
+		v.m_capacity = 0;
+		return *this;
+	}
+
+	inline string_c& operator=(const char* v)
+	{
+		assign(v);
+		return *this;
+	}
+
+	inline string_c& operator=(const std::string& v)
+	{
+		assign(v);
+		return *this;
+	}
+
+	inline string_c& operator=(const eco::string_c& v)
+	{
+		assign(v);
+		return *this;
+	}
+
+	inline char& operator[](uint32_t pos)
+	{
+		return m_data[pos];
+	}
+
+	inline char operator[](uint32_t pos) const
+	{
+		return m_data[pos];
 	}
 
 	inline ~string_c()
@@ -207,9 +284,9 @@ public:
 public:
 	inline void swap(eco::string_c& v)
 	{
-		std::swap(this->data, v.data);
-		std::swap(this->size, v.size);
-		std::swap(this->capacity, v.capacity);
+		std::swap(m_data, v.m_data);
+		std::swap(m_size, v.m_size);
+		std::swap(m_capacity, v.m_capacity);
 	}
 
 	inline void assign(const char* v)
@@ -219,84 +296,86 @@ public:
 	inline void assign(const char* v, uint32_t size)
 	{
 		resize(size);
-		if (size > 0) { memcpy(&this->data[0], v, size); }
+		if (size > 0) { memcpy(&m_data[0], v, size); }
 	}
 	inline void assign(const std::string& v)
 	{
-		assign(v.c_str(), (uint32_t)v.size());
+		assign(v.c_str(), static_cast<uint32_t>(v.size()));
+	}
+	inline void assign(const eco::string_c& v)
+	{
+		assign(v.m_data, v.m_size);
 	}
 
 	inline void erase(uint32_t pos, uint32_t count)
 	{
-		if (count > 0 && this->size > pos)
+		if (count > 0 && m_size > pos)
 		{
-			uint32_t size = this->size - pos;
+			uint32_t size = m_size - pos;
 			if (count < size) { size = count; }
-			count = this->size - pos - size;
+			count = m_size - pos - size;
 			if (count > 0)
 			{
-				memcpy(&this->data[pos], &this->data[pos + size], count);
+				memcpy(&m_data[pos], &m_data[pos + size], count);
 			}
-			this->size -= size;
-			this->data[this->size] = 0;
+			m_size -= size;
+			m_data[m_size] = 0;
 		}
 	}
 
 	inline void resize(uint32_t size)
 	{
 		reserve(size);
-		this->size = size;
-		if (this->data != nullptr) { this->data[this->size] = 0; }
+		m_size = size;
+		if (m_data != nullptr) { m_data[m_size] = 0; }
 	}
 
 	inline void reserve(uint32_t c)
 	{
-		if (this->capacity < c)
+		if (m_capacity < c)
 		{
 			// exponential growth.
 			if (c < 32) { c = 32; }
-			uint32_t old_size = this->size;
-			uint32_t new_size = this->capacity * 2;
+			uint32_t old_size = m_size;
+			uint32_t new_size = m_capacity * 2;
 			if (new_size < c) { new_size = c; }
 
 			// keep old value.
 			char* new_data = (char*)malloc(new_size + 1);
-			if (old_size > 0) { memcpy(new_data, this->data, old_size); }
+			if (old_size > 0) { memcpy(new_data, m_data, old_size); }
 			new_data[old_size] = 0;
 			
 			release();
-			this->data = new_data;
-			this->size = old_size;
-			this->capacity = new_size;
+			m_data = new_data;
+			m_size = old_size;
+			m_capacity = new_size;
 		}
-	}
-
-	inline void fit()
-	{
-		resize(uint32_t(eco::fit(this->data, this->size) - 1));
-	}
-
-	inline void clear()
-	{
-		resize(0);
 	}
 
 	inline void release()
 	{
-		if (this->data != nullptr)
+		if (m_data != nullptr)
 		{
-			free(this->data);
-			this->data = nullptr;
-			this->size = 0;
-			this->capacity = 0;
+			free(m_data);
+			m_data = nullptr;
+			m_size = 0;
+			m_capacity = 0;
 		}
 	}
 
+	inline void fit() { resize(uint32_t(eco::fit(m_data, m_size) - 1)); }
+	inline void clear() { resize(0); }
+	inline const char* c_str() const { return m_data ? m_data : ""; }
+	inline uint32_t size() const 	 { return m_size; }
+	inline uint32_t capacity() const { return m_capacity; }
+	inline eco::bool_t empty() const { return m_data == nullptr || m_size == 0; }
+
 private:
-	char*    data;
-	uint32_t size;
-	uint32_t capacity;
+	char*    m_data = nullptr;
+	uint32_t m_size = 0;
+	uint32_t m_capacity = 0;
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(eco);

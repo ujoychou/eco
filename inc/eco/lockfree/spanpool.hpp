@@ -104,11 +104,16 @@ public:
     inline spanlist() : eco::lockfree::stack_mc(NULL)
     {}
 
+    inline void init(char* base)
+    {
+        eco::lockfree::stack_mc::init(base);
+    }
+
     inline void init(char* base, uint32_t index, uint32_t pages)
     {
         m_index = index;
         m_pages = pages;
-        eco::lockfree::stack_mc::base(base);
+        eco::lockfree::stack_mc::init(base);
     }
 
     inline eco::lockfree::span* alloc()
@@ -177,7 +182,7 @@ public:
         {
             for (uint32_t i = 0; i < SPAN_NUM; i++)
             {
-                m_spanlist[i].base(m_freepool.base());
+                m_spanlist[i].init(m_freepool.base());
             }
             return true;
         }

@@ -32,9 +32,10 @@ public:
 template<typename type_t> using square_t = decoration<type_t, 1>;
 template<typename type_t> using group_t = decoration<type_t, 2>;
 template<typename type_t> using brace_t = decoration<type_t, 3>;
-template<typename type_t> using space_t = decoration<type_t, 4>;
-template<typename type_t> using upper_t = decoration<type_t, 5>;
-template<typename type_t> using lower_t = decoration<type_t, 6>;
+template<typename type_t> using angle_t = decoration<type_t, 4>;
+template<typename type_t> using space_t = decoration<type_t, 10>;
+template<typename type_t> using upper_t = decoration<type_t, 11>;
+template<typename type_t> using lower_t = decoration<type_t, 12>;
 
 template<typename type_t>
 inline square_t<type_t> square(const type_t& v) { return square_t<type_t>(v); }
@@ -42,6 +43,8 @@ template<typename type_t>
 inline group_t<type_t> group(const type_t& v) { return group_t<type_t>(v); }
 template<typename type_t>
 inline brace_t<type_t> brace(const type_t& v) { return brace_t<type_t>(v); }
+template<typename type_t>
+inline angle_t<type_t> angle(const type_t& v) { return angle_t<type_t>(v); }
 template<typename type_t>
 inline space_t<type_t> space(const type_t& v) { return space_t<type_t>(v); }
 template<typename type_t>
@@ -52,7 +55,7 @@ inline lower_t<type_t> lower(const type_t& v) { return lower_t<type_t>(v); }
 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename actual_t>
-class stream
+class stream_t
 {
 public:
 	inline actual_t& rthis() { return (actual_t&)(*this); }
@@ -128,6 +131,10 @@ public:
 	{
 		return rthis().append(v.value(), v.size());
 	}
+	inline actual_t& operator<<(const eco::string_c& v)
+	{
+		return rthis().append(v.c_str(), v.size());
+	}
 	inline actual_t& operator<<(const std::string& v)
 	{
 		return rthis().append(v.c_str(), v.size());
@@ -148,6 +155,11 @@ public:
 	inline actual_t& operator<<(const brace_t<type_t>& v)
 	{
 		return rthis() << '{' << v.value << '}';
+	}
+	template<typename type_t>
+	inline actual_t& operator<<(const angle_t<type_t>& v)
+	{
+		return rthis() << '<' << v.value << '>';
 	}
 	template<typename type_t>
 	inline actual_t& operator<<(const space_t<type_t>& v)

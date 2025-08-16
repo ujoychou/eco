@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<eco>
+  <log>
+    <memory cache_size="4M" entry_size="1k" />
+    <format logger="eco::log::console"/>
+    <async  enabled="true" queue_size="1024"/>
+    <eco_monitor type="eco::log::monitor" level="info" enabled="true"/>
+    <eco_logging type="eco::log::logging" level="info"/>
+    <eco_console type="eco::log::console" level="warn" format="%Y %S.%I (%T) [%L] %M"/>
+  </log>
+  <import>eco.xml</import>
+</eco>

@@ -1,80 +1,90 @@
 #include <gtest/gtest.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/log.hpp>
-#include <eco/string/string.hpp>
 
 
 ////////////////////////////////////////////////////////////////////////////////
 class test_log : public ::testing::Test
 {
 public:
+    inline void log_level()
+    {
+        eco_log(debug);
+        eco_log(info);
+        eco_log(warn);
+        eco_log(error);
+    }
+
+    inline void log_format()
+    {
+        int a = 0, b = 1, c = 2;
+
+        // output: format, printf, <<
+        eco_log(debug).format("a=% < b=%") % a % b << c;
+        eco_log(debug).printf("a=%d < b=%d", a, b) << c;
+        eco_log(debug) << "a=" << a << " < b=" << b << c;
+
+        // title: function, module, flag, etc.
+        eco_log(debug).title("FUNC").format("a=% < b=%") % a % b << c;
+        eco_log(debug).title("FLAG").printf("a=%d < b=%d", a, b) << c;
+        eco_log(debug).title("MODU") << "a=" << a << " < b=" << b << c;
+    }
+
+    inline void log_cond()
+    {
+        /*int a = 0, b = 1;
+
+        // when: condition
+        eco_log(debug, a < b).format("a=% < b=%") % a % b;
+        eco_log(debug, a < b).printf("a=%d < b=%d", a, b);
+        eco_log(debug, a < b) << "a=" << a << " < b=" << b;
+        eco_log(debug, a < b);
+
+        // each: interval
+        eco_log(debug, 3, 1).format("a=% < b=%") % a % b;
+        eco_log(debug, 3, 1).printf("a=%d < b=%d", a, b);
+        eco_log(debug, 3, 1) << "a=" << a << " < b=" << b;
+        eco_log(debug, 3, 1);
+
+        // when_each
+        eco_log(debug, a < b, 3, 0).format("a=% < b=%") % a % b;
+        eco_log(debug, a < b, 3, 0).printf("a=%d < b=%d", a, b);
+        eco_log(debug, a < b, 3, 0) << "a=" << a << " < b=" << b;
+        eco_log(debug, a < b, 3, 0);*/
+    }
+
+    inline void log_fatal()
+    {
+    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(test_log, factory)
+TEST_F(test_log, elog)
 {
-    std::string x;
-}
+    // logger1
+    eco::log::logger::config c;
+    c.name = "console";
+    c.type = "eco_console";
+    c.level_min = eco::log::warn;    
+    eco::log::elog::logger(c);
+    // logger2
+    c.name = "logging";
+    c.type = "eco_logging";
+    c.level_min = eco::log::info;
+    eco::log::elog::logger(c);
 
+    // config
+    eco::log::config conf;
+    conf.level_min = eco::log::info;
+    conf.cache_size = 4 * 1024 * 1024;
+    conf.entry_size = 1024;
+    conf.format_logger_type = "eco_logging";
+    eco::log::elog::start(conf);
 
-////////////////////////////////////////////////////////////////////////////////
-TEST_F(test_log, format)
-{
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-TEST_F(test_log, level)
-{
-    eco_fatal();
-    //ASSERT_EQ();
-    eco_error();
-    eco_warn();
-    eco_info();
-    eco_debug();
-    eco_log(debug);
-    eco_log(warn );
-    eco_log(error);
-    eco_log(fatal);
-    eco_log();
-    eco_log(eco::log::l9, 0);
-    eco_log(eco::log::l8, 0);
-    eco_log(eco::log::l7, 0);
-    eco_log(eco::log::l6, 0);
-    eco_log(eco::log::l5, 0);
-    eco_log(eco::log::l4, 0);
-    eco_log(eco::log::l3, 0);
-    eco_log(eco::log::l2, 0);
-    eco_log(eco::log::l1, 0);
-
-    int a = 0, b = 1;
-    eco_log(debug).when(a < b).each(3).f("xxxx%1 xxx%2").p(1).p(3);
-    eco_log(debug).when(a < b).each(3).format("xxxx%1 xxx%2") % a % b;
-
-    eco_log(debug, "sdfsdfsdfsdfsdfs", 1, 2.33, "cool").each(3).when(a > 9);
-    eco_log(debug, (a > 9), 100, "sdfsdfsdfsdfsdfs", 1, 2.33, "cool");
-
-
-    eco::log::logger().each();
-
-eco_log(debug);
-eco_log(debug, "fixdebug");
-eco_log(debug, "fixdebug", 1250);
-
-eco_log(debug, "fixdebug", 1250)
-	.when([]()->bool{ return it->data; })
-	.each(100)
-	.text("this is the message content %s", name);
-eco_log(debug)
-	.when([]()->bool{ return it->data; })
-	.each(100)
-	<< "this is the message content " << name;
-
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-TEST_F(test_log, format)
-{
+    // logging test
+    log_level();
+    log_format();
+    log_cond();
+    log_fatal();
 }

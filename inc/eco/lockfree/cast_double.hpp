@@ -16,7 +16,7 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/macro.hpp>
+#include <eco/prec.hpp>
 #include <eco/type/number.hpp>
 #include <eco/cast/cast_integer.hpp>
 

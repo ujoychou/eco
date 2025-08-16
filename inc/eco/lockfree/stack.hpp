@@ -16,7 +16,7 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/macro.hpp>
+#include <eco/prec.hpp>
 #include <eco/type/number.hpp>
 #include <atomic>
 #include <stdlib.h>
@@ -179,38 +179,50 @@ public:
 class stack_mc
 {
 private:
-    struct top
-    {
-        eco::offset_t curr;     // current object address
-        uint32_t aba;           // aba counter, solve aba problem
-
-        inline top() {}
-        inline top(uint32_t c, eco::offset_t n) : curr(c), aba(n) {}
-    };
-    const char*       m_base = 0; // base address of the stack
-    std::atomic<top>  m_top;      // top object of the stack
-
-protected:
     struct node
     {
         std::atomic<eco::offset_t> next;
     };
 
+    struct top
+    {
+        eco::offset_t curr;     // current object address
+        uint32_t aba;           // aba counter, solve aba problem
+    };
+    const char*       m_base = 0; // base address of the stack
+    std::atomic<top>  m_top;      // top object of the stack
+
+    inline stack_mc(const stack_mc&) = delete;
+    inline stack_mc& operator=(const stack_mc&) = delete;
+
 public:
-    inline stack_mc(void* p) : m_base(static_cast<char*>(p)), m_top(top(0, 0))
+    explicit inline stack_mc(void* p = nullptr)
+        : m_base(static_cast<char*>(p)), m_top(top{0, 0})
     {}
 
-    inline stack_mc(uint32_t object, uint32_t capacity) :  m_top(top(0, 0))
+    inline stack_mc(stack_mc&& mc)
+        : m_base(mc.m_base), m_top(mc.m_top.load(std::memory_order_acquire))
+    {
+        mc.m_base = NULL;
+        mc.m_top = stack_mc::top{0, 0};
+    }
+
+    inline stack_mc(uint32_t object, uint32_t capacity) :  m_top(top{0, 0})
+    {
+        init(object, capacity);
+    }
+
+    inline void init(char* base)
+    {
+        m_base = base;
+    }
+
+    inline void init(uint32_t object, uint32_t capacity)
     {
         uint32_t size = object * capacity;
         char* first = static_cast<char*>(malloc(size));
-        m_base = first - sizeof(void*);
+        m_base = first - sizeof(char*);
         push(first, link(first, size, object));
-    }
-
-    inline void base(void* ptr)
-    {
-        m_base = static_cast<char*>(ptr);
     }
 
     inline void* ptr(eco::offset_t offset) const
@@ -258,7 +270,7 @@ public:
         node* n = static_cast<node*>(obj);
 
         top top_old = m_top.load(std::memory_order_acquire);
-        top top_new(offset(obj), top_old.aba + 1);
+        top top_new{offset(obj), top_old.aba + 1};
         n->next.store(top_old.curr, std::memory_order_release);
         while (!m_top.compare_exchange_weak(top_old, top_new))
         {
@@ -271,7 +283,7 @@ public:
     {
         node* node_lst = static_cast<node*>(last);
         top top_old = m_top.load(std::memory_order_acquire);
-        top top_new(offset(first), top_old.aba);
+        top top_new{offset(first), top_old.aba};
         node_lst->next.store(top_old.curr, std::memory_order_release);
         while (!m_top.compare_exchange_weak(top_old, top_new))
         {
@@ -287,7 +299,7 @@ public:
 
     inline void* release()
     {
-        top top_new(0, 0);
+        top top_new{0, 0};
         top top_old = m_top.load(std::memory_order_acquire);
         while (!m_top.compare_exchange_weak(top_old, top_new)) {}
         return ptr(top_old.curr);

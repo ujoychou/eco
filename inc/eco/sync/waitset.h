@@ -16,7 +16,7 @@ waiting task done, fail, timeout.
 * copyright(c) 2013 - 2015, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/macro.hpp>
+#include <eco/prec.hpp>
 #include <mutex>
 #include <condition_variable>
 

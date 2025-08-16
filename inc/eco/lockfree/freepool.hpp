@@ -198,9 +198,9 @@ public:
     {
         if (m_freepool.init(policy))
         {
-            m_spanmeta_list.base(m_freepool.base());
-            m_freelist_list.base(m_freepool.base());
-            m_radix_it_list.base(m_freepool.base());
+            m_spanmeta_list.init(m_freepool.base());
+            m_freelist_list.init(m_freepool.base());
+            m_radix_it_list.init(m_freepool.base());
             return true;            
         }
         return false;

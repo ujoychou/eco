@@ -1,81 +1,116 @@
-#include <eco/log/log.hpp>
+#include <eco/log.hpp>
 ////////////////////////////////////////////////////////////////////////////////
+#include <eco/lockfree/stack.hpp>
+#include <memory>
+#include <vector>
+#include "log_impl.hpp"
 
 
-namespace eco {
-namespace log {
-thread_local eco::string thread_buff;
+eco_namespace(eco);
+eco_namespace(log);
 ////////////////////////////////////////////////////////////////////////////////
-inline const char* name(eco::log::level value)
+struct elog_impl
 {
-    switch (value)
-    {
-    case eco::log::debug: return "debug";
-    case eco::log::trace: return "trace";
-    case eco::log::info:  return "info";
-    case eco::log::warn:  return "warn";
-    case eco::log::error: return "error";
-    case eco::log::fatal: return "fatal";
-    }
-    return " none";
-}
+public:
+    typedef std::shared_ptr<eco::log::logger> logger_ptr;
+    eco::log::level         level_min = eco::log::none;
+    eco::log::level         level_set = eco::log::none;
+    logger_ptr              format;
+    eco::log::config        config;
+    eco::lockfree::stack_mc cache;
+    std::vector<logger_ptr> loggers;
 
-inline const char* filename(const char* name, int nth)
-{
-	return "";
-}
+    inline elog_impl() {}
+
+    inline void return_entry(eco::log::entry& entry)
+    {
+        cache.push(const_cast<char*>(entry.text()));
+        entry.reset(nullptr, 0);
+    }
+
+    inline void borrow_entry(eco::log::entry& entry)
+    {
+        entry.reset(static_cast<char*>(cache.pop()), config.entry_size);
+    }
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void stream::format(
-    level level, const char* file, int line, const char* title,
-                      const char* format, va_list* args)
+static eco::log::elog_impl g_impl;
+void elog::logger(const eco::log::logger::config& conf)
 {
-    // "[time] [thread] [level] <title> message (file) "
-    // [20230912 15:53:35.899984] [T3928X938] [ INFO] <title> msg...(file.c:161)
-	const char* name = eco::this_thread::name();
-	thread_buff << '[' << date_time::stamp(date_time::std_ms).value << ']';
-	if (eco::empty(name))
-		thread_buff << '[' << eco::this_thread::id() << ']';
-	else
-		thread_buff << '[' << eco::log::name(name, 8) << ']';
-
-	thread_buff << '[' << eco::log::name() << ']';
-
-    // <title>
-    if (title != NULL)
-    {
-        thread_buff << '<' << title << '>';
-    }
-    // message
-    if (format != NULL)
-    {
-        int left = (int)sizeof(buf) - size;
-        buf[size++] = ' ';  // add space
-        size += vsnprintf(buf + size, (size_t)left, format, *args);
-    }
-    
-    // (file)
-    int left = (int)sizeof(buf) - size;
-    if (left > 0 && level >= ks_warn)
-    {
-		file = eco::log::filename(file, 2);
-        size += snprintf(buf + size, (size_t)left, " (%s:%d)", file, line);
-    }
-    thread_buff << '\n';
+    elog_impl::logger_ptr logger = eco::log::logger::create(conf.type);
+    logger->m_conf = conf;
+    g_impl.loggers.push_back(logger);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void stream::log_args(level level, const char* file, int line, const char* title,
-                      const char* format, va_list* args)
+void elog::start(const eco::log::config& conf)
 {
-    // "[time] [thread] [level] <title> message (file) "
-    // [20230912 15:53:35.899984] [T3928X938] [ INFO] <title> msg...(file.c:161)
-    log_format();
-	eco::log::post(thread_buff);
+    // entry cache
+    uint32_t size = eco::align_up(conf.entry_size, 8);
+    uint32_t count = conf.cache_size / size;
+    g_impl.cache.init(size, count);
+    g_impl.config = conf;
+
+    // format logger
+    for (elog_impl::logger_ptr& logger : g_impl.loggers)
+    {
+        if (logger->same_of(conf.format_logger_type))
+        {
+            g_impl.format = logger;
+        }
+    }
+    if (!g_impl.format)
+    {
+        g_impl.format = eco::log::logger::create(conf.format_logger_type);
+    }
+
+    // logger level
+    g_impl.level_min = conf.level_min;
+    g_impl.level_set = conf.level_set;
+    for (elog_impl::logger_ptr& logger : g_impl.loggers)
+    {
+        // level_min
+        if (logger->m_conf.level_min == eco::log::none)
+            logger->m_conf.level_min = conf.level_min;
+        else if (g_impl.level_min > logger->m_conf.level_min)
+            g_impl.level_min = logger->m_conf.level_min;
+        // level_set
+        if (logger->m_conf.level_set == eco::log::none)
+            logger->m_conf.level_set = conf.level_set;
+        else
+            g_impl.level_set |= logger->m_conf.level_set;
+    }
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-}}
+void elog::format(eco::log::message& msg)
+{
+    g_impl.borrow_entry(msg.entry);
+    g_impl.format->on_entry_format_begin(msg);
+}
+
+void elog::output(eco::log::message& msg)
+{
+    g_impl.format->on_entry_format_end(msg);
+    for (elog_impl::logger_ptr& logger : g_impl.loggers)
+    {
+        logger->on_entry_output(msg);
+    }
+    g_impl.return_entry(msg.entry);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco::bool_t elog::level_check(eco::log::level l)
+{
+    return (l >= g_impl.level_min) || (l & g_impl.level_set);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco_namespace_end(log);
+eco_namespace_end(eco);

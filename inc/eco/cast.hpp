@@ -54,11 +54,11 @@ template<> inline uint8_t cast(const eco::string_view& v)
 }
 template<> inline int16_t cast(const eco::string_view& v)
 {
-	return eco::string_to_integer<int16_t>(v).value;
+	return static_cast<int16_t>(eco::string_to_integer<int32_t>(v).value);
 }
 template<> inline uint16_t cast(const eco::string_view& v)
 {
-	return eco::string_to_integer<uint16_t>(v).value;
+	return static_cast<uint16_t>(eco::string_to_integer<int32_t>(v).value);
 }
 template<> inline int32_t cast(const eco::string_view& v)
 {

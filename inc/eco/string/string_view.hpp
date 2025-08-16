@@ -16,7 +16,7 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/macro.hpp>
+#include <eco/prec.hpp>
 #include <string.h>
 
 
@@ -64,7 +64,7 @@ public:
 
 	inline string_view& size(uint32_t v)
 	{
-		if (v < size()) { size_ = v; }
+		size_ = v;
 		return *this;
 	}
 

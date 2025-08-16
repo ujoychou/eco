@@ -16,7 +16,7 @@
 * copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/macro.hpp>
+#include <eco/prec.hpp>
 #include <eco/string/string_c.hpp>
 #include <eco/string/string_view.hpp>
 #include <eco/cast/cast_def.hpp>

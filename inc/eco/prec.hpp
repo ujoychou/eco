@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include <memory>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,10 +49,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // c++ namespace
-#undef eco_namespace
-#undef eco_namespace_end
-#undef eco_todo
-#undef eco_note
 #define eco_namespace(ns) namespace ns {
 #define eco_namespace_end(ns) }
 #define eco_todo(thing)
@@ -81,12 +78,75 @@ enum class result : int
     fail        = 1,
     error	    = 2,
     timeout     = 3,
-
     syserr      = 0x1 << 31,
 };
-eco_namespace_end(eco)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// c++ dll export/import
-#define eco_api
+template<typename type_t>
+class value_t
+{
+public:
+	typedef type_t ref;
+	typedef type_t value;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+template<typename type_t>
+class object_t
+{
+public:
+	typedef type_t value;
+	typedef std::shared_ptr<type_t> ref;
+	typedef std::shared_ptr<type_t> ptr;
+	typedef std::weak_ptr<type_t> wptr;
+
+protected:
+	inline object_t() {};
+	inline ~object_t() {};
+
+private:
+	inline object_t(const object_t&);
+	inline const object_t& operator=(const object_t& );
+};
+
+// compile object: noncopyable.
+#define eco_noncopyable(type_t) \
+private:\
+	type_t(const type_t& );\
+	type_t& operator=(const type_t& );
+
+// compile object: single object delare.
+#define eco_object_ptr(object_t) \
+public:\
+	typedef std::shared_ptr<object_t> value;\
+	typedef std::shared_ptr<object_t> ptr;\
+	typedef std::weak_ptr<object_t> wptr;
+#define eco_object(object_t) eco_object_ptr(object_t) eco_noncopyable(object_t);
+
+
+////////////////////////////////////////////////////////////////////////////////
+// singleton proxy object that instantiate the object.
+template<typename type_t>
+class singleton
+{
+	eco_noncopyable(singleton);
+    static type_t s_get;
+public:
+	inline static type_t& get() { return s_get; }
+};
+template<typename type_t>
+type_t singleton<type_t>::s_get;
+
+// singleton: single object declare.
+#define eco_singleton(type_t)\
+	eco_noncopyable(type_t);\
+    friend class eco::singleton<type_t>;\
+    inline type_t() {}\
+public:\
+	inline static type_t& get() { return eco::singleton<type_t>::get(); }
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco_namespace_end(eco)
