@@ -28,7 +28,7 @@ eco_namespace(eco);
 eco_namespace(rtti);
 class type;
 ////////////////////////////////////////////////////////////////////////////////
-class object : public std::enable_shared_from_this<eco::rtti::object>
+class object
 {
 	eco_object(object);
 public:
@@ -49,11 +49,10 @@ public:
 		return eco_macro_str_(object);
 	}
 
-	// cast one object to current class's instance object.
 	template<typename object_t>
-	inline typename object_t::ptr cast()
+	inline static object::ptr cast(eco::rtti::object::ptr& obj)
 	{
-		return std::dynamic_pointer_cast<object_t>(shared_from_this());
+		return std::dynamic_pointer_cast<object_t>(obj);
 	}
 
 	// check is the kind of class.
@@ -64,26 +63,19 @@ public:
 	inline bool same_of(const char* name) const;
 	template<typename object_t> inline bool same_of() const;
 };
-class object_null
-{
-public:
-	inline static const eco::rtti::type* type()
-	{
-		return nullptr;
-	}
-};
-typedef eco::rtti::object::ptr (*create_func_t)(void);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 class eco_api type_registry
 {
 public:
-	static void register_type(const char* name, const eco::rtti::type* type);
+	static void set_type(const char* name, const eco::rtti::type* type);
+	static const eco::rtti::type* get_type(const char* name);
 	static eco::rtti::object::ptr create(const char* name);
 };
 
 // type init when compile time.
+typedef eco::rtti::object::ptr (*create_func_t)(void);
 template<typename object_t, typename parent_t, create_func_t f>
 struct type_init { static eco::rtti::type type; };
 template<typename object_t, typename parent_t, create_func_t f>
@@ -100,7 +92,7 @@ public:
 	inline type(const char* name, const type* parent, create_func_t create)
 		: m_name(name), m_parent(parent), m_create(create)
 	{
-		rtti::type_registry::register_type(name, this);
+		rtti::type_registry::set_type(name, this);
 	}
 
 	// get type name of this type.
@@ -167,11 +159,6 @@ inline bool eco::rtti::object::same_of() const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(rtti);
-eco_namespace_end(eco);
-
-
-////////////////////////////////////////////////////////////////////////////////
 // runtime object implement.
 #define eco_rtti__(object_t)\
 public:\
@@ -212,3 +199,5 @@ inline static typename object_t::ptr create(const char* name)\
 
 
 ////////////////////////////////////////////////////////////////////////////////
+eco_namespace_end(rtti);
+eco_namespace_end(eco);

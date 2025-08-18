@@ -296,36 +296,76 @@ private:
 };
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
-#define eco_log_impl_when(level, when, title) \
+template<uint32_t intv_count, uint32_t intv_duration>
+class each
+{
+public:
+    inline each()
+    {
+        m_time_start = eco::datetime::now();
+        m_time_last = m_time_start;
+    }
+
+    inline eco::bool_t is()
+    {
+        // match with "intv_count" or "intv_duration"
+        int64_t curr = eco::datetime::now();
+        eco::bool_t cond = (++m_count % intv_count == 0);
+        cond = cond || (curr - m_time_last > intv_duration);
+        if (cond) { m_time_last = curr; }
+        return cond;
+    }
+
+    inline uint64_t count() const
+    {
+        return m_count;
+    }
+
+    inline int64_t start() const
+    {
+        return m_time_start;
+    }
+
+private:
+    uint64_t m_count = 0;
+    eco::datetime m_time_start = 0;
+    eco::datetime m_time_last = 0;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+#define eco_log_when(title, level, when) \
 for (int w = (when) && eco::log::elog::level_check(level); w; w = 0) \
     eco::log::stream(level, __LINE__, __FILE__, title)
-#define eco_log_impl_each(level, when, each_count, each_duration, title) \
+#define eco_log_each(title, level, when, each_count, each_duration) \
 for (int w = (when) && eco::log::elog::level_check(level); w; w = 0) \
-    for (static eco::log::each each(each_count, each_duration); \
-         w && each.is(); w = 0) \
+    for (static const eco::log::each<each_count, each_duration> each; w && \
+         const_cast<eco::log::each<each_count, each_duration>&>(each).is(); \
+         w = 0) \
         eco::log::stream(level, __LINE__, __FILE__, title)
 
 // eco_log
 #define eco_log_1(level) \
-eco_log_impl_when(eco::log::level, 1, NULL)
+eco_log_when(NULL, eco::log::level, 1)
 #define eco_log_2(level, when) \
-eco_log_impl_when(eco::log::level, when, NULL)
+eco_log_when(NULL, eco::log::level, when)
 #define eco_log_3(level, each_count, each_duration) \
-eco_log_impl_each(eco::log::level, 1, each_count, each_duration, NULL)
+eco_log_each(NULL, eco::log::level, 1, each_count, each_duration)
 #define eco_log_4(level, when, each_count, each_duration) \
-eco_log_impl_each(eco::log::level, when, each_count, each_duration, NULL)
+eco_log_each(NULL, eco::log::level, when, each_count, each_duration)
 #define eco_log(...) eco_macro_overload(eco_log_,__VA_ARGS__)
 
 // eco_log_level
 #define eco_log_level_1(level) \
-eco_log_impl_when(level, 1, NULL)
+eco_log_when(NULL, level, 1)
 #define eco_log_level_2(level, when) \
-eco_log_impl_when(level, when, NULL)
+eco_log_when(NULL, level, when)
 #define eco_log_level_3(level, each_count, each_duration) \
-eco_log_impl_each(level, 1, each_count, each_duration, NULL)
+eco_log_each(NULL, level, 1, each_count, each_duration)
 #define eco_log_level_4(level, when, each_count, each_duration) \
-eco_log_impl_each(level, when, each_count, each_duration, NULL)
+eco_log_each(NULL, level, when, each_count, each_duration)
 #define eco_log_level(...) eco_macro_overload(eco_log_level_,__VA_ARGS__)
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(log);

@@ -32,13 +32,13 @@ public:
 
     inline void log_cond()
     {
-        /*int a = 0, b = 1;
+        int a = 0, b = 1;
 
         // when: condition
-        eco_log(debug, a < b).format("a=% < b=%") % a % b;
+        /*eco_log(debug, a < b).format("a=% < b=%") % a % b;
         eco_log(debug, a < b).printf("a=%d < b=%d", a, b);
         eco_log(debug, a < b) << "a=" << a << " < b=" << b;
-        eco_log(debug, a < b);
+        eco_log(debug, a < b);*/
 
         // each: interval
         eco_log(debug, 3, 1).format("a=% < b=%") % a % b;
@@ -50,7 +50,7 @@ public:
         eco_log(debug, a < b, 3, 0).format("a=% < b=%") % a % b;
         eco_log(debug, a < b, 3, 0).printf("a=%d < b=%d", a, b);
         eco_log(debug, a < b, 3, 0) << "a=" << a << " < b=" << b;
-        eco_log(debug, a < b, 3, 0);*/
+        eco_log(debug, a < b, 3, 0);
     }
 
     inline void log_fatal()
