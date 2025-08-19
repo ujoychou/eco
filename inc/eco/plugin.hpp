@@ -1,10 +1,9 @@
 #pragma once
 /*******************************************************************************
 @ name
-runtime type.
+plugin
 
 @ function
-1. runtime type. exp: mfc runtime create.
 
 
 @ exception
@@ -13,98 +12,122 @@ runtime type.
 
 --------------------------------------------------------------------------------
 @ [history ver 1.0]
-@ ujoy modifyed on 2021-11-20
+@ ujoy created on 2025-08-19
 
 
 --------------------------------------------------------------------------------
-* copyright(c) 2016 - 2025, ujoy, reserved all right.
+* copyright(c) 2015 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rtti.hpp>
+#include <eco/rtti/api.hpp>
+#include <eco/rtti/dll.hpp>
 #include <eco/error.hpp>
 
 
 eco_namespace(eco);
+eco_namespace(rtti);
+class plugin_type;
 ////////////////////////////////////////////////////////////////////////////////
-#define eco_plugin(type_name) 
-
-
-////////////////////////////////////////////////////////////////////////////////
-class plugin : public eco::rtti::object
+class eco_api plugin_registry
 {
 public:
-	static void path_add(const char* path)
-	{
-	}
+	static void set(eco::plugin_type* plugin);
 
-	template<typename basic_t>
-	static inline basic_t::ptr get(const char* name)
-	{
-		eco::rtti::object::ptr obj = eco::plugin::find(name);
-		if (obj == NULL)
-		{
-			eco_throw("plugin not found: %s", name);
-			return nullptr;
-		}
-		else if (!obj->kind_of<basic_t>())
-		{
-			eco_throw("type not match: %s isn't kind of %s", 
-				obj->type()->name(), basic_t::type_name());
-			return nullptr;
-		}
-		return eco::rtti::object::cast<basic_t>(obj);
-	}
+	static eco::plugin_type* get(
+		const char* name,
+		const char* version);
 
-	template<typename basic_t>
-	static inline basic_t::ptr get(const char* name, const char* type_name)
+	static eco::plugin_type* get_compatible(
+		const char* name,
+		const char* version);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+class plugin_type
+{
+public:
+	inline plugin_type(
+		const char* name,
+		const char* version,
+		create_func_t create,
+		compatible_func_t compatible)
+		: m_name(name)
+		, m_version(version)
+		, m_dllpath(eco::os::dllpath())
+		, m_create(create)
+		, m_compatible(compatible)
 	{
-		eco::rtti::object::ptr obj = eco::plugin::find(name);
-		if (obj == NULL)
-		{
-			obj = eco::plugin::create<basic_t>(type_name);
-			eco::plugin::add(name, obj);
-		}
-		else if (!obj->same_of(type_name))
-		{
-			eco_throw("type not match: %s", type_name);
-			return nullptr;
-		}
-		else if (!obj->kind_of<basic_t>())
-		{
-			eco_throw("type not match: %s", type_name);
-			return nullptr;
-		}
-		return eco::rtti::object::cast<basic_t>(obj);
+		eco::plugin_registry::set(this);
 	}
 
 private:
-	template<typename basic_t>
-	static inline basic_t::ptr create(const char* type_name)
-	{
-		const eco::rtti::type* type = eco::rtti::type_registry::get_type(type_name);
-		if (type == NULL)
-		{
-			eco_throw("type not found: %s", type_name);
-			return nullptr;
-		}
-		if (!type->kind_of<basic_t>()) 
-		{
-			eco_throw("type not match: %s", type_name);
-			return nullptr;
-		}
-		return type->create<basic_t>();
-	}
-	
-}
+	typedef void* (*create_func_t)(const char* name);
+	typedef eco::bool_t (*compatible_func_t)(const char* version);
+
+	const char* 		m_name;
+	const char* 		m_version;
+	const char* 		m_dllpath;
+	create_func_t 		m_create;
+	compatible_func_t 	m_compatible;
+	eco::rtti::dll 		m_dll;
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-extern "C" eco::Result __attribute__((weak, visibility("default")))
-erx_entry_point(eco::RxMessageId msg, void* ap)
+class eco_api plugin
 {
-    ConnectorApp::get().entry_point(msg, ap);
-	return 0;
-}
+public:
+	static void* get_object(
+		const char* plugin_name,
+		const char* plugin_version,
+	    const char* object_name);
+
+	template<typename object_t>
+	inline static object_t* get_object(
+		const char* plugin_name,
+		const char* plugin_version,
+	    const char* object_name)
+	{
+		return static_cast<object_t*>(get_object(
+			plugin_name, plugin_version, object_name));
+	}
+
+	inline static eco::plugin_type* get_plugin(
+		const char* name, const char* version)
+	{
+		return eco::plugin_registry::get(name, version);
+	}
+
+	static eco::plugin_type* get_plugin_compatible(
+		const char* name, const char* version)
+	{
+		return eco::plugin_registry::get_compatible(name, version);
+	}
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
+// plugin init when compile time.
+template<typename type_t>
+struct plugin_init { static eco::plugin_type type; };
+template<typename type_t>
+eco::plugin_type plugin_init<type_t>::type(
+	type_t::name(), type_t::version(),
+    &type_t::create, &type_t::compatible);
+
+#define eco_plugin__(type_t, name, version)\
+inline static const char* name() { return name; } \
+inline static const char* version() { return version; } \
+inline static void* create() { return new type_t(); } \
+inline static eco::plugin_type* plugin() { return &plugin_init<type_t>::type;}
+#define eco_plugin_2(type_t, version)\
+eco_plugin__(type_t, eco_macro_str(type_t), version)
+#define eco_plugin_3(type_t, type_name, version)\
+eco_plugin__(type_t, type_name, version)
+#define eco_plugin(...) eco_macro_overload(eco_plugin_,__VA_ARGS__)
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco_namespace_end(rtti);
 eco_namespace_end(eco);

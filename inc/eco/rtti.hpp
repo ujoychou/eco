@@ -69,8 +69,8 @@ public:
 class eco_api type_registry
 {
 public:
-	static void set_type(const char* name, const eco::rtti::type* type);
-	static const eco::rtti::type* get_type(const char* name);
+	static void set(const char* name, const eco::rtti::type* type);
+	static const eco::rtti::type* get(const char* name);
 	static eco::rtti::object::ptr create(const char* name);
 };
 
@@ -164,14 +164,8 @@ inline bool eco::rtti::object::same_of() const
 public:\
 	typedef std::weak_ptr<object_t> wptr;\
 	typedef std::shared_ptr<object_t> ptr;\
-	inline static const char* type_name()\
-	{\
-		return eco_macro_str_(object_t);\
-	}\
-	virtual const eco::rtti::type* get_type() const\
-	{\
-		return type();\
-	}
+	virtual const eco::rtti::type* get_type() const { return type(); }\
+	inline static const char* type_name() { return eco_macro_str(object_t); }
 	
 // runtime object who is a instance can be created.
 #define eco_rtti(object_t, parent_t)\
@@ -189,7 +183,7 @@ inline static eco::rtti::object::ptr create()\
 eco_rtti__(object_t) \
 inline static const eco::rtti::type* type()\
 {\
-	return &eco::rtti::type_init<object_t, parent_t, nullptr>::type;\
+	return &eco::rtti::type_init<object_t, parent_t, NULL>::type;\
 }\
 inline static typename object_t::ptr create(const char* name)\
 {\
