@@ -18,14 +18,13 @@
 * copyright(c) 2025 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/plugin.hpp>
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class database : public eco::plugin::object
+class file
 {
 public:
-	virtual void write() = 0;
-	virtual void read() = 0;
+	virtual ~file() {};
+	virtual void open() = 0;
 	virtual void close() = 0;
 };

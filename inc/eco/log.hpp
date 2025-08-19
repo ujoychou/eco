@@ -50,6 +50,13 @@ enum
 };
 typedef int level;
 
+enum
+{
+    on_begin	= 0x0001,
+    on_end		= 0x0002,
+    on_title	= 0x0003,
+};
+typedef int on_time;
 
 ////////////////////////////////////////////////////////////////////////////////
 struct entry
@@ -163,7 +170,7 @@ struct message
 ////////////////////////////////////////////////////////////////////////////////
 class logger : public eco::rtti::object
 {
-    eco_rtti_i(logger, eco::rtti::object);
+    eco_rtti_interface(logger, eco::rtti::object);
 public:
     struct config
     {
@@ -176,9 +183,13 @@ public:
     };
 
     virtual ~logger() {}
-    virtual void on_entry_format_begin(eco::log::message& message) = 0;
-    virtual void on_entry_format_end(eco::log::message& message) = 0;
-    virtual void on_entry_output(eco::log::message& message) = 0;
+
+    virtual void on_entry_format(
+        eco::log::message& message,
+        eco::log::on_time on) = 0;
+
+    virtual void on_entry_output(
+        eco::log::message& message) = 0;
 
 protected:
     eco::log::logger::config m_conf;
@@ -216,7 +227,7 @@ public:
 
     static void start(const eco::log::config& conf);
 
-    static void format(eco::log::message& message);
+    static void format(eco::log::message& message, eco::log::on_time on);
 
     static void output(eco::log::message& message);
 
@@ -255,13 +266,14 @@ public:
         const char* title)
         : m_message(level, line, file, title)
     {
-        // to call "logger::on_entry_format_begin()"
-        eco::log::elog::format(m_message);
+        // to call "logger::on_entry_format(msg, eco::log::on_begin)"
+        eco::log::elog::format(m_message, eco::log::on_begin);
     }
 
     inline ~stream()
     {
-        // to call "logger::on_entry_format_end()"
+        // to call "logger::on_entry_format(msg, eco::log::on_end)"
+        // to call "logger::on_entry_output(msg)"
         eco::log::elog::output(m_message);
     }
 
@@ -280,14 +292,13 @@ public:
         return *this;
     }
     
-    template<template<typename q> class wrap_t = eco::angle_t>
     inline stream& title(const char* title)
     {
         if (m_message.title == NULL)
         {
             m_message.title = title;
+            eco::log::elog::format(m_message, eco::log::on_title);
         }
-        (*this) << wrap_t<const char*>(title);
         return *this;
     }
 
@@ -311,10 +322,10 @@ public:
     inline eco::bool_t is()
     {
         // match with "intv_count" or "intv_duration"
-        int64_t curr = eco::datetime::now();
+        //int64_t curr = eco::datetime::now();
         eco::bool_t cond = (++m_count % intv_count == 0);
-        cond = cond || (curr - m_time_last > intv_duration);
-        if (cond) { m_time_last = curr; }
+        //cond = cond || (curr - m_time_last > intv_duration);
+        //if (cond) { m_time_last = curr; }
         return cond;
     }
 
@@ -323,50 +334,61 @@ public:
         return m_count;
     }
 
-    inline int64_t start() const
+    /*inline int64_t start() const
     {
         return m_time_start;
-    }
+    }*/
 
 private:
     uint64_t m_count = 0;
-    eco::datetime m_time_start = 0;
-    eco::datetime m_time_last = 0;
+    eco::datetime m_time_start;
+    eco::datetime m_time_last;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define eco_log_when(title, level, when) \
+// eco_log_title
+#define eco_log_title_2(title, level) \
+for (int w = eco::log::elog::level_check(level); w; w = 0) \
+    eco::log::stream(level, __LINE__, __FILE__, title)
+#define eco_log_title_3(title, level, when) \
 for (int w = (when) && eco::log::elog::level_check(level); w; w = 0) \
     eco::log::stream(level, __LINE__, __FILE__, title)
-#define eco_log_each(title, level, when, each_count, each_duration) \
+#define eco_log_title_4(title, level, each_count, each_duration) \
+for (int w = eco::log::elog::level_check(level); w; w = 0) \
+    for (static const eco::log::each<each_count, each_duration> each; w && \
+         const_cast<eco::log::each<each_count, each_duration>&>(each).is(); \
+         w = 0) \
+        eco::log::stream(level, __LINE__, __FILE__, title)
+#define eco_log_title_5(title, level, when, each_count, each_duration) \
 for (int w = (when) && eco::log::elog::level_check(level); w; w = 0) \
     for (static const eco::log::each<each_count, each_duration> each; w && \
          const_cast<eco::log::each<each_count, each_duration>&>(each).is(); \
          w = 0) \
         eco::log::stream(level, __LINE__, __FILE__, title)
-
-// eco_log
-#define eco_log_1(level) \
-eco_log_when(NULL, eco::log::level, 1)
-#define eco_log_2(level, when) \
-eco_log_when(NULL, eco::log::level, when)
-#define eco_log_3(level, each_count, each_duration) \
-eco_log_each(NULL, eco::log::level, 1, each_count, each_duration)
-#define eco_log_4(level, when, each_count, each_duration) \
-eco_log_each(NULL, eco::log::level, when, each_count, each_duration)
-#define eco_log(...) eco_macro_overload(eco_log_,__VA_ARGS__)
+#define eco_log_title(...) eco_macro_overload(eco_log_title_,__VA_ARGS__)
 
 // eco_log_level
 #define eco_log_level_1(level) \
-eco_log_when(NULL, level, 1)
+eco_log_title_2(NULL, level)
 #define eco_log_level_2(level, when) \
-eco_log_when(NULL, level, when)
+eco_log_title_3(NULL, level, when)
 #define eco_log_level_3(level, each_count, each_duration) \
-eco_log_each(NULL, level, 1, each_count, each_duration)
+eco_log_title_4(NULL, level, each_count, each_duration)
 #define eco_log_level_4(level, when, each_count, each_duration) \
-eco_log_each(NULL, level, when, each_count, each_duration)
+eco_log_title_5(NULL, level, when, each_count, each_duration)
 #define eco_log_level(...) eco_macro_overload(eco_log_level_,__VA_ARGS__)
+
+// eco_log
+#define eco_log_1(level) \
+eco_log_title_2(NULL, eco::log::level)
+#define eco_log_2(level, when) \
+eco_log_title_3(NULL, eco::log::level, when)
+#define eco_log_3(level, each_count, each_duration) \
+eco_log_title_4(NULL, eco::log::level, each_count, each_duration)
+#define eco_log_4(level, when, each_count, each_duration) \
+eco_log_title_5(NULL, eco::log::level, when, each_count, each_duration)
+#define eco_log(...) eco_macro_overload(eco_log_,__VA_ARGS__)
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(log);
 eco_namespace_end(eco);

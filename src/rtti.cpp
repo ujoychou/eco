@@ -15,20 +15,20 @@ struct type_registry_impl
 
 type_registry_impl g_impl;
 ////////////////////////////////////////////////////////////////////////////////
-void type_registry::register_type(const char* name, const eco::rtti::type* type)
+void type_registry::set_type(const char* name, const eco::rtti::type* type)
 {
     g_impl.map[name] = type;
 } 
-
-rtti::object::ptr type_registry::create(const char* name)
+const eco::rtti::type* type_registry::get_type(const char* name)
 {
     auto it = g_impl.map.find(name);
-    return (it != g_impl.map.end()) ? it->second->create() : rtti::object::ptr();
+    return (it != g_impl.map.end()) ? it->second : nullptr;
+} 
+eco::rtti::object::ptr type_registry::create(const char* name)
+{
+    const eco::rtti::type* type = get_type(name);
+    return (type != nullptr) ? type->create() : eco::rtti::object::ptr();
 }
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -87,15 +87,15 @@ void elog::start(const eco::log::config& conf)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void elog::format(eco::log::message& msg)
+void elog::format(eco::log::message& msg, eco::log::on_time on)
 {
     g_impl.borrow_entry(msg.entry);
-    g_impl.format->on_entry_format_begin(msg);
+    g_impl.format->on_entry_format(msg, on);
 }
 
 void elog::output(eco::log::message& msg)
 {
-    g_impl.format->on_entry_format_end(msg);
+    g_impl.format->on_entry_format(msg, eco::log::on_end);
     for (elog_impl::logger_ptr& logger : g_impl.loggers)
     {
         logger->on_entry_output(msg);

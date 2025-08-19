@@ -21,6 +21,7 @@ dll entry
 *******************************************************************************/
 #include <eco/rtti/api.hpp>
 #include <eco/rtti/type.hpp>
+#include <string>
 
 
 eco_namespace(eco);
@@ -71,6 +72,8 @@ public:
 	{
 		return reinterpret_cast<func_t>(get_func(func_name));
 	}
+
+	inline operator bool() const { return m_handle != nullptr; }
 
 private:
 	void* m_handle;

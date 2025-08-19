@@ -1,72 +1,83 @@
-#include <gtest/gtest.h>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/plugin.hpp>
+#include <eco/rtti/app.hpp>
+#include <eco/log.hpp>
 
 
+using eco::log;
+thread_local 
 ////////////////////////////////////////////////////////////////////////////////
-class test_plugin : public ::testing::Test
+class test_glog : public eco::log::logger
 {
+    eco_plugin("glog", "1.0.0");
 public:
-    
+    void on_entry_format(message& message, on_time on) override
+    {
+        if (on == on_begin)
+           message.entry().append("[GLOG_1.0.0] <BEGIN>");
+        else if (on == on_end)
+            message.entry().append("<END>");
+    }
+
+    void on_entry_output(message& message) override
+    {
+        message.entry().append(" OUTPUT");
+    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(test_plugin, create_api)
+class test_blog : public eco::log::logger
 {
-    eco::plugin::path_add("test/unit/plugin");
-    eco::database::ptr db;
-    // 无配置的情况下
-    db = eco::plugin::create<eco::database>("eco_mysql");
-    eco::plugin::add("account", db);
-    db = eco::plugin::create<eco::database>("eco_sqlite");
-    eco::plugin::add("config", db);
-
-    // 有配置的情况下
-    db = eco::plugin::get<eco::database>("account", "eco_mysql");
-    db = eco::plugin::get<eco::database>("config", "eco_sqlite");
-    // 等同于
-    eco::database::ptr silkway = eco::app().persist("silkway");
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-class mysql : public eco::database
-{
-    eco_plugin("eco_mysql");
+    eco_plugin("blog", "2.1.0");
 public:
-    
+    void on_entry_format(message& message, on_time on) override
+    {
+        if (on == on_begin)
+            message.entry().append("[BLOG_2.1.0] <BEGIN>");
+        else if (on == on_end)
+            message.entry().append("<END>");
+    }
+
+    void on_entry_output(message& message) override
+    {
+        message.entry().append(" OUTPUT");
+    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class sqlite : public eco::database
+class test_clog : public eco::log::logger
 {
-    eco_plugin("eco_sqlite");
+    eco_plugin("blog", "2.2.0");
 public:
+    void on_entry_format(message& message, on_time on) override
+    {
+        if (on == on_begin)
+            message.entry().append("[CLOG_2.2.0] <BEGIN>");
+        else if (on == on_end)
+            message.entry().append("<END>");
+    }
+
+    void on_entry_output(message& message) override
+    {
+        message.entry().append(" OUTPUT");
+    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class pgsql : public eco::database
+class LogRxApp : public eco::rx::app
 {
-    eco_plugin("eco_pgsql");
 public:
+    void on_init() override
+    {
+        // init glog
+    }
+
+    void on_exit() override
+    {
+        // exit glog
+    }
 };
-
-
-void create()
-{
-    const char* type = dll.type();
-    const char* 
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void main()
-{
-    auto x = eco::plugin::load("/a/b/c.dll");
-    x->name();
-    x->create();
-
-}
+eco_erx(LogRxApp, erx_app);

@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/plugin.hpp>
 #include <eco/rtti/app.hpp>
+#include "plugin_type.hpp"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -13,37 +14,44 @@ public:
 };
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
-class mysql : public eco::database
+class test_mysql : public file
 {
-    eco_plugin("eco_mysql");
-public:    
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-class sqlite : public eco::database
-{
-    eco_plugin("eco_sqlite");
+    eco_plugin(test_mysql, "mysql", "1.0.0");
 public:
+    virtual void open() override
+    {
+    }
+
+    virtual void close() override
+    {
+    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class pgsql : public eco::database
+class test_sqlite : public file
 {
-    eco_plugin("eco_pgsql");
+    eco_plugin(test_sqlite, "sqlite", "2.1.0");
 public:
+    static eco::bool_t compatible_with(const char* version)
+    {
+        return eco::version_compare(version, "2.1.0") >= 0;
+    }
+
+    static eco::bool_t can_open(const char* path)
+    {}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class RxAppDatabase : public eco::rx::app
+class FileRxApp : public eco::rx::app
 {
 public:
     virtual void on_init() override
     {
+        eco::plugin::set_plugin<test_mysql>();
+        eco::plugin::set_plugin<test_sqlite>();
     }
 
     virtual void on_exit() override
@@ -52,12 +60,5 @@ public:
 };
 
 
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
-eco_erx(RxAppDatabase);
+eco_erx(FileRxApp, erx_app);

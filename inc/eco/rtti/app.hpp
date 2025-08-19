@@ -89,11 +89,15 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define eco_erx(erx_app) \
+#define eco_erx(erx_app_t, erx_app) \
+inline erx_app_t& erx_app() \
+{\
+	return eco::singleton<erx_app_t>::get();\
+}\
 extern "C" __attribute__((weak, visibility("default"))) \
 eco::result erx_entry_point(eco::rx::message msg, void* ap) \
 { \
-    eco::singleton<erx_app>::get().entry_point(msg, ap); \
+    erx_app().entry_point(msg, ap); \
 	return eco::ok; \
 }
 

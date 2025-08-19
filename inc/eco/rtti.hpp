@@ -185,7 +185,7 @@ inline static eco::rtti::object::ptr create()\
 	return std::make_shared<object_t>();\
 }
 // runtime object who is a interface cann't be created.
-#define eco_rtti_i(object_t, parent_t) \
+#define eco_rtti_interface(object_t, parent_t) \
 eco_rtti__(object_t) \
 inline static const eco::rtti::type* type()\
 {\

@@ -12,20 +12,21 @@ class logger_logging : public eco::log::logger
 {
     eco_rtti(logger_logging, eco::log::logger);
 public:
+    // time [thread] [level] <title> message (file:line)
+    // 20250813 12:59:56.405324 [event] [ info] <dds-someip> load mapping...(file.c:161)
+    static inline void format_title(eco::log::message& msg)
+    {
+        eco::input<eco::log::entry> input(msg.entry);
+        if (msg.title != nullptr) { input << eco::square(msg.title); }
+    }
     static inline void format_begin(eco::log::message& msg)
     {
-        // time [thread] [level] <title> message (file:line)
-        // 20250813 12:59:56.405324 [event] [ INFO] load mapping...(file.c:161)
         eco::input<eco::log::entry> input(msg.entry);
         input << msg.time.stamp(eco::datetime::iso_m) << ' ';
         input << eco::square(eco::empty(msg.thread) ? msg.tid : msg.thread);
         input << ' ' << eco::square(eco::log::name(msg.level)) << ' ';
+        format_title(msg);
     }
-
-    static inline void format_begin(message& msg, const eco::string& fmt)
-    {
-    }
-
     static inline void format_end(message& msg)
     {
         // (file:line)
@@ -37,17 +38,30 @@ public:
         }
     }
 
-public:
-    virtual void on_entry_format_begin(eco::log::message& msg) override
+    static inline void format_message(
+        eco::log::message& msg, const eco::string& format, eco::log::on_time on)
     {
-        return m_conf.format.empty() 
-            ? logger_logging::format_begin(msg)
-            : logger_logging::format_begin(msg, m_conf.format);
+        if (on == on_begin)
+        {
+            if (format.empty())
+            {
+                logger_logging::format_begin(msg);
+            }
+        }
+        else if (on == on_end)
+        {
+            logger_logging::format_end(msg);
+        }
+        else if (on == on_title)
+        {
+            logger_logging::format_title(msg);
+        }
     }
 
-    virtual void on_entry_format_end(eco::log::message& msg) override
+public:
+    virtual void on_entry_format(eco::log::message& msg, on_time on) override
     {
-        logger_logging::format_end(msg);
+        format_message(msg, m_conf.format, on);
     }
 
     virtual void on_entry_output(eco::log::message& msg) override
@@ -63,16 +77,9 @@ class logger_console : public eco::log::logger
 {
     eco_rtti(logger_console, eco::log::logger);
 public:
-    virtual void on_entry_format_begin(eco::log::message& msg) override
+    virtual void on_entry_format(eco::log::message& msg, on_time on) override
     {
-        return m_conf.format.empty() 
-            ? logger_logging::format_begin(msg)
-            : logger_logging::format_begin(msg, m_conf.format);
-    }
-
-    virtual void on_entry_format_end(eco::log::message& msg) override
-    {
-        logger_logging::format_end(msg);
+        logger_logging::format_message(msg, m_conf.format, on);
     }
 
     virtual void on_entry_output(eco::log::message& msg) override
