@@ -21,32 +21,27 @@ dll entry
 *******************************************************************************/
 #include <eco/rtti/api.hpp>
 #include <eco/rtti/type.hpp>
+#include <eco/os/os.hpp>
 #include <string>
 
 
 eco_namespace(eco);
-eco_namespace(rx);
-////////////////////////////////////////////////////////////////////////////////
-typedef void  	(*func_t)(void);
-eco_api void* 	dll_load(const char* dll_name);
-eco_api void  	dll_free(void*& dll_handle);
-eco_api func_t 	dll_func(void* dll_handle, const char* func_name);
-
-
+class app;
+eco_namespace(rtti);
 ////////////////////////////////////////////////////////////////////////////////
 class dll
 {
 public:
  	// rx object.
-	inline dll() : m_handle(nullptr) {}
-	inline ~dll() { if (m_handle) { dll_free(m_handle); } }
+	inline dll() {}
+	inline ~dll() { if (m_handle) { eco::os::dll_free(m_handle); } }
 
 	// load dll file, you can dedicate the name of dll.
 	inline void load(const char* dll_path, const char* dll_name = "")
 	{
 		m_path = dll_path;
 		m_name = dll_name;
-		m_handle = eco::dll_load(dll_path);
+		m_handle = eco::os::dll_load(dll_path);
 	}
 
 	// get dll file path.
@@ -61,82 +56,69 @@ public:
 	inline dll& name(const char* name) { m_name = name; return *this; }
 	
 	// get dll function.
-	inline func_t get_func(const char* func_name)
+	inline function_t get_func(const char* func_name)
 	{
-		return eco::dll_func(m_handle, func_name);
+		return eco::os::dll_func(m_handle, func_name);
 	}
 
 	// get right function type by cast.
-	template<typename func_t>
-	inline func_t cast_func(const char* func_name)
+	template<typename function_t>
+	inline function_t cast_func(const char* func_name)
 	{
-		return reinterpret_cast<func_t>(get_func(func_name));
+		return reinterpret_cast<function_t>(get_func(func_name));
 	}
 
 	inline operator bool() const { return m_handle != nullptr; }
 
 private:
-	void* m_handle;
+	void* m_handle = nullptr;
 	std::string m_name;
 	std::string m_path;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class object : public eco::rx::dll
+class rxobject : public eco::rtti::dll
 {
 public:
-	typedef eco::result (*erx_entry_point_t)(eco::rx::message msg, void* ap);
+	typedef eco::result (*erx_entry_point_t)(eco::rtti::message msg, void* app);
 
-	inline object(
-		const char* dll_path,
-		const char* dll_name = "")
-		: m_rx_msg(0)
+	inline rxobject(const char* dll_path, const char* dll_name = "")
 	{
-		eco::dll::load(dll_path, dll_name);
-		m_entry_point = eco::rx::dll::cast_func<
+		eco::rtti::dll::load(dll_path, dll_name);	
+		m_entry_point = eco::rtti::dll::cast_func<
 			erx_entry_point_t>("erx_entry_point");
 	}
 
 	// notify erx when app init.
-	inline eco::result on_init(eco::app& app)
+	inline eco::result on_init()
 	{
-		m_rx_msg = message_init;
-		return m_entry_point(message(m_rx_msg), &app);
+		return m_entry_point(eco::rtti::message_init, nullptr);
 	}
 
 	// notify erx init command.
 	inline eco::result on_cmd()
 	{
-		m_rx_msg = message_cmd;
-		return m_entry_point(message(m_rx_msg), nullptr);
+		return m_entry_point(eco::rtti::message_cmd, nullptr);
 	}
 
 	// notify erx load data.
 	inline eco::result on_load()
 	{
-		m_rx_msg = message_load;
-		return m_entry_point(message(m_rx_msg), nullptr);
+		return m_entry_point(eco::rtti::message_load, nullptr);
 	}
 
 	// notify erx when app exit.
 	inline eco::result on_exit()
 	{
-		m_rx_msg = message_exit;
-		return m_entry_point(message(m_rx_msg), nullptr);
-	}
-
-	inline eco::rx::message message() const
-	{
-		return m_rx_msg;
+		return m_entry_point(eco::rtti::message_exit, nullptr);
 	}
 
 private:
-	eco::rx::message  m_rx_msg;
 	erx_entry_point_t m_entry_point;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(rx);
+eco_namespace_end(rtti);
 eco_namespace_end(eco);

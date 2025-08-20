@@ -12,5 +12,5 @@ PLATFORM_HOST=linux-x64
 # Cross-compile when different from host
 PLATFORM_BUILD=linux-x64
 COMPILER=gcc
-THREADS=8
+THREADS=1
 source ${BUILD_PATH}/inc/eco/pak/shell/build.sh

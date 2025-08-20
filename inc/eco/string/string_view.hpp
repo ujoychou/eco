@@ -26,7 +26,7 @@ class string_view
 {
 public:
 	template<typename string_t>
-	inline string_view(const string_t& v) 
+	explicit inline string_view(const string_t& v) 
 		: data_(v.c_str()), size_(static_cast<uint32_t>(v.size()))
 	{}
 

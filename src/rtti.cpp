@@ -13,13 +13,13 @@ struct type_registry_impl
 };
 
 
-type_registry_impl g_impl;
+static type_registry_impl g_impl;
 ////////////////////////////////////////////////////////////////////////////////
-void type_registry::set(const char* name, const eco::rtti::type* type)
+void type_registry::set_type(const char* name, const eco::rtti::type* type)
 {
     g_impl.map[name] = type;
 } 
-const eco::rtti::type* type_registry::get(const char* name)
+const eco::rtti::type* type_registry::get_type(const char* name)
 {
     auto it = g_impl.map.find(name);
     return (it != g_impl.map.end()) ? it->second : nullptr;

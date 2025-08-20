@@ -17,78 +17,12 @@
 
 *******************************************************************************/
 #include <eco/prec.hpp>
-#include <eco/string/string.hpp>
+#include <eco/string.hpp>
 
 
-////////////////////////////////////////////////////////////////////////////////
 eco_namespace(eco);
-eco_namespace(detail);
-struct error_data
-{
-private:
-    int option;
-    // error key: id & path
-    int id;
-    eco::string path;
-
-    // error message: "message / params of message"
-    eco::string message;
-    const char* format;
-
-    friend class eco::error;
-};
-eco_namespace_end(detail);
-
-
 ////////////////////////////////////////////////////////////////////////////////
-class error : public eco::stream<eco::error>, public eco::format<eco::error>
-{
-public:
-    inline error() : data(this_thread_data())
-    {}
 
-    inline error(int id, const char* format) : data(this_thread_data())
-    {
-        data.id = id;
-        data.path.clear();
-        data.format = format;
-    }
-
-    inline error(const char* path, const char* format)
-        : data(this_thread_data())
-    {
-        data.id = 0;
-        data.path = path;
-        data.format = format;
-        //data.message.format(format, );
-    }
-
-    inline error& operator % (int v)
-    {
-        return (*this);
-    }
-
-    inline const eco::string& message()
-    {
-        return data.message;
-    }
-
-    inline eco::error& sys(bool_t value)
-    {
-        if (value)
-            data.id |= eco::result::syserr;
-        else
-            data.id &= ~eco::result::syserr;
-    }
-    inline bool sys() const
-    {
-        return (data.id & eco::result::syserr) != 0;
-    }
-
-private:
-    eco::detail::error_data& data;
-    static eco::detail::error_data& this_thread_data();
-};
 
 
 ////////////////////////////////////////////////////////////////////////////////

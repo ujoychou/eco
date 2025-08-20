@@ -32,6 +32,8 @@ class object
 {
 	eco_object(object);
 public:
+	typedef eco::rtti::object::ptr (*create_t)(void);
+
 	inline object() {}
 	virtual ~object(void) {}
 
@@ -69,16 +71,15 @@ public:
 class eco_api type_registry
 {
 public:
-	static void set(const char* name, const eco::rtti::type* type);
-	static const eco::rtti::type* get(const char* name);
+	static void set_type(const char* name, const eco::rtti::type* type);
+	static const eco::rtti::type* get_type(const char* name);
 	static eco::rtti::object::ptr create(const char* name);
 };
 
 // type init when compile time.
-typedef eco::rtti::object::ptr (*create_func_t)(void);
-template<typename object_t, typename parent_t, create_func_t f>
+template<typename object_t, typename parent_t, eco::rtti::object::create_t f>
 struct type_init { static eco::rtti::type type; };
-template<typename object_t, typename parent_t, create_func_t f>
+template<typename object_t, typename parent_t, eco::rtti::object::create_t f>
 eco::rtti::type type_init<object_t, parent_t, f>::type(
 	object_t::type_name(), parent_t::type(), f);
 
@@ -89,7 +90,10 @@ class type
 	eco_noncopyable(type);
 public:
 	// init.
-	inline type(const char* name, const type* parent, create_func_t create)
+	inline type(
+		const char* name,
+		const type* parent,
+		eco::rtti::object::create_t create)
 		: m_name(name), m_parent(parent), m_create(create)
 	{
 		rtti::type_registry::set_type(name, this);
@@ -133,7 +137,7 @@ public:
 private:
 	const char* m_name;
 	const eco::rtti::type* m_parent;
-	create_func_t m_create;
+	eco::rtti::object::create_t m_create;
 };
 
 
@@ -183,7 +187,7 @@ inline static eco::rtti::object::ptr create()\
 eco_rtti__(object_t) \
 inline static const eco::rtti::type* type()\
 {\
-	return &eco::rtti::type_init<object_t, parent_t, NULL>::type;\
+	return &eco::rtti::type_init<object_t, parent_t, nullptr>::type;\
 }\
 inline static typename object_t::ptr create(const char* name)\
 {\

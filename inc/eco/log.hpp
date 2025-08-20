@@ -110,8 +110,9 @@ struct entry
 		return *this;
     }
 
-    inline entry& append(const char* str, uint32_t size)
+    inline entry& append(const char* str, uint32_t size = 0)
     {
+        if (size == 0) { size = strlen(str); }
         size = adjust(size);
 		memcpy(&m_buff[m_pos_current], str, size);
 		m_pos_current += size;

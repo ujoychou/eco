@@ -25,27 +25,27 @@
 eco_namespace(eco)
 ////////////////////////////////////////////////////////////////////////////////
 // char
-inline bool_t upper(char v)
+inline bool upper(char v)
 {
 	return v >= 'A' && v <= 'Z';
 }
-inline bool_t lower(char v)
+inline bool lower(char v)
 {
 	return v <= 'z' && v >= 'a';
 }
-inline bool_t letter(char v)
+inline bool letter(char v)
 {
 	return upper(v) || lower(v);
 }
-inline bool_t newline(char v)
+inline bool newline(char v)
 {
 	return (v == '\n' || v == '\r');
 }
-inline bool_t space(char v)
+inline bool space(char v)
 {
 	return (v == ' ' || v == '	');
 }
-inline bool_t empty(char v)
+inline bool empty(char v)
 {
 	return space(v) || newline(v);
 }
@@ -62,11 +62,11 @@ inline char to_lower(char v)
 
 ////////////////////////////////////////////////////////////////////////////////
 // number
-inline bool_t number(char v)
+inline bool number(char v)
 {
 	return v >= '0' && v <= '9';
 }
-inline bool_t number(const char* v)
+inline bool number(const char* v)
 {
 	for (const char* c = v; *c != 0; ++c)
 	{
@@ -77,8 +77,8 @@ inline bool_t number(const char* v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// char*
-inline bool_t empty(const char* v)
+// char* const operation
+inline bool empty(const char* v)
 {
 	return (v == NULL || v[0] == 0);
 }
@@ -91,9 +91,8 @@ inline bool equal(const char* s1, const char* s2)
 	for (; *s1 && *s2 && *s1 == *s2; ++s1, ++s2) {}
 	return *s2 == 0;
 }
-inline bool_t iequal(const char* s1, const char* s2, uint32_t size)
+inline bool iequal(const char* s1, const char* s2, uint32_t size)
 {
-	assert(size > 0);
 	char c1, c2;
 	do 
 	{
@@ -112,34 +111,15 @@ inline int snprintf(char* buff, size_t size, const char* format, ...)
 	return result;
 }
 #endif
+
+
 ////////////////////////////////////////////////////////////////////////////////
-inline char* to_upper(char* v)
-{
-	for (char* c = v; *c != 0; ++c) { *c = to_upper(*c); }
-	return v;
-}
-inline char* to_lower(char* v)
-{
-	for (char* c = v; *c != 0; ++c) { *c = to_lower(*c); }
-	return v;
-}
-// clear the string data.
-inline void clear(char* v)
-{
-	v[0] = 0;
-}
-// get string end size.
-inline size_t fit(const char* v, size_t size)
-{
-	size_t i = size - 1;
-	for (; i != size_t(-1) && v[i] == 0; --i) {}
-	return ++i;
-}
+// char* find operation
 inline uint32_t find_first(const char* key, char flag)
 {
 	uint32_t pos = 0;
 	for (; *key != 0 && *key != flag; ++key, ++pos) {}
-	return (*key == 0) ? -1 : pos;
+	return (*key == 0) ? eco::u_1 : pos;
 }
 inline uint32_t find_last(const char* key, uint32_t end, char flag)
 {
@@ -161,7 +141,7 @@ inline uint32_t find_nth(const char* key, char flag, uint32_t nth)
 	{
 		if (*key == flag && ++cur_seq == nth) { break; }
 	}
-	return (*key == 0) ? -1 : pos;
+	return (*key == 0) ? eco::u_1 : pos;
 }
 inline const char* find(const char* dest, const char* v)
 {
@@ -170,6 +150,32 @@ inline const char* find(const char* dest, const char* v)
 		if (equal(dest, v)) { return dest; }
 	}
 	return nullptr;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// char* setting operation
+inline char* to_upper(char* v)
+{
+	for (char* c = v; *c != 0; ++c) { *c = to_upper(*c); }
+	return v;
+}
+inline char* to_lower(char* v)
+{
+	for (char* c = v; *c != 0; ++c) { *c = to_lower(*c); }
+	return v;
+}
+// clear the string data.
+inline void clear(char* v)
+{
+	v[0] = 0;
+}
+// get string end size.
+inline uint32_t fit(const char* v, uint32_t size)
+{
+	uint32_t i = size - 1;
+	for (; i != eco::u_1 && v[i] == 0; --i) {}
+	return ++i;
 }
 
 
@@ -206,7 +212,7 @@ public:
 public:
 	inline string_c() {}
 
-	explicit inline string_c(uint32_t size, bool_t reserved = false)
+	explicit inline string_c(uint32_t size, eco::bool_t reserved = false)
 	{
 		reserved ? reserve(size) : resize(size);
 	}
@@ -370,7 +376,7 @@ public:
 	inline uint32_t capacity() const { return m_capacity; }
 	inline eco::bool_t empty() const { return m_data == nullptr || m_size == 0; }
 
-private:
+protected:
 	char*    m_data = nullptr;
 	uint32_t m_size = 0;
 	uint32_t m_capacity = 0;

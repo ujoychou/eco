@@ -18,7 +18,6 @@
 *******************************************************************************/
 #include <stdint.h>
 #include <stddef.h>
-#include <assert.h>
 #include <memory>
 
 
@@ -72,6 +71,8 @@ eco_macro_cat(macro, eco_macro_getn(__VA_ARGS__))(__VA_ARGS__)
 eco_namespace(eco)
 using bool_t = uint32_t;
 using offset_t = uint32_t;
+using function_t = void (*)(void);
+const uint32_t u_1 = static_cast<uint32_t>(-1);
 enum class result : int
 {
     ok 	        = 0,

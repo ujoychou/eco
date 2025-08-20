@@ -24,7 +24,7 @@
 
 
 eco_namespace(eco);
-eco_namespace(rx);
+eco_namespace(rtti);
 ////////////////////////////////////////////////////////////////////////////////
 class app
 {
@@ -32,59 +32,46 @@ protected:
 	// notify erx when app init.
 	virtual eco::result on_init()
 	{
-		return eco::ok;
+		return eco::result::ok;
 	}
 
 	// notify erx init command.
 	virtual eco::result on_cmd()
 	{
-		return eco::ok;
+		return eco::result::ok;
 	}
 
 	// notify erx load data.
 	virtual eco::result on_load()
 	{
-		return eco::ok;
+		return eco::result::ok;
 	}
 
 	// notify erx when app exit.
 	virtual eco::result on_exit()
 	{
-		return eco::ok;
+		return eco::result::ok;
 	}
 
 public:
-	inline app()
-	{
-		m_app = nullptr;
-	}
-
-	// get app who load erx.
-	inline eco::app& get_app()
-	{
-		return *m_app;
-	}
-
 	// erx dll entry point.
-	inline eco::result entry_point(const eco::rx::message msg, void* app)
+	inline eco::result entry_point(const eco::rtti::message msg, void* app)
 	{
 		switch (msg)
 		{
-		case eco::rx::message_init:
-			m_app = static_cast<eco::app*>(app);
+		case eco::rtti::message_init:
 			return on_init();
-		case eco::rx::message_cmd:
+		case eco::rtti::message_cmd:
 			return on_cmd();
-		case eco::rx::message_load:
+		case eco::rtti::message_load:
 			return on_load();
-		case eco::rx::message_exit:
+		case eco::rtti::message_exit:
 			return on_exit();
 		}
-		return eco::ok;
+		return eco::result::ok;
 	}
 
 private:
-	eco::app* m_app;
 };
 
 
@@ -95,12 +82,11 @@ inline erx_app_t& erx_app() \
 	return eco::singleton<erx_app_t>::get();\
 }\
 extern "C" __attribute__((weak, visibility("default"))) \
-eco::result erx_entry_point(eco::rx::message msg, void* ap) \
+eco::result erx_entry_point(eco::rtti::message msg, void* ap) \
 { \
-    erx_app().entry_point(msg, ap); \
-	return eco::ok; \
+    return erx_app().entry_point(msg, ap); \
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(rx);
+eco_namespace_end(rtti);
 eco_namespace_end(eco);

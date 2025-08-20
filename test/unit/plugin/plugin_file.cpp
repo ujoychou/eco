@@ -5,16 +5,6 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
-class plugin
-{
-public:
-    const char* name() const;
-    const char* version() const;
-    void* create() const;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 class test_mysql : public file
 {
     eco_plugin(test_mysql, "mysql", "1.0.0");
@@ -48,13 +38,13 @@ public:
 class FileRxApp : public eco::rx::app
 {
 public:
-    virtual void on_init() override
+    eco::result on_init() override
     {
         eco::plugin::set_plugin<test_mysql>();
         eco::plugin::set_plugin<test_sqlite>();
     }
 
-    virtual void on_exit() override
+    eco::result on_exit() override
     {
     }
 };
