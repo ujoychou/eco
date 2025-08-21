@@ -23,9 +23,10 @@
 eco_namespace(eco);
 eco_namespace(os);
 ////////////////////////////////////////////////////////////////////////////////
-eco_api void* dll_load(const char* dll_name);
-eco_api void  dll_free(void*& dll_handle);
-eco_api eco::function_t dll_func(void* dll_handle, const char* func_name);
+eco_api void* dll_load(const char* path);
+eco_api void  dll_free(void*& handle);
+eco_api const char* dll_path();
+eco_api eco::func_t dll_func(void* handle, const char* func_name);
 ////////////////////////////////////////////////////////////////////////////////
 eco_namespace_end(os);
 eco_namespace_end(eco);

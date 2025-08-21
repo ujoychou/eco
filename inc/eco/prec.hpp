@@ -70,9 +70,9 @@ eco_macro_cat(macro, eco_macro_getn(__VA_ARGS__))(__VA_ARGS__)
 // c++ typedef
 eco_namespace(eco)
 using bool_t = uint32_t;
+using func_t = void (*)(void);
 using offset_t = uint32_t;
-using function_t = void (*)(void);
-const uint32_t u_1 = static_cast<uint32_t>(-1);
+const uint32_t U32_1 = static_cast<uint32_t>(-1);
 enum class result : int
 {
     ok 	        = 0,
@@ -124,7 +124,9 @@ public:\
 	typedef std::shared_ptr<object_t> value;\
 	typedef std::shared_ptr<object_t> ptr;\
 	typedef std::weak_ptr<object_t> wptr;
-#define eco_object(object_t) eco_object_ptr(object_t) eco_noncopyable(object_t);
+#define eco_object(object_t) \
+eco_object_ptr(object_t) \
+eco_noncopyable(object_t);
 
 
 ////////////////////////////////////////////////////////////////////////////////

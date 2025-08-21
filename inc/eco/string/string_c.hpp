@@ -119,7 +119,7 @@ inline uint32_t find_first(const char* key, char flag)
 {
 	uint32_t pos = 0;
 	for (; *key != 0 && *key != flag; ++key, ++pos) {}
-	return (*key == 0) ? eco::u_1 : pos;
+	return (*key == 0) ? eco::U32_1 : pos;
 }
 inline uint32_t find_last(const char* key, uint32_t end, char flag)
 {
@@ -141,7 +141,7 @@ inline uint32_t find_nth(const char* key, char flag, uint32_t nth)
 	{
 		if (*key == flag && ++cur_seq == nth) { break; }
 	}
-	return (*key == 0) ? eco::u_1 : pos;
+	return (*key == 0) ? eco::U32_1 : pos;
 }
 inline const char* find(const char* dest, const char* v)
 {
@@ -174,7 +174,7 @@ inline void clear(char* v)
 inline uint32_t fit(const char* v, uint32_t size)
 {
 	uint32_t i = size - 1;
-	for (; i != eco::u_1 && v[i] == 0; --i) {}
+	for (; i != eco::U32_1 && v[i] == 0; --i) {}
 	return ++i;
 }
 

@@ -31,7 +31,7 @@ inline int compare_version(const char* s1, const char* s2)
 	uint32_t v2 = 0;
 	uint32_t pos1 = find_first(s1, '.');
 	uint32_t pos2 = find_first(s2, '.');
-	while (pos1 != eco::u_1 && pos2 != eco::u_1)
+	while (pos1 != eco::U32_1 && pos2 != eco::U32_1)
 	{
 		v1 = eco::cast<uint32_t>(eco::string_view(s1, pos1));
 		v2 = eco::cast<uint32_t>(eco::string_view(s2, pos1));
@@ -42,7 +42,7 @@ inline int compare_version(const char* s1, const char* s2)
 		pos2 = find_first(s2, '.');
 	}
 	return v1 < v2 ? -1 : (v1 > v2 ? 1 : 
-		(pos1 == pos2 ? 0 : pos1 == eco::u_1 ? -1 : 1));
+		(pos1 == pos2 ? 0 : pos1 == eco::U32_1 ? -1 : 1));
 }
 
 

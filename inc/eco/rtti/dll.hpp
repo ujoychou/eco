@@ -26,7 +26,6 @@ dll entry
 
 
 eco_namespace(eco);
-class app;
 eco_namespace(rtti);
 ////////////////////////////////////////////////////////////////////////////////
 class dll
@@ -56,16 +55,16 @@ public:
 	inline dll& name(const char* name) { m_name = name; return *this; }
 	
 	// get dll function.
-	inline function_t get_func(const char* func_name)
+	inline eco::func_t get_func(const char* func_name)
 	{
 		return eco::os::dll_func(m_handle, func_name);
 	}
 
 	// get right function type by cast.
-	template<typename function_t>
-	inline function_t cast_func(const char* func_name)
+	template<typename func_t>
+	inline func_t cast_func(const char* func_name)
 	{
-		return reinterpret_cast<function_t>(get_func(func_name));
+		return reinterpret_cast<func_t>(get_func(func_name));
 	}
 
 	inline operator bool() const { return m_handle != nullptr; }

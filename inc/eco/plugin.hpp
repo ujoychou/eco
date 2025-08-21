@@ -29,26 +29,39 @@ eco_namespace(rtti);
 ////////////////////////////////////////////////////////////////////////////////
 struct plugin_type
 {
+	eco_object(plugin_type);
 public:
-	typedef void* (*create_t)(const char* name);
+	typedef void* (*create_t)();
 	eco::string name;
 	eco::string version;
 	eco::string	dllpath;
 	create_t	create;
+
+	inline plugin_type(
+        const char* name,
+        const char* version,
+        const char* dllpath,
+        plugin_type::create_t create)
+        : name(name)
+        , version(version)
+        , dllpath(dllpath)
+        , create(create)
+    {}
 };
 class eco_api plugin_registry
 {
 public:
-	static eco::rtti::plugin_type* set_plugin(
+	static eco::rtti::plugin_type::ptr set_plugin(
 		const char* name,
 		const char* version,
+		const char* dllpath,
 		eco::rtti::plugin_type::create_t create);
 
-	static eco::rtti::plugin_type* get_plugin(
+	static eco::rtti::plugin_type::ptr get_plugin(
 		const char* name,
 		const char* version);
 
-	static eco::rtti::plugin_type* get_plugin_compatible(
+	static eco::rtti::plugin_type::ptr get_plugin_compatible(
 		const char* name,
 		const char* version);
 };
@@ -57,9 +70,10 @@ struct plugin_regisger
 	inline plugin_regisger(
 		const char* n, const char* v, eco::rtti::plugin_type::create_t c)
 	{
-		type = eco::rtti::plugin_registry::set_plugin(n, v, c);
+		const char* p = eco::os::dll_path();
+		type = eco::rtti::plugin_registry::set_plugin(n, v, p, c);
 	}
-	eco::rtti::plugin_type* type = nullptr;
+	eco::rtti::plugin_type::ptr type;
 };
 
 
@@ -82,13 +96,13 @@ public:
 			plugin_name, plugin_version, object_name));
 	}
 
-	inline static eco::rtti::plugin_type* get_plugin(
+	inline static eco::rtti::plugin_type::ptr get_plugin(
 		const char* name, const char* version)
 	{
 		return eco::rtti::plugin_registry::get_plugin(name, version);
 	}
 
-	static eco::rtti::plugin_type* get_plugin_compatible(
+	static eco::rtti::plugin_type::ptr get_plugin_compatible(
 		const char* name, const char* version)
 	{
 		return eco::rtti::plugin_registry::get_plugin_compatible(name, version);
@@ -108,10 +122,10 @@ eco::rtti::plugin_regisger plugin_init<type_t>::reg(
 public:\
 inline static const char* name() { return nam; } \
 inline static const char* version() { return ver; } \
-inline static void* create(const char* name) { return new type_t(); } \
-inline static eco::rtti::plugin_type* plugin()\
+inline static void* create() { return new type_t(); } \
+inline static eco::rtti::plugin_type& plugin()\
 {\
-	return eco::rtti::plugin_init<type_t>::reg.type;\
+	return *eco::rtti::plugin_init<type_t>::reg.type;\
 }
 #define eco_plugin_2(type_t, version)\
 eco_plugin__(type_t, eco_macro_str(type_t), version)
