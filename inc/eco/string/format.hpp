@@ -109,7 +109,6 @@ public:
 		return rthis().append(v.c_str(), v.size());
 	}
 
-public:
 	inline format_t(const char* format = nullptr)
 		: m_pos(0), m_format(format)
 	{}

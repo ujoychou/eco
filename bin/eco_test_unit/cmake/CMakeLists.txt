@@ -27,6 +27,7 @@ set(SRC_FILES
     ${PRJ_DIR}/test/unit/lockfree/test_queue.cpp
     ${PRJ_DIR}/test/unit/sync/test_spinlock.cpp
     ${PRJ_DIR}/test/unit/test_number.cpp
+    ${PRJ_DIR}/test/unit/test_error.cpp
     ${PRJ_DIR}/test/unit/lockfree/test_freepool.cpp
     ${PRJ_DIR}/test/unit/lockfree/test_spanpool.cpp
     ${PRJ_DIR}/test/unit/lockfree/test_freelist.cpp)

@@ -1,6 +1,5 @@
 #include <eco/log.hpp>
 ////////////////////////////////////////////////////////////////////////////////
-#include <eco/lockfree/stack.hpp>
 #include <memory>
 #include <vector>
 #include "log_impl.hpp"
@@ -17,21 +16,9 @@ public:
     eco::log::level         level_set = eco::log::none;
     logger_ptr              format;
     eco::log::config        config;
-    eco::lockfree::stack_mc cache;
     std::vector<logger_ptr> loggers;
 
     inline elog_impl() {}
-
-    inline void return_entry(eco::log::entry& entry)
-    {
-        cache.push(const_cast<char*>(entry.text()));
-        entry.reset(nullptr, 0);
-    }
-
-    inline void borrow_entry(eco::log::entry& entry)
-    {
-        entry.reset(static_cast<char*>(cache.pop()), config.entry_size);
-    }
 };
 
 
@@ -51,7 +38,7 @@ void elog::start(const eco::log::config& conf)
     // entry cache
     uint32_t size = eco::align_up(conf.entry_size, 8);
     uint32_t count = conf.cache_size / size;
-    g_impl.cache.init(size, count);
+    eco::cache::init_logs(size, count);
     g_impl.config = conf;
 
     // format logger
@@ -89,7 +76,10 @@ void elog::start(const eco::log::config& conf)
 ////////////////////////////////////////////////////////////////////////////////
 void elog::format(eco::log::message& msg, eco::log::on_time on)
 {
-    g_impl.borrow_entry(msg.entry);
+    if (msg.entry.text() == nullptr)
+    {
+        msg.entry = eco::cache::entry_this_borrow();
+    }
     g_impl.format->on_entry_format(msg, on);
 }
 
@@ -100,7 +90,7 @@ void elog::output(eco::log::message& msg)
     {
         logger->on_entry_output(msg);
     }
-    g_impl.return_entry(msg.entry);
+    eco::cache::entry_this_return(msg.entry);
 }
 
 

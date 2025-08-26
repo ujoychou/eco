@@ -21,6 +21,7 @@
 #include <eco/thread.hpp>
 #include <eco/datetime.hpp>
 #include <eco/rtti.hpp>
+#include <eco/cache/cache.hpp>
 
 
 eco_namespace(eco);
@@ -60,86 +61,6 @@ typedef int on_time;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-struct entry
-{
-    explicit inline entry(void* data = 0) : m_buff(static_cast<char*>(data))
-    {}
-
-    inline void reset(void* data, uint32_t capacity)
-    {
-        m_buff = static_cast<char*>(data);
-        m_pos_current = 0;
-        m_pos_message = 0;
-        m_capacity = capacity;
-    }
-
-    inline void set_message_pos()
-    {
-        m_pos_message = m_pos_current;
-    }
-
-    inline uint32_t left() const
-    {
-        return m_capacity - m_pos_current;
-    }
-
-    inline uint32_t adjust(uint32_t size) const
-    {
-        uint32_t size_left = left();
-        return (size_left < size ? size_left : size);
-    }
-
-    inline void printf(const char* format, va_list* args)
-    {
-        snprintf(m_buff, left(), format, *args);
-    }
-
-    inline entry& append(char c)
-	{
-		m_buff[m_pos_current++] = c;
-		m_buff[m_pos_current] = 0;
-		return *this;
-	}
-
-    inline entry& append(char c, uint32_t size)
-    {
-        size = adjust(size);
-		if (size == 1) return append(c);
-		memset(&m_buff[m_pos_current], c, size);
-		m_pos_current += size;
-		m_buff[m_pos_current] = 0;
-		return *this;
-    }
-
-    inline entry& append(const char* str, uint32_t size = 0)
-    {
-        if (size == 0) { size = strlen(str); }
-        size = adjust(size);
-		memcpy(&m_buff[m_pos_current], str, size);
-		m_pos_current += size;
-		m_buff[m_pos_current] = 0;
-		return *this;
-    }
-
-    inline const char* text() const
-    {
-        return m_buff;
-    }
-
-    inline const char* message() const
-    {
-        return m_buff + m_pos_message;
-    }
-
-protected:
-    uint32_t m_pos_current = 0;
-    uint32_t m_pos_message = 0;
-    uint32_t m_capacity = 0;
-    char*    m_buff = nullptr;
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 struct message
 {
     eco::log::level  level;
@@ -150,7 +71,7 @@ struct message
     int              line;
     const char*      file;
     const char*      title;
-    eco::log::entry  entry;
+    eco::entry       entry;
 
     inline message(
         eco::log::level level,
@@ -243,6 +164,44 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+template<uint32_t intv_count, uint32_t intv_duration>
+class each
+{
+public:
+    inline each()
+    {
+        m_time_start = eco::datetime::now();
+        m_time_last = m_time_start;
+    }
+
+    inline eco::bool_t is()
+    {
+        // match with "intv_count" or "intv_duration"
+        //int64_t curr = eco::datetime::now();
+        eco::bool_t cond = (++m_count % intv_count == 0);
+        //cond = cond || (curr - m_time_last > intv_duration);
+        //if (cond) { m_time_last = curr; }
+        return cond;
+    }
+
+    inline uint64_t count() const
+    {
+        return m_count;
+    }
+
+    /*inline int64_t start() const
+    {
+        return m_time_start;
+    }*/
+
+private:
+    uint64_t m_count = 0;
+    eco::datetime m_time_start;
+    eco::datetime m_time_last;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 class stream
     : public eco::stream_t<eco::log::stream>
     , public eco::format_t<eco::log::stream>
@@ -289,18 +248,8 @@ public:
     {
         va_list args;
         va_start(args, format);
-        m_message.entry.printf(format, &args);
+        m_message.entry.printf(format, args);
         va_end(args);
-        return *this;
-    }
-    
-    inline stream& title(const char* title)
-    {
-        if (m_message.title == NULL)
-        {
-            m_message.title = title;
-            eco::log::elog::format(m_message, eco::log::on_title);
-        }
         return *this;
     }
 
@@ -308,44 +257,6 @@ private:
     eco::log::message  m_message;
 };
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-template<uint32_t intv_count, uint32_t intv_duration>
-class each
-{
-public:
-    inline each()
-    {
-        m_time_start = eco::datetime::now();
-        m_time_last = m_time_start;
-    }
-
-    inline eco::bool_t is()
-    {
-        // match with "intv_count" or "intv_duration"
-        //int64_t curr = eco::datetime::now();
-        eco::bool_t cond = (++m_count % intv_count == 0);
-        //cond = cond || (curr - m_time_last > intv_duration);
-        //if (cond) { m_time_last = curr; }
-        return cond;
-    }
-
-    inline uint64_t count() const
-    {
-        return m_count;
-    }
-
-    /*inline int64_t start() const
-    {
-        return m_time_start;
-    }*/
-
-private:
-    uint64_t m_count = 0;
-    eco::datetime m_time_start;
-    eco::datetime m_time_last;
-};
 
 
 ////////////////////////////////////////////////////////////////////////////////
