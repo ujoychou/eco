@@ -18,6 +18,7 @@
 *******************************************************************************/
 #include <eco/string/string_c.hpp>
 #include <eco/string/string_view.hpp>
+#include <eco/string/string_entry.hpp>
 #include <eco/string/stream.hpp>
 #include <eco/string/format.hpp>
 

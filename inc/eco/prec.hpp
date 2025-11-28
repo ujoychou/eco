@@ -79,7 +79,7 @@ enum class result : int
     fail        = 1,
     error	    = 2,
     timeout     = 3,
-    syserr      = 0x1 << 31,
+	defined     = 1000,
 };
 
 

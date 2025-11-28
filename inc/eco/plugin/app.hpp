@@ -19,8 +19,8 @@
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rtti/dll.hpp>
-#include <eco/rtti/type.hpp>
+#include <eco/plugin/dll.hpp>
+#include <eco/plugin/type.hpp>
 
 
 eco_namespace(eco);

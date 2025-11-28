@@ -20,7 +20,7 @@ runtime type.
 * copyright(c) 2016 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rtti/api.hpp>
+#include <eco/export/api.hpp>
 #include <eco/string/string_c.hpp>
 
 
@@ -75,13 +75,6 @@ public:
 	static const eco::rtti::type* get_type(const char* name);
 	static eco::rtti::object::ptr create(const char* name);
 };
-
-// type init when compile time.
-template<typename object_t, typename parent_t, eco::rtti::object::create_t f>
-struct type_init { static eco::rtti::type type; };
-template<typename object_t, typename parent_t, eco::rtti::object::create_t f>
-eco::rtti::type type_init<object_t, parent_t, f>::type(
-	object_t::type_name(), parent_t::type(), f);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +156,22 @@ inline bool eco::rtti::object::same_of() const
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// type init when compile time: rtti
+template<typename object_t, typename parent_t>
+struct type_init { static eco::rtti::type type; };
+template<typename object_t, typename parent_t>
+eco::rtti::type type_init<object_t, parent_t>::type(
+	object_t::type_name(), parent_t::type(), &object_t::create);
+
+// type init when compile time: rtti_interface
+template<typename object_t>
+struct type_init_null { static eco::rtti::type type; };
+template<typename object_t>
+eco::rtti::type type_init_null<object_t>::type(
+	object_t::type_name(), eco::rtti::object::type(), 0);
+
+
+////////////////////////////////////////////////////////////////////////////////
 // runtime object implement.
 #define eco_rtti__(object_t)\
 public:\
@@ -172,22 +181,23 @@ public:\
 	inline static const char* type_name() { return eco_macro_str(object_t); }
 	
 // runtime object who is a instance can be created.
+// [TODO] using std::allocate_shared
 #define eco_rtti(object_t, parent_t)\
 eco_rtti__(object_t)\
 inline static const eco::rtti::type* type()\
 {\
-	return &eco::rtti::type_init<object_t, parent_t, &object_t::create>::type;\
+	return &eco::rtti::type_init<object_t, parent_t>::type;\
 }\
 inline static eco::rtti::object::ptr create()\
 {\
-	return std::make_shared<object_t>();\
+	return std::allocate_shared<object_t>(std::allocator<object_t>());\
 }
 // runtime object who is a interface cann't be created.
-#define eco_rtti_interface(object_t, parent_t) \
-eco_rtti__(object_t) \
+#define eco_rtti_interface(object_t) \
+eco_rtti__(object_t)\
 inline static const eco::rtti::type* type()\
 {\
-	return &eco::rtti::type_init<object_t, parent_t, nullptr>::type;\
+	return &eco::rtti::type_init_null<object_t>::type;\
 }\
 inline static typename object_t::ptr create(const char* name)\
 {\

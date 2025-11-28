@@ -113,10 +113,11 @@ public:
 		: m_pos(0), m_format(format)
 	{}
 
-	inline void reset(const char* v)
+	inline actual_t& format(const char* v)
 	{
 		m_pos = 0;
 		m_format = v;
+		return rthis();
 	}
 
 protected:

@@ -299,28 +299,3 @@ void app()
     ui.set_action(error().id(), ACTION_RECHARGE);
     ui.show();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void test()
-{
-    /* [异常管理]
-    1. 支持异常ID与PATH
-    2. 支持
-    */
-}

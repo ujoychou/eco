@@ -1,4 +1,4 @@
-#include <eco/cache/cache.hpp>
+#include <eco/cache.hpp>
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/lockfree/stack.hpp>
 
@@ -10,18 +10,24 @@ struct cache_impl
 public:
     uint32_t logs_entry_size = 0;
     eco::lockfree::stack_mc cache_logs;
-    
 };
+struct cache_error_this
+{
+    char* buffer;
+    eco::bool_t nolog;
+};
+
+
 static eco::cache_impl s_impl;
-static thread_local eco::entry this_cache_error;
+static thread_local cache_error_this this_cache_error;
 static thread_local eco::lockfree::stack this_cache_logs;
 ////////////////////////////////////////////////////////////////////////////////
 eco::entry& cache::entry_this_error()
 {
-    if (this_cache_error.text() == nullptr)
+    if (this_cache_error.buffer == nullptr)
     {
-        this_cache_error.reset(static_cast<char*>(
-            s_impl.cache_logs.pop()), s_impl.logs_entry_size);
+        this_cache_error.buffer = static_cast<char*>(
+            s_impl.cache_logs.pop());
     }
     return this_cache_error;
 }

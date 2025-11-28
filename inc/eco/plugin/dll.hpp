@@ -19,9 +19,9 @@ dll entry
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rtti/api.hpp>
-#include <eco/rtti/type.hpp>
+#include <eco/export/api.hpp>
 #include <eco/os/os.hpp>
+#include <eco/plugin/type.hpp>
 #include <string>
 
 

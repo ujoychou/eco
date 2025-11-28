@@ -2,31 +2,38 @@
 /*******************************************************************************
 @ name
 
+
 @ function
+
 
 @ exception
 
 @ note
 
 --------------------------------------------------------------------------------
-@ [2025-08-20] ujoy created
+@ [history ver 1.0]
 
 
 --------------------------------------------------------------------------------
-* copyright(c) 2025 - 2027, ujoy, reserved all right.
+* copyright(c) 2025 - 2025, ujoy, reserved all right.
 
 *******************************************************************************/
 #include <eco/prec.hpp>
-#include <eco/export/api.hpp>
+#include <eco/log/message.hpp>
 
 
 eco_namespace(eco);
-eco_namespace(os);
+eco_namespace(log);
 ////////////////////////////////////////////////////////////////////////////////
-eco_api void* dll_load(const char* path);
-eco_api void  dll_free(void*& handle);
-eco_api const char* dll_path();
-eco_api eco::func_t dll_func(void* handle, const char* func_name);
+class logger
+{
+public:
+	virtual ~logger() {};
+	virtual void on_entry_format(message& message, int on) = 0;
+    virtual void on_entry_output(message& message) = 0;
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(os);
+eco_namespace_end(log);
 eco_namespace_end(eco);

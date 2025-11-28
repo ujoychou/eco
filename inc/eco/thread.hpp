@@ -19,7 +19,7 @@ thread and common thread function.
 
 *******************************************************************************/
 #include <eco/cast.hpp>
-#include <eco/rtti/api.hpp>
+#include <eco/export/api.hpp>
 
 
 eco_namespace(eco);

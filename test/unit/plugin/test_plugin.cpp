@@ -3,6 +3,7 @@
 #include <eco/plugin.hpp>
 #include <eco/log.hpp>
 #include "plugin_type.hpp"
+#include "plugin_logger.hpp"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,15 +35,15 @@ TEST_F(test_plugin, logger_plugin)
 
     // using logger api
     eco::log::message msg(eco::log::info, __LINE__, __FILE__, "test");
-    metric->on_entry_format(msg, eco::log::on_begin);
+    metric->on_entry_format(msg, 1);
     EXPECT_STREQ(msg.entry.text(), "[GLOG_1.0.0] <BEGIN>");
-    metric->on_entry_format(msg, eco::log::on_end);
+    metric->on_entry_format(msg, 2);
     EXPECT_STREQ(msg.entry.text(), "[GLOG_1.0.0] <BEGIN><END>");
     metric->on_entry_output(msg);
     EXPECT_STREQ(msg.entry.text(), "[GLOG_1.0.0] <BEGIN><END> OUTPUT");
-    blogic->on_entry_format(msg, eco::log::on_begin);
+    blogic->on_entry_format(msg, 1);
     EXPECT_STREQ(msg.entry.text(), "[BLOG_2.1.0] <BEGIN>");
-    blogic->on_entry_format(msg, eco::log::on_end);
+    blogic->on_entry_format(msg, 2);
     EXPECT_STREQ(msg.entry.text(), "[BLOG_2.1.0] <BEGIN><END>");
     blogic->on_entry_output(msg);
     EXPECT_STREQ(msg.entry.text(), "[BLOG_2.1.0] <BEGIN><END> OUTPUT");

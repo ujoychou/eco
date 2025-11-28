@@ -1,7 +1,6 @@
 #pragma once
 /*******************************************************************************
 @ name
-dll entry
 
 @ function
 
@@ -10,32 +9,31 @@ dll entry
 @ note
 
 --------------------------------------------------------------------------------
-@ [history ver 1.0]
-@ ujoy modifyed on 2016-05-09.
-1.create and init this class.
+@ [2024-08-21] ujoy created
 
 
 --------------------------------------------------------------------------------
-* copyright(c) 2016 - 2017, ujoy, reserved all right.
+* copyright(c) 2024 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rtti/api.hpp>
+#include <eco/string.hpp>
 
 
 eco_namespace(eco);
-eco_namespace(rtti);
 ////////////////////////////////////////////////////////////////////////////////
-// app message send to erx dll.
-enum
+struct chain
 {
-	message_init		= 0x0001,
-	message_cmd			= 0x0002,
-	message_load		= 0x0003,
-	message_exit		= 0x0004,
+    static uint64_t id()
+    {
+        return 0;
+    }
+
+    static const char* user()
+    {
+        return "";
+    }
 };
-typedef int message;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(rtti);
 eco_namespace_end(eco);

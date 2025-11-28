@@ -19,9 +19,9 @@ plugin
 * copyright(c) 2015 - 2027, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/rtti/api.hpp>
-#include <eco/rtti/dll.hpp>
-#include <eco/error.hpp>
+#include <eco/export/api.hpp>
+#include <eco/os/os.hpp>
+#include <eco/except.hpp>
 
 
 eco_namespace(eco);
@@ -33,7 +33,7 @@ struct plugin_type
 public:
 	typedef void* (*create_t)();
 	eco::string name;
-	eco::string version;
+	eco::string version;	
 	eco::string	dllpath;
 	create_t	create;
 
@@ -48,6 +48,7 @@ public:
         , create(create)
     {}
 };
+
 class eco_api plugin_registry
 {
 public:
@@ -65,6 +66,7 @@ public:
 		const char* name,
 		const char* version);
 };
+
 struct plugin_regisger
 {
 	inline plugin_regisger(
@@ -75,6 +77,12 @@ struct plugin_regisger
 	}
 	eco::rtti::plugin_type::ptr type;
 };
+
+template<typename type_t>
+struct plugin_init { static eco::rtti::plugin_regisger reg; };
+template<typename type_t>
+eco::rtti::plugin_regisger plugin_init<type_t>::reg(
+	type_t::name(), type_t::version(), &type_t::create);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -111,13 +119,6 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// plugin init when compile time.
-template<typename type_t>
-struct plugin_init { static eco::rtti::plugin_regisger reg; };
-template<typename type_t>
-eco::rtti::plugin_regisger plugin_init<type_t>::reg(
-	type_t::name(), type_t::version(), &type_t::create);
-
 #define eco_plugin__(type_t, nam, ver)\
 public:\
 inline static const char* name() { return nam; } \

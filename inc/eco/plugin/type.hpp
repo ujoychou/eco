@@ -1,6 +1,7 @@
 #pragma once
 /*******************************************************************************
 @ name
+dll entry
 
 @ function
 
@@ -9,24 +10,32 @@
 @ note
 
 --------------------------------------------------------------------------------
-@ [2025-08-20] ujoy created
+@ [history ver 1.0]
+@ ujoy modifyed on 2016-05-09.
+1.create and init this class.
 
 
 --------------------------------------------------------------------------------
-* copyright(c) 2025 - 2027, ujoy, reserved all right.
+* copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/prec.hpp>
 #include <eco/export/api.hpp>
 
 
 eco_namespace(eco);
-eco_namespace(os);
+eco_namespace(rtti);
 ////////////////////////////////////////////////////////////////////////////////
-eco_api void* dll_load(const char* path);
-eco_api void  dll_free(void*& handle);
-eco_api const char* dll_path();
-eco_api eco::func_t dll_func(void* handle, const char* func_name);
+// app message send to erx dll.
+enum
+{
+	message_init		= 0x0001,
+	message_cmd			= 0x0002,
+	message_load		= 0x0003,
+	message_exit		= 0x0004,
+};
+typedef int message;
+
+
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(os);
+eco_namespace_end(rtti);
 eco_namespace_end(eco);

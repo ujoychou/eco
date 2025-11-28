@@ -27,7 +27,8 @@ eco_namespace(eco);
 ////////////////////////////////////////////////////////////////////////////////
 struct entry
 {
-    explicit inline entry(void* data = 0) : m_buff(static_cast<char*>(data))
+    explicit inline entry(void* data = nullptr)
+        : m_buff(static_cast<char*>(data))
     {}
 
     inline void reset(void* data, uint32_t capacity)
@@ -56,7 +57,7 @@ struct entry
 
     inline void printf(const char* format, va_list& args)
     {
-        snprintf(m_buff, left(), format, args);
+        //snprintf(m_buff, left(), format, args);
     }
 
     inline entry& append(char c)

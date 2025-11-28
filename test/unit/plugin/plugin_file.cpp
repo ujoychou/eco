@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/plugin.hpp>
-#include <eco/rtti/app.hpp>
+#include <eco/plugin/app.hpp>
 #include "plugin_type.hpp"
 
 

@@ -2,6 +2,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/type.hpp>
 #include <map>
+#include <eco/plugin/dll.hpp>
 
 
 
@@ -86,7 +87,11 @@ public:
         return ((**it).name == name) ? (*it) : nullptr;
     }
 };
-static plugin_registry_impl g_impl;
+static plugin_registry_impl& get_impl()
+{
+    static plugin_registry_impl impl;
+    return impl;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +103,7 @@ eco::rtti::plugin_type::ptr plugin_registry::set_plugin(
 {
     plugin_type_impl::ptr info = std::make_shared<plugin_type_impl>(
         name, version, dllpath, create);
-    plugin_type_impl::ptr* it = g_impl.type_map.set(info);
+    plugin_type_impl::ptr* it = get_impl().type_map.set(info);
     return it ? *it : nullptr;
 } 
 
@@ -106,14 +111,14 @@ eco::rtti::plugin_type::ptr plugin_registry::get_plugin(
     const char* name,
     const char* version)
 {
-    return g_impl.get_plugin(name, version);
+    return get_impl().get_plugin(name, version);
 }
 
 eco::rtti::plugin_type::ptr plugin_registry::get_plugin_compatible(
     const char* name,
     const char* version)
 {
-    return g_impl.get_plugin_compatible(name, version);
+    return get_impl().get_plugin_compatible(name, version);
 }
 
 
@@ -121,14 +126,15 @@ eco::rtti::plugin_type::ptr plugin_registry::get_plugin_compatible(
 void* plugin::get(const char* name, const char* version, const char* object_name)
 {
     // exist object
-    auto it = g_impl.object_map.find(object_name);
-    if (it != g_impl.object_map.end())
+    plugin_registry_impl& impl = get_impl();
+    auto it = impl.object_map.find(object_name);
+    if (it != impl.object_map.end())
     {
         return it->second;
     }
 
     // create new object
-    plugin_type_impl::ptr type = g_impl.get_plugin_compatible(name, version);
+    plugin_type_impl::ptr type = impl.get_plugin_compatible(name, version);
     if (type == nullptr)
     {
         //eco_throw(eco::error::invalid_argument, "plugin not found");
@@ -138,7 +144,7 @@ void* plugin::get(const char* name, const char* version, const char* object_name
     {
         type->dll.load(type->dllpath.c_str());
         //eco_throw(type->dll, "plugin load failed");
-        type = g_impl.get_plugin_compatible(name, version);
+        type = impl.get_plugin_compatible(name, version);
     }
     void* object = type->create();
     if (object == nullptr)
@@ -146,7 +152,7 @@ void* plugin::get(const char* name, const char* version, const char* object_name
         //eco_throw(eco::error::invalid_argument, "object not found");
         return nullptr;
     }
-    g_impl.object_map[object_name] = object;
+    impl.object_map[object_name] = object;
     return object;
 }
 

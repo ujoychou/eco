@@ -1,24 +1,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <eco/plugin.hpp>
-#include <eco/rtti/app.hpp>
+#include <eco/plugin/app.hpp>
 #include <eco/log.hpp>
+#include "plugin/plugin_logger.hpp"
 
 
-using namespace eco::log;
 ////////////////////////////////////////////////////////////////////////////////
 class test_glog : public eco::log::logger
 {
     eco_plugin(test_glog, "1.0.0");
 public:
-    void on_entry_format(message& message, on_time on) override
+    void on_entry_format(eco::log::message& message, int on) override
     {
-        if (on == on_begin)
+        if (on == 1)
            message.entry.append("[GLOG_1.0.0] <BEGIN>");
-        else if (on == on_end)
+        else if (on == 2)
             message.entry.append("<END>");
     }
 
-    void on_entry_output(message& message) override
+    void on_entry_output(eco::log::message& message) override
     {
         message.entry.append(" OUTPUT");
     }
@@ -30,15 +30,15 @@ class test_blog : public eco::log::logger
 {
     eco_plugin(test_blog, "2.1.0");
 public:
-    void on_entry_format(message& message, on_time on) override
+    void on_entry_format(eco::log::message& message, int on) override
     {
-        if (on == on_begin)
+        if (on == 1)
             message.entry.append("[BLOG_2.1.0] <BEGIN>");
-        else if (on == on_end)
+        else if (on == 2)
             message.entry.append("<END>");
     }
 
-    void on_entry_output(message& message) override
+    void on_entry_output(eco::log::message& message) override
     {
         message.entry.append(" OUTPUT");
     }
@@ -50,15 +50,15 @@ class test_clog : public eco::log::logger
 {
     eco_plugin(test_clog, "2.2.0");
 public:
-    void on_entry_format(message& message, on_time on) override
+    void on_entry_format(eco::log::message& message, int on) override
     {
-        if (on == on_begin)
+        if (on == 1)
             message.entry.append("[CLOG_2.2.0] <BEGIN>");
-        else if (on == on_end)
+        else if (on == 2)
             message.entry.append("<END>");
     }
 
-    void on_entry_output(message& message) override
+    void on_entry_output(eco::log::message& message) override
     {
         message.entry.append(" OUTPUT");
     }

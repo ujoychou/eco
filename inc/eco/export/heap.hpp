@@ -1,5 +1,4 @@
-#ifndef ECO_RX_HEAP_H
-#define ECO_RX_HEAP_H
+#pragma once
 /*******************************************************************************
 @ name
 
@@ -19,15 +18,14 @@
 * copyright(c) 2016 - 2017, ujoy, reserved all right.
 
 *******************************************************************************/
-#include <eco/Prec.h>
-#include <eco/rx/RxApi.h>
+#include <eco/export/api.hpp>
 
 
 #undef new
 #undef delete
-ECO_NS_BEGIN(eco);
+eco_namespace(eco);
 ////////////////////////////////////////////////////////////////////////////////
-class ECO_API RxHeap 
+class eco_api heap 
 {
 public:
 	// new operators.
@@ -57,5 +55,4 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ECO_NS_END(eco);
-#endif
+eco_namespace_end(eco);

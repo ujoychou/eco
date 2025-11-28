@@ -37,15 +37,15 @@ template<typename type_t> using space_t = decoration<type_t, 10>;
 template<typename type_t> using upper_t = decoration<type_t, 11>;
 template<typename type_t> using lower_t = decoration<type_t, 12>;
 
-template<typename type_t>
+template<typename type_t>	// []
 inline square_t<type_t> square(const type_t& v) { return square_t<type_t>(v); }
-template<typename type_t>
+template<typename type_t> 	// ()
 inline group_t<type_t> group(const type_t& v) { return group_t<type_t>(v); }
-template<typename type_t>
+template<typename type_t>	// {}
 inline brace_t<type_t> brace(const type_t& v) { return brace_t<type_t>(v); }
-template<typename type_t>
+template<typename type_t>	// <>
 inline angle_t<type_t> angle(const type_t& v) { return angle_t<type_t>(v); }
-template<typename type_t>
+template<typename type_t>	// ' '
 inline space_t<type_t> space(const type_t& v) { return space_t<type_t>(v); }
 template<typename type_t>
 inline upper_t<type_t> upper(const type_t& v) { return upper_t<type_t>(v); }

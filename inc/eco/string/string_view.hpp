@@ -25,52 +25,58 @@ eco_namespace(eco)
 class string_view
 {
 public:
+	inline string_view(const char* v = nullptr) : m_data(v), m_size(-1)
+	{}
+
+	inline string_view(const char* v, uint32_t size) : m_data(v), m_size(size)
+	{}
+
 	template<typename string_t>
 	explicit inline string_view(const string_t& v) 
-		: data_(v.c_str()), size_(static_cast<uint32_t>(v.size()))
+		: m_data(v.c_str()), m_size(static_cast<uint32_t>(v.size()))
 	{}
 
-	inline string_view(const char* v) : data_(v), size_(-1)
-	{}
-
-	inline string_view(const char* v, uint32_t size) : data_(v), size_(size)
-	{}
+	inline void reset(const char* v, uint32_t size)
+	{
+		m_data = v;
+		m_size = size;
+	}
 
 	inline bool null() const
 	{
-		return (data_ == NULL);
+		return (m_data == NULL);
 	}
 
 	inline const char* c_str() const
 	{
-		return data_;
+		return m_data;
 	}
 
 	inline const char* c_end() const
 	{
-		return data_ + size();
+		return m_data + size();
 	}
 
 	inline char operator[](uint32_t index) const
 	{
-		return null() ? 0 : data_[index];
+		return null() ? 0 : m_data[index];
 	}
 
 	inline uint32_t size() const
 	{
-		if (size_ == (uint32_t)-1) { size_ = !null() ? strlen(data_) : 0; }
-		return size_;
+		if (m_size == (uint32_t)-1) { m_size = !null() ? strlen(m_data) : 0; }
+		return m_size;
 	}
 
 	inline string_view& size(uint32_t v)
 	{
-		size_ = v;
+		m_size = v;
 		return *this;
 	}
 
-private:
-	const char* data_;
-	mutable uint32_t size_;
+protected:
+	const char*      m_data;
+	mutable uint32_t m_size;
 };
 
 
