@@ -17,7 +17,8 @@ set(SRC_FILES
     ${PRJ_DIR}/test/unit/cast/test_cast_integer_1_ai.cpp
     ${PRJ_DIR}/test/unit/cast/ryu_64.cc
     ${PRJ_DIR}/src/log/config.cpp
-    ${PRJ_DIR}/test/unit/test_except.cpp
+    #${PRJ_DIR}/src/log/log.cpp
+    ${PRJ_DIR}/test/unit/test_elog.cpp
     ${PRJ_DIR}/src/thread.cpp
     ${PRJ_DIR}/src/rtti.cpp
     ${PRJ_DIR}/src/plugin.cpp

@@ -64,41 +64,14 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename type_t>
-class except_t : public eco::stream_t<eco::except_t<type_t> >
+template<typename actual_t>
+class except_t : public eco::stream_t<actual_t>
 {
-private:
-    typedef except_t<type_t> this_t;
-    friend class except_impl;
-    eco::except_impl* m_impl;
-    type_t            m_return;
-    
-    inline except_t()
-    {
-        m_impl = except_api::this_except();
-    }
+protected:
+    eco::except_impl* m_impl = 0;
+    inline actual_t& rthis() { return (actual_t&)(*this); }
 
 public:
-    static inline eco::except_t<type_t> this_except()
-    {
-        return eco::except_t<type_t>();
-    }
-
-    inline except_t(
-        int level, int id, int line, const char* file, const char* func)
-    {
-        except_input input{level, id, line, file, func};
-        m_impl = except_api::this_except(input);
-    }
-
-    inline except_t(
-        int level, int id, int line, const char* file, const char* func, type_t v)
-    {
-        except_input input{level, id, line, file, func};
-        m_impl = except_api::this_except(input);
-        m_return = v;
-    }
-
     inline ~except_t()
     {
         if (!m_impl->logs.entry.null())
@@ -107,7 +80,6 @@ public:
         }
     }
 
-public:
     inline int id() const
     {
         return m_impl->id;
@@ -118,17 +90,12 @@ public:
         return m_impl->id != 0;
     }
 
-    inline operator type_t() const
-    {
-        return m_return;
-    }
-
     template<typename args_t>
-    inline this_t& args(args_t v)
+    inline actual_t& args(args_t v)
     {
         //eco::c_str str(v);
         //m_impl->entry_args.append(str.value(), str.size());
-        return *this;
+        return rthis();
     }
 
     inline const char* args() const
@@ -136,23 +103,22 @@ public:
         return m_impl->entry_args.c_str();
     }
 
-public:
-    inline this_t& mode(int v)
+    inline actual_t& mode(int v)
     {
         m_impl->logs.level = eco::log::level_mode(m_impl->logs.level, v);
-        return *this;
+        return rthis();
     }
 
-    inline this_t& user(const char* v)
+    inline actual_t& user(const char* v)
     {
         m_impl->logs.user = v;
-        return *this;
+        return rthis();
     }
 
-    inline this_t& aspect(const char* v)
+    inline actual_t& aspect(const char* v)
     {
         m_impl->logs.aspect = v;
-        return *this;
+        return rthis();
     }
 
     inline const char* what() const
@@ -165,25 +131,25 @@ public:
         return !m_impl->logs.entry.null();
     }
 
-    inline this_t& append(char c, uint32_t size)
+    inline actual_t& append(char c, uint32_t size)
     {
         if (has_logs())
         {
             m_impl->logs.entry.append(c, size);
         }
-        return *this;
+        return rthis();
     }
 
-    inline this_t& append(const char* str, uint32_t size)
+    inline actual_t& append(const char* str, uint32_t size)
     {
         if (has_logs())
         {
             m_impl->logs.entry.append(str, size);
         }
-        return *this;
+        return rthis();
     }
 
-    inline this_t& printf(const char* format, ...)
+    inline actual_t& printf(const char* format, ...)
     {
         if (has_logs())
         {
@@ -192,9 +158,9 @@ public:
             //m_logs.entry.printf(format, args);
             va_end(args);
         }
-        return *this;
+        return rthis();
     }
-    inline this_t& format(const char* format, ...)
+    inline actual_t& format(const char* format, ...)
     {
         if (has_logs())
         {
@@ -203,25 +169,66 @@ public:
             //m_logs.entry.printf(format, args);
             va_end(args);
         }
-        return *this;
+        return rthis();
     }
 };
 
-// eco exception.
-using except = except_t<eco::bool_t>;
+
+////////////////////////////////////////////////////////////////////////////////
+// eco exception that can return <type_t> value.
+template<typename type_t>
+class except_return : public except_t<except_return<type_t>>
+{
+public:
+    inline except_return(
+        int level, int id, int line, const char* file, const char* func, type_t v)
+    {
+        except_input input{level, id, line, file, func};
+        this->m_impl = except_api::this_except(input);
+        m_return = v;
+    }
+
+    inline operator type_t() const
+    {
+        return m_return;
+    }
+
+private:
+    type_t m_return;
+};
 
 // eco exception that can return <type_t> value.
 template <typename type_t>
-inline except_t<type_t> except_r(
+inline except_return<type_t> except_r(
     int level, int id, int line, const char* file, const char* func, type_t v)
 {
-    return except_t<type_t>(level, id, line, file, func, v);
+    return except_return<type_t>(level, id, line, file, func, v);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-eco_namespace_end(eco);
+// eco exception.
+class except : public except_t<except>
+{
+private:
+    inline except()
+    {
+        m_impl = except_api::this_except();
+    }
 
+public:
+    inline except(
+        int level, int id, int line, const char* file, const char* func)
+    {
+        except_input input{level, id, line, file, func};
+        m_impl = except_api::this_except(input);
+    }
+
+    static inline except this_except()
+    {
+        return except();
+    }
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -248,3 +255,7 @@ for (int w = 1; w && (when); w = 0) \
     throw eco::except(eco::log::level, id, __LINE__, __FILE__, __func__)
 // throw except mode:
 #define eco_throw(...) eco_macro_overload(eco_throw_,__VA_ARGS__)
+
+
+////////////////////////////////////////////////////////////////////////////////
+eco_namespace_end(eco);

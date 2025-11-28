@@ -173,11 +173,11 @@ eco_log_level_4(eco::log::level, when, each_count, each_duration)
 #define eco_log(...) eco_macro_overload(eco_log_,__VA_ARGS__)
 
 // eco_log_modula
-#define eco_log_modula(modula, modula_name, level, ...) \
-eco_log_level(modula_init<modula, modula_name>::l(eco::log::level), __VA_ARGS__)
+#define eco_log_modula(modula, level, ...) \
+eco_log_level(eco::log::level_modula(eco::log::level, modula), ##__VA_ARGS__)
 // exp: modula_log
-// #define modula1_log(l, ...) eco_log_modula(1, "modula1", l, __VA_ARGS__)
-// #define modula2_log(l, ...) eco_log_modula(2, "modula2", l, __VA_ARGS__)
+// #define modula1_log(l, ...) eco_log_modula(1, "modula1", l, ##__VA_ARGS__)
+// #define modula2_log(l, ...) eco_log_modula(2, "modula2", l, ##__VA_ARGS__)
 // exp: aspect_log
-// #define aspect1_log(l, ...) eco_log(l, __VA_ARGS__).aspect("aspect1")
-// #define aspect2_log(l, ...) eco_log(l, __VA_ARGS__).aspect("aspect2")
+// #define aspect1_log(l, ...) eco_log(l, ##__VA_ARGS__).aspect("aspect1")
+// #define aspect2_log(l, ...) eco_log(l, ##__VA_ARGS__).aspect("aspect2")

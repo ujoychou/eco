@@ -65,22 +65,26 @@ enum
 };
 typedef uint8_t mode;
 
-// int level (4byte) = modula (2byte) + level (1byte) + mode (1byte)
-inline int level_modula(int level)
-{
-    return level & 0x00FF0000;
-}
+// int level (4byte) = level (1byte) + modula (1byte) + mode (1byte)
 inline int level_level(int level)
 {
     return level & 0x000000FF;
 }
+inline int level_modula(int level)
+{
+    return level & 0x0000FF00;
+}
 inline int level_mode(int level)
 {
-    return level & 0xFF000000;
+    return level & 0x00FF0000;
+}
+inline int level_modula(int level, int modula)
+{
+    return level | modula << 8;
 }
 inline int level_mode(int level, int mode)
 {
-    return level | (mode << 24);
+    return level | (mode << 16);
 }
 
 

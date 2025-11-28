@@ -101,32 +101,32 @@ TEST_F(test_elog, elog)
 
 ////////////////////////////////////////////////////////////////////////////////
 // 金融系统：交易/行情/合约/结算/风控
-#define trader_log(level, ...)  eco_log_modula(1, "trader", level, __VA_ARGS__)
-#define market_log(level, ...)  eco_log_modula(2, "market", level, __VA_ARGS__)
-#define target_log(level, ...)  eco_log_modula(3, "target", level, __VA_ARGS__)
-#define settle_log(level, ...)  eco_log_modula(4, "settle", level, __VA_ARGS__)
-#define riskctrl_log(level, ...)  eco_log_modula(5, "riskctrl", level, __VA_ARGS__)
+#define trader_log(level, ...)    eco_log_modula(1, level, ##__VA_ARGS__)
+#define market_log(level, ...)    eco_log_modula(2, level, ##__VA_ARGS__)
+#define target_log(level, ...)    eco_log_modula(3, level, ##__VA_ARGS__)
+#define settle_log(level, ...)    eco_log_modula(4, level, ##__VA_ARGS__)
+#define riskctrl_log(level, ...)  eco_log_modula(5, level, ##__VA_ARGS__)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(test_elog, modula)
 {
-    int rc = 0;
     // [debug] (...) <trader> --- buy 100 shares of AAPL.
-    trader_log(debug).mode(eco::log::mode_req) << "buy 100 shares of AAPL";
+    trader_log(debug).mode(eco::log::req) << "buy 100 shares of AAPL";
     // [debug] (...) <trader.order> ::: @ujoy buy 100 shares of AAPL.
     trader_log(debug).aspect("order").user("ujoy") << "buy 100 shares of AAPL";
-    trader_log(debug).aspect("order").user("ujoy").printf(
+    settle_log(debug).aspect("order").user("ujoy").printf(
         "buy %d shares of AAPL", 100);
-    trader_log(debug).aspect("order").user("ujoy").format(
+    market_log(debug).aspect("order").user("ujoy").format(
         "buy {} shares of AAPL", 100);
     // [error] (...) <trader.order> === @ujoy buy 100 shares of AAPL failed. 
     // {unit/test_elog.cpp:124} {#-1}
-    trader_log(error, rc != 0).aspect("order").user("ujoy").mode(eco::log::mode_rsp)
+    int rc = 0;
+    target_log(error, rc != 0).aspect("order").user("ujoy").mode(eco::log::rsp)
         << "buy 100 shares of AAPL failed";
     // [info ] (...) <trader.order> ::: @ujoy buy 100 shares of AAPL. (each=93/s)
-    int rc = -1;
-    trader_log(info, rc == 0, 1000, 0).aspect("order").user("ujoy")
+    rc = -1;
+    riskctrl_log(info, rc == 0, 1000, 0).aspect("order").user("ujoy")
         .format("buy {} shares of AAPL (each={}/s)", 100, each.frequency());
-    
+
     // [debug] (...) <market> ::: 
     //market_log(debug);
     // [info ] (...) <target> ::: 

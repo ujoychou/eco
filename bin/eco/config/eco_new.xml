@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <eco>
   <logger>
-    <cache cache_size="4m" entry_size="1k" modula_size="32"/>
-    <async enabled="true"/>
-    <format aspect="true"/>
     <sink type="file" level="1,debug;2,info" path="./log/" file="elog_time%_pc%_pid%.log" roll_size="10m"/>
     <sink type="console" level="info"/>
     <sink type="monitor" level="debug"/>
+    <cache cache_size="4m" entry_size="1k"/>
+    <async enable="true"/>
+    <format aspect="true"/>
+    <modula name="trader;market;target;settle;riskctrl"/>
   </logger>
   <except>
     <cache entry_size="64b"/>

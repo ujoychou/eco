@@ -69,12 +69,12 @@ void elog::start(const eco::log::config& conf)
 void format(eco::log::message& msg)
 {    
     // "time (thread) [level] (chain)"
-    eco::entry entry = eco::cache::entry_borrow_log();
-    eco::input<eco::log::entry> input(entry);
-    input << msg->time.stamp(eco::datetime::iso_m) << ' ';
-    input << eco::group(msg->thread) << ' ';
-    input << eco::square(eco::log::level_name(impl::Level(msg->level))) << ' ';
-    input << eco::group(msg->chain) << ' ';
+    eco::string_entry entry;// = eco::cache::entry_borrow_log();
+    //eco::input<eco::log::entry> input(entry);
+    //input << msg->time.stamp(eco::datetime::iso_m) << ' ';
+    //entry << eco::group(msg->thread) << ' ';
+    entry << eco::square(eco::log::level_name(eco::log::level_level(msg.level))) << ' ';
+    entry << eco::group(msg->chain) << ' ';
 
     // <module.aspect>
     const char* modula = impl::modular_name(impl::modula(msg.level));
