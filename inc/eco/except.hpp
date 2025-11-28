@@ -74,7 +74,7 @@ protected:
 public:
     inline ~except_t()
     {
-        if (!m_impl->logs.entry.null())
+        if (has_logs())
         {
             except_api::this_except_log(*m_impl);
         }
@@ -83,11 +83,6 @@ public:
     inline int id() const
     {
         return m_impl->id;
-    }
-
-    inline operator bool() const
-    {
-        return m_impl->id != 0;
     }
 
     template<typename args_t>
@@ -210,18 +205,22 @@ inline except_return<type_t> except_r(
 // eco exception.
 class except : public except_t<except>
 {
-private:
+public:
     inline except()
     {
         m_impl = except_api::this_except();
     }
 
-public:
     inline except(
         int level, int id, int line, const char* file, const char* func)
     {
         except_input input{level, id, line, file, func};
         m_impl = except_api::this_except(input);
+    }
+
+    inline operator bool() const
+    {
+        return m_impl->id != 0;
     }
 
     static inline except this_except()
