@@ -38,7 +38,7 @@ struct except_impl
 {
     // except id: "service + kind + id = trade/9031001"
     // except kind: using for log and user prompt.
-    int         id;        // except id: "kind(8bit) + id(24bit)".
+    int         id;         // except id: "kind(8bit) + id(24bit)".
     // const char* service; // the name of service that client request.
     const char* args;       // except context arguments data, used by caller.
 

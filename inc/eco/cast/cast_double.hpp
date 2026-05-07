@@ -19,6 +19,7 @@
 #include <eco/prec.hpp>
 #include <eco/type/number.hpp>
 #include <eco/cast/cast_integer.hpp>
+#include <eco/cast/cast_double_ryu.hpp>
 
 
 eco_namespace(eco);
@@ -58,10 +59,42 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Ryu-based shortest round-trip decimal converter.
 template<typename float_t>
 class double_to_string
 {
-    eco::cast_detail::result result;
+public:
+    inline double_to_string()
+    {
+        m_result.buff[0] = 0;
+        m_size = 0;
+    }
+
+    // Cast a double to its shortest scientific-notation string.
+    // Result accessible via c_str() / size() (NUL-terminated).
+    inline double_to_string& cast(double v)
+    {
+        m_size = ryu_detail::d2s_buffered_n(v, m_result.buff);
+        m_result.buff[m_size] = '\0';
+        m_result.pos = 0;
+        return *this;
+    }
+
+    inline const char* c_str() const { return m_result.buff; }
+    inline uint32_t    size () const { return (uint32_t)m_size; }
+
+public:
+    // Lower-level access for users who already manage their own buffer.
+    static inline int cast(double v, char* out)
+    {
+        const int n = ryu_detail::d2s_buffered_n(v, out);
+        out[n] = '\0';
+        return n;
+    }
+
+private:
+    eco::cast_detail::result m_result;
+    int                      m_size;
 };
 
 
