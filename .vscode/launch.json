@@ -2,15 +2,25 @@
     "version": "2.0.1",
     "configurations": [
         {
-            "name": "Utt.Debug",
+            "name": "eco_test_unit",
             "type": "cppdbg",
             "request": "launch",
-            "cwd": "${workspaceFolder}/.tmp/utt_debug/",
-            "program": "${workspaceFolder}/.tmp/utt_debug/Utt",
-            "args": [],
-            "environment": [],
+            "environment": [
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "$LD_LIBRARY_PATH:${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1"
+                },
+            ],
+            "cwd": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1",
+            "program": "${workspaceFolder}/.tmp/eco_test_unit_linux-x64_debug_1.3.1/eco_test_unit",
+            "args": ["--gtest_filter=test_cast_double.*"],
             "stopAtEntry": false,
             "externalConsole": false,
+            "logging": {
+                "engineLogging": true,
+                "trace": true,
+                "programOutput": true
+            },
 
             "MIMode": "gdb",
             "miDebuggerPath": "/usr/bin/gdb",
@@ -21,20 +31,6 @@
                     "ignoreFailures": true
                 }
             ],
-
-            // defined in tasks.json
-            "preLaunchTask": "utt_debug"
-        },
-        {
-            "name": "Utt.Debug.Win64",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "cwd": "${workspaceFolder}/.bin/utt_debug_win64/",
-            "program": "${workspaceFolder}/.bin/utt_debug_win64/${workspaceFolderBasename}.exe",
-            "args": [],
-            "environment": [],
-            "stopAtEntry": false,
-            "externalConsole": false,
         }
     ]
 }

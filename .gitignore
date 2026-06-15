@@ -38,3 +38,5 @@
 .tmp
 .bin
 .lib
+gtest
+plugin.bak
