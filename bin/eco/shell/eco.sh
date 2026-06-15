@@ -3,8 +3,11 @@ SHELL_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
 # build eco
 PROJECT="eco"
-PROJECT_DIR=${SHELL_DIR}/../../..
-CONFIG="debug"
-PLATFORM="linux-x64"
-THREADS=8
-source ${PATH}/inc/eco/pak/shell/build.sh
+VERSION=1.3.1
+BUILD_TYPE=Debug
+BUILD_PATH=${SHELL_DIR}/../../..
+PLATFORM_HOST=linux_x64
+PLATFORM_BUILD=linux_x64
+COMPILER=gcc
+THREADS=1
+source ${BUILD_PATH}/inc/eco/pak/shell/build.sh

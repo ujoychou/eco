@@ -4,11 +4,12 @@
 
 # PRJ_FMT
 # PRJ_DIR: project directory, which include: bin/doc/inc/src/test, .tmp/.bin
-# PRJ_VER: the output version file.
+# PRJ_VER: project output version file.
+# PRJ_CFG: project config name, exp "eco-linux_x64-debug-3.2.0".
 # CPP_VER: 
-# INSTALL_DIR:
+# INS_DIR:
 
-# INCLUDE_DIRS
+# INC_DIRS
 # LINK_LIBS
 # LINK_DIRS
 
@@ -20,49 +21,47 @@
 include(${CMAKE_CURRENT_LIST_DIR}/fun.cmake)
 
 # platform
-if(${PLATFORM} STREQUAL "linux-x64")
+if(${PLATFORM} STREQUAL "linux_x64")
     add_definitions(-DECO_LINUX)
-elseif (${PLATFORM} STREQUAL "linux-aarch64")
+elseif (${PLATFORM} STREQUAL "linux_aarch64")
     add_definitions(-DECO_LINUX)
-elseif (${PLATFORM} STREQUAL "win-x64")
+elseif (${PLATFORM} STREQUAL "windows_x64")
     add_definitions(-DECO_WIN32)
-elseif (${PLATFORM} STREQUAL "win-aarch64")
+elseif (${PLATFORM} STREQUAL "windows_aarch64")
     add_definitions(-DECO_WIN32)
 else()
     message(WARNING "unknown arch platform: ${PLATFORM}")
 endif()
 
 # project full name & project version template file.
-# exp: [eco-linux-x64-debug-3.2.0]
-set(PRJ_CFG ${PROJECT_NAME}_${PLATFORM}_${CMAKE_BUILD_TYPE}_${PROJECT_VERSION})
-string(TOLOWER ${PRJ_CFG} PRJ_CFG)
 if(PRJ_VER)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.tpl.h ${PRJ_VER})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${PRJ_VER})
 endif()
 message("---------------------------------------------------------------------")
-
+message("== ${PRJ_CFG}")
+message("---------------------------------------------------------------------")
 # build directory
 set(TMP_DIR ${PRJ_DIR}/.tmp/${PRJ_CFG})
 set(BIN_DIR ${PRJ_DIR}/.bin/${PRJ_CFG})
-if(NOT INSTALL_DIR)
-    set(INSTALL_DIR ${BIN_DIR})
+if(NOT INS_DIR)
+    set(INS_DIR ${BIN_DIR})
 endif()
 
 # get absolute path
 get_filename_component(PRJ_DIR ${PRJ_DIR} ABSOLUTE)
 get_filename_component(TMP_DIR ${TMP_DIR} ABSOLUTE)
 get_filename_component(BIN_DIR ${BIN_DIR} ABSOLUTE)
-get_filename_component(INSTALL_DIR ${INSTALL_DIR} ABSOLUTE)
+get_filename_component(INS_DIR ${INS_DIR} ABSOLUTE)
 eco_get_absolute_path(SRC_DIRS ${SRC_DIRS})
 eco_get_absolute_path(SRC_DIRS_EXCLUDE ${SRC_DIRS_EXCLUDE})
 eco_get_absolute_path(SRC_FILES ${SRC_FILES})
 eco_get_absolute_path(SRC_FILES_EXCLUDE ${SRC_FILES_EXCLUDE})
-eco_get_absolute_path(INCLUDE_DIRS ${INCLUDE_DIRS})
+eco_get_absolute_path(INC_DIRS ${INC_DIRS})
 eco_get_absolute_path(LINK_DIRS ${LINK_DIRS})
 message("== PRJ_DIR:${PRJ_DIR}")
 message("==.BIN_DIR:${BIN_DIR}")
 message("==.TMP_DIR:${TMP_DIR}")
-message("== INSTALL_DIR:${INSTALL_DIR}")
+message("== INS_DIR:${INS_DIR}")
 message("== CMAKE_DIR:${CMAKE_CURRENT_SOURCE_DIR}")
 message("== CMAKE_BIN_DIR:${CMAKE_CURRENT_BINARY_DIR}")
 message("---------------------------------------------------------------------")
@@ -100,9 +99,9 @@ message("---------------------------------------------------------------------")
 
 ################################################################################
 # c++ target: output name. (exe/shared/static)
-eco_project(OUTPUT_FILE ${PRJ_FMT} ${INSTALL_DIR})
+eco_project(OUTPUT_FILE ${PRJ_FMT} ${INS_DIR})
 # c++ target: inc & lib & install
-target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${INC_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PRJ_DIR}/inc)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SRC_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LINK_LIBS})
@@ -118,7 +117,7 @@ if(EXISTS ${TMP_DIR}/conandeps_legacy.cmake)
     target_link_libraries(${PROJECT_NAME} PRIVATE libgtest.a libgtest_main.a)
 endif()
 eco_messages("== SRC_DIR:" ${SRC_DIRS})
-eco_messages("== INCLUDE_DIR:" ${INCLUDE_DIRS})
+eco_messages("== INC_DIR:" ${INC_DIRS})
 eco_messages("== LINK_DIR:" ${LINK_DIRS})
 message("== LINK_LIBS:${LINK_LIBS}")
 message("== LINK_LIBS_CONAN:${CONANDEPS_LEGACY}")

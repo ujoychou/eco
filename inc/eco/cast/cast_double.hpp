@@ -20,6 +20,7 @@
 #include <eco/type/number.hpp>
 #include <eco/cast/cast_integer.hpp>
 #include <eco/cast/cast_double_ryu.hpp>
+#include <eco/cast/cast_double_dragonbox.hpp>
 
 
 eco_namespace(eco);
@@ -88,6 +89,45 @@ public:
     static inline int cast(double v, char* out)
     {
         const int n = ryu_detail::d2s_buffered_n(v, out);
+        out[n] = '\0';
+        return n;
+    }
+
+private:
+    eco::cast_detail::result m_result;
+    int                      m_size;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Dragonbox-based shortest round-trip decimal converter.
+// Mirrors the API of double_to_string above so the two algorithms are drop-in
+// replacements; users can pick whichever suits their workload.
+template<typename float_t>
+class double_to_string_dragonbox
+{
+public:
+    inline double_to_string_dragonbox()
+    {
+        m_result.buff[0] = 0;
+        m_size = 0;
+    }
+
+    inline double_to_string_dragonbox& cast(double v)
+    {
+        m_size = dragonbox_detail::d2s_buffered_n(v, m_result.buff);
+        m_result.buff[m_size] = '\0';
+        m_result.pos = 0;
+        return *this;
+    }
+
+    inline const char* c_str() const { return m_result.buff; }
+    inline uint32_t    size () const { return (uint32_t)m_size; }
+
+public:
+    static inline int cast(double v, char* out)
+    {
+        const int n = dragonbox_detail::d2s_buffered_n(v, out);
         out[n] = '\0';
         return n;
     }

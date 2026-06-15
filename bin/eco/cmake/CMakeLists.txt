@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.0.0) 
 
-# project name version.
-project(eco VERSION 1.0.1)
-# project param for cppxx.cmake
+# project setting: name ver dir fmt
+project(eco VERSION ${VERSION})
 set(PRJ_FMT "lib")
 set(PRJ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(PRJ_VER_FILE ${PRJ_DIR}/inc/eco/rx/RxVersion.h)
+set(PRJ_VER ${PRJ_DIR}/inc/eco/version.h)
 
 # src files: directory.
 set(SRC_DIRS ${PRJ_DIR}/src)
